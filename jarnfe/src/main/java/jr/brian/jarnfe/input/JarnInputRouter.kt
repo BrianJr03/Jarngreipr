@@ -141,6 +141,8 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     fun hasModalLayer(screen: JarnScreen): Boolean =
         layers.any { it.screen == screen && it.mode != JarnLayerMode.Passive }
 
+    var oppositeTabsAvailable: () -> Boolean = { false }
+
     fun hintsFor(screen: JarnScreen): List<JarnInputHint> {
         val hints = LinkedHashMap<JarnKey, JarnInputHint>()
         JarnAction.entries.forEach { action ->
@@ -150,6 +152,19 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         }
         return hints.values.toList()
     }
+
+    /** The shoulder pair that moves this screen's tabs: L1/R1 while active, L2/R2 from the other screen. */
+    fun tabHintFor(screen: JarnScreen): JarnInputHint? = when {
+        screen == activeScreen -> JarnInputHint(JarnKey.L1R1, R.string.jarnfe_hint_tabs).takeIf {
+            bindsWithoutLabel(screen, JarnAction.TabPrevious) && bindsWithoutLabel(screen, JarnAction.TabNext)
+        }
+        oppositeTabsAvailable() -> JarnInputHint(JarnKey.L2R2, R.string.jarnfe_hint_tabs)
+        else -> null
+    }
+
+    private fun bindsWithoutLabel(screen: JarnScreen, action: JarnAction): Boolean =
+        (lookup(screen, action) as? Lookup.Found)?.layer?.labels?.get(action) == null &&
+            lookup(screen, action) is Lookup.Found
 
     private fun hintLabel(screen: JarnScreen, action: JarnAction): Int? =
         when (val found = lookup(screen, action)) {

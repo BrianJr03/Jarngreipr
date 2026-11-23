@@ -70,6 +70,7 @@ internal fun NowSystemLogo(path: String, title: String, onFailed: () -> Unit) {
     val needsBacking by produceState<Boolean?>(null, path, colors.bg, canLoad) {
         if (canLoad) value = logoNeedsBacking(context, path, colors.bg)
     }
+    NowRevealWhen(needsBacking != null)
     val backing = if (needsBacking == true) {
         Modifier
             .background(colors.textHigh.copy(alpha = LOGO_BACKING_ALPHA), JarnTheme.radius.smShape)

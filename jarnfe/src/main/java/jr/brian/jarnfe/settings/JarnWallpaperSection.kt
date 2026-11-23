@@ -10,6 +10,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnNavigateRow
@@ -26,7 +28,7 @@ import kotlinx.coroutines.launch
 private val WallpaperMimeTypes = arrayOf("image/*")
 
 @Composable
-internal fun JarnWallpaperSection() {
+internal fun JarnWallpaperSection(showTitle: Boolean = true, initialFocus: FocusRequester? = null) {
     val context = LocalContext.current
     val source = remember(context) { context.jarnWallpaperSourceOrNull() } ?: return
     val store = remember(context) { context.jarnLookStoreOrNull() }
@@ -34,12 +36,12 @@ internal fun JarnWallpaperSection() {
     val hasWallpaper = source.currentUri != null
     val showsLive = JarnLiveWallpapers.fromId(liveId) != null
     val openPicker = rememberWallpaperPicker(source, onApplied = { store?.setLiveWallpaperId(null) })
-    SettingsSectionTitle(R.string.jarnfe_wallpaper_title)
+    if (showTitle) SettingsSectionTitle(R.string.jarnfe_wallpaper_title)
     JarnValueRow(
         label = stringResource(R.string.jarnfe_wallpaper_choose),
         value = stringResource(if (hasWallpaper) R.string.jarnfe_wallpaper_custom else R.string.jarnfe_wallpaper_theme),
         onClick = openPicker,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().then(initialFocus?.let { Modifier.focusRequester(it) } ?: Modifier),
     )
     store?.let { JarnLiveWallpaperPicker(savedId = liveId, onChoose = it::setLiveWallpaperId) }
     JarnNavigateRow(

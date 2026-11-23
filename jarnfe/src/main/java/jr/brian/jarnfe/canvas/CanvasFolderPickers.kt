@@ -34,24 +34,33 @@ internal fun CanvasFolderCreateFlow(
     onClose: () -> Unit,
 ) {
     var apps by remember { mutableStateOf<List<JarnCanvasApp>?>(null) }
-    var selected by remember { mutableStateOf(emptySet<String>()) }
+    var selection by remember { mutableStateOf(CanvasPickSelection<JarnCanvasApp>()) }
+    var picked by remember { mutableStateOf(emptyList<String>()) }
+    var query by remember { mutableStateOf("") }
     var naming by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { apps = runCatching { data.installedApps() }.getOrDefault(emptyList()) }
     if (naming) {
         CanvasKeyboardSheet(
             label = stringResource(R.string.jarnfe_folder_name_label),
-            onDone = { text -> onCreate(jarnFolderNameOrNull(text) ?: defaultName, selected.toList()) },
+            onDone = { text -> onCreate(jarnFolderNameOrNull(text) ?: defaultName, picked) },
             onCancel = { naming = false },
         )
     } else {
-        CanvasFolderAppsPicker(
+        val rows = remember(apps, query) { apps?.let { list -> canvasPickerMatches(list, query) { it.label } } }
+        CanvasMultiPicker(
             title = stringResource(R.string.jarnfe_canvas_pick_folder_title),
-            apps = apps,
-            selected = selected,
-            onSelected = { selected = it },
-            confirmLabel = stringResource(R.string.jarnfe_folder_next, selected.size),
-            canConfirmEmpty = false,
-            onConfirm = { naming = true },
+            rows = rows,
+            rowKey = { it.packageName },
+            rowLabel = { it.label },
+            selection = selection,
+            onSelection = { selection = it },
+            query = query,
+            onQuery = { query = it },
+            confirmLabel = stringResource(R.string.jarnfe_folder_next, selection.count),
+            onConfirm = { chosen ->
+                picked = chosen.map { it.packageName }
+                naming = true
+            },
             onClose = onClose,
         )
     }

@@ -52,6 +52,14 @@ internal fun canvasItemResolved(item: CanvasItem, page: JarnCanvasPage): Boolean
     else -> true
 }
 
+private fun CanvasAddNotice.show() = when (this) {
+    CanvasAddNotice.PageFull -> JarnNotices.show(R.string.jarnfe_canvas_notice_page_full)
+    is CanvasAddNotice.SomeDidNotFit -> JarnNotices.showCount(R.plurals.jarnfe_canvas_notice_no_fit, count)
+    CanvasAddNotice.Failed -> JarnNotices.show(R.string.jarnfe_canvas_notice_add_failed)
+    CanvasAddNotice.AlreadyHere -> JarnNotices.show(R.string.jarnfe_canvas_notice_already_here)
+    is CanvasAddNotice.Added -> JarnNotices.showCount(R.plurals.jarnfe_canvas_notice_added, count)
+}
+
 @Composable
 internal fun CanvasTileOverlays(
     overlay: CanvasOverlay?,
@@ -81,6 +89,19 @@ internal fun CanvasTileOverlays(
             }
         }
     }
+    val backToAdd = { onOverlay(CanvasOverlay.Add) }
+    val romCatalog = rememberCanvasRomCatalog()
+    val addPicked: (suspend () -> List<JarnCanvasNewTile>) -> Unit = { build ->
+        close()
+        page?.index?.let { index ->
+            scope.launch {
+                val tiles = build()
+                val result = data.addTiles(index, tiles)
+                canvasAddNotice(result)?.show()
+                if (tiles.size == 1) result.addedIds.firstOrNull()?.let(commands.grabNewTile)
+            }
+        }
+    }
     when (overlay) {
         CanvasOverlay.Add -> CanvasAddSheet(
             addingHere = addingHere,
@@ -99,16 +120,24 @@ internal fun CanvasTileOverlays(
             },
             onClose = close,
         )
-        CanvasOverlay.PickApp -> CanvasAppPickerSheet(
-            data = data,
-            onPicked = { addTile(JarnCanvasNewTile.App(it.packageName)) },
-            onClose = close,
-        )
+        CanvasOverlay.PickApp -> {
+            val capacity = remember(page?.layout) { page?.layout?.let(::jarnCanvasFreeSlots) ?: 0 }
+            if (capacity == 0) {
+                CanvasPageFullSheet(backToAdd)
+            } else {
+                CanvasAppPickerSheet(
+                    data = data,
+                    capacity = capacity,
+                    onPicked = { apps -> addPicked { apps.map { JarnCanvasNewTile.App(it.packageName) } } },
+                    onClose = backToAdd,
+                )
+            }
+        }
         CanvasOverlay.PickFolderApps -> CanvasFolderCreateFlow(
             data = data,
             defaultName = folderName,
             onCreate = { name, packages -> addTile(JarnCanvasNewTile.Folder(name, packages)) },
-            onClose = close,
+            onClose = backToAdd,
         )
         is CanvasOverlay.Folder -> {
             val item = page?.layout?.items
@@ -120,16 +149,33 @@ internal fun CanvasTileOverlays(
                 CanvasFolderRoute(data, page.index, folder, close)
             }
         }
-        CanvasOverlay.PickRom -> CanvasRomPickerSheet(
-            data = data,
-            onPicked = { addTile(JarnCanvasNewTile.Rom(it.key)) },
-            onClose = close,
-        )
+        CanvasOverlay.PickRom -> {
+            val capacity = remember(page?.layout) { page?.layout?.let(::jarnCanvasFreeSlots) ?: 0 }
+            val placed = remember(page?.layout) {
+                page?.layout?.items.orEmpty().filterIsInstance<CanvasItem.RomItem>().mapTo(HashSet()) { it.romKey }
+            }
+            if (capacity == 0) {
+                CanvasPageFullSheet(backToAdd)
+            } else {
+                CanvasRomPickerFlow(
+                    data = data,
+                    catalog = romCatalog,
+                    capacity = capacity,
+                    placedKeys = placed,
+                    onPicked = { picks ->
+                        addPicked {
+                            romCatalog?.tiles(picks) ?: picks.map { JarnCanvasNewTile.Rom(it.rom.key) }
+                        }
+                    },
+                    onClose = backToAdd,
+                )
+            }
+        }
         CanvasOverlay.PickWidget -> CanvasWidgetPickerSheet(
             data = data,
             rebindId = null,
             onBound = { addTile(JarnCanvasNewTile.Widget(it.widgetId, it.columns, it.rows)) },
-            onClose = close,
+            onClose = backToAdd,
         )
         is CanvasOverlay.RebindWidget -> CanvasWidgetPickerSheet(
             data = data,

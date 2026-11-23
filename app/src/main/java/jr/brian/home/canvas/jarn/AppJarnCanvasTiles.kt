@@ -26,9 +26,11 @@ import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.model.PageType
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.rss.RssItem
 import jr.brian.home.util.WallpaperUtils
 import jr.brian.home.viewmodels.WidgetViewModel
+import jr.brian.jarnfe.canvas.JarnCanvasAddResult
 import jr.brian.jarnfe.canvas.JarnCanvasApp
 import jr.brian.jarnfe.canvas.JarnCanvasNewTile
 import jr.brian.jarnfe.canvas.JarnCanvasRom
@@ -41,6 +43,7 @@ import jr.brian.jarnfe.canvas.JarnWidgetHealth
 import jr.brian.jarnfe.canvas.JarnWidgetLease
 import jr.brian.jarnfe.canvas.JarnWidgetProvider
 import jr.brian.jarnfe.canvas.jarnLayoutWithArrival
+import jr.brian.jarnfe.canvas.jarnPlanCanvasAdds
 import jr.brian.jarnfe.canvas.jarnTileMayChangePage
 import jr.brian.jarnfe.canvas.showJarnFolderEditFailed
 import kotlinx.coroutines.Dispatchers
@@ -112,6 +115,7 @@ class AppJarnCanvasTiles @Inject constructor(
             )
             is JarnCanvasNewTile.Folder -> addFolder(pageIndex, tile)
             is JarnCanvasNewTile.Rom -> addRom(pageIndex, tile.key)
+            is JarnCanvasNewTile.LibraryRom -> addRom(pageIndex, tile.rom.key, tile.rom.toPinnedRom())
             is JarnCanvasNewTile.Widget -> {
                 val item = CanvasItem.WidgetItem("widget-${tile.widgetId}", tile.widgetId)
                 layouts.addItem(pageIndex, item, colSpan = tile.columns, rowSpan = tile.rows)
@@ -134,6 +138,48 @@ class AppJarnCanvasTiles @Inject constructor(
             JarnCanvasNewTile.RssMusic ->
                 place(pageIndex, CanvasItem.RssMusicItem("rss-music-${UUID.randomUUID()}"))
         }
+    }
+
+    override suspend fun addTiles(pageIndex: Int, tiles: List<JarnCanvasNewTile>): JarnCanvasAddResult = edit {
+        if (!isCanvasPage(pageIndex)) return@edit JarnCanvasAddResult(failed = tiles.size)
+        val layout = layouts.getLayout(pageIndex)
+        val known = pinnedRoms.allPinnedRoms.first().associateBy { it.key }
+        val onPage = layout.items.filterIsInstance<CanvasItem.RomItem>().mapTo(HashSet()) { it.romKey }
+        val pins = LinkedHashMap<String, PinnedRomInfo>()
+        var alreadyPlaced = 0
+        var failed = 0
+        val items = tiles.mapNotNull { tile ->
+            val (key, fallback) = when (tile) {
+                is JarnCanvasNewTile.App -> return@mapNotNull CanvasItem.AppItem(
+                    "app-${tile.packageName}-${UUID.randomUUID()}",
+                    tile.packageName,
+                )
+                is JarnCanvasNewTile.Rom -> tile.key to null
+                is JarnCanvasNewTile.LibraryRom -> tile.rom.key to tile.rom.toPinnedRom()
+                else -> {
+                    failed += 1
+                    return@mapNotNull null
+                }
+            }
+            if (key in onPage || key in pins) {
+                alreadyPlaced += 1
+                return@mapNotNull null
+            }
+            val rom = known[key] ?: fallback
+            if (rom == null) {
+                failed += 1
+                return@mapNotNull null
+            }
+            pins[key] = rom
+            CanvasItem.RomItem("rom-$key", key)
+        }
+        val plan = jarnPlanCanvasAdds(layout, items)
+        val placed = plan.placedIds.toSet()
+        items.filterIsInstance<CanvasItem.RomItem>().filter { it.id in placed }.forEach { item ->
+            pinnedRoms.addPinnedRom(pageIndex, pins.getValue(item.romKey), CanvasTabType.VALUE)
+        }
+        if (placed.isNotEmpty()) layouts.replaceLayout(pageIndex, plan.layout)
+        JarnCanvasAddResult(plan.placedIds, alreadyPlaced, plan.noRoom, failed)
     }
 
     override fun updateTile(pageIndex: Int, item: CanvasItem) {
@@ -376,11 +422,11 @@ class AppJarnCanvasTiles @Inject constructor(
         return place(pageIndex, CanvasItem.FolderItem("folder-${folder.id}", folder.id))
     }
 
-    private suspend fun addRom(pageIndex: Int, key: String): String? {
+    private suspend fun addRom(pageIndex: Int, key: String, unpinned: PinnedRomInfo? = null): String? {
         val existing = layouts.getLayout(pageIndex).items
             .firstOrNull { it is CanvasItem.RomItem && it.romKey == key }
         if (existing != null) return existing.id
-        val rom = pinnedRoms.allPinnedRoms.first().firstOrNull { it.key == key } ?: return null
+        val rom = pinnedRoms.allPinnedRoms.first().firstOrNull { it.key == key } ?: unpinned ?: return null
         pinnedRoms.addPinnedRom(pageIndex, rom, CanvasTabType.VALUE)
         return place(pageIndex, CanvasItem.RomItem("rom-$key", key))
     }
@@ -393,6 +439,16 @@ class AppJarnCanvasTiles @Inject constructor(
     /** A tile edit touches several stores, so leaving the screen must never stop one halfway. */
     internal suspend fun <T> edit(block: suspend () -> T): T =
         withContext(NonCancellable) { edits.withLock { block() } }
+
+    private fun JarnCanvasRom.toPinnedRom() = PinnedRomInfo(
+        key = key,
+        name = title,
+        systemName = systemName,
+        path = path,
+        artworkPath = artPath,
+        emulatorPackage = emulatorPackage,
+        launchCommand = launchCommand,
+    )
 
     private fun RssItem.toJarnRssItem() = JarnCanvasRssItem(
         id = id,

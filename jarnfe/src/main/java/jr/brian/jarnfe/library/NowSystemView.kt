@@ -68,6 +68,7 @@ internal fun nowShelfLayout(gameCount: Int, shelfSize: Int): NowShelfLayout = wh
 @Composable
 internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
     val store = JarnNowShelf
+    NowRevealWhen(now?.isLoaded == true)
     LaunchedEffect(JarnGameActions.gameId, JarnGameActions.page) { store.followLaunchedCover() }
     val canPlay = JarnLibrary.canPlay
     val hasDetails = JarnGameActions.controller != null

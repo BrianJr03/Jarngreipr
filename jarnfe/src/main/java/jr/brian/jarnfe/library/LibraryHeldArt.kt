@@ -36,7 +36,7 @@ internal fun interface HeldArtDecoder {
     suspend fun decode(path: String, size: IntSize): ImageBitmap?
 }
 
-/** Keeps the current image until the next is decoded, then crossfades. */
+/** Keeps the current image until the next is decoded, then fades one out as the other fades in. */
 @Stable
 internal class HeldArtState {
     var shown by mutableStateOf<HeldImage?>(null)
@@ -44,6 +44,8 @@ internal class HeldArtState {
     var outgoing by mutableStateOf<HeldImage?>(null)
         private set
     var isSettled by mutableStateOf(false)
+        private set
+    var settledPaths by mutableStateOf<List<String>?>(null)
         private set
     val reveal = Animatable(1f)
 
@@ -54,9 +56,13 @@ internal class HeldArtState {
         decode: suspend (String) -> ImageBitmap?,
     ) {
         val current = shown
-        if (current != null && paths.firstOrNull() == current.path) return finishFade(fade)
+        if (current != null && paths.firstOrNull() == current.path) {
+            settledPaths = paths
+            return finishFade(fade)
+        }
         val next = paths.firstNotNullOfOrNull { path -> decode(path)?.let { HeldImage(path, it) } }
         isSettled = true
+        settledPaths = paths
         if (next?.path == current?.path) return finishFade(fade)
         outgoing = current ?: outgoing
         shown = next
@@ -85,7 +91,8 @@ internal fun BoxScope.LibraryHeldArt(
 ) {
     val state = remember { HeldArtState() }
     var size by remember { mutableStateOf<IntSize?>(null) }
-    val fade = JarnTheme.motion.art.spec<Float>()
+    val fade = JarnTheme.motion.panel.spec<Float>()
+    NowRevealWhen(state.settledPaths == paths)
     LaunchedEffect(paths, size != null, canLoad) {
         val target = size
         if (canLoad && target != null) state.moveTo(paths, fade) { decoder.decode(it, target) }
@@ -95,7 +102,9 @@ internal fun BoxScope.LibraryHeldArt(
             .matchParentSize()
             .onSizeChanged { if (it.width > 0 && it.height > 0) size = it },
     ) {
-        state.outgoing?.let { HeldImageLayer(it, contentScale, alignment) }
+        state.outgoing?.let {
+            HeldImageLayer(it, contentScale, alignment, Modifier.graphicsLayer { alpha = 1f - state.reveal.value })
+        }
         val shown = state.shown
         if (shown != null) {
             HeldImageLayer(shown, contentScale, alignment, Modifier.graphicsLayer { alpha = state.reveal.value })

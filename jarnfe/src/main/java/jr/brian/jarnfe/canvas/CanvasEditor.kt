@@ -10,6 +10,9 @@ import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 
+/** What the Arrange banner should tell the user right now. */
+internal enum class CanvasArrangeStep { Choose, HoldingWithController, HoldingWithTouch }
+
 /**
  * Edit state, owned above the page so one grab survives a page change. It is never saved, so
  * Classic's edit flag stays untouched. [navigate] moves the visible page on the grab's behalf.
@@ -21,6 +24,20 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
 
     var grab by mutableStateOf<CanvasGrab?>(null)
         private set
+
+    /** True in the lasting Arrange mode, false during a one-shot move that returns to browsing. */
+    val arranging: Boolean
+        get() = editing && grab?.leaveEditOnEnd != true
+
+    val arrangeStep: CanvasArrangeStep?
+        get() {
+            if (!arranging) return null
+            return when (grab?.driver) {
+                null -> CanvasArrangeStep.Choose
+                CanvasGrabDriver.Controller -> CanvasArrangeStep.HoldingWithController
+                CanvasGrabDriver.Touch -> CanvasArrangeStep.HoldingWithTouch
+            }
+        }
 
     /** Holds a dropped layout on screen until the saved one arrives, so tiles never jump back. */
     var settled by mutableStateOf<Map<String, GridRect>?>(null)
@@ -75,6 +92,11 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
         }
     }
 
+    /** Picks up one tile from the tile menu. Browsing comes back when the grab ends. */
+    fun beginMove(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int) {
+        beginOneShot(layout, itemId, minColSpan, minRowSpan)
+    }
+
     /** Starts a finger grab from browse or edit. Browse comes back when the grab ends. */
     fun beginTouch(
         layout: CanvasLayout,
@@ -115,13 +137,21 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
 
     /** Grabs a tile that was just added, at [cell] if given, so B can take it back off the page. */
     fun beginAdded(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int, cell: GridCell? = null) {
+        val started = beginOneShot(layout, itemId, minColSpan, minRowSpan) ?: return
+        val added = started.copy(isNewTile = true)
+        grab = if (cell == null) added else added.movedTo(cell.col, cell.row)
+    }
+
+    /** Leaves the mode untouched when the grab can't start, so a refused move never strands Arrange. */
+    private fun beginOneShot(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int): CanvasGrab? {
+        if (grab != null) return null
         val wasEditing = editing
-        enter()
+        editing = true
         begin(layout, itemId, minColSpan, minRowSpan)
-        grab?.takeIf { it.itemId == itemId }?.let { started ->
-            val added = started.copy(isNewTile = true, leaveEditOnUndo = !wasEditing)
-            grab = if (cell == null) added else added.movedTo(cell.col, cell.row)
-        }
+        val started = grab?.copy(leaveEditOnEnd = !wasEditing)
+        if (started == null) editing = wasEditing
+        grab = started
+        return started
     }
 
     /** Only ever removes a tile from [beginAdded], and returns to the mode the add started in. */
@@ -129,7 +159,7 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
         val added = grab?.takeIf { it.isNewTile } ?: return
         grab = null
         returnHome(added)
-        if (added.leaveEditOnUndo) editing = false
+        if (added.leaveEditOnEnd) editing = false
         remove(added.itemId)
     }
 
@@ -174,12 +204,13 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
     ) {
         val finished = grab ?: return
         when (val result = finished.dropResult()) {
-            CanvasGrabDrop.Unchanged -> cancelGrab()
-            is CanvasGrabDrop.SamePage -> {
-                endGrab(finished)
-                settled = result.write.placements
-                commit(result.write.placements)
-            }
+            CanvasGrabDrop.Unchanged ->
+                if (finished.isNewTile && !finished.isAwayFromHome) {
+                    place(finished, finished.preview.placements, commit)
+                } else {
+                    cancelGrab()
+                }
+            is CanvasGrabDrop.SamePage -> place(finished, result.write.placements, commit)
             is CanvasGrabDrop.BetweenPages ->
                 if (moveBetweenPages == null) {
                     cancelGrab()
@@ -188,6 +219,16 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
                     moveBetweenPages(result)
                 }
         }
+    }
+
+    private fun place(
+        finished: CanvasGrab,
+        placements: Map<String, GridRect>,
+        commit: (Map<String, GridRect>) -> Unit,
+    ) {
+        endGrab(finished)
+        settled = placements
+        commit(placements)
     }
 
     private fun endGrab(finished: CanvasGrab) {

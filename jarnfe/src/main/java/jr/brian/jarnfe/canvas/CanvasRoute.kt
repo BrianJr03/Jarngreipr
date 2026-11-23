@@ -270,8 +270,7 @@ private fun CanvasPageSurface(
         page?.let {
             val (minCol, minRow) = minSpansFor(data, item, cellPx)
             lastFocused = item.id
-            editor.enter()
-            editor.begin(it.layout, item.id, minCol, minRow)
+            editor.beginMove(it.layout, item.id, minCol, minRow)
         }
     }
     val useWidget: (CanvasItem.WidgetItem) -> Unit = { item ->
@@ -362,9 +361,14 @@ private fun CanvasPageSurface(
     LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing) {
         if (focusTarget == null || sheetOpen || !isActive) return@LaunchedEffect
         withFrameNanos { }
-        if (!tabsFocus.hasFocus) runCatching { requesterFor(focusTarget).requestFocus() }
+        if (editor.arranging || !tabsFocus.hasFocus) runCatching { requesterFor(focusTarget).requestFocus() }
     }
 
+    val moveArrangeFocus: (Int, Int) -> Unit = { deltaCol, deltaRow ->
+        val next = canvasFocusStep(page.visiblePlacements(editor), lastFocused, deltaCol, deltaRow)
+            ?: focusTarget.takeUnless { boardHasFocus }
+        next?.let { id -> runCatching { requesterFor(id).requestFocus() } }
+    }
     val focusedTile = page?.layout?.items?.firstOrNull { it.id == lastFocused }
     val restoreUndo: () -> Unit = {
         val restored = undo.undo(page?.layout?.activeArrangement.orEmpty()) { moved, undone ->
@@ -403,6 +407,7 @@ private fun CanvasPageSurface(
         editor = editor,
         hasTiles = page?.layout?.items?.isNotEmpty() == true,
         confirmLabel = page?.let { focusedConfirmLabel(data, it, focusedTile) },
+        ownsButtons = canvasOwnsButtons(boardHasFocus, focusTarget != null),
         sheetOpen = sheetOpen || interactingId != null || page?.kind == JarnCanvasPageKind.Rss,
         pagePush = pagePush,
         onContext = { if (focusedTile != null) handlers.openTileMenu(focusedTile) else onOptions() },
@@ -420,10 +425,18 @@ private fun CanvasPageSurface(
             val homePage = editor.grab?.home?.pageIndex ?: return@CanvasInputLayers
             editor.undoAdd { id -> scope.launch { data.removeTile(homePage, id) } }
         },
+        onArrangeMove = moveArrangeFocus,
     )
 
     Column(Modifier.fillMaxSize()) {
-        CanvasPageHeader(page, pageCount, snapshot.homePage, editor.editing)
+        CanvasPageHeader(
+            page = page,
+            pageCount = pageCount,
+            homePage = snapshot.homePage,
+            arrangeStep = editor.arrangeStep,
+            moving = editor.editing && !editor.arranging,
+            onOptions = onOptions,
+        )
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -437,6 +450,12 @@ private fun CanvasPageSurface(
                 page.kind == JarnCanvasPageKind.Rss -> JarnRssRoute(state, sheetOpen, rssSheets, onOptions)
                 page.kind != JarnCanvasPageKind.Canvas ->
                     CanvasNotice(R.string.jarnfe_canvas_other_page_title, R.string.jarnfe_canvas_other_page_message)
+                page.layout.items.isEmpty() && !editor.editing -> CanvasEmptySpace(
+                    page = page,
+                    sheetOpen = sheetOpen,
+                    onAdd = { onAddAt(canvasFirstOpenCell(page.layout)) },
+                    onOptions = onOptions,
+                )
                 else -> {
                     val stageArt = rememberCanvasStageArt(state, page)
                     CanvasGrid(
@@ -515,6 +534,7 @@ private fun recordDrop(
     placements: Map<String, GridRect>,
 ) {
     val before = finished.home.baseline.placements
+    val added = finished.itemId.takeIf { finished.isNewTile }
     undo.recordLayout(
         writes,
         CanvasLayoutChange(
@@ -522,7 +542,8 @@ private fun recordDrop(
             orientation = finished.home.orientation,
             before = before,
             after = placements,
-            kind = canvasUndoKind(finished.itemId, before, placements),
+            kind = if (added != null) CanvasUndoKind.Added else canvasUndoKind(finished.itemId, before, placements),
+            addedTileId = added,
         ),
     )
 }
@@ -539,6 +560,12 @@ private fun JarnCanvasPage.withoutTiles(hidden: Set<String>): JarnCanvasPage =
             ),
         )
     }
+
+private fun JarnCanvasPage?.visiblePlacements(editor: CanvasEditor): Map<String, GridRect> {
+    val shown = this?.layout ?: return emptyMap()
+    val ids = shown.items.mapTo(HashSet()) { it.id }
+    return editor.placements(shown).filterKeys { it in ids }
+}
 
 private fun minSpansFor(data: JarnCanvasData, item: CanvasItem, cellPx: Float): Pair<Int, Int> =
     if (item is CanvasItem.WidgetItem) data.widgetMinSpans(item.widgetId, cellPx) else 1 to 1

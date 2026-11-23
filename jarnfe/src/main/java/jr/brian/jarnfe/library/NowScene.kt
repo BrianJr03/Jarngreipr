@@ -59,6 +59,7 @@ private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSys
         is LibrarySelection.System -> nowSystemPaths(selection.system, systemNow)
         is LibrarySelection.Game -> nowGamePaths(selection.game, rememberNowSceneArt(selection.game))
     }
+    NowRevealWhen(target != null)
     val paths = rememberHeldPaths(target)
     val wall = rememberHeldWall(systemNow).takeIf { selection != LibrarySelection.None }
     LibraryHeldArt(paths) {

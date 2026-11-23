@@ -170,6 +170,54 @@ class CanvasUndoTest {
     }
 
     @Test
+    fun `undo of a placed new tile restores neighbors and opens its delayed removal`() = runTest {
+        val writes = FakeWrites()
+        val undo = controller()
+        undo.recordLayout(writes, change().copy(kind = CanvasUndoKind.Added, addedTileId = "a"))
+        assertEquals(before, undo.undo(after))
+        assertEquals(listOf(before), writes.commits)
+        assertEquals(CanvasPendingRemoval(0, "a"), undo.entry)
+        assertEquals(setOf("a"), undo.hiddenOn(0))
+        assertTrue(writes.removals.isEmpty())
+        advanceTimeBy(CANVAS_UNDO_WINDOW_MS + 1)
+        runCurrent()
+        assertEquals(listOf(0 to "a"), writes.removals)
+    }
+
+    @Test
+    fun `a new tile dropped where it landed is removed without a layout write`() = runTest {
+        val writes = FakeWrites()
+        val undo = controller()
+        undo.recordLayout(writes, change().copy(after = before, kind = CanvasUndoKind.Added, addedTileId = "a"))
+        undo.undo(before)
+        assertTrue(writes.commits.isEmpty())
+        assertEquals(CanvasPendingRemoval(0, "a"), undo.entry)
+    }
+
+    @Test
+    fun `a new tile is still removed when the layout changed some other way`() = runTest {
+        val writes = FakeWrites()
+        val undo = controller()
+        undo.recordLayout(writes, change().copy(kind = CanvasUndoKind.Added, addedTileId = "a"))
+        assertNull(undo.undo(mapOf("a" to GridRect(5, 5, 1, 1), "b" to GridRect(6, 5, 1, 1))))
+        assertTrue(writes.commits.isEmpty())
+        assertEquals(CanvasPendingRemoval(0, "a"), undo.entry)
+    }
+
+    @Test
+    fun `undoing the removal of a placed new tile keeps it`() = runTest {
+        val writes = FakeWrites()
+        val undo = controller()
+        undo.recordLayout(writes, change().copy(kind = CanvasUndoKind.Added, addedTileId = "a"))
+        undo.undo(after)
+        undo.undo(before)
+        advanceTimeBy(CANVAS_UNDO_WINDOW_MS * 2)
+        runCurrent()
+        assertTrue(writes.removals.isEmpty())
+        assertTrue(undo.hiddenOn(0).isEmpty())
+    }
+
+    @Test
     fun `undo kind tells a resize from a move`() {
         assertEquals(CanvasUndoKind.Moved, canvasUndoKind("a", before, after))
         val grown = before + ("a" to GridRect(0, 0, 2, 1))

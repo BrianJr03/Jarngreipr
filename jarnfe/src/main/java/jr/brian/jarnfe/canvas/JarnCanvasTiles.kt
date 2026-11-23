@@ -50,6 +50,10 @@ sealed interface JarnCanvasNewTile {
     data class App(val packageName: String) : JarnCanvasNewTile
     data class Folder(val name: String, val packageNames: List<String>) : JarnCanvasNewTile
     data class Rom(val key: String) : JarnCanvasNewTile
+
+    /** A library game that may not be pinned yet. Adding it pins it, as Classic's Browse does. */
+    data class LibraryRom(val rom: JarnCanvasRom) : JarnCanvasNewTile
+
     data class Widget(val widgetId: Int, val columns: Int, val rows: Int) : JarnCanvasNewTile
     data object Art : JarnCanvasNewTile
     data object LastPlayed : JarnCanvasNewTile
@@ -57,6 +61,14 @@ sealed interface JarnCanvasNewTile {
     data object RssLauncher : JarnCanvasNewTile
     data object RssMusic : JarnCanvasNewTile
 }
+
+/** What a bulk add did. [noRoom] tiles did not fit, and [alreadyPlaced] games were on the page. */
+data class JarnCanvasAddResult(
+    val addedIds: List<String> = emptyList(),
+    val alreadyPlaced: Int = 0,
+    val noRoom: Int = 0,
+    val failed: Int = 0,
+)
 
 /** Held while widgets are on screen. Closing hands live updates back to Classic. */
 interface JarnWidgetLease : AutoCloseable {
@@ -71,6 +83,9 @@ interface JarnCanvasTiles {
 
     /** Returns the tile's id, or null when the page cannot take it. */
     suspend fun addTile(pageIndex: Int, tile: JarnCanvasNewTile): String?
+
+    /** Adds app and game tiles in one save, in free cells only. Nothing already placed moves. */
+    suspend fun addTiles(pageIndex: Int, tiles: List<JarnCanvasNewTile>): JarnCanvasAddResult
 
     /** Replaces a tile's settings in place. Its placement in both orientations is kept. */
     fun updateTile(pageIndex: Int, item: CanvasItem)
