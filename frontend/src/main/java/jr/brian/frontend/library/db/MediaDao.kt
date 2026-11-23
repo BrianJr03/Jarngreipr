@@ -26,6 +26,9 @@ interface MediaDao {
     @Upsert
     suspend fun upsertAll(media: List<MediaEntity>)
 
+    @Query("SELECT * FROM media WHERE gameId IN (:gameIds)")
+    suspend fun getByGameIds(gameIds: List<Long>): List<MediaEntity>
+
     @Query("DELETE FROM media WHERE gameId IN (:gameIds)")
     suspend fun deleteByGameIds(gameIds: List<Long>)
 

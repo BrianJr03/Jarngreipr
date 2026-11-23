@@ -43,14 +43,14 @@ class SafTreeScanner @Inject constructor(
 
     private val resolver: ContentResolver get() = context.contentResolver
 
-    override suspend fun scan(
+    override suspend fun scanWithReport(
         sourceRoot: String,
         systems: Set<String>?,
-    ): List<ScannedRom> = withContext(Dispatchers.IO) {
+    ): ScanReport = withContext(Dispatchers.IO) {
         val treeUri = runCatching { sourceRoot.toUri() }.getOrNull()
         if (treeUri == null) {
             Log.w(TAG, "Not a parseable tree URI: $sourceRoot")
-            return@withContext emptyList()
+            return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
         }
 
         val filter = systems?.map { it.lowercase() }?.toSet()
@@ -59,12 +59,14 @@ class SafTreeScanner @Inject constructor(
         }.getOrNull()
         if (rootDocId == null) {
             Log.w(TAG, "Could not resolve tree document id for $treeUri")
-            return@withContext emptyList()
+            return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
         }
 
         val out = mutableListOf<ScannedRom>()
+        val unreadable = mutableSetOf<String>()
         // Pass 1: list the root's children to find system folders.
         val systemCandidates = queryChildren(treeUri, rootDocId)
+            ?: return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
         for (child in systemCandidates) {
             if (!child.isDirectory) continue
             if (!ScanRules.shouldDescend(child.displayName)) continue
@@ -81,10 +83,11 @@ class SafTreeScanner @Inject constructor(
                 def = def,
                 relativeSegments = emptyList(),
                 out = out,
+                unreadable = unreadable,
                 depthRemaining = ScanRules.WALK_MAX_DEPTH,
             )
         }
-        out
+        ScanReport(roms = out, unreadableSystems = unreadable)
     }
 
     private fun walk(
@@ -93,19 +96,27 @@ class SafTreeScanner @Inject constructor(
         def: SystemDef,
         relativeSegments: List<String>,
         out: MutableList<ScannedRom>,
+        unreadable: MutableSet<String>,
         depthRemaining: Int,
     ) {
         val systemId = def.id
         val extensions = def.extensions
         if (depthRemaining < 0) return
         val children = queryChildren(treeUri, parentDocId)
+        if (children == null) {
+            unreadable += systemId
+            return
+        }
         for (child in children) {
             val name = child.displayName
             if (!ScanRules.shouldDescend(name)) continue
             val childSegments = relativeSegments + name
 
             if (child.isDirectory) {
-                if (def.folderGameMarkers.any { hasFile(treeUri, child.documentId, it) }) {
+                val isMarkedGame = hasAnyMarker(treeUri, child.documentId, def)
+                if (isMarkedGame == null) {
+                    unreadable += systemId
+                } else if (isMarkedGame) {
                     out += toScanned(treeUri, child, systemId, childSegments, isDirectoryAsFile = true)
                 } else if (ScanRules.matchesExtension(name, extensions)) {
                     out += toScanned(treeUri, child, systemId, childSegments, isDirectoryAsFile = true)
@@ -116,6 +127,7 @@ class SafTreeScanner @Inject constructor(
                         def = def,
                         relativeSegments = childSegments,
                         out = out,
+                        unreadable = unreadable,
                         depthRemaining = depthRemaining - 1,
                     )
                 }
@@ -129,18 +141,33 @@ class SafTreeScanner @Inject constructor(
      * Does [relativePath] (`base/exefs/main.npdm`) name a file under [dirDocId]?
      * One query per path segment, and only for systems that declare
      * [SystemDef.folderGameMarkers], so extension-only systems pay nothing.
+     * Null when a folder on the way couldn't be read, which is not a "no".
      */
-    private fun hasFile(treeUri: Uri, dirDocId: String, relativePath: String): Boolean {
+    private fun hasFile(treeUri: Uri, dirDocId: String, relativePath: String): Boolean? {
         val segments = relativePath.split('/')
         var docId = dirDocId
         for ((i, segment) in segments.withIndex()) {
             val isLast = i == segments.lastIndex
-            val match = queryChildren(treeUri, docId)
+            val listing = queryChildren(treeUri, docId) ?: return null
+            val match = listing
                 .firstOrNull { it.displayName == segment && it.isDirectory != isLast }
                 ?: return false
             docId = match.documentId
         }
         return true
+    }
+
+    /** True on the first marker found; null if none matched and one couldn't be read. */
+    private fun hasAnyMarker(treeUri: Uri, dirDocId: String, def: SystemDef): Boolean? {
+        var sawUnreadable = false
+        for (marker in def.folderGameMarkers) {
+            when (hasFile(treeUri, dirDocId, marker)) {
+                true -> return true
+                null -> sawUnreadable = true
+                false -> Unit
+            }
+        }
+        return if (sawUnreadable) null else false
     }
 
     private fun toScanned(
@@ -162,7 +189,12 @@ class SafTreeScanner @Inject constructor(
         )
     }
 
-    private fun queryChildren(treeUri: Uri, parentDocId: String): List<DocumentChild> {
+    /**
+     * Null means the folder couldn't be fully listed (provider failure,
+     * lost grant, or a provider still loading), as opposed to an empty
+     * folder.
+     */
+    private fun queryChildren(treeUri: Uri, parentDocId: String): List<DocumentChild>? {
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentDocId)
         val projection = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
@@ -173,6 +205,14 @@ class SafTreeScanner @Inject constructor(
         )
         return try {
             resolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+                val extras = cursor.extras
+                if (
+                    extras?.getString(DocumentsContract.EXTRA_ERROR) != null ||
+                    extras?.getBoolean(DocumentsContract.EXTRA_LOADING) == true
+                ) {
+                    Log.w(TAG, "SAF listing incomplete for $childrenUri")
+                    return null
+                }
                 val idIdx = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
                 val nameIdx = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
                 val mimeIdx = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
@@ -190,10 +230,10 @@ class SafTreeScanner @Inject constructor(
                     )
                 }
                 out
-            }.orEmpty()
+            }
         } catch (e: Exception) {
             Log.w(TAG, "SAF query failed for $childrenUri", e)
-            emptyList()
+            null
         }
     }
 

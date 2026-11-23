@@ -127,8 +127,18 @@ class LibraryMigration @Inject constructor(
             for (sysDir in systemDirs) {
                 val def = catalog.findByFolderAlias(sysDir.name) ?: continue
                 val file = java.io.File(sysDir, "gamelist.xml")
-                gamelistImporter.importFile(file, source.id, def.id)
+                importGamelist(file, source.id, def.id)
             }
+        }
+    }
+
+    private suspend fun importGamelist(file: java.io.File, sourceId: Long, systemId: String) {
+        val key = "$SEEN_FAVORITES_KEY_PREFIX${sourceId}_$systemId"
+        val before = migrationPrefs.getStringSet(key, null).orEmpty().toSet()
+        val seenFavorites = before.toMutableSet()
+        gamelistImporter.importFile(file, sourceId, systemId, seenFavorites)
+        if (seenFavorites != before) {
+            migrationPrefs.edit().putStringSet(key, seenFavorites).apply()
         }
     }
 
@@ -221,6 +231,7 @@ class LibraryMigration @Inject constructor(
         const val TAG = "LibraryMigration"
         const val MIGRATION_PREFS = "library_migration_prefs"
         const val MIGRATION_VERSION_KEY = "migration_version"
+        const val SEEN_FAVORITES_KEY_PREFIX = "gamelist_seen_favorites_"
 
         /**
          * Bumped whenever a new migration step is added OR the
