@@ -39,6 +39,7 @@ import coil.compose.AsyncImage
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.audio.JarnAudio
 import jr.brian.jarnfe.canvas.findActivity
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
@@ -209,7 +210,13 @@ private fun RssArticleBody(
 private fun RssVideoPanel(data: JarnRssData, url: String, onExit: () -> Unit) {
     val context = LocalContext.current
     val video = remember(data, url) { data.createVideo(context, url) }
-    DisposableEffect(video) { onDispose { video.release() } }
+    DisposableEffect(video) {
+        JarnAudio.setVideoOpen(true)
+        onDispose {
+            video.release()
+            JarnAudio.setVideoOpen(false)
+        }
+    }
     var isPlaying by remember { mutableStateOf(true) }
     var failed by remember { mutableStateOf(false) }
     var positionMs by remember { mutableLongStateOf(0L) }

@@ -464,6 +464,7 @@ class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
         esdeViewModel.musicController.onActivityResumed()
         esdeViewModel.onVideoActivityFinished()
         esdeViewModel.handleLauncherResumed()
+        managers.feature.bgMusicManager.clearHold()
         managers.feature.bgMusicManager.resumePlayback()
     }
 

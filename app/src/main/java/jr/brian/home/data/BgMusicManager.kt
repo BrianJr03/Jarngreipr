@@ -57,6 +57,10 @@ class BgMusicManager @Inject constructor(
     val muted: Boolean get() = isMuted
     private var isMutePaused = false
 
+    // Only Jarn FE sets these. While held, nothing may start audio or take focus.
+    private var isHeld = false
+    private var restartAfterHold = false
+
     private fun effectiveVolume() = when {
         isDucked -> vol * DUCK_FACTOR
         else -> vol
@@ -199,7 +203,7 @@ class BgMusicManager @Inject constructor(
         } else {
             if (isMutePaused) {
                 isMutePaused = false
-                mediaPlayer?.runCatching { start() }
+                if (!isHeld) mediaPlayer?.runCatching { start() }
             }
             val ev = effectiveVolume()
             mediaPlayer?.setVolume(ev, ev)
@@ -220,6 +224,7 @@ class BgMusicManager @Inject constructor(
     fun stopPlayback() {
         isIntendedToPlay = false
         isMutePaused = false
+        restartAfterHold = false
         mediaPlayer?.releaseAndCloseSession()
         nextMediaPlayer?.releaseAndCloseSession()
         mediaPlayer = null
@@ -248,7 +253,7 @@ class BgMusicManager @Inject constructor(
             // Only resume if we were the ones who paused it for mute
             if (isMutePaused && isIntendedToPlay) {
                 isMutePaused = false
-                mediaPlayer?.runCatching { start() }
+                if (!isHeld) mediaPlayer?.runCatching { start() }
                 val ev = effectiveVolume()
                 mediaPlayer?.setVolume(ev, ev)
                 nextMediaPlayer?.setVolume(ev, ev)
@@ -290,13 +295,46 @@ class BgMusicManager @Inject constructor(
 
     fun resumePlayback() {
         // Don't resume if the player is paused because of mute
-        if (isMutePaused) return
+        if (isMutePaused || isHeld) return
 
         if (mediaPlayer != null) {
             mediaPlayer?.runCatching { start() }
         } else if (isIntendedToPlay) {
             resumeIfConfigured()
         }
+    }
+
+    /** Silences music and gives up audio focus until [releaseHold] or [clearHold]. */
+    fun holdPlayback() {
+        if (isHeld) return
+        isHeld = true
+        pausePlayback()
+        abandonAudioFocus()
+    }
+
+    /** Ends a hold and makes sure the configured music is actually playing. */
+    fun releaseHold() {
+        isHeld = false
+        if (isMuted || vol == 0f) return
+        when {
+            restartAfterHold -> startPlayback()
+            !isIntendedToPlay || mediaPlayer == null -> resumeIfConfigured()
+            !isPlayerActive() && requestAudioFocus() -> resumePlayback()
+        }
+    }
+
+    /** Ends a hold without starting anything new, for a host that resumes music itself. */
+    fun clearHold() {
+        isHeld = false
+        if (restartAfterHold) startPlayback()
+    }
+
+    private fun isPlayerActive(): Boolean =
+        mediaPlayer?.runCatching { isPlaying }?.getOrDefault(false) == true
+
+    private fun deferStartIfHeld(): Boolean {
+        if (isHeld) restartAfterHold = true
+        return isHeld
     }
 
     /** Called on app start to resume playback if a source is configured. */
@@ -340,6 +378,7 @@ class BgMusicManager @Inject constructor(
 
         val player = buildFolderPlayer(uri) ?: return
         player.setOnPreparedListener { mp ->
+            if (deferStartIfHeld()) return@setOnPreparedListener
             if (!requestAudioFocus()) return@setOnPreparedListener
             context.openAudioEffectSession(mp.audioSessionId)
             if (isMuted) {
@@ -437,6 +476,7 @@ class BgMusicManager @Inject constructor(
 
         val primary = buildSingleFilePlayer(uri) ?: return
         primary.setOnPreparedListener { mp ->
+            if (deferStartIfHeld()) return@setOnPreparedListener
             if (!requestAudioFocus()) return@setOnPreparedListener
             context.openAudioEffectSession(mp.audioSessionId)
 

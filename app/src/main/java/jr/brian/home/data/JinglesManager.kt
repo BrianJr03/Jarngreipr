@@ -274,6 +274,7 @@ class JinglesManager @Inject constructor(
     @OptIn(UnstableApi::class)
     suspend fun downloadRepo(
         repoSlug: String,
+        acceptIndex: (JingleIndex) -> Boolean = { true },
         onProgress: (Float) -> Unit = {}
     ): JinglesResult<Unit> = withContext(Dispatchers.IO) {
         val tag = "DownloadRepo"
@@ -285,6 +286,9 @@ class JinglesManager @Inject constructor(
 
             val (index, branch) = fetchResult
             Log.d(tag, "Fetched index. Branch=$branch, Entries=${index.entries.size}")
+            if (!acceptIndex(index)) {
+                return@withContext JinglesResult.Failure("Rejected index.json for $repoSlug")
+            }
 
             // Use app-specific external dir — no MANAGE_EXTERNAL_STORAGE needed
             val repoDir = getDownloadedDir(repoSlug)
