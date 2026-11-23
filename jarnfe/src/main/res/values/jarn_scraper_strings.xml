@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_scraper_title">Scraper setup</string>
+    <string name="jarnfe_scraper_row_hint">Connect an account, choose art types, and check status.</string>
+    <string name="jarnfe_scraper_source_screenscraper" translatable="false">ScreenScraper</string>
+    <string name="jarnfe_scraper_source_steamgriddb" translatable="false">SteamGridDB</string>
+    <string name="jarnfe_scraper_screenscraper_hint">Art for most retro systems. Needs a free account.</string>
+    <string name="jarnfe_scraper_steamgriddb_hint">Covers, logos, and hero art. Needs a free API key.</string>
+    <string name="jarnfe_scraper_unavailable">Not available in this build.</string>
+    <string name="jarnfe_scraper_no_account">No account added yet.</string>
+
+    <string name="jarnfe_scraper_step_source">Choose a source</string>
+    <string name="jarnfe_scraper_step_source_message">Add your account to fetch box art.</string>
+    <string name="jarnfe_scraper_step_account">Add your account</string>
+    <string name="jarnfe_scraper_step_account_message">Press A on a field to type with the controller.</string>
+    <string name="jarnfe_scraper_step_test">Test connection</string>
+    <string name="jarnfe_scraper_step_test_message">Make sure your account works before scraping.</string>
+    <string name="jarnfe_scraper_step_art">Choose art</string>
+    <string name="jarnfe_scraper_step_art_message">Only these types are downloaded.</string>
+    <string name="jarnfe_scraper_step_finish">All set</string>
+    <string name="jarnfe_scraper_step_finish_message">Scraping only runs when you ask. It adds art only for games missing it.</string>
+
+    <string name="jarnfe_scraper_field_user">ScreenScraper username</string>
+    <string name="jarnfe_scraper_field_password">ScreenScraper password</string>
+    <string name="jarnfe_scraper_field_api_key">SteamGridDB API key</string>
+    <string name="jarnfe_scraper_field_entered">Entered</string>
+    <string name="jarnfe_scraper_field_saved">Saved. Press to replace.</string>
+    <string name="jarnfe_scraper_field_empty">Not set</string>
+    <string name="jarnfe_scraper_account_help">Create a ScreenScraper account at screenscraper.fr. Find your SteamGridDB key at steamgriddb.com under Preferences, then API.</string>
+
+    <string name="jarnfe_scraper_test">Test connection</string>
+    <string name="jarnfe_scraper_skip_test">Skip test</string>
+    <string name="jarnfe_scraper_continue">Continue</string>
+    <string name="jarnfe_scraper_testing">Testing</string>
+    <string name="jarnfe_scraper_not_tested">Not tested</string>
+    <string name="jarnfe_scraper_result_line">%1$s: %2$s</string>
+    <string name="jarnfe_scraper_result_ok">Connected</string>
+    <string name="jarnfe_scraper_result_missing">Add your account first.</string>
+    <string name="jarnfe_scraper_result_bad_user">Check your username and password.</string>
+    <string name="jarnfe_scraper_result_bad_key">Check your API key.</string>
+    <string name="jarnfe_scraper_result_limited">Too many requests. Try again later.</string>
+    <string name="jarnfe_scraper_result_offline">Couldn\'t connect. Check your internet.</string>
+    <string name="jarnfe_scraper_result_service">The service isn\'t responding. Try again later.</string>
+
+    <string name="jarnfe_scraper_kind_covers">Covers</string>
+    <string name="jarnfe_scraper_kind_screenshots">Screenshots</string>
+    <string name="jarnfe_scraper_kind_marquees">Marquees</string>
+    <string name="jarnfe_scraper_kind_fanart">Fanart</string>
+    <string name="jarnfe_scraper_kind_titles">Title screens</string>
+    <string name="jarnfe_scraper_kind_mix">Mix images</string>
+    <string name="jarnfe_scraper_kind_videos">Videos</string>
+    <string name="jarnfe_scraper_kind_separator">, </string>
+    <string name="jarnfe_scraper_art_required">Pick at least one art type for each source.</string>
+
+    <string name="jarnfe_scraper_scrape_now">Scrape missing art</string>
+    <string name="jarnfe_scraper_scrape_again">Scrape again</string>
+    <string name="jarnfe_scraper_later">Later</string>
+    <string name="jarnfe_scraper_edit">Edit setup</string>
+    <string name="jarnfe_scraper_done">Done</string>
+    <string name="jarnfe_scraper_cancel">Cancel scrape</string>
+    <string name="jarnfe_scraper_progress">%1$d of %2$d games. Art added: %3$d.</string>
+    <string name="jarnfe_scraper_summary">Games checked: %1$d. Art added: %2$d. Problems: %3$d.</string>
+    <string name="jarnfe_scraper_nothing_missing">No missing art to fetch.</string>
+    <string name="jarnfe_scraper_stopped">Scrape stopped. Art already downloaded was kept.</string>
+
+    <string name="jarnfe_scraper_discard_title">Discard changes?</string>
+    <string name="jarnfe_scraper_discard_message">Your scraper changes haven\'t been saved.</string>
+    <string name="jarnfe_scraper_discard">Discard</string>
+    <string name="jarnfe_scraper_keep_editing">Keep editing</string>
+
+    <string name="jarnfe_keyboard_type">Type</string>
+    <string name="jarnfe_keyboard_delete">Delete</string>
+    <string name="jarnfe_keyboard_shift">Shift</string>
+    <string name="jarnfe_keyboard_symbols">Symbols</string>
+    <string name="jarnfe_keyboard_space">Space</string>
+    <string name="jarnfe_keyboard_done">Done</string>
+</resources>

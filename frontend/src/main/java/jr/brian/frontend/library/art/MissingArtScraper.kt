@@ -6,10 +6,12 @@ import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.media.MediaKind
 import jr.brian.frontend.scrape.LibraryScraper
-import jr.brian.frontend.scrape.ScrapeRequest
+import jr.brian.frontend.scrape.ScrapeChoices
+import jr.brian.frontend.scrape.ScrapeChoicesSource
 import jr.brian.frontend.scrape.ScrapeSummary
 import jr.brian.frontend.scrape.ScrapeWorker
 import jr.brian.frontend.scrape.ScraperMediaKind
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +22,8 @@ class MissingArtScheduler @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
     fun schedule(systemId: String?) = ScrapeWorker.enqueueMissingArt(context, systemId)
+
+    fun cancel() = ScrapeWorker.cancel(context)
 }
 
 /**
@@ -34,6 +38,7 @@ class MissingArtScraper @Inject constructor(
     private val roots: ArtRoots,
     private val scraper: LibraryScraper,
     private val visibilitySource: LibraryVisibilitySource,
+    private val choices: ScrapeChoicesSource = ScrapeChoicesSource { ScrapeChoices.All },
 ) {
     suspend fun run(systemId: String?): ScrapeSummary {
         val visibility = visibilitySource.visibility().first()
@@ -42,24 +47,36 @@ class MissingArtScraper @Inject constructor(
         } else {
             gameDao.observeBySystem(systemId).first()
         }.filterNot { visibility.hides(it) }
-        val missing = missingKinds(games)
-        if (missing.isEmpty()) return ScrapeSummary()
-        val summary = scraper.scrape(
-            games = games.filter { it.id in missing },
-            request = ScrapeRequest(
-                isolatedRoot = roots.jarnScrapedRoot,
-                kindsForGame = { missing[it.id].orEmpty() },
-            ),
-        )
-        indexes.invalidate()
-        return summary
+        val chosen = choices.current()
+        val missing = missingKinds(games, chosen.wantedKinds)
+        if (missing.isEmpty()) {
+            scraper.reportNothingMissing()
+            return ScrapeSummary()
+        }
+        return try {
+            scraper.scrape(
+                games = games.filter { it.id in missing },
+                request = chosen.toRequest(
+                    isolatedRoot = roots.jarnScrapedRoot,
+                    kindsForGame = { missing[it.id].orEmpty() },
+                ),
+            )
+        } catch (e: CancellationException) {
+            scraper.reportCancelled()
+            throw e
+        } finally {
+            indexes.invalidate()
+        }
     }
 
-    private suspend fun missingKinds(games: List<GameEntity>): Map<Long, Set<ScraperMediaKind>> {
+    private suspend fun missingKinds(
+        games: List<GameEntity>,
+        wanted: Set<ScraperMediaKind>,
+    ): Map<Long, Set<ScraperMediaKind>> {
         val out = HashMap<Long, Set<ScraperMediaKind>>()
         for (game in games) {
             val art = resolver.resolve(game)
-            val kinds = SCRAPABLE.filterKeys { art[it] == null }.values.toSet()
+            val kinds = SCRAPABLE.filterKeys { art[it] == null }.values.filter { it in wanted }.toSet()
             if (kinds.isNotEmpty()) out[game.id] = kinds
         }
         return out

@@ -92,6 +92,11 @@ class ScrapeWorker @AssistedInject constructor(
             )
         }
 
+        /** Stops the running scrape. Files already downloaded are kept. */
+        fun cancel(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_WORK_NAME)
+        }
+
         /** Enqueue the worker. Replaces any already-running scrape. */
         fun enqueueAll(context: Context) {
             val req = OneTimeWorkRequestBuilder<ScrapeWorker>().build()
