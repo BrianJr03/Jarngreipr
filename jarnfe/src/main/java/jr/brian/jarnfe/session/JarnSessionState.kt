@@ -40,8 +40,24 @@ data class JarnSessionState(
     val settingsSection: SettingsSection = SettingsSection.Library,
     val settingsReturnScreen: JarnScreen? = null,
     val tapHold: JarnTapHold? = null,
+    val deckWindowLost: Boolean = false,
 ) {
     val stageRoute: StageRoute get() = stageStack.last()
+
+    /**
+     * The display is still there but its window closed. Until it returns the session runs as
+     * single screen, so input, panels and hints never target a window that does not exist.
+     */
+    fun onDeckWindowLost(): JarnSessionState {
+        val hostless = withDeckHost(false)
+        if (!deckDisplayAvailable && !deckWindowLost) return hostless
+        return hostless.withDeckDisplay(false).copy(deckWindowLost = true)
+    }
+
+    fun onDeckWindowBack(): JarnSessionState =
+        if (deckWindowLost) copy(deckWindowLost = false).withDeckDisplay(true) else this
+
+    fun onDeckWindowAbandoned(): JarnSessionState = copy(deckWindowLost = false)
 
     val rolesSwapped: Boolean
         get() = swapRequested && deckDisplayAvailable && deckHostReady
@@ -187,6 +203,7 @@ data class JarnSessionState(
             osFocusedScreen = osFocusedScreen?.let(::roleOn).takeUnless { it == JarnScreen.Deck },
             awaitingDeckLaunch = false,
             tapHold = null,
+            deckWindowLost = false,
         )
     }
 

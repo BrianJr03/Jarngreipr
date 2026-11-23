@@ -39,6 +39,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
     /** The role this window shows when screens are not swapped. */
     protected abstract val screen: JarnScreen
 
+    /** Set before a finish Jarn chose, so it is never mistaken for Android closing the window. */
+    protected var closingDeliberately = false
+
     private var swap: JarnScreenSwap? = null
     private val buttonHaptic: () -> Unit = {
         if (jarnLookStoreOrNull()?.display?.buttonHaptics != false) {
@@ -56,16 +59,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
         connectJarnLibrary(this)
         swap = jarnScreenSwapOrNull()
         swap?.let { saved -> JarnSession.update { withSwapRequested(saved.isSwapped) } }
-        JarnInput.setGlobalBindings(
-            jarnGlobalBindings(
-                session = JarnSession,
-                onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
-                onSwap = swap?.let { it::requestSwap },
-                onOppositeTab = { delta ->
-                    stepOppositeTabs(delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
-                },
-            ),
-        )
+        installGlobalBindings(JarnSession.state.deckWindowLost)
         if (!canHostOnCurrentDisplay()) {
             finish()
             return
@@ -79,6 +73,8 @@ abstract class JarnScreenActivity : ComponentActivity() {
             val needsHandoff = JarnSession.state.needsFocusHandoff(role)
             val isActive = JarnSession.state.activeScreen == role
             val focusManager = LocalFocusManager.current
+            val deckMissing = JarnSession.state.deckWindowLost
+            LaunchedEffect(deckMissing) { installGlobalBindings(deckMissing) }
             LaunchedEffect(needsHandoff) { if (needsHandoff) bringToFront() }
             LaunchedEffect(isActive) { if (isActive) takeContentFocus(focusManager) }
             LaunchedEffect(swap) {
@@ -88,6 +84,20 @@ abstract class JarnScreenActivity : ComponentActivity() {
             JarnShellRoot(role)
         }
         enterImmersive()
+    }
+
+    private fun installGlobalBindings(deckMissing: Boolean) {
+        JarnInput.setGlobalBindings(
+            jarnGlobalBindings(
+                session = JarnSession,
+                onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
+                onSwap = swap?.let { it::requestSwap },
+                onOppositeTab = { delta ->
+                    stepOppositeTabs(delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
+                },
+                deckMissing = deckMissing,
+            ),
+        )
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -121,6 +131,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
             return true
         }
+        if (JarnDeckWatch.consumeSelect(event)) return true
         JarnInput.onHintPressed = buttonHaptic
         if (JarnInput.dispatch(event)) return true
         val target = activeWindowFor(event)
@@ -204,7 +215,11 @@ abstract class JarnScreenActivity : ComponentActivity() {
         private val liveWindows = LinkedHashSet<JarnScreenActivity>()
 
         fun finishAllWindows() {
-            liveWindows.toList().forEach { it.finish() }
+            JarnDeckWatch.onLeavingJarn()
+            liveWindows.toList().forEach {
+                it.closingDeliberately = true
+                it.finish()
+            }
         }
     }
 }

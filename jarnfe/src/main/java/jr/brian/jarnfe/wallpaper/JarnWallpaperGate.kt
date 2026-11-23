@@ -94,7 +94,7 @@ internal object JarnWallpaperGate {
     fun allowsAnimation(isMotionReduced: Boolean): Boolean =
         JarnWallpaperConditions(
             windows = windows,
-            deckDisplayAvailable = JarnSession.state.deckDisplayAvailable,
+            deckDisplayAvailable = JarnSession.state.run { deckDisplayAvailable || deckWindowLost },
             isScreenOn = isScreenOn,
             isBatterySaverOn = isBatterySaverOn,
             isMotionReduced = isMotionReduced,
