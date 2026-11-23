@@ -8,11 +8,10 @@ enum class LibrarySection { Systems, Favorites, Recent }
 
 enum class DeckTab { Now, Apps, Canvas }
 
-/** [Data] is the slot for backup, restore and updates, and stays hidden until those screens exist. */
+/** [Data] holds backup, restore and updates. */
 enum class SettingsSection { Library, Art, Look, Display, Data }
 
-val VisibleSettingsSections: List<SettingsSection> =
-    SettingsSection.entries.filter { it != SettingsSection.Data }
+val VisibleSettingsSections: List<SettingsSection> = SettingsSection.entries
 
 /**
  * Shared state of both screens. [osFocusedScreen] mirrors which activity Android

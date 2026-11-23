@@ -44,6 +44,8 @@ import jr.brian.frontend.library.setup.GameFolder
 import jr.brian.frontend.library.setup.GameFolderStatus
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.backup.JarnDataHost
+import jr.brian.jarnfe.backup.JarnDataSection
 import jr.brian.jarnfe.library.JarnFolderPicker
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.jarnLibraryDataOrNull
@@ -56,6 +58,8 @@ import jr.brian.jarnfe.shell.JarnNotices
 import jr.brian.jarnfe.systems.JarnSystems
 import jr.brian.jarnfe.systems.JarnSystemsSection
 import jr.brian.jarnfe.tools.JarnInputToolsPanel
+import jr.brian.jarnfe.utilities.JarnUtilitiesPanel
+import jr.brian.jarnfe.wallpaper.jarnDisabledRowBacking
 
 private val SideBySideMinWidth = 600.dp
 
@@ -91,11 +95,22 @@ internal fun JarnSettingsControls(section: SettingsSection, horizontalMargin: Dp
         JarnInputToolsPanel(onClose = { toolsOpen = false })
         return
     }
+    var utilitiesOpen by rememberSaveable { mutableStateOf(false) }
+    if (utilitiesOpen) {
+        JarnUtilitiesPanel(onClose = { utilitiesOpen = false })
+        return
+    }
     Column(Modifier.fillMaxSize()) {
         SettingsSectionTabs(section, horizontalMargin)
         key(section) {
             SettingsSectionPage(horizontalMargin, Modifier.weight(1f).fillMaxWidth()) {
-                SettingsSectionContent(section, data, setup, onOpenTools = { toolsOpen = true })
+                SettingsSectionContent(
+                    section = section,
+                    data = data,
+                    setup = setup,
+                    onOpenTools = { toolsOpen = true },
+                    onOpenUtilities = { utilitiesOpen = true },
+                )
             }
         }
     }
@@ -105,6 +120,7 @@ internal fun JarnSettingsControls(section: SettingsSection, horizontalMargin: Dp
 @Composable
 internal fun JarnSettingsScraperHost() {
     val context = LocalContext.current
+    JarnDataHost()
     val data = remember(context) { context.jarnLibraryDataOrNull() } ?: return
     JarnScraperSetupHost(data)
 }
@@ -125,7 +141,7 @@ private fun SettingsSection.labelRes(): Int = when (this) {
     SettingsSection.Art -> R.string.jarnfe_art_title
     SettingsSection.Look -> R.string.jarnfe_look_title
     SettingsSection.Display -> R.string.jarnfe_settings_section_display
-    SettingsSection.Data -> R.string.jarnfe_settings_section_library
+    SettingsSection.Data -> R.string.jarnfe_settings_section_data
 }
 
 @Composable
@@ -171,6 +187,7 @@ private fun SettingsSectionContent(
     data: JarnLibraryData,
     setup: LibrarySetup,
     onOpenTools: () -> Unit,
+    onOpenUtilities: () -> Unit,
 ) {
     when (section) {
         SettingsSection.Library -> LibrarySettings(setup)
@@ -182,9 +199,20 @@ private fun SettingsSectionContent(
         SettingsSection.Display -> {
             JarnDisplaySection()
             InputToolsRow(onOpenTools)
+            UtilitiesRow(onOpenUtilities)
         }
-        SettingsSection.Data -> Unit
+        SettingsSection.Data -> JarnDataSection()
     }
+}
+
+@Composable
+private fun UtilitiesRow(onOpen: () -> Unit) {
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_utilities_title),
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_utilities_settings_hint),
+    )
 }
 
 @Composable
@@ -249,7 +277,7 @@ private fun GameFolderRow(folder: GameFolder) {
     JarnNavigateRow(
         label = folder.name,
         onClick = { JarnFolderPicker.open?.invoke(folder.reconnectHint()) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().jarnDisabledRowBacking(needsReconnect),
         supporting = gameFolderStatusText(folder),
         enabled = needsReconnect,
         focusableWhenDisabled = true,
