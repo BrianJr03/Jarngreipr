@@ -6,6 +6,7 @@ import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.SystemDao
 import jr.brian.frontend.library.systems.SystemCatalog
@@ -61,6 +62,7 @@ class AppJarnSystemManager @Inject constructor(
     private val gameDao: GameDao,
     private val catalog: SystemCatalog,
     private val gameOptions: Provider<JarnGameOptions>,
+    private val artDetector: Provider<ArtSourceDetector>,
 ) : JarnSystemManager {
 
     /** Folder choices live outside the observable prefs state. */
@@ -182,6 +184,7 @@ class AppJarnSystemManager @Inject constructor(
                     displayPath = readablePath(treeUri.toString()) ?: treeUri.toString(),
                 ),
             )
+            artDetector.get().check(mediaChanged = true)
             true
         }
 

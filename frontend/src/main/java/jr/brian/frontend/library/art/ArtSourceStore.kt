@@ -23,9 +23,37 @@ class ArtSourceStore @Inject constructor(
 
     val source: ArtSource get() = _state.value
 
+    private val _detectedState = MutableStateFlow(
+        prefs.getString(KEY_DETECTED_SOURCE, null)?.let(ArtSource::fromNameOrDefault),
+    )
+
+    /** Device-local and left out of backups, because a restored source is a choice. */
+    val detectedState: StateFlow<ArtSource?> = _detectedState.asStateFlow()
+
+    /** Null until a source is saved, so an untouched default never passes as a choice. */
+    val savedSource: ArtSource? get() = source.takeIf { prefs.contains(KEY_SOURCE) }
+
+    @Synchronized
     fun setSource(source: ArtSource) {
         _state.value = source
-        prefs.edit { putString(KEY_SOURCE, source.name) }
+        _detectedState.value = null
+        prefs.edit {
+            putString(KEY_SOURCE, source.name)
+            remove(KEY_DETECTED_SOURCE)
+        }
+    }
+
+    /** Saves [source] only if nothing is saved yet, so a choice made meanwhile wins. */
+    @Synchronized
+    fun saveDetected(source: ArtSource): Boolean {
+        if (prefs.contains(KEY_SOURCE)) return false
+        _state.value = source
+        _detectedState.value = source
+        prefs.edit {
+            putString(KEY_SOURCE, source.name)
+            putString(KEY_DETECTED_SOURCE, source.name)
+        }
+        return true
     }
 
     private fun load(): ArtSource =
@@ -46,6 +74,7 @@ class ArtSourceStore @Inject constructor(
     private companion object {
         const val PREFS_NAME = "jarnfe_art_prefs"
         const val KEY_SOURCE = "art_source"
+        const val KEY_DETECTED_SOURCE = "detected_art_source"
         const val KEY_SYSTEM_SOURCE = "system_art_source"
     }
 }

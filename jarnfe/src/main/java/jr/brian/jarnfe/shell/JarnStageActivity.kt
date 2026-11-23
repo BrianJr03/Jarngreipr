@@ -18,6 +18,7 @@ import jr.brian.jarnfe.library.JarnFolderController
 import jr.brian.jarnfe.library.JarnFolderPicker
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
+import jr.brian.jarnfe.library.jarnArtDetectorOrNull
 import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.session.JarnSession
@@ -71,6 +72,7 @@ class JarnStageActivity : JarnScreenActivity() {
     override fun onResume() {
         super.onResume()
         jarnLibrarySetupOrNull()?.recheck()
+        jarnArtDetectorOrNull()?.check()
         syncDeck()
     }
 

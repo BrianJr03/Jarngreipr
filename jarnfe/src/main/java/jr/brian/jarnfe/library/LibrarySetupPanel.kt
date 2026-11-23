@@ -117,6 +117,12 @@ internal class JarnFolderController(
 
     private fun onPicked(uri: Uri?) {
         if (uri == null) return
-        activity.lifecycleScope.launch { showFolderResult(setup.saveFolder(uri)) }
+        activity.lifecycleScope.launch {
+            val result = setup.saveFolder(uri)
+            showFolderResult(result)
+            if (result is FolderSaveResult.Found) {
+                activity.jarnArtDetectorOrNull()?.check(mediaChanged = true)
+            }
+        }
     }
 }
