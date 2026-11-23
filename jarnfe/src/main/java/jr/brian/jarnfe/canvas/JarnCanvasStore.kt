@@ -4,6 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 private const val NO_PAGE = -1
 
@@ -13,6 +16,11 @@ internal class JarnCanvasStore {
         private set
 
     var selectedPage by mutableIntStateOf(NO_PAGE)
+
+    /** Lives with the process, so a removal that has started always finishes after Canvas closes. */
+    val undo by lazy {
+        CanvasUndoController(CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
+    }
 
     /** Runs until cancelled. Starts on the Home page, and keeps the selection on a real page. */
     suspend fun observe(data: JarnCanvasData) {

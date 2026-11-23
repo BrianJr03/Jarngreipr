@@ -36,14 +36,18 @@ internal fun rememberCanvasTouch(
     openMenu: (CanvasItem) -> Unit,
     commit: (CanvasLayout, Map<String, GridRect>) -> Unit,
     onGrabbed: (String) -> Unit,
+    onDropped: (CanvasGrab, Map<String, GridRect>) -> Unit,
+    removeTile: (CanvasGrab) -> Unit,
 ): CanvasTouch {
     val density = LocalDensity.current.density
     val view = LocalView.current
     val context = LocalContext.current
     val touch = remember(editor, density) {
-        CanvasTouch(CanvasTouchDriver(editor), CanvasBoardSpace(density))
+        val space = CanvasBoardSpace(density)
+        CanvasTouch(CanvasTouchDriver(editor, density = density, toWindow = space::toWindow), space)
     }
     val layout = page?.takeIf { it.kind == JarnCanvasPageKind.Canvas }?.layout
+    val hapticsOn = { context.jarnLookStoreOrNull()?.display?.buttonHaptics != false }
     SideEffect {
         touch.driver.actions = CanvasTouchActions(
             enabled = enabled && layout != null,
@@ -52,12 +56,11 @@ internal fun rememberCanvasTouch(
             openMenu = openMenu,
             commit = commit,
             onGrabbed = onGrabbed,
-            haptic = {
-                if (context.jarnLookStoreOrNull()?.display?.buttonHaptics != false) {
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                }
-            },
+            haptic = { if (hapticsOn()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) },
             showBlocked = { JarnNotices.show(R.string.jarnfe_canvas_notice_touch_moving_tile) },
+            tick = { if (hapticsOn()) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
+            onDropped = onDropped,
+            removeTile = removeTile,
         )
     }
     return touch

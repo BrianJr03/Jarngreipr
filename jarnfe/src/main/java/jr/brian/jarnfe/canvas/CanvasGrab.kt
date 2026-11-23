@@ -7,9 +7,10 @@ import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.grid.toSnapshot
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.GridRect
 
-private const val MAX_PUSH_AXIS_SPAN = 12
+internal const val MAX_PUSH_AXIS_SPAN = 12
 
 internal enum class CanvasResizeAxis { Width, Height }
 
@@ -22,6 +23,7 @@ internal data class CanvasGrabHome(
     val reserved: List<GridRect>,
     val rect: GridRect,
     val visiblePushCells: Int,
+    val orientation: CanvasScrollOrientation = CanvasScrollOrientation.HORIZONTAL,
 )
 
 internal data class CanvasPageWrite(val pageIndex: Int, val placements: Map<String, GridRect>)
@@ -62,6 +64,7 @@ internal data class CanvasGrab(
     val isFolder: Boolean = false,
     val leaveEditOnUndo: Boolean = false,
     val leaveEditOnEnd: Boolean = false,
+    val resizeCorner: CanvasResizeCorner? = null,
 ) {
     val rect: GridRect get() = preview.placements[itemId] ?: cursor
 
@@ -94,6 +97,9 @@ internal data class CanvasGrab(
             ),
         ),
     )
+
+    /** Puts every neighbor back while the tile hovers over the remove bar. */
+    fun previewCleared(): CanvasGrab = copy(preview = baseline, cursor = baseline.placements[itemId] ?: cursor)
 
     fun axisToggled(): CanvasGrab = copy(
         axis = if (axis == CanvasResizeAxis.Width) CanvasResizeAxis.Height else CanvasResizeAxis.Width,
@@ -228,7 +234,7 @@ internal fun beginCanvasGrab(
         minColSpan = minColSpan.coerceAtLeast(1),
         minRowSpan = minRowSpan.coerceAtLeast(1),
         cursor = rect,
-        home = CanvasGrabHome(pageIndex, baseline, reserved, rect, visiblePushCells),
+        home = CanvasGrabHome(pageIndex, baseline, reserved, rect, visiblePushCells, layout.activeOrientation),
         driver = driver,
         visiblePushCells = visiblePushCells,
         isFolder = layout.items.any { it.id == itemId && it is CanvasItem.FolderItem },

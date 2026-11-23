@@ -42,6 +42,7 @@ internal class CanvasTileCommands(
     val refreshWidgets: () -> Unit,
     val grabNewTile: (String) -> Unit,
     val previewArt: (CanvasArtPreview?) -> Unit,
+    val removeTile: (CanvasItem) -> Unit,
 )
 
 internal fun canvasItemResolved(item: CanvasItem, page: JarnCanvasPage): Boolean = when (item) {
@@ -246,7 +247,7 @@ internal fun CanvasTileOverlays(
                     item = item,
                     onConfirm = {
                         close()
-                        scope.launch { data.removeTile(page.index, item.id) }
+                        commands.removeTile(item)
                     },
                     onDismiss = { onOverlay(CanvasOverlay.TileMenu(item.id)) },
                 )

@@ -22,6 +22,11 @@ import androidx.compose.ui.util.fastForEach
 internal class CanvasBoardSpace(private val density: Float) {
     var coordinates: LayoutCoordinates? = null
 
+    fun toWindow(boardPoint: Offset): Offset {
+        val board = coordinates?.takeIf { it.isAttached } ?: return Offset.Unspecified
+        return board.localToWindow(boardPoint)
+    }
+
     /** [Offset.Unspecified] until the board is attached, so a move never boxes a nullable. */
     fun fromScreen(x: Float, y: Float): Offset {
         val board = coordinates ?: return Offset.Unspecified
@@ -51,8 +56,12 @@ internal fun Modifier.canvasBoardTouch(driver: CanvasTouchDriver, space: CanvasB
     .pointerInput(driver, space) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            val id = driver.tileAt(down.position) ?: return@awaitEachGesture
-            val start = driver.startFor(id)
+            val corner = driver.pressCorner(down.position)
+            val id = (if (corner != null) driver.selectedId else driver.tileAt(down.position)) ?: run {
+                driver.clearSelection()
+                return@awaitEachGesture
+            }
+            val start = if (corner != null) CanvasTouchStart.Resize else driver.startFor(id)
             if (start == CanvasTouchStart.BrowseWidget) {
                 watchWidgetFingers(driver, space, down.id)
             } else {

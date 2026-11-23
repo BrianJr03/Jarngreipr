@@ -48,6 +48,13 @@
     <string name="jarnfe_canvas_hint_drop">Drop</string>
     <string name="jarnfe_canvas_hint_cancel">Cancel</string>
     <string name="jarnfe_canvas_hint_undo_add">Undo add</string>
+    <string name="jarnfe_canvas_undo">Undo</string>
+    <string name="jarnfe_canvas_undo_moved">Tile moved</string>
+    <string name="jarnfe_canvas_undo_resized">Tile resized</string>
+    <string name="jarnfe_canvas_undo_removed">Tile removed</string>
+    <string name="jarnfe_canvas_dock_drop">Drop here to remove</string>
+    <string name="jarnfe_canvas_dock_release">Let go to remove</string>
+    <string name="jarnfe_canvas_size_readout">%1$d x %2$d</string>
     <string name="jarnfe_canvas_hint_change_photo">Change photo</string>
     <string name="jarnfe_canvas_hint_go_to_now">Go to Now</string>
     <string name="jarnfe_canvas_cell_locked">Menu stays here</string>

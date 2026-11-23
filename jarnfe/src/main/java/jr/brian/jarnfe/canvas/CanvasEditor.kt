@@ -70,7 +70,13 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
     }
 
     /** Starts a finger grab from browse or edit. Browse comes back when the grab ends. */
-    fun beginTouch(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int): Boolean {
+    fun beginTouch(
+        layout: CanvasLayout,
+        itemId: String,
+        minColSpan: Int,
+        minRowSpan: Int,
+        resizeCorner: CanvasResizeCorner? = null,
+    ): Boolean {
         if (grab != null || settled != null) return false
         val started = beginCanvasGrab(
             layout = layout,
@@ -81,9 +87,17 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
             pageIndex = shownPage ?: 0,
             driver = CanvasGrabDriver.Touch,
         ) ?: return false
-        grab = started.copy(leaveEditOnEnd = !editing)
+        grab = started.copy(leaveEditOnEnd = !editing, resizeCorner = resizeCorner)
         editing = true
         return true
+    }
+
+    /** Ends the grab with nothing saved and hands it over, so the caller can remove its tile. */
+    fun takeForRemoval(): CanvasGrab? {
+        val taken = grab ?: return null
+        endGrab(taken)
+        returnHome(taken)
+        return taken
     }
 
     /** Grabs a tile that was just added, so B can take it back off the page. */
