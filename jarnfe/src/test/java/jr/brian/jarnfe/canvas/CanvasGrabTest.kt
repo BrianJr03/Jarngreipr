@@ -163,6 +163,8 @@ class CanvasGrabTest {
         editor.beginAdded(twoTiles, "a", 1, 1)
         editor.drop { }
         editor.undoAdd { removed += it }
+        editor.settled = null
+        editor.enter()
         editor.begin(twoTiles, "a", 1, 1)
         assertFalse(editor.grab!!.isNewTile)
         assertTrue(removed.isEmpty())

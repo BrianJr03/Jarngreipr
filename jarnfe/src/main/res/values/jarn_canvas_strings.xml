@@ -7,7 +7,11 @@
     <string name="jarnfe_canvas_other_page_message">You can still move it, delete it, or set it as Home from Pages.</string>
     <string name="jarnfe_canvas_page_of">Page %1$d of %2$d</string>
     <string name="jarnfe_canvas_home">Home</string>
-    <string name="jarnfe_canvas_editing">Editing layout</string>
+    <string name="jarnfe_canvas_moving">Moving tile</string>
+    <string name="jarnfe_canvas_arrange_title">Arrange</string>
+    <string name="jarnfe_canvas_arrange_choose">Pick a tile with A, or drag it. B when done.</string>
+    <string name="jarnfe_canvas_arrange_holding">D-pad moves it, A drops it, B cancels.</string>
+    <string name="jarnfe_canvas_arrange_holding_touch">Let go to place it.</string>
     <string name="jarnfe_canvas_menu_tile">Canvas options</string>
 
     <string name="jarnfe_canvas_tile_widget">Widget</string>
@@ -29,7 +33,7 @@
     <string name="jarnfe_canvas_last_played_empty">Games you play will show up here.</string>
 
     <string name="jarnfe_canvas_options_title">Canvas options</string>
-    <string name="jarnfe_canvas_option_edit">Edit layout</string>
+    <string name="jarnfe_canvas_option_edit">Arrange tiles</string>
     <string name="jarnfe_canvas_option_edit_detail">Move and resize tiles</string>
     <string name="jarnfe_canvas_option_pages">Pages</string>
     <string name="jarnfe_canvas_option_pages_detail">Go to, add, move, delete, or set Home</string>
@@ -51,10 +55,12 @@
     <string name="jarnfe_canvas_kind_rss">RSS</string>
 
     <string name="jarnfe_canvas_hint_grab">Grab</string>
+    <string name="jarnfe_canvas_hint_choose">Choose tile</string>
     <string name="jarnfe_canvas_hint_drop">Drop</string>
     <string name="jarnfe_canvas_hint_cancel">Cancel</string>
     <string name="jarnfe_canvas_hint_undo_add">Undo add</string>
     <string name="jarnfe_canvas_undo">Undo</string>
+    <string name="jarnfe_canvas_undo_added">Tile added</string>
     <string name="jarnfe_canvas_undo_moved">Tile moved</string>
     <string name="jarnfe_canvas_undo_resized">Tile resized</string>
     <string name="jarnfe_canvas_undo_removed">Tile removed</string>
@@ -62,6 +68,9 @@
     <string name="jarnfe_canvas_dock_drop">Drop here to remove</string>
     <string name="jarnfe_canvas_dock_release">Let go to remove</string>
     <string name="jarnfe_canvas_size_readout">%1$d x %2$d</string>
+    <string name="jarnfe_canvas_refused_edge">Can\'t go further</string>
+    <string name="jarnfe_canvas_refused_smallest">Can\'t get smaller</string>
+    <string name="jarnfe_canvas_refused_largest">Can\'t get bigger</string>
     <string name="jarnfe_canvas_hint_change_photo">Change photo</string>
     <string name="jarnfe_canvas_hint_go_to_now">Go to Now</string>
     <string name="jarnfe_canvas_cell_locked">Menu stays here</string>
@@ -81,6 +90,23 @@
 
     <string name="jarnfe_canvas_option_add">Add a tile</string>
     <string name="jarnfe_canvas_option_add_detail">Apps, games, widgets, photos, and more</string>
+    <string name="jarnfe_canvas_option_tidy">Tidy</string>
+    <string name="jarnfe_canvas_option_tidy_detail">Close the gaps between tiles</string>
+    <string name="jarnfe_canvas_option_rows">Rows</string>
+    <string name="jarnfe_canvas_option_columns">Columns</string>
+    <string name="jarnfe_canvas_option_menu_tile">Show menu tile</string>
+    <string name="jarnfe_canvas_option_menu_tile_detail">Start always opens Canvas options</string>
+    <string name="jarnfe_canvas_option_wallpaper_detail">Choose what shows behind Jarn</string>
+    <string name="jarnfe_canvas_hint_adjust">Adjust</string>
+    <string name="jarnfe_canvas_tidy_title">Tidy this page?</string>
+    <string name="jarnfe_canvas_tidy_message">Tiles slide together to close the gaps. You can undo this right after.</string>
+    <string name="jarnfe_canvas_undo_tidied">Page tidied</string>
+    <string name="jarnfe_canvas_notice_already_tidy">This page is already tidy.</string>
+    <string name="jarnfe_canvas_notice_tiles_past_edge">Some tiles need that space. Move them first.</string>
+    <string name="jarnfe_canvas_notice_menu_cell_taken">A tile is in the menu tile\'s spot. Move it first.</string>
+    <string name="jarnfe_canvas_notice_setup_unavailable">This page can\'t change that setting.</string>
+    <string name="jarnfe_canvas_empty_title">Make this space yours</string>
+    <string name="jarnfe_canvas_empty_message">Add apps, games, widgets, and photos, then arrange them your way.</string>
     <string name="jarnfe_canvas_add_title">Add to Canvas</string>
     <string name="jarnfe_canvas_add_here_title">Add to this spot</string>
     <string name="jarnfe_canvas_add_app">App</string>

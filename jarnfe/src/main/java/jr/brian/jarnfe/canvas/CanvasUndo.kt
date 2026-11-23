@@ -20,20 +20,24 @@ internal const val CANVAS_UNDO_WINDOW_MS = 6_000L
 /** Long enough for the saved layout to arrive, so a finished removal never flashes back. */
 internal const val CANVAS_REMOVAL_HIDE_MS = 1_000L
 
-internal enum class CanvasUndoKind { Moved, Resized, Removed, MovedToFolder }
+internal enum class CanvasUndoKind { Added, Moved, Resized, Removed, MovedToFolder, Tidied }
 
 internal sealed interface CanvasUndoEntry {
     val pageIndex: Int
     val kind: CanvasUndoKind
 }
 
-/** Whole arrangements, so an undo also returns every tile the solver pushed. */
+/**
+ * Whole arrangements, so an undo also returns every tile the solver pushed. [addedTileId] is a tile
+ * this drop placed for the first time, which an undo takes off the board.
+ */
 internal data class CanvasLayoutChange(
     override val pageIndex: Int,
     val orientation: CanvasScrollOrientation,
     val before: Map<String, GridRect>,
     val after: Map<String, GridRect>,
     override val kind: CanvasUndoKind,
+    val addedTileId: String? = null,
 ) : CanvasUndoEntry
 
 /** The tile is still saved while this exists, so losing the process simply brings it back. */
@@ -61,9 +65,12 @@ internal data class CanvasPendingFolderAdd(
 }
 
 /** Already saved on both pages. Undo restores them, and letting the window end changes nothing. */
-internal data class CanvasTileMoveEntry(val moved: JarnCanvasTileMoved) : CanvasUndoEntry {
+internal data class CanvasTileMoveEntry(
+    val moved: JarnCanvasTileMoved,
+    val isNewTile: Boolean = false,
+) : CanvasUndoEntry {
     override val pageIndex: Int get() = moved.move.toPage
-    override val kind: CanvasUndoKind get() = CanvasUndoKind.Moved
+    override val kind: CanvasUndoKind get() = if (isNewTile) CanvasUndoKind.Added else CanvasUndoKind.Moved
 }
 
 internal interface CanvasUndoWrites {
@@ -161,11 +168,16 @@ internal class CanvasUndoController(
      * Runs in [scope], so leaving Canvas can't stop it between the two pages. [onFinished] gets the
      * saved move, or null when it failed, and an undo window opens for a move that succeeded.
      */
-    fun moveTile(target: CanvasUndoWrites, move: JarnCanvasTileMove, onFinished: (JarnCanvasTileMoved?) -> Unit) {
+    fun moveTile(
+        target: CanvasUndoWrites,
+        move: JarnCanvasTileMove,
+        isNewTile: Boolean = false,
+        onFinished: (JarnCanvasTileMoved?) -> Unit,
+    ) {
         settle()
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val moved = runCatching { target.moveTile(move) }.getOrNull()
-            if (moved != null) open(target, CanvasTileMoveEntry(moved))
+            if (moved != null) open(target, CanvasTileMoveEntry(moved, isNewTile))
             onFinished(moved)
         }
     }
@@ -178,7 +190,8 @@ internal class CanvasUndoController(
     /**
      * Returns the arrangement to show, or null when nothing needs placing. A layout that changed
      * some other way is left alone, because restoring over it would lose that newer edit.
-     * [onMoveUndone] reports whether a between-page move was restored.
+     * [onMoveUndone] reports whether a between-page move was restored. Undoing a newly placed tile
+     * opens the delayed removal, so the toast can still bring it back.
      */
     fun undo(
         current: Map<String, GridRect>,
@@ -190,15 +203,21 @@ internal class CanvasUndoController(
         if (undone is CanvasTileMoveEntry && target != null) {
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 val restored = runCatching { target.undoTileMove(undone.moved) }.getOrDefault(false)
-                onMoveUndone(undone.moved, restored)
+                if (restored && undone.isNewTile) {
+                    removeTile(target, undone.moved.move.fromPage, undone.moved.move.itemId)
+                } else {
+                    onMoveUndone(undone.moved, restored)
+                }
             }
             return null
         }
         if (undone !is CanvasLayoutChange || target == null) return null
         val untouched = canvasPlacementsAgree(undone.after, current) || canvasPlacementsAgree(undone.before, current)
-        if (!untouched) return null
-        target.commit(undone.pageIndex, undone.orientation, undone.before)
-        return undone.before
+        if (untouched && undone.before != undone.after) {
+            target.commit(undone.pageIndex, undone.orientation, undone.before)
+        }
+        undone.addedTileId?.let { removeTile(target, undone.pageIndex, it) }
+        return undone.before.takeIf { untouched }
     }
 
     /** Ends the window now. Safe to call from any exit, any number of times. */
