@@ -61,6 +61,7 @@ class ExperienceSwitchSurvivalTest {
             jarnLookStore = JarnLookStore(context),
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = pins,
+            playStatsBackup = io.mockk.mockk(relaxed = true),
         )
     }
 

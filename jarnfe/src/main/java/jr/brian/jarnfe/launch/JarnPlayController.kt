@@ -89,10 +89,12 @@ internal class JarnPlayController(
         when (result) {
             is JarnLaunchResult.NeedsFileAccess -> requestFolder(ref, result.pickerHint)
             is JarnLaunchResult.NeedsEmulatorChoice -> actions?.requestChoice(game, result.kind)
-            is JarnLaunchResult.Launched ->
+            is JarnLaunchResult.Launched -> {
+                activity.recordGameLaunched(ref)
                 if (result.companionChoices.isNotEmpty()) {
                     actions?.offerCompanions(game, result.companionChoices)
                 }
+            }
             else -> Unit
         }
     }

@@ -56,6 +56,7 @@ class JarnLookConfigImportTest {
             jarnLookStore = store,
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(ApplicationProvider.getApplicationContext()),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
+            playStatsBackup = io.mockk.mockk(relaxed = true),
         )
     }
 
@@ -273,7 +274,7 @@ class JarnLookConfigImportTest {
 
     @Test
     fun `schema version covers app names`() {
-        assertEquals(47, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(48, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

@@ -54,6 +54,7 @@ class ImportExportManager @Inject constructor(
     private val jarnLookStore: jr.brian.frontend.look.JarnLookStore,
     private val artChoiceStore: jr.brian.frontend.library.art.GameArtChoiceStore,
     private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
+    private val playStatsBackup: jr.brian.frontend.library.play.PlayStatsBackup,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -69,6 +70,7 @@ class ImportExportManager @Inject constructor(
             page = buildPageConfig(),
             feature = buildFeatureConfig().copy(
                 libraryFolders = libraryFolderBackup.export()?.map { it.toConfig() },
+                jarnPlayStats = playStatsBackup.export()?.map { it.toConfig() },
             ),
             system = buildSystemConfig()
         )
@@ -367,6 +369,9 @@ class ImportExportManager @Inject constructor(
         applySystemConfig(config.system)
         config.feature.libraryFolders?.let { folders ->
             libraryFolderBackup.restore(folders.map { it.toBackedUpFolder() })
+        }
+        config.feature.jarnPlayStats?.let { stats ->
+            playStatsBackup.restore(stats.map { it.toBackedUpPlayStat() })
         }
     }
 

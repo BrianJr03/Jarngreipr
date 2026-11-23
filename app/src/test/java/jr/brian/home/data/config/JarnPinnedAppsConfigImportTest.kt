@@ -56,6 +56,7 @@ class JarnPinnedAppsConfigImportTest {
             jarnLookStore = JarnLookStore(context),
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = store,
+            playStatsBackup = io.mockk.mockk(relaxed = true),
         )
     }
 

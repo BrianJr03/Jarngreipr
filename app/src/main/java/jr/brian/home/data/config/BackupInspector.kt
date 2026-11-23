@@ -226,6 +226,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         dock = DockConfig(),
         recentlyPlayed = emptyList(),
         libraryFolders = null,
+        jarnPlayStats = null,
         jarnLook = null,
         jarnReducedMotion = null,
         jarnArtChoices = null,

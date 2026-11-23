@@ -33,6 +33,7 @@ import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.onScreenTapped
 import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
+import jr.brian.jarnfe.launch.jarnPlaySessionsOrNull
 import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 
 abstract class JarnScreenActivity : ComponentActivity() {
@@ -113,10 +114,16 @@ abstract class JarnScreenActivity : ComponentActivity() {
         JarnAudio.onTopResumed(this, isTopResumedActivity)
     }
 
+    override fun onResume() {
+        super.onResume()
+        jarnPlaySessionsOrNull()?.onWindowResumed(screen.name)
+    }
+
     /** A covered window cannot take keys, so game launch and return follow Android as usual. */
     override fun onStop() {
         super.onStop()
         JarnSession.update { onWindowCovered() }
+        if (!isChangingConfigurations) jarnPlaySessionsOrNull()?.onWindowStopped(screen.name)
     }
 
     override fun onDestroy() {

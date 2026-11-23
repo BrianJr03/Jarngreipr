@@ -10,6 +10,7 @@ import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
+import jr.brian.frontend.library.play.BackedUpPlayStat
 import jr.brian.frontend.library.setup.BackedUpFolder
 import kotlinx.serialization.Serializable
 
@@ -199,7 +200,9 @@ data class JarngreiprConfig(
         //      after a tap. Null or unknown values leave the current choice alone.
         // v47: added JarnDisplayConfig.appNamesVisible and undoCountdownVisible, the Jarn FE
         //      show app names and undo timer choices. Null on older blobs, and import keeps them.
-        const val CONFIG_VERSION = 47
+        // v48: added FeatureConfig.jarnPlayStats, play counts and time per game. Null on
+        //      older blobs, and import keeps current totals. Import only ever raises them.
+        const val CONFIG_VERSION = 48
     }
 }
 
@@ -378,8 +381,24 @@ data class FeatureConfig(
     /** v44: Jarn FE display choices. Null on pre-v44 exports, and import keeps the current ones. */
     val jarnDisplay: JarnDisplayConfig? = null,
     /** v45: Jarn FE live wallpaper id or "off". Null on pre-v45 exports, and import keeps the current one. */
-    val jarnLiveWallpaper: String? = null
+    val jarnLiveWallpaper: String? = null,
+    /** v48: play totals per game. Null on pre-v48 exports, and import keeps current totals. */
+    val jarnPlayStats: List<JarnPlayStatConfig>? = null
 )
+
+@Serializable
+data class JarnPlayStatConfig(
+    val systemId: String = "",
+    val relativePath: String = "",
+    val playCount: Int = 0,
+    val playTimeMinutes: Int = 0,
+)
+
+internal fun BackedUpPlayStat.toConfig() =
+    JarnPlayStatConfig(systemId, relativePath, playCount, playTimeMinutes)
+
+internal fun JarnPlayStatConfig.toBackedUpPlayStat() =
+    BackedUpPlayStat(systemId, relativePath, playCount, playTimeMinutes)
 
 /** Each field is nullable so a partial backup only changes what it carries. */
 @Serializable

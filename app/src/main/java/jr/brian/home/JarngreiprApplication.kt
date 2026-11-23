@@ -45,6 +45,7 @@ import jr.brian.jarnfe.launch.JarnGameLauncher
 import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
+import jr.brian.jarnfe.launch.JarnPlaySessionsProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
@@ -63,6 +64,7 @@ import jr.brian.jarnfe.utilities.JarnUtilities
 import jr.brian.jarnfe.utilities.JarnUtilitiesProvider
 import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
+import jr.brian.frontend.library.play.PlaySessionRecorder
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.look.JarnLookStore
 import javax.inject.Inject
@@ -75,6 +77,7 @@ class JarngreiprApplication :
     Configuration.Provider,
     JarnGameLauncherProvider,
     JarnGameOptionsProvider,
+    JarnPlaySessionsProvider,
     JarnLibraryDataProvider,
     JarnCanvasDataProvider,
     JarnLookStoreProvider,
@@ -119,6 +122,13 @@ class JarngreiprApplication :
 
     override val jarnGameLauncher: JarnGameLauncher
         get() = jarnGameLauncherProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's play tracking. */
+    @Inject
+    lateinit var jarnPlaySessionsProvider: Provider<PlaySessionRecorder>
+
+    override val jarnPlaySessions: PlaySessionRecorder
+        get() = jarnPlaySessionsProvider.get()
 
     @Inject
     lateinit var jarnGameOptionsProvider: Provider<JarnGameOptions>
