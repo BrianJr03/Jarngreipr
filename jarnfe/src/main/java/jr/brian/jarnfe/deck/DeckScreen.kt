@@ -1,14 +1,17 @@
 package jr.brian.jarnfe.deck
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
@@ -31,6 +34,9 @@ import jr.brian.jarnfe.settings.JarnSettingsScraperHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.deckBindings
 import jr.brian.jarnfe.splash.JarnDeckSplash
+import jr.brian.jarnfe.splash.jarnSplashFade
+import jr.brian.jarnfe.wallpaper.JarnWallpaperBackdrop
+import jr.brian.jarnfe.wallpaper.LocalJarnDisabledBacking
 
 @StringRes
 private fun DeckTab.labelRes(): Int = when (this) {
@@ -42,10 +48,16 @@ private fun DeckTab.labelRes(): Int = when (this) {
 @Composable
 internal fun DeckScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
-        Box(Modifier.fillMaxSize()) {
-            JarnScreenFrame(
-                header = { if (deckShowsTabs(state)) DeckTabStrip(state.deckTab) },
-            ) { DeckBody(state) }
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            Box(Modifier.jarnSplashFade()) {
+                JarnWallpaperBackdrop(showWallpaper = true)
+            }
+            CompositionLocalProvider(LocalJarnDisabledBacking provides JarnTheme.colors.bg) {
+                JarnScreenFrame(
+                    header = { if (deckShowsTabs(state)) DeckTabStrip(state.deckTab) },
+                    background = Color.Transparent,
+                ) { DeckBody(state) }
+            }
             if (deckShowsSettings(state)) JarnSettingsScraperHost()
             JarnDeckSplash()
         }
