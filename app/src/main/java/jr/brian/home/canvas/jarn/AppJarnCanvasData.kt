@@ -42,8 +42,12 @@ import jr.brian.jarnfe.canvas.JarnCanvasMusic
 import jr.brian.jarnfe.canvas.JarnCanvasPage
 import jr.brian.jarnfe.canvas.JarnCanvasPageKind
 import jr.brian.jarnfe.canvas.JarnCanvasRom
+import jr.brian.jarnfe.canvas.JarnCanvasSetupChange
+import jr.brian.jarnfe.canvas.JarnCanvasSetupRefusal
+import jr.brian.jarnfe.canvas.JarnCanvasSetupResult
 import jr.brian.jarnfe.canvas.JarnCanvasSnapshot
 import jr.brian.jarnfe.canvas.JarnCanvasTiles
+import jr.brian.jarnfe.canvas.canvasLayoutAfterSetup
 import jr.brian.jarnfe.canvas.jarnPageOrderAfterMove
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -169,6 +173,18 @@ class AppJarnCanvasData @Inject constructor(
         if (pageTypes.pageTypes.value.getOrNull(pageIndex) != PageType.UNIFIED_CANVAS) return
         val current = layouts.getLayout(pageIndex)
         layouts.replaceLayout(pageIndex, mergeJarnPlacements(current, orientation, placements))
+    }
+
+    override suspend fun applyPageSetup(
+        pageIndex: Int,
+        change: JarnCanvasSetupChange,
+    ): JarnCanvasSetupResult = editPages {
+        if (pageTypes.pageTypes.value.getOrNull(pageIndex) != PageType.UNIFIED_CANVAS) {
+            return@editPages JarnCanvasSetupResult.Refused(JarnCanvasSetupRefusal.NotCanvas)
+        }
+        val result = canvasLayoutAfterSetup(layouts.getLayout(pageIndex), change)
+        if (result is JarnCanvasSetupResult.Applied) layouts.replaceLayout(pageIndex, result.layout)
+        result
     }
 
     override fun widgetMinSpans(widgetId: Int, cellSizePx: Float): Pair<Int, Int> {

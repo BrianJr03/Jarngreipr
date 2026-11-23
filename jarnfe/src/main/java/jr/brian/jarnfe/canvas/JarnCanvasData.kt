@@ -80,6 +80,9 @@ interface JarnCanvasData : JarnCanvasTiles, JarnCanvasFolders {
         placements: Map<String, GridRect>,
     )
 
+    /** Saves a row, column, or menu tile change to Classic's layout, unless it would hide a tile. */
+    suspend fun applyPageSetup(pageIndex: Int, change: JarnCanvasSetupChange): JarnCanvasSetupResult
+
     /** The smallest (columns, rows) a widget can shrink to at this cell size. */
     fun widgetMinSpans(widgetId: Int, cellSizePx: Float): Pair<Int, Int>
 
