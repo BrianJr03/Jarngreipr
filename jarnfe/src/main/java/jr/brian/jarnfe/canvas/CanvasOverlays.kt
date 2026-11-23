@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.canvas
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +25,7 @@ internal sealed interface CanvasOverlay {
     data class TileMenu(val itemId: String) : CanvasOverlay
     data class ConfirmRemove(val itemId: String) : CanvasOverlay
     data class Items(val target: CanvasListTarget) : CanvasOverlay
+    data class Folder(val itemId: String) : CanvasOverlay
 }
 
 /** What a tile menu needs from the page on screen. */
@@ -94,11 +96,22 @@ internal fun CanvasTileOverlays(
             onPicked = { addTile(JarnCanvasNewTile.App(it.packageName)) },
             onClose = close,
         )
-        CanvasOverlay.PickFolderApps -> CanvasFolderPickerSheet(
+        CanvasOverlay.PickFolderApps -> CanvasFolderCreateFlow(
             data = data,
-            onCreate = { addTile(JarnCanvasNewTile.Folder(folderName, it)) },
+            defaultName = folderName,
+            onCreate = { name, packages -> addTile(JarnCanvasNewTile.Folder(name, packages)) },
             onClose = close,
         )
+        is CanvasOverlay.Folder -> {
+            val item = page?.layout?.items
+                ?.firstOrNull { it.id == overlay.itemId } as? CanvasItem.FolderItem
+            val folder = item?.let { page.folders[it.folderId] }
+            if (folder == null) {
+                LaunchedEffect(overlay) { close() }
+            } else {
+                CanvasFolderRoute(data, page.index, folder, close)
+            }
+        }
         CanvasOverlay.PickRom -> CanvasRomPickerSheet(
             data = data,
             onPicked = { addTile(JarnCanvasNewTile.Rom(it.key)) },

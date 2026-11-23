@@ -37,6 +37,46 @@ class JarnSessionStateTest {
     }
 
     @Test
+    fun `settings opens on the deck and back returns to the stage`() {
+        val hosted = dual.withDeckHost(true)
+        val open = hosted.openSettings()
+        assertEquals(JarnScreen.Deck, open.activeScreen)
+        val closed = open.back()
+        assertEquals(StageRoute.Library, closed.stageRoute)
+        assertEquals(JarnScreen.Stage, closed.activeScreen)
+    }
+
+    @Test
+    fun `settings stays on stage without a deck window`() {
+        assertEquals(JarnScreen.Stage, dual.openSettings().activeScreen)
+        assertEquals(JarnScreen.Stage, JarnSessionState().openSettings().activeScreen)
+    }
+
+    @Test
+    fun `settings controls follow the deck window`() {
+        val open = dual.withDeckHost(true).openSettings()
+        assertEquals(JarnScreen.Stage, open.withDeckHost(false).activeScreen)
+        assertEquals(JarnScreen.Stage, open.withDeckDisplay(false).activeScreen)
+        assertEquals(JarnScreen.Deck, dual.openSettings().withDeckHost(true).activeScreen)
+    }
+
+    @Test
+    fun `returning from systems gives control back to the settings deck`() {
+        val systems = dual.withDeckHost(true).openSettings().openSystems()
+        assertEquals(JarnScreen.Stage, systems.activeScreen)
+        val back = systems.back()
+        assertEquals(StageRoute.Settings, back.stageRoute)
+        assertEquals(JarnScreen.Deck, back.activeScreen)
+    }
+
+    @Test
+    fun `settings sections stop at the ends and skip the hidden slot`() {
+        assertEquals(SettingsSection.Library, dual.stepSettingsSection(-1).settingsSection)
+        val last = VisibleSettingsSections.fold(dual) { state, _ -> state.stepSettingsSection(1) }
+        assertEquals(SettingsSection.Display, last.settingsSection)
+    }
+
+    @Test
     fun `switching toggles screens with two displays and the panel with one`() {
         assertEquals(JarnScreen.Deck, dual.switchActiveScreen().activeScreen)
         val single = JarnSessionState().switchActiveScreen()

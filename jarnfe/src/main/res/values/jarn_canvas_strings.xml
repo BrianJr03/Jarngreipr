@@ -78,8 +78,6 @@
     <string name="jarnfe_canvas_pick_loading">Loading</string>
     <string name="jarnfe_canvas_pick_empty">Nothing to choose yet.</string>
     <string name="jarnfe_canvas_folder_default_name">New folder</string>
-    <string name="jarnfe_canvas_folder_create">Create folder (%1$d)</string>
-    <string name="jarnfe_canvas_app_selected">Selected</string>
 
     <string name="jarnfe_canvas_action_open">Open</string>
     <string name="jarnfe_canvas_action_use_widget">Use widget</string>

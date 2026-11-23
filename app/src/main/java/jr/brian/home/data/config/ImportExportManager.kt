@@ -324,6 +324,7 @@ class ImportExportManager @Inject constructor(
             jarnReducedMotion = jarnLookStore.reducedMotion,
             jarnArtChoices = artChoiceStore.choices.toConfig(),
             jarnPinnedApps = appPinStore.pinned,
+            jarnDisplay = jarnLookStore.display.toConfig(),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -742,6 +743,7 @@ class ImportExportManager @Inject constructor(
         config.jarnReducedMotion?.let(jarnLookStore::setReducedMotion)
         config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
         config.jarnPinnedApps?.let(appPinStore::restore)
+        config.jarnDisplay?.let { jarnLookStore.updateDisplay(it::applyTo) }
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

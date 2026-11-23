@@ -2,6 +2,10 @@ package jr.brian.jarnfe.scraper
 
 import jr.brian.frontend.scrape.ScraperConnectionResult
 import jr.brian.frontend.scrape.ScraperMediaKind
+import jr.brian.jarnfe.keyboard.JarnKeyboardKey
+import jr.brian.jarnfe.keyboard.JarnKeyboardPage
+import jr.brian.jarnfe.keyboard.JarnKeyboardState
+import jr.brian.jarnfe.keyboard.jarnKeyboardRows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

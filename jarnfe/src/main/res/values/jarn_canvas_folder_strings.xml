@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="jarnfe_folder_app_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="jarnfe_folder_rename">Rename</string>
+    <string name="jarnfe_folder_background">Background</string>
+    <string name="jarnfe_folder_edit_apps">Edit apps</string>
+    <string name="jarnfe_folder_delete">Delete</string>
+    <string name="jarnfe_folder_name_label">Folder name</string>
+    <string name="jarnfe_folder_edit_title">Apps in this folder</string>
+    <string name="jarnfe_folder_show_all">Show all</string>
+    <string name="jarnfe_folder_hide_all">Hide all</string>
+    <string name="jarnfe_folder_next">Next (%1$d)</string>
+    <string name="jarnfe_folder_save">Save (%1$d)</string>
+    <string name="jarnfe_folder_delete_title">Delete this folder?</string>
+    <string name="jarnfe_folder_delete_message">The folder and its tile are removed. The apps inside stay installed.</string>
+    <string name="jarnfe_folder_empty_message">A folder with no apps is deleted, along with its tile. The apps stay installed.</string>
+    <string name="jarnfe_folder_last_app_message">This is the last app, so the folder and its tile are removed. The app stays installed.</string>
+    <string name="jarnfe_folder_background_title">Folder background</string>
+    <string name="jarnfe_folder_background_image">Choose image</string>
+    <string name="jarnfe_folder_background_clear">Clear background</string>
+    <string name="jarnfe_folder_background_color">Color %1$d</string>
+    <string name="jarnfe_folder_background_color_selected">Color %1$d, selected</string>
+    <string name="jarnfe_folder_open_other">Open on other display</string>
+    <string name="jarnfe_folder_launch_on">Launch on</string>
+    <string name="jarnfe_folder_display_top">Top display</string>
+    <string name="jarnfe_folder_display_bottom">Bottom display</string>
+    <string name="jarnfe_folder_ask_display">Ask which display on launch</string>
+    <string name="jarnfe_folder_choose_icon">Choose custom icon</string>
+    <string name="jarnfe_folder_remove_icon">Remove custom icon</string>
+    <string name="jarnfe_folder_rename_app">Rename app</string>
+    <string name="jarnfe_folder_reset_name">Use original name</string>
+    <string name="jarnfe_folder_app_name_label">App name</string>
+    <string name="jarnfe_folder_remove_app">Remove from folder</string>
+    <string name="jarnfe_folder_which_display">Launch on which display?</string>
+</resources>

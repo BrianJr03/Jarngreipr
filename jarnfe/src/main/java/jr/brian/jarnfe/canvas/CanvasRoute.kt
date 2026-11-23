@@ -82,6 +82,7 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
     }
     val handlers = CanvasTileHandlers(
         onOpenList = { overlay = CanvasOverlay.Items(it) },
+        openFolder = { overlay = CanvasOverlay.Folder(it) },
         launchApp = launchApp,
         launchRom = launchRom,
         choosePhoto = { item -> page?.let { choosePhoto(it.index, item) } },
@@ -154,10 +155,6 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
         (overlay as? CanvasOverlay.Items)?.let { items ->
             CanvasListSheet(
                 target = items.target,
-                onLaunchApp = { app ->
-                    overlay = null
-                    launchApp(app)
-                },
                 onLaunchRom = { rom ->
                     overlay = null
                     launchRom(rom)
@@ -170,6 +167,7 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
 
 private class CanvasTileHandlers(
     val onOpenList: (CanvasListTarget) -> Unit,
+    val openFolder: (String) -> Unit,
     val launchApp: (JarnCanvasApp) -> Unit,
     val launchRom: (JarnCanvasRom) -> Unit,
     val choosePhoto: (CanvasItem.PhotoContainer) -> Unit,
@@ -369,7 +367,7 @@ private fun activateTile(
     when (item) {
         is CanvasItem.AppItem -> page.apps[item.packageName]?.let(handlers.launchApp) ?: showMissing()
         is CanvasItem.FolderItem ->
-            page.folders[item.folderId]?.let { handlers.onOpenList(CanvasListTarget.Folder(it)) } ?: showMissing()
+            if (item.folderId in page.folders) handlers.openFolder(item.id) else showMissing()
         is CanvasItem.RomItem -> page.roms[item.romKey]?.let(handlers.launchRom) ?: showMissing()
         is CanvasItem.LastPlayedItem ->
             handlers.onOpenList(CanvasListTarget.LastPlayed(snapshot.recent.take(item.resolvedCount)))

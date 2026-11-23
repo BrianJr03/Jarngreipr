@@ -15,6 +15,7 @@ import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.CustomAppNameManager
+import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.IconPackManager
@@ -37,6 +38,7 @@ import jr.brian.jarnfe.canvas.JARN_CANVAS_MAX_PAGES
 import jr.brian.jarnfe.canvas.JarnCanvasApp
 import jr.brian.jarnfe.canvas.JarnCanvasData
 import jr.brian.jarnfe.canvas.JarnCanvasFolder
+import jr.brian.jarnfe.canvas.JarnCanvasFolders
 import jr.brian.jarnfe.canvas.JarnCanvasMusic
 import jr.brian.jarnfe.canvas.JarnCanvasPage
 import jr.brian.jarnfe.canvas.JarnCanvasPageKind
@@ -56,6 +58,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Provider
@@ -109,6 +112,7 @@ private data class CanvasSources(
     val layouts: Map<Int, CanvasLayout>,
     val names: Map<String, String>,
     val recent: List<RecentlyPlayedEntry>,
+    val customIcons: Map<String, String> = emptyMap(),
 )
 
 private data class PageRefs(val folders: List<Folder>, val roms: List<PinnedRomInfo>)
@@ -132,8 +136,10 @@ class AppJarnCanvasData @Inject constructor(
     private val widgetPreferences: WidgetPreferences,
     private val widgetPageApps: WidgetPageAppManager,
     private val nowPlaying: Provider<NowPlayingManager>,
+    private val customIcons: CustomIconManager,
     private val tiles: AppJarnCanvasTiles,
-) : JarnCanvasData, JarnCanvasTiles by tiles {
+    private val folderActions: AppJarnCanvasFolders,
+) : JarnCanvasData, JarnCanvasTiles by tiles, JarnCanvasFolders by folderActions {
 
     private val pageEdits get() = tiles.edits
     private val icons = ConcurrentHashMap<String, Drawable>()
@@ -146,6 +152,8 @@ class AppJarnCanvasData @Inject constructor(
         recentlyPlayed.entries,
     ) { types, home, saved, names, recent ->
         CanvasSources(types, home, saved, names, recent)
+    }.combine(customIcons.customIconsMap) { sources, icons ->
+        sources.copy(customIcons = icons)
     }.flatMapLatest { sources ->
         combine(pageRefs(sources), music(sources)) { refs, music ->
             buildSnapshot(sources, refs, music)
@@ -250,7 +258,7 @@ class AppJarnCanvasData @Inject constructor(
             if (type != PageType.UNIFIED_CANVAS || pageRefs == null) {
                 JarnCanvasPage(index, type.toJarnKind(), layout)
             } else {
-                resolvePage(index, layout, pageRefs, sources.names)
+                resolvePage(index, layout, pageRefs, sources)
             }
         }
         return JarnCanvasSnapshot(
@@ -265,13 +273,13 @@ class AppJarnCanvasData @Inject constructor(
         index: Int,
         layout: CanvasLayout,
         refs: PageRefs,
-        names: Map<String, String>,
+        sources: CanvasSources,
     ): JarnCanvasPage {
         val folderIds = layout.items.filterIsInstance<CanvasItem.FolderItem>().map { it.folderId }.toSet()
         val placedFolders = refs.folders.filter { it.id in folderIds }
         val packages = layout.items.filterIsInstance<CanvasItem.AppItem>().map { it.packageName } +
             placedFolders.flatMap { it.appPackageNames }
-        val apps = packages.distinct().mapNotNull { resolveApp(it, names) }.associateBy { it.packageName }
+        val apps = packages.distinct().mapNotNull { resolveApp(it, sources) }.associateBy { it.packageName }
         return JarnCanvasPage(
             index = index,
             kind = JarnCanvasPageKind.Canvas,
@@ -282,13 +290,15 @@ class AppJarnCanvasData @Inject constructor(
                     id = folder.id,
                     name = folder.name,
                     apps = folder.appPackageNames.mapNotNull(apps::get),
+                    backgroundColorArgb = folder.backgroundColorArgb,
+                    backgroundImagePath = folder.backgroundImagePath,
                 )
             },
             roms = refs.roms.associate { it.key to it.toJarnRom() },
         )
     }
 
-    private suspend fun resolveApp(packageName: String, names: Map<String, String>): JarnCanvasApp? {
+    private suspend fun resolveApp(packageName: String, sources: CanvasSources): JarnCanvasApp? {
         val manager = context.packageManager
         val info = try {
             manager.getApplicationInfo(packageName, 0)
@@ -297,10 +307,13 @@ class AppJarnCanvasData @Inject constructor(
         }
         val icon = icons[packageName] ?: loadIcon(packageName, info.loadIcon(manager))
             .also { icons[packageName] = it }
+        val customIcon = sources.customIcons[packageName]?.let(::File)?.takeIf { it.exists() }
         return JarnCanvasApp(
             packageName = packageName,
-            label = names[packageName] ?: info.loadLabel(manager).toString(),
+            label = sources.names[packageName] ?: info.loadLabel(manager).toString(),
             icon = icon,
+            iconPath = customIcon?.absolutePath,
+            iconVersion = customIcon?.lastModified() ?: 0L,
         )
     }
 

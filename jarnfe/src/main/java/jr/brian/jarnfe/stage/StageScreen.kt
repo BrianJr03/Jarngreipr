@@ -44,7 +44,6 @@ import jr.brian.jarnfe.library.LibraryGameListTitle
 import jr.brian.jarnfe.library.LibraryHome
 import jr.brian.jarnfe.library.LibraryOrphanGuard
 import jr.brian.jarnfe.library.LibrarySetupPanel
-import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
 import jr.brian.jarnfe.search.JarnSearchResultsPanel
@@ -53,7 +52,8 @@ import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.session.StageRoute
-import jr.brian.jarnfe.settings.JarnSettingsRoute
+import jr.brian.jarnfe.settings.JarnSettingsPreview
+import jr.brian.jarnfe.settings.JarnSettingsSingleScreen
 import jr.brian.jarnfe.shell.JarnNoticeHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.JarnStatusReadout
@@ -85,7 +85,7 @@ internal fun StageScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { stageBindings(state, JarnSession, JarnLibrary) }) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             Box(Modifier.jarnSplashFade()) {
-                JarnWallpaperBackdrop(showWallpaper = state.stageRoute != StageRoute.Settings)
+                JarnWallpaperBackdrop(showWallpaper = true)
             }
             JarnScreenFrame(
                 header = { StageHeader(state) },
@@ -157,7 +157,7 @@ private fun StageRouteContent(state: JarnSessionState) {
     when (state.stageRoute) {
         StageRoute.Library -> StageLibrary(state)
         StageRoute.GameList -> LibraryGameList(JarnLibrary)
-        StageRoute.Settings -> StageSettings()
+        StageRoute.Settings -> StageSettings(state)
         StageRoute.Search -> JarnSearchResultsPanel(state)
         StageRoute.Systems -> StageSystems()
     }
@@ -182,17 +182,11 @@ private fun StageLibrary(state: JarnSessionState) {
 }
 
 @Composable
-private fun StageSettings() {
-    val context = LocalContext.current
-    val data = remember(context) { context.jarnLibraryDataOrNull() }
-    val setup = remember(context) { context.jarnLibrarySetupOrNull() }
-    if (data != null && setup != null) {
-        JarnSettingsRoute(data, setup)
+private fun StageSettings(state: JarnSessionState) {
+    if (state.settingsOnDeck) {
+        JarnSettingsPreview()
     } else {
-        StageSubRoutePlaceholder(
-            R.string.jarnfe_empty_settings_title,
-            R.string.jarnfe_empty_settings_message,
-        )
+        JarnSettingsSingleScreen(state.settingsSection)
     }
 }
 
@@ -221,7 +215,7 @@ private fun LibraryRouteLinks(showDeckPanelLink: Boolean) {
     LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) firstLink.requestFocus() }
     Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
         StageLinkButton(R.string.jarnfe_route_settings, Modifier.focusRequester(firstLink)) {
-            JarnSession.update { openRoute(StageRoute.Settings) }
+            JarnSession.update { openSettings() }
         }
         if (showDeckPanelLink) {
             StageLinkButton(R.string.jarnfe_open_deck) { JarnSession.update { withDeckPanel(true) } }

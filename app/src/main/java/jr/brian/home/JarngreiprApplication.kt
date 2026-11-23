@@ -18,6 +18,7 @@ import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
 import jr.brian.home.jarn.AppJarnAppsData
 import jr.brian.home.jarn.AppJarnDockData
+import jr.brian.home.jarn.AppJarnInputTools
 import jr.brian.home.jarn.AppJarnScreenSwap
 import jr.brian.home.jarn.AppJarnWallpaperSource
 import jr.brian.jarnfe.apps.JarnAppsData
@@ -40,6 +41,8 @@ import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystemManagerProvider
 import jr.brian.jarnfe.scraper.JarnScraperSetup
 import jr.brian.jarnfe.scraper.JarnScraperSetupProvider
+import jr.brian.jarnfe.tools.JarnInputTools
+import jr.brian.jarnfe.tools.JarnInputToolsProvider
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.look.JarnLookStore
@@ -61,7 +64,8 @@ class JarngreiprApplication :
     JarnDockDataProvider,
     JarnAppsDataProvider,
     JarnSystemManagerProvider,
-    JarnScraperSetupProvider {
+    JarnScraperSetupProvider,
+    JarnInputToolsProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -139,6 +143,13 @@ class JarngreiprApplication :
 
     override val jarnScraperSetup: JarnScraperSetup
         get() = jarnScraperSetupProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's input tools. */
+    @Inject
+    lateinit var jarnInputToolsProvider: Provider<AppJarnInputTools>
+
+    override val jarnInputTools: JarnInputTools
+        get() = jarnInputToolsProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a

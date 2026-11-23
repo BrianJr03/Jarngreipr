@@ -74,7 +74,7 @@ class LibraryFolderConfigImportTest {
 
     @Test
     fun `schema version includes library folders`() {
-        assertEquals(43, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(44, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

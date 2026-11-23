@@ -338,7 +338,7 @@ class AppJarnCanvasTiles @Inject constructor(
     private fun newHost() = AppWidgetHost(context, WidgetViewModel.APPWIDGET_HOST_ID)
 
     /** A tile edit touches several stores, so leaving the screen must never stop one halfway. */
-    private suspend fun <T> edit(block: suspend () -> T): T =
+    internal suspend fun <T> edit(block: suspend () -> T): T =
         withContext(NonCancellable) { edits.withLock { block() } }
 
     private fun RssItem.toJarnRssItem() = JarnCanvasRssItem(

@@ -1,4 +1,4 @@
-package jr.brian.jarnfe.scraper
+package jr.brian.jarnfe.keyboard
 
 internal enum class JarnKeyboardPage { Lower, Upper, Symbols }
 
@@ -8,6 +8,7 @@ internal sealed interface JarnKeyboardKey {
     data object Symbols : JarnKeyboardKey
     data object Space : JarnKeyboardKey
     data object Delete : JarnKeyboardKey
+    data object Clear : JarnKeyboardKey
     data object Done : JarnKeyboardKey
 }
 
@@ -28,31 +29,46 @@ internal fun jarnKeyboardRows(page: JarnKeyboardPage): List<List<JarnKeyboardKey
         JarnKeyboardPage.Upper -> LowerRows.map { it.uppercase() }
         JarnKeyboardPage.Symbols -> SymbolRows
     }
-    return rows.map { row -> row.map(JarnKeyboardKey::Letter) }
+    return rows.map(::jarnKeyRow)
+}
+
+internal fun jarnKeyRow(row: String): List<JarnKeyboardKey.Letter> = row.map(JarnKeyboardKey::Letter)
+
+/** A key's place in the grid, kept so focus survives a page with shorter rows. */
+internal data class JarnKeyPosition(val row: Int, val column: Int) {
+    fun clampedTo(rows: List<List<*>>): JarnKeyPosition {
+        if (rows.isEmpty()) return this
+        val clampedRow = row.coerceIn(rows.indices)
+        return JarnKeyPosition(clampedRow, column.coerceIn(0, (rows[clampedRow].size - 1).coerceAtLeast(0)))
+    }
 }
 
 /** Text entry state for a controller. Its text form is redacted because it may hold a secret. */
 internal class JarnKeyboardState(
-    val text: String = "",
+    text: String = "",
     val page: JarnKeyboardPage = JarnKeyboardPage.Lower,
+    private val maxLength: Int = MAX_LENGTH,
 ) {
+    val text: String = text.take(maxLength)
+
     fun press(key: JarnKeyboardKey): JarnKeyboardState = when (key) {
         is JarnKeyboardKey.Letter -> append(key.char)
         JarnKeyboardKey.Space -> append(' ')
-        JarnKeyboardKey.Delete -> JarnKeyboardState(text.dropLast(1), page)
-        JarnKeyboardKey.Shift -> JarnKeyboardState(
-            text,
-            if (page == JarnKeyboardPage.Lower) JarnKeyboardPage.Upper else JarnKeyboardPage.Lower,
+        JarnKeyboardKey.Delete -> copy(text = text.dropLast(1))
+        JarnKeyboardKey.Clear -> copy(text = "")
+        JarnKeyboardKey.Shift -> copy(
+            page = if (page == JarnKeyboardPage.Lower) JarnKeyboardPage.Upper else JarnKeyboardPage.Lower,
         )
-        JarnKeyboardKey.Symbols -> JarnKeyboardState(
-            text,
-            if (page == JarnKeyboardPage.Symbols) JarnKeyboardPage.Lower else JarnKeyboardPage.Symbols,
+        JarnKeyboardKey.Symbols -> copy(
+            page = if (page == JarnKeyboardPage.Symbols) JarnKeyboardPage.Lower else JarnKeyboardPage.Symbols,
         )
         JarnKeyboardKey.Done -> this
     }
 
-    private fun append(char: Char) =
-        if (text.length >= MAX_LENGTH) this else JarnKeyboardState(text + char, page)
+    private fun append(char: Char) = if (text.length >= maxLength) this else copy(text = text + char)
+
+    private fun copy(text: String = this.text, page: JarnKeyboardPage = this.page) =
+        JarnKeyboardState(text, page, maxLength)
 
     override fun toString(): String = "JarnKeyboardState(redacted)"
 

@@ -8,6 +8,12 @@ enum class LibrarySection { Systems, Favorites, Recent }
 
 enum class DeckTab { Now, Apps, Canvas }
 
+/** [Data] is the slot for backup, restore and updates, and stays hidden until those screens exist. */
+enum class SettingsSection { Library, Art, Look, Display, Data }
+
+val VisibleSettingsSections: List<SettingsSection> =
+    SettingsSection.entries.filter { it != SettingsSection.Data }
+
 /**
  * Shared state of both screens. [osFocusedScreen] mirrors which activity Android
  * currently treats as top resumed, which can differ from [activeScreen] for the
@@ -30,6 +36,8 @@ data class JarnSessionState(
     val awaitingDeckLaunch: Boolean = false,
     val swapRequested: Boolean = false,
     val deckHostReady: Boolean = false,
+    val settingsSection: SettingsSection = SettingsSection.Library,
+    val settingsReturnScreen: JarnScreen? = null,
 ) {
     val stageRoute: StageRoute get() = stageStack.last()
 
@@ -43,7 +51,18 @@ data class JarnSessionState(
         keepingOsFocus(copy(swapRequested = requested))
 
     fun withDeckHost(ready: Boolean): JarnSessionState =
-        keepingOsFocus(copy(deckHostReady = ready))
+        keepingOsFocus(copy(deckHostReady = ready)).movingSettingsControls(this)
+
+    /** Settings controls need a real Deck window. Without one they stay on Stage. */
+    val settingsOnDeck: Boolean
+        get() = deckDisplayAvailable && deckHostReady
+
+    private fun movingSettingsControls(previous: JarnSessionState): JarnSessionState =
+        if (stageRoute == StageRoute.Settings && settingsOnDeck != previous.settingsOnDeck) {
+            copy(activeScreen = if (settingsOnDeck) JarnScreen.Deck else JarnScreen.Stage)
+        } else {
+            this
+        }
 
     /** The focused window did not change, but the role it shows may have. */
     private fun keepingOsFocus(next: JarnSessionState): JarnSessionState =
@@ -76,13 +95,29 @@ data class JarnSessionState(
         return copy(stageStack = stack)
     }
 
+    /** Controls open on the Deck, so the Stage is left free to show the live preview. */
+    fun openSettings(): JarnSessionState {
+        val returnScreen = if (stageRoute == StageRoute.Settings) settingsReturnScreen else activeScreen
+        return openRoute(StageRoute.Settings).copy(
+            activeScreen = if (settingsOnDeck) JarnScreen.Deck else JarnScreen.Stage,
+            deckPanelOpen = false,
+            settingsReturnScreen = returnScreen,
+        )
+    }
+
+    fun stepSettingsSection(delta: Int): JarnSessionState =
+        copy(settingsSection = VisibleSettingsSections.stepped(settingsSection, delta))
+
     /** System management always runs on Stage, so a Deck entry hands control back to it. */
     fun openSystems(): JarnSessionState =
         openRoute(StageRoute.Systems).copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
 
     fun back(): JarnSessionState = when {
         deckPanelOpen -> copy(deckPanelOpen = false, activeScreen = JarnScreen.Stage)
-        stageRoute == StageRoute.Settings -> popRoute()
+        stageRoute == StageRoute.Settings -> popRoute().copy(
+            activeScreen = settingsReturnScreen?.takeIf { deckDisplayAvailable } ?: activeScreen,
+            settingsReturnScreen = null,
+        )
         activeScreen == JarnScreen.Deck -> copy(activeScreen = JarnScreen.Stage)
         stageStack.size > 1 -> popRoute()
         else -> this
@@ -134,7 +169,7 @@ data class JarnSessionState(
                     deckPanelOpen = false,
                     activeScreen = if (deckPanelOpen) JarnScreen.Stage else activeScreen,
                 ),
-            )
+            ).movingSettingsControls(this)
         }
         val keepPanel = !deckDisplayAvailable && deckPanelOpen
         return copy(
@@ -174,7 +209,15 @@ data class JarnSessionState(
         deckTab.name,
     ).joinToString(FIELD_SEPARATOR)
 
-    private fun popRoute() = copy(stageStack = stageStack.dropLast(1))
+    /** Coming back to Settings from a route above it returns control to its Deck controls. */
+    private fun popRoute(): JarnSessionState {
+        val popped = copy(stageStack = stageStack.dropLast(1))
+        return if (popped.stageRoute == StageRoute.Settings && popped.settingsOnDeck) {
+            popped.copy(activeScreen = JarnScreen.Deck)
+        } else {
+            popped
+        }
+    }
 
     companion object {
         private const val FIELD_SEPARATOR = "|"

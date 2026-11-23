@@ -33,7 +33,6 @@ import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.LocalJarnColors
@@ -41,26 +40,14 @@ import jr.brian.core.ui.theme.LocalJarnMotion
 import jr.brian.core.ui.theme.LocalJarnScreenActivation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.max
-import kotlin.math.min
 
 internal val JarnFocusRingWidth = 3.dp
 internal val JarnFocusGapWidth = 2.dp
-internal val JarnFocusOutset = JarnFocusRingWidth + JarnFocusGapWidth
-internal val JarnFocusGrowthCap = 6.dp
 private const val JarnFocusLandingSpread = 1.4f
 
-internal fun jarnFocusScale(widthPx: Float, heightPx: Float, capPx: Float, targetScale: Float): Float {
-    val longest = max(widthPx, heightPx)
-    if (longest <= 0f || targetScale <= 1f) return 1f
-    return min(targetScale, 1f + 2f * capPx / longest)
-}
-
-internal fun jarnCombinedScale(focusScale: Float, focusProgress: Float, pressScale: Float, pressProgress: Float): Float {
-    val focused = 1f + (focusScale - 1f) * focusProgress
-    val pressed = 1f + (pressScale - 1f) * pressProgress
-    return focused * pressed
-}
+/** Never above 1, so a focused or pressed item stays inside its own bounds. */
+internal fun jarnPressScale(pressScale: Float, pressProgress: Float): Float =
+    (1f + (pressScale - 1f) * pressProgress).coerceAtMost(1f)
 
 fun Modifier.jarnFocus(
     shape: Shape,
@@ -102,7 +89,7 @@ private class JarnFocusNode(
     private var cachedDensity = 0f
 
     private val layerBlock: GraphicsLayerScope.() -> Unit = {
-        val scale = currentScale(size.width, size.height, this)
+        val scale = currentScale()
         scaleX = scale
         scaleY = scale
     }
@@ -184,14 +171,8 @@ private class JarnFocusNode(
         animatePress()
     }
 
-    private fun currentScale(widthPx: Float, heightPx: Float, density: Density): Float {
-        val activation = currentValueOf(LocalJarnScreenActivation).value
-        if (activation <= 0f) return 1f
-        val motion = currentValueOf(LocalJarnMotion)
-        val capPx = with(density) { JarnFocusGrowthCap.toPx() }
-        val focusScale = jarnFocusScale(widthPx, heightPx, capPx, motion.focusScale)
-        return jarnCombinedScale(focusScale, focusProgress.value * activation, motion.pressScale, pressProgress.value)
-    }
+    private fun currentScale(): Float =
+        jarnPressScale(currentValueOf(LocalJarnMotion).pressScale, pressProgress.value)
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
@@ -201,30 +182,30 @@ private class JarnFocusNode(
     }
 
     override fun ContentDrawScope.draw() {
+        drawContent()
         val progress = focusProgress.value
         if (isFocused || progress > 0f) drawIndicator(progress)
-        drawContent()
     }
 
-    /** The ring exists only on the active screen, and lands inward as that screen takes control. */
+    /** The ring exists only on the active screen, and settles as that screen takes control. */
     private fun DrawScope.drawIndicator(progress: Float) {
         val activation = currentValueOf(LocalJarnScreenActivation).value
         if (activation <= 0f) return
         val colors = currentValueOf(LocalJarnColors)
-        val scale = currentScale(size.width, size.height, this)
         val spread = 1f + (1f - activation) * JarnFocusLandingSpread
-        drawRing(outlinePath(), scale, colors.focus, colors.focusGap, progress * activation, spread)
+        drawRing(outlinePath(), currentScale(), colors.focus, colors.focusGap, progress * activation, spread)
     }
 
+    /** Clipped to the item's shape, so the ring can't reach a neighbor or be cut off by one. */
     private fun DrawScope.drawRing(path: Path, scale: Float, ring: Color, gap: Color, alpha: Float, spread: Float) {
-        val ringStroke = 2f * JarnFocusOutset.toPx() * spread / scale
-        val gapStroke = 2f * JarnFocusGapWidth.toPx() * spread / scale
+        val ringStroke = 2f * JarnFocusRingWidth.toPx() * spread / scale
+        val gapStroke = ringStroke + 2f * JarnFocusGapWidth.toPx() * spread / scale
         withTransform({
             scale(scale, scale, center)
-            clipPath(path, ClipOp.Difference)
+            clipPath(path, ClipOp.Intersect)
         }) {
-            drawPath(path, ring, alpha, Stroke(width = ringStroke, join = StrokeJoin.Round))
             drawPath(path, gap, alpha, Stroke(width = gapStroke, join = StrokeJoin.Round))
+            drawPath(path, ring, alpha, Stroke(width = ringStroke, join = StrokeJoin.Round))
         }
     }
 

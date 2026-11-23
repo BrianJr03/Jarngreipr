@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -21,10 +23,11 @@ import jr.brian.core.ui.library.JarnHeroPanel
 import jr.brian.core.ui.library.JarnSystemTile
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.LibrarySection
 
-private val SystemCellMinSize = 148.dp
-private val GameCellMinSize = 112.dp
+internal val SystemCellMinSize = 148.dp
+internal val GameCellMinSize = 112.dp
 private val HeroHeight = 160.dp
 private const val SYSTEM_SKELETON_RATIO = 16f / 10f
 private const val GAME_SKELETON_RATIO = 3f / 4f
@@ -74,9 +77,10 @@ private fun LibrarySystems(
     emptyActions: @Composable () -> Unit,
 ) {
     val state = library.state
+    val cellMinSize = SystemCellMinSize * rememberJarnDisplay().systemTileScale
     LibraryFeedContent(
         feed = state.systems,
-        cellMinSize = SystemCellMinSize,
+        cellMinSize = cellMinSize,
         tileRatio = SYSTEM_SKELETON_RATIO,
         onRetry = library::retry,
         empty = { LibraryEmptyMessage(systemsEmptyCopy(state.systems.hiddenCount), emptyActions) },
@@ -86,8 +90,16 @@ private fun LibrarySystems(
             itemKey = JarnLibrarySystem::id,
             focusedKey = state.focusedSystem?.id,
             onFocused = { id -> library.update { focusSystem(id) } },
-            cellMinSize = SystemCellMinSize,
-            header = state.hero?.let { hero -> { LibraryHeroBanner(hero) } },
+            cellMinSize = cellMinSize,
+            header = state.hero?.let { hero ->
+                {
+                    LibraryHeroBanner(
+                        hero = hero,
+                        onPlay = library::play.takeIf { library.canPlay },
+                        onFocusChange = { library.heroFocused = it },
+                    )
+                }
+            },
         ) { system, modifier ->
             JarnSystemTile(
                 title = system.title,
@@ -112,13 +124,22 @@ private fun gamesEmptyCopy(hiddenCount: Int) = if (hiddenCount > 0) {
 }
 
 @Composable
-private fun LibraryHeroBanner(hero: LibraryHero) {
+private fun LibraryHeroBanner(
+    hero: LibraryHero,
+    onPlay: ((JarnLibraryGame) -> Unit)?,
+    onFocusChange: (Boolean) -> Unit,
+) {
+    DisposableEffect(Unit) { onDispose { onFocusChange(false) } }
     when (hero) {
         is LibraryHero.ContinuePlaying -> JarnHeroPanel(
             eyebrow = stringResource(R.string.jarnfe_library_continue_playing),
             title = heroTitle(hero.game.title),
             body = playSummary(hero.game.metadata),
-            modifier = Modifier.fillMaxWidth().height(HeroHeight),
+            modifier = Modifier
+                .onFocusChanged { onFocusChange(it.isFocused) }
+                .fillMaxWidth()
+                .height(HeroHeight),
+            onClick = onPlay?.let { play -> { play(hero.game) } },
             art = { LibraryCoverArt(hero.game, Alignment.CenterEnd) },
         )
         is LibraryHero.FocusedSystem -> JarnHeroPanel(
@@ -143,9 +164,10 @@ private fun LibraryGames(
     library: JarnLibraryStore,
     empty: @Composable () -> Unit,
 ) {
+    val cellMinSize = GameCellMinSize * rememberJarnDisplay().gameTileScale
     LibraryFeedContent(
         feed = feed,
-        cellMinSize = GameCellMinSize,
+        cellMinSize = cellMinSize,
         tileRatio = GAME_SKELETON_RATIO,
         onRetry = library::retry,
         empty = empty,
@@ -155,7 +177,7 @@ private fun LibraryGames(
             itemKey = JarnLibraryGame::id,
             focusedKey = focusedKey,
             onFocused = onFocused,
-            cellMinSize = GameCellMinSize,
+            cellMinSize = cellMinSize,
             refocusSignal = library.stageRefocus,
         ) { game, modifier ->
             JarnGameTile(
