@@ -3,7 +3,6 @@
     <string name="jarnfe_hint_open">Open</string>
 
     <string name="jarnfe_library_continue_playing">Continue playing</string>
-    <string name="jarnfe_library_recent_games">Recent games</string>
     <string name="jarnfe_library_game_position">Game %1$d of %2$d</string>
     <string name="jarnfe_library_scan_progress">Loaded %1$d of %2$d</string>
     <string name="jarnfe_library_loading">Loading your library</string>
@@ -11,6 +10,9 @@
     <string name="jarnfe_library_last_played">Last played %1$s</string>
     <string name="jarnfe_library_playtime_hours">%1$d h played</string>
     <string name="jarnfe_library_playtime_minutes">%1$d min played</string>
+    <string name="jarnfe_now_players_one">1 player</string>
+    <string name="jarnfe_now_players_count">%1$s players</string>
+    <string name="jarnfe_now_rating">%1$s rating</string>
     <plurals name="jarnfe_library_game_count">
         <item quantity="one">%1$d game</item>
         <item quantity="other">%1$d games</item>
