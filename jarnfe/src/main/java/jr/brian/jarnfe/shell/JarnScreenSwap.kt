@@ -9,9 +9,6 @@ interface JarnScreenSwap {
     val swapped: Flow<Boolean>
 
     fun requestSwap()
-
-    /** Points hardware input at [displayId], for devices that lock it to one screen. */
-    fun syncInputTo(displayId: Int)
 }
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */
