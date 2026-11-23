@@ -22,7 +22,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnNavigateRow
-import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.shell.JarnNotices
@@ -71,74 +70,31 @@ private fun CanvasPickerColumn(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** Loads [load] once, and shows a loading or empty line until there are rows to focus. */
-@Composable
-private fun <T> CanvasLoadedPicker(
-    title: String,
-    load: suspend () -> List<T>,
-    onClose: () -> Unit,
-    footer: @Composable () -> Unit = {},
-    row: @Composable (item: T, modifier: Modifier) -> Unit,
-) {
-    var items by remember { mutableStateOf<List<T>?>(null) }
-    val first = remember { FocusRequester() }
-    LaunchedEffect(Unit) { items = runCatching { load() }.getOrDefault(emptyList()) }
-    val loaded = items
-    if (loaded.isNullOrEmpty()) {
-        CanvasModalSheet(title, null, onClose) {
-            JarnText(
-                text = stringResource(
-                    if (loaded == null) R.string.jarnfe_canvas_pick_loading else R.string.jarnfe_canvas_pick_empty,
-                ),
-                style = JarnTheme.type.body,
-                color = JarnTheme.colors.textMid,
-            )
-        }
-        return
-    }
-    CanvasModalSheet(title, first, onClose) {
-        CanvasPickerColumn {
-            loaded.forEachIndexed { index, item ->
-                row(item, if (index == 0) Modifier.focusRequester(first) else Modifier)
-            }
-        }
-        footer()
-    }
-}
-
 @Composable
 internal fun CanvasAppPickerSheet(
     data: JarnCanvasData,
-    onPicked: (JarnCanvasApp) -> Unit,
+    capacity: Int,
+    onPicked: (List<JarnCanvasApp>) -> Unit,
     onClose: () -> Unit,
 ) {
-    CanvasLoadedPicker(
+    var apps by remember { mutableStateOf<List<JarnCanvasApp>?>(null) }
+    var selection by remember { mutableStateOf(CanvasPickSelection<JarnCanvasApp>(capacity = capacity)) }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(data) { apps = runCatching { data.installedApps() }.getOrDefault(emptyList()) }
+    val rows = remember(apps, query) { apps?.let { list -> canvasPickerMatches(list, query) { it.label } } }
+    CanvasMultiPicker(
         title = stringResource(R.string.jarnfe_canvas_pick_app_title),
-        load = data::installedApps,
+        rows = rows,
+        rowKey = { it.packageName },
+        rowLabel = { it.label },
+        selection = selection,
+        onSelection = { selection = it },
+        query = query,
+        onQuery = { query = it },
+        confirmLabel = stringResource(R.string.jarnfe_canvas_pick_add, selection.count),
+        onConfirm = onPicked,
         onClose = onClose,
-    ) { app, modifier ->
-        JarnNavigateRow(app.label, onClick = { onPicked(app) }, modifier = modifier.fillMaxWidth())
-    }
-}
-
-@Composable
-internal fun CanvasRomPickerSheet(
-    data: JarnCanvasData,
-    onPicked: (JarnCanvasRom) -> Unit,
-    onClose: () -> Unit,
-) {
-    CanvasLoadedPicker(
-        title = stringResource(R.string.jarnfe_canvas_pick_rom_title),
-        load = data::pinnedRoms,
-        onClose = onClose,
-    ) { rom, modifier ->
-        JarnNavigateRow(
-            label = rom.title,
-            supporting = rom.systemName,
-            onClick = { onPicked(rom) },
-            modifier = modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 /** With [rebindId], binds that same id. A cancelled prompt then leaves the id untouched. */
@@ -161,9 +117,18 @@ internal fun CanvasWidgetPickerSheet(
             data.cancelWidgetBind(bind)
         }
     }
-    CanvasLoadedPicker(
+    var providers by remember { mutableStateOf<List<JarnWidgetProvider>?>(null) }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(data) { providers = runCatching { data.widgetProviders() }.getOrDefault(emptyList()) }
+    val rows = remember(providers, query) {
+        providers?.let { list -> canvasPickerMatches(list, query) { "${it.label} ${it.appName}" } }
+    }
+    CanvasSearchPicker(
         title = stringResource(R.string.jarnfe_canvas_pick_widget_title),
-        load = data::widgetProviders,
+        rows = rows,
+        rowKey = { it.key },
+        query = query,
+        onQuery = { query = it },
         onClose = onClose,
     ) { provider, modifier ->
         JarnNavigateRow(
@@ -184,7 +149,7 @@ internal fun CanvasWidgetPickerSheet(
                     JarnWidgetBind.Failed -> JarnNotices.show(R.string.jarnfe_canvas_notice_widget_failed)
                 }
             },
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier,
         )
     }
 }
