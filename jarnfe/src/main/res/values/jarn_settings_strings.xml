@@ -19,6 +19,11 @@
     <string name="jarnfe_settings_show_hints_hint">Shows what each button does along the bottom of the screen.</string>
     <string name="jarnfe_settings_haptics">Button vibration</string>
     <string name="jarnfe_settings_haptics_hint">A short buzz when a button does something.</string>
+    <string name="jarnfe_settings_tap_control">Controller after tap</string>
+    <string name="jarnfe_settings_tap_control_hint">Which screen keeps the controller after you touch either screen. Select still switches.</string>
+    <string name="jarnfe_settings_tap_control_follow">Follow tap</string>
+    <string name="jarnfe_settings_tap_control_top">Always top</string>
+    <string name="jarnfe_settings_tap_control_bottom">Always bottom</string>
     <string name="jarnfe_wallpaper_title">Wallpaper</string>
     <string name="jarnfe_wallpaper_choose">Choose image or GIF</string>
     <string name="jarnfe_wallpaper_custom">Custom</string>

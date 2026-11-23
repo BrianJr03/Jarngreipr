@@ -11,9 +11,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnSliderRow
 import jr.brian.core.ui.components.JarnToggleRow
+import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnLookStore
+import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
+import jr.brian.jarnfe.session.JarnSession
 import kotlin.math.roundToInt
 
 private const val PERCENT = 100
@@ -45,7 +49,30 @@ internal fun JarnDisplaySection() {
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
     )
+    if (JarnSession.state.deckDisplayAvailable) TapControlRow(store, display.tapControl)
 }
+
+@Composable
+private fun TapControlRow(store: JarnLookStore, choice: JarnTapControl) {
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_settings_tap_control),
+        value = stringResource(choice.labelRes),
+        onClick = { store.updateDisplay { it.copy(tapControl = choice.next()) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_settings_tap_control_hint),
+    )
+}
+
+@get:StringRes
+private val JarnTapControl.labelRes: Int
+    get() = when (this) {
+        JarnTapControl.FollowTap -> R.string.jarnfe_settings_tap_control_follow
+        JarnTapControl.AlwaysTop -> R.string.jarnfe_settings_tap_control_top
+        JarnTapControl.AlwaysBottom -> R.string.jarnfe_settings_tap_control_bottom
+    }
+
+private fun JarnTapControl.next(): JarnTapControl =
+    JarnTapControl.entries[(ordinal + 1) % JarnTapControl.entries.size]
 
 @Composable
 private fun TileScaleRow(@StringRes labelRes: Int, scale: Float, onChange: (Float) -> Unit) {

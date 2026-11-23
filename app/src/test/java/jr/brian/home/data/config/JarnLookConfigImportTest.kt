@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import jr.brian.frontend.library.art.ArtSourceStore
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnTapControl
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.ManagerContainer
@@ -147,6 +148,37 @@ class JarnLookConfigImportTest {
         importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
 
         assertEquals(JarnDisplayPrefs.MAX_TILE_SCALE, store.display.systemTileScale)
+    }
+
+    @Test
+    fun `controller after tap round trips through a backup`() = runTest {
+        val display = JarnDisplayConfig(tapControl = JarnTapControl.AlwaysBottom.id)
+        val exported = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = display))
+        val json = importExport.encodeToJson(exported)
+
+        assertEquals(display, importExport.decodeFromJson(json).feature.jarnDisplay)
+        importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertEquals(JarnTapControl.AlwaysBottom, store.display.tapControl)
+        assertEquals("bottom", store.display.toConfig().tapControl)
+    }
+
+    @Test
+    fun `a null or unknown controller after tap keeps the current choice`() = runTest {
+        store.updateDisplay { it.copy(tapControl = JarnTapControl.AlwaysTop) }
+        listOf("null", "\"sideways\"").forEach { value ->
+            val backup = """{ "version": 46, "feature": { "jarnDisplay": { "tapControl": $value } } }"""
+
+            val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+            assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+            assertEquals(JarnTapControl.AlwaysTop, store.display.tapControl)
+        }
+    }
+
+    @Test
+    fun `schema version covers controller after tap`() {
+        assertEquals(46, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {
