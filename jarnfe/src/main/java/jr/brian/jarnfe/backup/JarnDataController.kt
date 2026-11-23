@@ -49,13 +49,19 @@ internal class JarnDataController(private val scope: CoroutineScope) {
     fun export(backup: JarnBackup, target: Uri, returnTo: FocusRequester?) {
         if (!begin(returnTo, R.string.jarnfe_backup_saving)) return
         scope.launch {
-            if (backup.export(target)) {
-                sheet = null
-                JarnNotices.show(R.string.jarnfe_backup_saved)
-            } else {
-                sheet = JarnDataSheet.Message(R.string.jarnfe_backup_failed_title, R.string.jarnfe_backup_failed_message)
+            when (backup.export(target)) {
+                JarnBackupExport.Saved -> finishExport(R.string.jarnfe_backup_saved)
+                JarnBackupExport.SavedWithoutSomeFolders ->
+                    finishExport(R.string.jarnfe_backup_saved_without_folders)
+                JarnBackupExport.Failed -> sheet =
+                    JarnDataSheet.Message(R.string.jarnfe_backup_failed_title, R.string.jarnfe_backup_failed_message)
             }
         }
+    }
+
+    private fun finishExport(@StringRes messageRes: Int) {
+        sheet = null
+        JarnNotices.show(messageRes)
     }
 
     fun inspect(backup: JarnBackup, source: Uri, returnTo: FocusRequester?) {

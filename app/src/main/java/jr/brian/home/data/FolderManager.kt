@@ -261,6 +261,23 @@ class FolderManager @Inject constructor(
         }
     }
 
+    /** Null when the page's stored folders can't be read, unlike [getFolders]. */
+    suspend fun readFolders(pageIndex: Int, tabType: String): List<Folder>? {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
+        val stored = context.folderDataStore.data.first()[key]
+        return decodeStoredFolders(stored)?.map { it.toFolder() }
+    }
+
+    /** Unreadable stored data is left byte-for-byte as it is. */
+    suspend fun clearFoldersIfReadable(pageIndex: Int, tabType: String) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
+        context.folderDataStore.edit { preferences ->
+            if (decodeStoredFolders(preferences[key]) != null) {
+                preferences[key] = json.encodeToString(emptyList<FolderData>())
+            }
+        }
+    }
+
     suspend fun reorderPages(
         oldIndicesInNewOrder: Map<Int, Int>,
         tabType: String = TAB_TYPE_APPS

@@ -15,6 +15,7 @@
 
     <string name="jarnfe_backup_saving">Saving backup</string>
     <string name="jarnfe_backup_saved">Backup saved</string>
+    <string name="jarnfe_backup_saved_without_folders">Backup saved, but some folders couldn\'t be read and were left out</string>
     <string name="jarnfe_backup_failed_title">Backup not saved</string>
     <string name="jarnfe_backup_failed_message">That location couldn\'t be written to. Try saving somewhere else.</string>
 

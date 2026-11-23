@@ -2,6 +2,7 @@ package jr.brian.jarnfe.backup
 
 import android.net.Uri
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -31,9 +32,10 @@ class JarnDataControllerTest {
     private class FakeBackup(
         val inspection: JarnBackupInspection,
         val restoreResult: CompletableDeferred<Boolean> = CompletableDeferred(true),
+        val exportResult: JarnBackupExport = JarnBackupExport.Saved,
     ) : JarnBackup {
         var restores = 0
-        override suspend fun export(target: Uri) = true
+        override suspend fun export(target: Uri) = exportResult
         override suspend fun inspect(source: Uri) = inspection
         override suspend fun restore(candidate: JarnBackupCandidate): Boolean {
             restores += 1
@@ -111,6 +113,17 @@ class JarnDataControllerTest {
         controller.confirmRestore(backup)
         val sheet = controller.sheet as JarnDataSheet.Message
         assertEquals(R.string.jarnfe_restore_failed_message, sheet.messageRes)
+    }
+
+    @Test
+    fun `a backup missing unreadable folders still saves and warns`() {
+        val backup = FakeBackup(
+            JarnBackupInspection.Ready(candidate),
+            exportResult = JarnBackupExport.SavedWithoutSomeFolders,
+        )
+        controller.export(backup, uri, null)
+        assertNull(controller.sheet)
+        assertEquals(R.string.jarnfe_backup_saved_without_folders, JarnNotices.current?.messageRes)
     }
 
     @Test

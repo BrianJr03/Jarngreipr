@@ -6,14 +6,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.util.UnstableApi
 import androidx.annotation.VisibleForTesting
-import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
 import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.FabPosition
-import jr.brian.home.data.FolderManager
 import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
@@ -34,7 +32,6 @@ import jr.brian.home.model.PhysicalButton
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.model.ControlPadItem
 import jr.brian.home.model.app.AppPosition
-import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.theme.managers.WallpaperType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -144,7 +141,7 @@ class ImportExportManager @Inject constructor(
 
         val positionsByPage = buildPositionsByPage(app, maxPages)
 
-        val foldersByKey = buildFoldersByKey(app, maxPages)
+        val foldersByKey = buildFoldersByKey(app)
 
         return AppConfig(
             visibility = AppVisibilityConfig(
@@ -190,37 +187,10 @@ class ImportExportManager @Inject constructor(
         return result
     }
 
-    private suspend fun buildFoldersByKey(
-        app: AppManagers,
-        maxPages: Int
-    ): Map<String, List<FolderItemConfig>> {
-        val result = mutableMapOf<String, List<FolderItemConfig>>()
-        val tabTypes = listOf(
-            FolderManager.TAB_TYPE_APPS,
-            FolderManager.TAB_TYPE_WIDGETS,
-            CanvasTabType.VALUE
-        )
-        for (page in 0 until maxPages) {
-            for (tabType in tabTypes) {
-                val folders = app.folderManager.getFolders(page, tabType).first()
-                if (folders.isNotEmpty()) {
-                    result["${tabType}_$page"] = folders.map { folder ->
-                        FolderItemConfig(
-                            id = folder.id,
-                            name = folder.name,
-                            apps = folder.appPackageNames,
-                            x = folder.position.x,
-                            y = folder.position.y,
-                            iconSize = folder.position.iconSize,
-                            backgroundColorArgb = folder.backgroundColorArgb,
-                            backgroundImagePath = folder.backgroundImagePath
-                        )
-                    }
-                }
-            }
+    private suspend fun buildFoldersByKey(app: AppManagers): Map<String, List<FolderItemConfig>> =
+        buildFolderBackup { page, tabType ->
+            app.folderManager.readFolders(page, tabType)?.map { it.toFolderItemConfig() }
         }
-        return result
-    }
 
     private suspend fun buildPageConfig(): PageConfig {
         val page = managers.page
@@ -510,32 +480,16 @@ class ImportExportManager @Inject constructor(
             }
         }
 
-        val tabTypes = listOf(
-            FolderManager.TAB_TYPE_APPS,
-            FolderManager.TAB_TYPE_WIDGETS,
-            CanvasTabType.VALUE
-        )
-        for (page in 0 until PageCountRange.MAX) {
-            for (tabType in tabTypes) {
-                app.folderManager.setAllFolders(page, tabType, emptyList())
-            }
-        }
-        config.folders.forEach { (key, folderConfigs) ->
-            val lastUnderscore = key.lastIndexOf('_')
-            if (lastUnderscore == -1) return@forEach
-            val tabType = key.substring(0, lastUnderscore)
-            val page = key.substring(lastUnderscore + 1).toIntOrNull() ?: return@forEach
-            val folders = folderConfigs.map { fc ->
-                Folder(
-                    id = fc.id,
-                    name = fc.name,
-                    appPackageNames = fc.apps,
-                    position = AppPosition(fc.id, fc.x, fc.y, fc.iconSize),
-                    backgroundColorArgb = fc.backgroundColorArgb,
-                    backgroundImagePath = fc.backgroundImagePath
+        planFolderRestore(config.folders).forEach { step ->
+            when (step) {
+                is FolderRestoreStep.ClearIfReadable ->
+                    app.folderManager.clearFoldersIfReadable(step.page, step.tabType)
+                is FolderRestoreStep.Replace -> app.folderManager.setAllFolders(
+                    step.page,
+                    step.tabType,
+                    step.folders.map { it.toFolder() }
                 )
             }
-            app.folderManager.setAllFolders(page, tabType, folders)
         }
     }
 
@@ -769,12 +723,14 @@ class ImportExportManager @Inject constructor(
     fun decodeFromJson(jsonString: String): JarngreiprConfig =
         json.decodeFromString(jsonString)
 
-    suspend fun exportToStream(outputStream: OutputStream) {
+    /** Returns how many folder pages were left out because they couldn't be read. */
+    suspend fun exportToStream(outputStream: OutputStream): Int {
         val config = buildConfig()
         val jsonString = encodeToJson(config)
         withContext(Dispatchers.IO) {
             outputStream.writer().use { it.write(jsonString) }
         }
+        return omittedFolderPageCount(config.app.folders)
     }
 
     suspend fun importFromStream(inputStream: InputStream): Result<Unit> = runCatching {
@@ -786,7 +742,7 @@ class ImportExportManager @Inject constructor(
     }
 
     private object PageCountRange {
-        const val MAX = 6
+        const val MAX = FOLDER_BACKUP_PAGE_COUNT
     }
 }
 
