@@ -13,7 +13,7 @@ TOP = "4630946441858561667"
 BOTTOM = "4630946482288158084"
 LIBRARY = ["Systems", "Favorites", "Recent"]
 DECK = ["Now", "Apps", "Canvas"]
-SETTINGS = ["Library", "Art", "Look", "Display"]
+SETTINGS = ["Library", "Art", "Look", "Display", "Data"]
 
 
 def env(name, default=""):

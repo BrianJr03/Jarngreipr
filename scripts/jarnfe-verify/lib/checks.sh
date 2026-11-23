@@ -3,7 +3,7 @@
 
 LIBRARY_TABS=(Systems Favorites Recent)
 DECK_TABS=(Now Apps Canvas)
-SETTINGS_TABS=(Library Art Look Display)
+SETTINGS_TABS=(Library Art Look Display Data)
 # Wallpaper showing through the gaps between tiles moved up to 5 cells on a real Thor idle.
 CONTENT_CHANGE_CELLS=12
 MIN_USABLE_CELLS=100
@@ -288,12 +288,12 @@ check_settings_by_ui() {
   original="$(ui_selected "${SETTINGS_TABS[@]}")"
   press_times "$KEY_L1" 3 || return
   expect_selected Library "L1 clamps to the first section" "${SETTINGS_TABS[@]}"
-  for name in Art Look Display; do
+  for name in Art Look Display Data; do
     key "$KEY_R1" || return
     expect_selected "$name" "R1 opens section" "${SETTINGS_TABS[@]}"
   done
   key "$KEY_R1" || return
-  expect_selected Display "R1 clamps at the last section" "${SETTINGS_TABS[@]}"
+  expect_selected Data "R1 clamps at the last section" "${SETTINGS_TABS[@]}"
   [ -n "$original" ] && step_to_tab "$(index_of "$original" "${SETTINGS_TABS[@]}")" "${#SETTINGS_TABS[@]}"
 }
 
