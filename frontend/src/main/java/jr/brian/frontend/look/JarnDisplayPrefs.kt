@@ -1,11 +1,24 @@
 package jr.brian.frontend.look
 
+/** Which physical screen keeps the controller after a touch. */
+enum class JarnTapControl(val id: String) {
+    FollowTap("follow"),
+    AlwaysTop("top"),
+    AlwaysBottom("bottom"),
+    ;
+
+    companion object {
+        fun fromId(id: String?): JarnTapControl? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** Jarn FE display choices. The defaults match how Jarn FE looked before they existed. */
 data class JarnDisplayPrefs(
     val systemTileScale: Float = DEFAULT_TILE_SCALE,
     val gameTileScale: Float = DEFAULT_TILE_SCALE,
     val hintsVisible: Boolean = true,
     val buttonHaptics: Boolean = true,
+    val tapControl: JarnTapControl = JarnTapControl.FollowTap,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

@@ -53,6 +53,7 @@ class JarnLookStore @Inject constructor(
             putFloat(KEY_GAME_TILE_SCALE, next.gameTileScale)
             putBoolean(KEY_HINTS_VISIBLE, next.hintsVisible)
             putBoolean(KEY_BUTTON_HAPTICS, next.buttonHaptics)
+            putString(KEY_TAP_CONTROL, next.tapControl.id)
         }
     }
 
@@ -61,6 +62,7 @@ class JarnLookStore @Inject constructor(
         gameTileScale = prefs.getFloat(KEY_GAME_TILE_SCALE, JarnDisplayPrefs.DEFAULT_TILE_SCALE),
         hintsVisible = prefs.getBoolean(KEY_HINTS_VISIBLE, true),
         buttonHaptics = prefs.getBoolean(KEY_BUTTON_HAPTICS, true),
+        tapControl = JarnTapControl.fromId(prefs.getString(KEY_TAP_CONTROL, null)) ?: JarnTapControl.FollowTap,
     ).coerced()
 
     fun setLookId(id: String) {
@@ -92,5 +94,6 @@ class JarnLookStore @Inject constructor(
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"
         const val KEY_HINTS_VISIBLE = "hints_visible"
         const val KEY_BUTTON_HAPTICS = "button_haptics"
+        const val KEY_TAP_CONTROL = "tap_control"
     }
 }

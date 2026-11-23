@@ -1,5 +1,6 @@
 package jr.brian.home.data.config
 
+import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
 import jr.brian.jarnfe.backup.JarnBackupArea
 import jr.brian.jarnfe.backup.JarnBackupChange
@@ -187,6 +188,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             gameTileScale = it.gameTileScale ?: shown?.gameTileScale,
             hintsVisible = it.hintsVisible ?: shown?.hintsVisible,
             buttonHaptics = it.buttonHaptics ?: shown?.buttonHaptics,
+            tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

@@ -25,6 +25,7 @@ internal sealed interface CanvasOverlay {
     data object Rss : CanvasOverlay
     data class RebindWidget(val widgetId: Int) : CanvasOverlay
     data class TileMenu(val itemId: String) : CanvasOverlay
+    data class ArtMedia(val itemId: String) : CanvasOverlay
     data class ConfirmRemove(val itemId: String) : CanvasOverlay
     data class Items(val target: CanvasListTarget) : CanvasOverlay
     data class Folder(val itemId: String) : CanvasOverlay
@@ -40,6 +41,7 @@ internal class CanvasTileCommands(
     val playRandom: (CanvasItem.LastPlayedItem) -> Unit,
     val refreshWidgets: () -> Unit,
     val grabNewTile: (String) -> Unit,
+    val previewArt: (CanvasArtPreview?) -> Unit,
 )
 
 internal fun canvasItemResolved(item: CanvasItem, page: JarnCanvasPage): Boolean = when (item) {
@@ -173,7 +175,12 @@ internal fun CanvasTileOverlays(
                                 (item as? CanvasItem.LastPlayedItem)?.let {
                                     data.updateTile(page.index, it.withNextCount())
                                 }
+                            CanvasTileAction.MediaType -> onOverlay(CanvasOverlay.ArtMedia(item.id))
                             CanvasTileAction.Scale -> data.updateTile(page.index, item.withFlippedScale())
+                            CanvasTileAction.TransparentBackground ->
+                                (item as? CanvasItem.EsdeArtItem)?.let {
+                                    data.updateTile(page.index, it.withCardTransparencyToggled())
+                                }
                             CanvasTileAction.AppOptions -> onOverlay(CanvasOverlay.AppOptions(item.id))
                             CanvasTileAction.Move -> {
                                 close()
@@ -183,6 +190,27 @@ internal fun CanvasTileOverlays(
                         }
                     },
                     onClose = close,
+                )
+            }
+        }
+        is CanvasOverlay.ArtMedia -> {
+            val item = page?.layout?.items
+                ?.firstOrNull { it.id == overlay.itemId } as? CanvasItem.EsdeArtItem
+            if (item == null) {
+                LaunchedEffect(overlay) { close() }
+            } else {
+                CanvasArtMediaSheet(
+                    item = item,
+                    onPreview = { commands.previewArt(CanvasArtPreview(item.id, it)) },
+                    onConfirm = { type ->
+                        commands.previewArt(CanvasArtPreview(item.id, type))
+                        data.updateTile(page.index, item.withMediaType(type))
+                        close()
+                    },
+                    onClose = {
+                        commands.previewArt(null)
+                        onOverlay(CanvasOverlay.TileMenu(item.id))
+                    },
                 )
             }
         }

@@ -39,9 +39,6 @@ private const val FOLDER_PREVIEW_COLUMNS = 2
 private val AppIconSize = 44.dp
 private val FolderIconSize = 22.dp
 
-/** The art Stage is showing, which Frontend art tiles mirror. */
-internal data class CanvasStageArt(val title: String, val path: String?)
-
 @Composable
 internal fun BoxScope.CanvasTileContent(
     item: CanvasItem,
@@ -62,21 +59,29 @@ internal fun BoxScope.CanvasTileContent(
     }
 }
 
-private fun EsdeContentScale.toContentScale(): ContentScale = when (this) {
+internal fun EsdeContentScale.toContentScale(): ContentScale = when (this) {
     EsdeContentScale.FIT -> ContentScale.Fit
     EsdeContentScale.CROP -> ContentScale.Crop
 }
 
 @Composable
-private fun BoxScope.CanvasImage(model: Any?, title: String, scale: ContentScale) {
+internal fun BoxScope.CanvasImage(
+    model: Any?,
+    title: String,
+    scale: ContentScale,
+    imageModifier: Modifier = Modifier,
+    placeholder: @Composable BoxScope.(String) -> Unit = {
+        JarnArtPlaceholder(it, Modifier.matchParentSize())
+    },
+) {
     var failed by remember(model) { mutableStateOf(false) }
     if (model == null || failed) {
-        JarnArtPlaceholder(title, Modifier.matchParentSize())
+        placeholder(title)
     } else {
         AsyncImage(
             model = model,
             contentDescription = null,
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier.matchParentSize().then(imageModifier),
             contentScale = scale,
             onError = { failed = true },
         )
@@ -84,7 +89,7 @@ private fun BoxScope.CanvasImage(model: Any?, title: String, scale: ContentScale
 }
 
 @Composable
-private fun BoxScope.LabelTile(label: String) {
+internal fun BoxScope.LabelTile(label: String) {
     JarnText(
         text = label,
         style = JarnTheme.type.labelStrong,
@@ -212,24 +217,6 @@ private fun BoxScope.MusicTile(music: JarnCanvasMusic?) {
     ) {
         JarnText(music.title, JarnTheme.type.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
         music.artist?.let { JarnText(it, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 1) }
-    }
-}
-
-@Composable
-private fun BoxScope.ArtTile(item: CanvasItem.EsdeArtItem, stageArt: CanvasStageArt?) {
-    val shape = RoundedCornerShape(item.resolvedBackgroundCornerRadiusDp.dp)
-    val background = item.backgroundColorArgb?.let { Color(it) } ?: Color.Transparent
-    Box(
-        Modifier
-            .matchParentSize()
-            .clip(shape)
-            .background(background),
-    ) {
-        if (stageArt == null) {
-            LabelTile(stringResource(R.string.jarnfe_canvas_tile_art))
-        } else {
-            CanvasImage(stageArt.path, stageArt.title, item.resolvedContentScale.toContentScale())
-        }
     }
 }
 

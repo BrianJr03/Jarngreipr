@@ -2,6 +2,8 @@ package jr.brian.jarnfe.canvas
 
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.FrameLayout
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -127,6 +129,7 @@ internal fun BoxScope.CanvasWidgetTile(
     revision: Int,
     editing: Boolean,
     interacting: Boolean,
+    touch: CanvasWidgetTouchBinding,
     onEditTap: () -> Unit,
     onLeave: () -> Unit,
 ) {
@@ -144,13 +147,18 @@ internal fun BoxScope.CanvasWidgetTile(
             CanvasWidgetProblem(JarnWidgetHealth.Gone)
         } else {
             AndroidView(
-                factory = {
+                factory = { frameContext ->
                     (view.parent as? ViewGroup)?.removeView(view)
                     (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
                     view.isFocusable = false
                     hostView = view
-                    view
+                    CanvasWidgetTouchFrame(frameContext).apply {
+                        isFocusable = false
+                        descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                        addView(view, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                    }
                 },
+                update = { frame -> frame.binding = touch },
                 modifier = Modifier.matchParentSize(),
             )
         }

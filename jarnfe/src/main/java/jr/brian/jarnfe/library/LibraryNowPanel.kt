@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.library
 
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +11,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnButton
@@ -21,6 +28,7 @@ import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnMetadataPlate
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.launch.GameActionsDeck
 import jr.brian.jarnfe.launch.JarnGameActions
@@ -37,14 +45,49 @@ private val NowTopZone = 240.dp
 
 @Composable
 internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibraryGame>) {
-    when (selection) {
-        LibrarySelection.None -> JarnEmptyState(
-            title = stringResource(R.string.jarnfe_empty_now_title),
-            message = stringResource(R.string.jarnfe_empty_now_message),
-        )
-        is LibrarySelection.System -> NowColumn { SystemSummary(selection.system, recent) }
-        is LibrarySelection.Game -> NowColumn { GameNow(selection.game) }
+    NowFocusKeeper(selection) {
+        when (selection) {
+            LibrarySelection.None -> JarnEmptyState(
+                title = stringResource(R.string.jarnfe_empty_now_title),
+                message = stringResource(R.string.jarnfe_empty_now_message),
+            )
+            is LibrarySelection.System -> NowColumn { SystemSummary(selection.system, recent) }
+            is LibrarySelection.Game -> NowColumn { GameNow(selection.game) }
+        }
     }
+}
+
+/**
+ * The Stage can change the selection while the controller is on Now. If that removes the focused
+ * row, focus lands back inside the panel instead of disappearing from the active screen.
+ */
+@Composable
+private fun NowFocusKeeper(selection: LibrarySelection, content: @Composable () -> Unit) {
+    val requester = remember { FocusRequester() }
+    val holdsFocus = remember { booleanArrayOf(false) }
+    val selectionKey = selection.focusKey()
+    val hadFocus = remember(selectionKey) { holdsFocus[0] }
+    val isActive = LocalJarnScreenActive.current
+    LaunchedEffect(selectionKey) {
+        if (!hadFocus || !isActive) return@LaunchedEffect
+        withFrameNanos { }
+        withFrameNanos { }
+        if (!holdsFocus[0]) runCatching { requester.requestFocus() }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { holdsFocus[0] = it.hasFocus }
+            .focusRequester(requester)
+            .focusGroup(),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+private fun LibrarySelection.focusKey(): String? = when (this) {
+    LibrarySelection.None -> null
+    is LibrarySelection.System -> "system:${system.id}"
+    is LibrarySelection.Game -> "game:${game.id}"
 }
 
 @Composable

@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnTapControl
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
@@ -194,7 +195,9 @@ data class JarngreiprConfig(
         //      button haptics. Null on older blobs or fields, and import keeps those.
         // v45: added FeatureConfig.jarnLiveWallpaper, the Jarn FE live wallpaper id.
         //      Null on older blobs, and import keeps the current choice. "off" clears it.
-        const val CONFIG_VERSION = 45
+        // v46: added JarnDisplayConfig.tapControl, the screen that keeps the controller
+        //      after a tap. Null or unknown values leave the current choice alone.
+        const val CONFIG_VERSION = 46
     }
 }
 
@@ -383,6 +386,7 @@ data class JarnDisplayConfig(
     val gameTileScale: Float? = null,
     val hintsVisible: Boolean? = null,
     val buttonHaptics: Boolean? = null,
+    val tapControl: String? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -390,6 +394,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     gameTileScale = gameTileScale,
     hintsVisible = hintsVisible,
     buttonHaptics = buttonHaptics,
+    tapControl = tapControl.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -397,6 +402,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     gameTileScale = gameTileScale ?: current.gameTileScale,
     hintsVisible = hintsVisible ?: current.hintsVisible,
     buttonHaptics = buttonHaptics ?: current.buttonHaptics,
+    tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
 )
 
 @Serializable

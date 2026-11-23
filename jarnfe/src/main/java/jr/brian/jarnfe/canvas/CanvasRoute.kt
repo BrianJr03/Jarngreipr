@@ -37,8 +37,6 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.LocalJarnInputRouter
 import jr.brian.jarnfe.input.LocalJarnScreen
-import jr.brian.jarnfe.library.JarnLibrary
-import jr.brian.jarnfe.library.LibrarySelection
 import jr.brian.jarnfe.rss.JarnRssRoute
 import jr.brian.jarnfe.rss.JarnRssSheetSlot
 import jr.brian.jarnfe.session.DeckTab
@@ -78,8 +76,13 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
     var overlay by remember { mutableStateOf<CanvasOverlay?>(null) }
     var pendingGrab by remember { mutableStateOf<String?>(null) }
     var widgetRevision by remember { mutableIntStateOf(0) }
+    var artPreview by remember { mutableStateOf<CanvasArtPreview?>(null) }
     val selected = JarnCanvas.selectedPage
     val page = snapshot.pages.getOrNull(selected)
+    LaunchedEffect(page?.layout, overlay) {
+        val settled = artPreview?.isSettled(page?.layout?.items.orEmpty()) == true
+        if (overlay !is CanvasOverlay.ArtMedia && settled) artPreview = null
+    }
     val editor = remember { CanvasEditor(navigate = { JarnCanvas.selectedPage = it }) }
     editor.showPage(page?.index)
     val scope = rememberCoroutineScope()
@@ -117,6 +120,7 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
                 pageCount = snapshot.pages.size,
                 sheetOpen = overlay != null,
                 widgetRevision = widgetRevision,
+                artPreview = artPreview,
                 pendingGrab = pendingGrab,
                 onPendingGrabHandled = { pendingGrab = null },
                 onOptions = { overlay = CanvasOverlay.Options },
@@ -149,6 +153,7 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
                             },
                             refreshWidgets = { widgetRevision += 1 },
                             grabNewTile = { pendingGrab = it },
+                            previewArt = { artPreview = it },
                         ),
                         onOverlay = { overlay = it },
                     )
@@ -210,6 +215,7 @@ private fun CanvasPageSurface(
     pageCount: Int,
     sheetOpen: Boolean,
     widgetRevision: Int,
+    artPreview: CanvasArtPreview?,
     pendingGrab: String?,
     onPendingGrabHandled: () -> Unit,
     onOptions: () -> Unit,
@@ -247,6 +253,27 @@ private fun CanvasPageSurface(
     val activate: (CanvasItem) -> Unit = { item ->
         page?.let { activateTile(item, it, snapshot, handlers, useWidget) }
     }
+    val tapTile: (CanvasItem, Float) -> Unit = { item, tileCellPx ->
+        when (canvasTapAction(editor.grab != null, editor.editing)) {
+            CanvasTapAction.Ignore -> Unit
+            CanvasTapAction.Grab -> page?.let {
+                val (minCol, minRow) = minSpansFor(data, item, tileCellPx)
+                editor.begin(it.layout, item.id, minCol, minRow)
+            }
+            CanvasTapAction.Open -> activate(item)
+        }
+    }
+    val touch = rememberCanvasTouch(
+        editor = editor,
+        page = page,
+        enabled = !sheetOpen && interactingId == null,
+        minSpans = { minSpansFor(data, it, cellPx) },
+        openMenu = handlers.openTileMenu,
+        commit = { layout, placements ->
+            page?.let { data.commitPlacements(it.index, layout.activeOrientation, placements) }
+        },
+        onGrabbed = { lastFocused = it },
+    )
 
     LaunchedEffect(isActive) {
         if (!isActive) {
@@ -309,24 +336,21 @@ private fun CanvasPageSurface(
                 page.kind != JarnCanvasPageKind.Canvas ->
                     CanvasNotice(R.string.jarnfe_canvas_other_page_title, R.string.jarnfe_canvas_other_page_message)
                 else -> {
-                    val stageArt = canvasStageArt(state)
+                    val stageArt = rememberCanvasStageArt(state, page)
                     CanvasGrid(
                         page = page,
                         placements = editor.placements(page.layout),
                         editing = editor.editing,
                         grabbedId = editor.grab?.itemId,
+                        liftedId = touch.driver.liftedId,
+                        touchHoldsGrab = editor.grab?.driver == CanvasGrabDriver.Touch,
+                        boardModifier = Modifier.canvasBoardTouch(touch.driver, touch.space),
+                        onBoardGeometry = { touch.driver.geometry = it },
                         focusRequesterFor = requesterFor,
                         onFocused = { lastFocused = it },
                         onCellSize = { cellPx = it },
                         onVisibleCells = editor::reportVisibleCells,
-                        onTileClick = { item, tileCellPx ->
-                            if (editor.editing) {
-                                val (minCol, minRow) = minSpansFor(data, item, tileCellPx)
-                                editor.begin(page.layout, item.id, minCol, minRow)
-                            } else {
-                                activate(item)
-                            }
-                        },
+                        onTileClick = tapTile,
                         onMenuClick = onOptions,
                     ) { item ->
                         if (item is CanvasItem.WidgetItem) {
@@ -337,14 +361,18 @@ private fun CanvasPageSurface(
                                 revision = widgetRevision,
                                 editing = editor.editing,
                                 interacting = interactingId == item.id,
-                                onEditTap = {
-                                    val (minCol, minRow) = minSpansFor(data, item, cellPx)
-                                    editor.begin(page.layout, item.id, minCol, minRow)
-                                },
+                                touch = CanvasWidgetTouchBinding(
+                                    driver = touch.driver,
+                                    space = touch.space,
+                                    itemId = item.id,
+                                    enabled = !sheetOpen && interactingId == null,
+                                    onBlankTap = { tapTile(item, cellPx) },
+                                ),
+                                onEditTap = { tapTile(item, cellPx) },
                                 onLeave = { interactingId = null },
                             )
                         } else {
-                            CanvasTileContent(item, page, snapshot, stageArt)
+                            CanvasTileContent(item.withArtPreview(artPreview), page, snapshot, stageArt)
                         }
                     }
                 }
@@ -377,13 +405,6 @@ private fun canvasFocusTarget(page: JarnCanvasPage, last: String?, editing: Bool
         else -> null
     }
 }
-
-private fun canvasStageArt(state: JarnSessionState): CanvasStageArt? =
-    when (val selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection)) {
-        is LibrarySelection.Game -> CanvasStageArt(selection.game.title, selection.game.artPath)
-        is LibrarySelection.System -> CanvasStageArt(selection.system.title, selection.system.artPath)
-        LibrarySelection.None -> null
-    }
 
 private fun activateTile(
     item: CanvasItem,
