@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -31,6 +32,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        // Canvas models are Compose parameters; the compiler records their stability here.
+        compose = true
         buildConfig = false
         resValues = false
     }
@@ -55,6 +58,8 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime)
 
     // Hilt — the FrontendBus adapter is provided from here.
     implementation(libs.hilt.android)

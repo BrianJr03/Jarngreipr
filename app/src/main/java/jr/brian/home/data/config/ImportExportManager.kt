@@ -11,6 +11,7 @@ import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
+import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.FabPosition
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.JoystickMode
@@ -18,6 +19,7 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
 import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.data.SnapMode
+import jr.brian.core.model.Experience
 import jr.brian.core.model.ScreenAssignment
 import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
 import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
@@ -49,6 +51,7 @@ import javax.inject.Singleton
 class ImportExportManager @Inject constructor(
     private val managers: ManagerContainer,
     private val screenAssignmentStore: ScreenAssignmentStore,
+    private val experienceStore: ExperienceStore,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -307,6 +310,7 @@ class ImportExportManager @Inject constructor(
             ),
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
             screenAssignment = screenAssignmentStore.assignment.name,
+            experience = experienceStore.experience.name,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -701,6 +705,12 @@ class ImportExportManager @Inject constructor(
         // app version never silently flips a user's layout.
         config.screenAssignment?.let {
             screenAssignmentStore.setAssignment(ScreenAssignment.fromNameOrDefault(it))
+        }
+
+        // Null means the imported blob predates v38, so keep the device's
+        // current experience (same rule as screenAssignment above).
+        config.experience?.let {
+            experienceStore.setExperience(Experience.fromNameOrDefault(it))
         }
     }
 
