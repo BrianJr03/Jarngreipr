@@ -82,8 +82,6 @@ interface JarnCanvasTiles {
 
     suspend fun pinnedRoms(): List<JarnCanvasRom>
 
-    fun openAppInfo(host: Activity, packageName: String)
-
     fun widgetHealth(widgetId: Int): JarnWidgetHealth
 
     fun acquireWidgetHost(): JarnWidgetLease

@@ -25,19 +25,18 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 
 internal enum class CanvasTileAction(@param:StringRes val label: Int) {
-    Open(R.string.jarnfe_canvas_action_open),
+    Move(R.string.jarnfe_canvas_action_move),
     UseWidget(R.string.jarnfe_canvas_action_use_widget),
     ChooseWidget(R.string.jarnfe_canvas_action_choose_widget),
     ChoosePhoto(R.string.jarnfe_canvas_action_choose_photo),
     PlayRandom(R.string.jarnfe_canvas_action_random),
     Games(R.string.jarnfe_canvas_action_games),
     Scale(R.string.jarnfe_canvas_action_scale),
-    AppInfo(R.string.jarnfe_canvas_action_app_info),
-    Move(R.string.jarnfe_canvas_action_move),
+    AppOptions(R.string.jarnfe_app_options),
     Remove(R.string.jarnfe_canvas_action_remove),
 }
 
-/** Only actions that work right now, so the menu never offers a dead row. */
+/** Only actions that work right now, so the menu never offers a dead row. A already opens a tile. */
 internal fun canvasTileActions(
     item: CanvasItem,
     resolved: Boolean,
@@ -45,35 +44,51 @@ internal fun canvasTileActions(
     hasRecent: Boolean,
 ): List<CanvasTileAction> {
     val specific = when (item) {
-        is CanvasItem.AppItem -> if (resolved) {
-            listOf(CanvasTileAction.Open, CanvasTileAction.AppInfo)
-        } else {
-            emptyList()
-        }
-        is CanvasItem.FolderItem -> if (resolved) listOf(CanvasTileAction.Open) else emptyList()
-        is CanvasItem.RomItem -> if (resolved) {
-            listOf(CanvasTileAction.Open, CanvasTileAction.Scale)
-        } else {
-            emptyList()
-        }
+        is CanvasItem.AppItem -> if (resolved) listOf(CanvasTileAction.AppOptions) else emptyList()
+        is CanvasItem.RomItem -> if (resolved) listOf(CanvasTileAction.Scale) else emptyList()
         is CanvasItem.WidgetItem -> when (widgetHealth) {
             JarnWidgetHealth.Live -> listOf(CanvasTileAction.UseWidget)
             JarnWidgetHealth.Unbound -> listOf(CanvasTileAction.ChooseWidget)
             JarnWidgetHealth.Gone, null -> emptyList()
         }
         is CanvasItem.PhotoContainer -> listOf(CanvasTileAction.ChoosePhoto)
-        is CanvasItem.EsdeArtItem -> listOf(CanvasTileAction.Open, CanvasTileAction.Scale)
+        is CanvasItem.EsdeArtItem -> listOf(CanvasTileAction.Scale)
         is CanvasItem.LastPlayedItem -> buildList {
-            add(CanvasTileAction.Open)
             if (hasRecent) add(CanvasTileAction.PlayRandom)
             add(CanvasTileAction.Games)
             add(CanvasTileAction.Scale)
         }
+        is CanvasItem.FolderItem,
         is CanvasItem.RssLauncherItem,
-        is CanvasItem.RssMusicItem -> listOf(CanvasTileAction.Open)
+        is CanvasItem.RssMusicItem -> emptyList()
     }
-    return specific + CanvasTileAction.Move + CanvasTileAction.Remove
+    return listOf(CanvasTileAction.Move) + specific + CanvasTileAction.Remove
 }
+
+/** What A does on this tile, or null when A has nothing to do but report it as missing. */
+@StringRes
+internal fun canvasConfirmHint(item: CanvasItem, resolved: Boolean, widgetHealth: JarnWidgetHealth?): Int? =
+    when (item) {
+        is CanvasItem.AppItem,
+        is CanvasItem.FolderItem -> R.string.jarnfe_hint_open.takeIf { resolved }
+        is CanvasItem.RomItem -> R.string.jarnfe_hint_play.takeIf { resolved }
+        is CanvasItem.WidgetItem ->
+            if (widgetHealth == JarnWidgetHealth.Live) {
+                R.string.jarnfe_canvas_action_use_widget
+            } else {
+                R.string.jarnfe_hint_context
+            }
+        is CanvasItem.PhotoContainer ->
+            if (item.imageUri == null) {
+                R.string.jarnfe_canvas_action_choose_photo
+            } else {
+                R.string.jarnfe_canvas_hint_change_photo
+            }
+        is CanvasItem.EsdeArtItem -> R.string.jarnfe_canvas_hint_go_to_now
+        is CanvasItem.LastPlayedItem,
+        is CanvasItem.RssLauncherItem,
+        is CanvasItem.RssMusicItem -> R.string.jarnfe_hint_open
+    }
 
 private fun EsdeContentScale.flipped(): EsdeContentScale =
     if (this == EsdeContentScale.FIT) EsdeContentScale.CROP else EsdeContentScale.FIT

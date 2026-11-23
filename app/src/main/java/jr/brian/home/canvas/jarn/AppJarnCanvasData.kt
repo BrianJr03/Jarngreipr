@@ -1,6 +1,5 @@
 package jr.brian.home.canvas.jarn
 
-import android.app.Activity
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
 import android.content.Context
@@ -13,7 +12,6 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.GridRect
-import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.CustomAppNameManager
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.FolderManager
@@ -28,6 +26,7 @@ import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.data.RecentlyPlayedManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
+import jr.brian.home.jarn.AppJarnAppOptions
 import jr.brian.home.model.PageType
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -56,6 +55,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -64,7 +64,6 @@ import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.math.max
-import jr.brian.home.util.launchApp as launchAppOnDisplay
 
 /** Writes [placements] into one orientation only. Items and every other field stay as stored. */
 internal fun mergeJarnPlacements(
@@ -132,13 +131,13 @@ class AppJarnCanvasData @Inject constructor(
     private val recentlyPlayed: RecentlyPlayedManager,
     private val customNames: CustomAppNameManager,
     private val iconPacks: IconPackManager,
-    private val displayPreferences: AppDisplayPreferenceManager,
     private val widgetPreferences: WidgetPreferences,
     private val widgetPageApps: WidgetPageAppManager,
     private val nowPlaying: Provider<NowPlayingManager>,
     private val customIcons: CustomIconManager,
     private val tiles: AppJarnCanvasTiles,
     private val folderActions: AppJarnCanvasFolders,
+    appOptions: AppJarnAppOptions,
 ) : JarnCanvasData, JarnCanvasTiles by tiles, JarnCanvasFolders by folderActions {
 
     private val pageEdits get() = tiles.edits
@@ -154,6 +153,8 @@ class AppJarnCanvasData @Inject constructor(
         CanvasSources(types, home, saved, names, recent)
     }.combine(customIcons.customIconsMap) { sources, icons ->
         sources.copy(customIcons = icons)
+    }.combine(appOptions.iconPackChanges.onEach { icons.clear() }) { sources, _ ->
+        sources
     }.flatMapLatest { sources ->
         combine(pageRefs(sources), music(sources)) { refs, music ->
             buildSnapshot(sources, refs, music)
@@ -178,10 +179,6 @@ class AppJarnCanvasData @Inject constructor(
         val columns = if (minWidth > 0) ((minWidth + cellSizePx - 1) / cellSizePx).toInt() else 1
         val rows = if (minHeight > 0) ((minHeight + cellSizePx - 1) / cellSizePx).toInt() else 1
         return columns.coerceAtLeast(1) to rows.coerceAtLeast(1)
-    }
-
-    override fun launchApp(host: Activity, packageName: String) {
-        launchAppOnDisplay(host, packageName, displayPreferences.getAppDisplayPreference(packageName))
     }
 
     override fun setHomePage(index: Int) {

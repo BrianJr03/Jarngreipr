@@ -31,14 +31,10 @@ class AppJarnCanvasFoldersTest {
         rss = mockk(relaxed = true),
     )
     private val subject = AppJarnCanvasFolders(
-        context = mockk(relaxed = true),
         layouts = layouts,
         folders = folders,
-        customNames = mockk(relaxed = true),
-        customIcons = mockk(relaxed = true),
-        displayPreferences = mockk(relaxed = true),
-        iconRefresh = mockk(relaxed = true),
         tiles = tiles,
+        appOptions = mockk(relaxed = true),
     )
     private val folder = Folder("id", "Games", listOf("gone", "a"), AppPosition("id", 0f, 0f))
 

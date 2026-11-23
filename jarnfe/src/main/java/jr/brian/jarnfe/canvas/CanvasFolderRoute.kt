@@ -1,8 +1,5 @@
 package jr.brian.jarnfe.canvas
 
-import android.content.ActivityNotFoundException
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,10 +10,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppOptionsExtra
+import jr.brian.jarnfe.apps.JarnAppOptionsFlow
+import jr.brian.jarnfe.apps.JarnAppOptionsTarget
+import jr.brian.jarnfe.apps.rememberJarnImagePicker
+import jr.brian.jarnfe.apps.shouldAskDisplay
 import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.launch
-
-private val FolderImageTypes = arrayOf("image/*")
 
 private sealed interface FolderStep {
     data object Contents : FolderStep
@@ -24,25 +24,9 @@ private sealed interface FolderStep {
     data object Background : FolderStep
     data object EditApps : FolderStep
     data object ConfirmDelete : FolderStep
-    data class AppMenu(val packageName: String) : FolderStep
-    data class RenameApp(val packageName: String) : FolderStep
+    data class AppOptions(val packageName: String) : FolderStep
     data class AskDisplay(val packageName: String) : FolderStep
     data class ConfirmLastApp(val packageName: String) : FolderStep
-}
-
-/** Opens the system image picker. Cancelling changes nothing. */
-@Composable
-internal fun rememberFolderImagePicker(onPicked: (String) -> Unit): () -> Unit {
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { onPicked(it.toString()) }
-    }
-    return {
-        try {
-            picker.launch(FolderImageTypes)
-        } catch (_: ActivityNotFoundException) {
-            JarnNotices.show(R.string.jarnfe_canvas_notice_picker_failed)
-        }
-    }
 }
 
 @Composable
@@ -54,7 +38,6 @@ internal fun CanvasFolderRoute(
 ) {
     var step by remember(folder.id) { mutableStateOf<FolderStep>(FolderStep.Contents) }
     var lastApp by remember(folder.id) { mutableStateOf<String?>(null) }
-    var iconTarget by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
@@ -71,27 +54,18 @@ internal fun CanvasFolderRoute(
     }
     val openApp: (JarnCanvasApp) -> Unit = { app ->
         lastApp = app.packageName
-        val options = data.folderAppOptions(app.packageName)
-        if (options.askOnLaunch && options.hasSecondDisplay) {
+        if (data.appOptions(app.packageName).shouldAskDisplay()) {
             step = FolderStep.AskDisplay(app.packageName)
         } else {
             onClose()
             activity?.let { data.launchApp(it, app.packageName) }
         }
     }
-    val chooseBackground = rememberFolderImagePicker { uri ->
+    val chooseBackground = rememberJarnImagePicker { uri ->
         scope.launch {
             if (data.setFolderBackgroundImage(pageIndex, folder.id, uri)) {
                 step = FolderStep.Contents
             } else {
-                JarnNotices.show(R.string.jarnfe_canvas_notice_photo_failed)
-            }
-        }
-    }
-    val chooseIcon = rememberFolderImagePicker { uri ->
-        val packageName = iconTarget ?: return@rememberFolderImagePicker
-        scope.launch {
-            if (!data.setAppIcon(packageName, uri)) {
                 JarnNotices.show(R.string.jarnfe_canvas_notice_photo_failed)
             }
         }
@@ -104,7 +78,7 @@ internal fun CanvasFolderRoute(
             onOpenApp = openApp,
             onAppOptions = {
                 lastApp = it.packageName
-                step = FolderStep.AppMenu(it.packageName)
+                step = FolderStep.AppOptions(it.packageName)
             },
             onRename = { step = FolderStep.Rename },
             onBackground = { step = FolderStep.Background },
@@ -144,50 +118,32 @@ internal fun CanvasFolderRoute(
             onConfirm = deleteFolder,
             onDismiss = toContents,
         )
-        is FolderStep.AppMenu -> {
+        is FolderStep.AppOptions -> {
             val app = folder.apps.firstOrNull { it.packageName == current.packageName }
             if (app == null) {
                 LaunchedEffect(current) { toContents() }
             } else {
-                CanvasFolderAppMenu(
+                JarnAppOptionsFlow(
                     data = data,
-                    app = app,
-                    onOpenOther = { display -> launchOn(app.packageName, display.opposite()) },
-                    onAppInfo = {
-                        onClose()
-                        activity?.let { data.openAppInfo(it, app.packageName) }
-                    },
-                    onChooseIcon = {
-                        iconTarget = app.packageName
-                        chooseIcon()
-                    },
-                    onClearIcon = { scope.launch { data.clearAppIcon(app.packageName) } },
-                    onRename = { step = FolderStep.RenameApp(app.packageName) },
-                    onRemove = {
-                        if (folder.apps.size <= 1) {
-                            step = FolderStep.ConfirmLastApp(app.packageName)
-                        } else {
-                            scope.launch {
-                                data.editFolderApps(pageIndex, folder.id, emptySet(), setOf(app.packageName))
+                    target = JarnAppOptionsTarget(app.packageName, app.label, app.iconPath != null),
+                    extras = listOf(
+                        JarnAppOptionsExtra(R.string.jarnfe_folder_remove_app) {
+                            if (folder.apps.size <= 1) {
+                                step = FolderStep.ConfirmLastApp(app.packageName)
+                            } else {
+                                scope.launch {
+                                    data.editFolderApps(pageIndex, folder.id, emptySet(), setOf(app.packageName))
+                                }
+                                lastApp = null
+                                toContents()
                             }
-                            lastApp = null
-                            toContents()
-                        }
-                    },
+                        },
+                    ),
                     onClose = toContents,
+                    onLeave = onClose,
                 )
             }
         }
-        is FolderStep.RenameApp -> CanvasKeyboardSheet(
-            label = stringResource(R.string.jarnfe_folder_app_name_label),
-            onDone = { text ->
-                jarnFolderNameOrNull(text)?.let { data.setAppName(current.packageName, it) }
-                step = FolderStep.AppMenu(current.packageName)
-            },
-            onCancel = { step = FolderStep.AppMenu(current.packageName) },
-            initialText = data.folderAppOptions(current.packageName).customName
-                ?: folder.apps.firstOrNull { it.packageName == current.packageName }?.label.orEmpty(),
-        )
         is FolderStep.AskDisplay -> CanvasDisplayChoiceSheet(
             onPick = { display -> launchOn(current.packageName, display) },
             onClose = toContents,
@@ -195,7 +151,7 @@ internal fun CanvasFolderRoute(
         is FolderStep.ConfirmLastApp -> CanvasFolderConfirmDialog(
             messageRes = R.string.jarnfe_folder_last_app_message,
             onConfirm = deleteFolder,
-            onDismiss = { step = FolderStep.AppMenu(current.packageName) },
+            onDismiss = { step = FolderStep.AppOptions(current.packageName) },
         )
     }
 }

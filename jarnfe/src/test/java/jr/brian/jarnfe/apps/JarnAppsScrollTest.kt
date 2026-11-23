@@ -32,6 +32,7 @@ import jr.brian.jarnfe.dock.JarnDockApp
 import jr.brian.jarnfe.input.JarnInputRouter
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +53,8 @@ class JarnAppsScrollTest {
     private val pinned = apps.take(3).map { it.packageName }
     private val hidden = setOf("pkg.48", "pkg.49")
     private var snapshot by mutableStateOf(JarnAppsSnapshot(apps, pinned, hidden))
+    private val options = FakeJarnAppOptions()
+    private val opened = mutableListOf<String>()
 
     private fun string(id: Int) = ApplicationProvider.getApplicationContext<Application>().getString(id)
 
@@ -60,7 +63,7 @@ class JarnAppsScrollTest {
             JarnTheme {
                 ProvideJarnInput(JarnInputRouter(), JarnScreen.Stage) {
                     Box(Modifier.size(320.dp, 300.dp)) {
-                        JarnAppsDrawer(snapshot, JarnAppsCommands({}, { _, _ -> }, { _, _ -> }))
+                        JarnAppsDrawer(snapshot, JarnAppsCommands({ opened += it }, options))
                     }
                 }
             }
@@ -140,6 +143,24 @@ class JarnAppsScrollTest {
         press(Key.DirectionDown)
         rule.onNodeWithTag("pkg.48").assertIsFocused()
         assertClearOfEdges(rule.onNodeWithTag("pkg.48"))
+    }
+
+    @Test
+    fun `a plain tile opens directly when ask on launch is off`() {
+        show()
+        rule.onNodeWithTag("pkg.10").performSemanticsAction(SemanticsActions.OnClick)
+        rule.waitForIdle()
+        assertEquals(listOf("pkg.10"), opened)
+    }
+
+    @Test
+    fun `a plain tile asks which display when ask on launch is on`() {
+        options.current = options.current.copy(askOnLaunch = true, hasSecondDisplay = true)
+        show()
+        rule.onNodeWithTag("pkg.10").performSemanticsAction(SemanticsActions.OnClick)
+        rule.waitForIdle()
+        assertTrue(opened.isEmpty())
+        rule.onNodeWithText(string(R.string.jarnfe_folder_which_display)).assertExists()
     }
 
     @Test

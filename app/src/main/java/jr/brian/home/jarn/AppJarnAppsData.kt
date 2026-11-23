@@ -1,18 +1,18 @@
 package jr.brian.home.jarn
 
-import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.apps.JarnAppPinStore
-import jr.brian.home.canvas.jarn.AppJarnCanvasData
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.CustomAppNameManager
+import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.IconPackManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.model.PageType
+import jr.brian.jarnfe.apps.JarnAppOptionsData
 import jr.brian.jarnfe.apps.JarnAppsData
 import jr.brian.jarnfe.apps.JarnAppsSnapshot
 import jr.brian.jarnfe.dock.JarnDockApp
@@ -30,8 +30,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
+import java.io.File
 import javax.inject.Inject
-import javax.inject.Provider
 import javax.inject.Singleton
 
 private const val INSTALLED_APPS_KEEP_ALIVE_MS = 30_000L
@@ -61,45 +61,44 @@ class AppJarnAppsData @Inject constructor(
     private val customNames: CustomAppNameManager,
     private val iconPacks: IconPackManager,
     private val pins: JarnAppPinStore,
-    private val canvas: Provider<AppJarnCanvasData>,
-) : JarnAppsData {
+    private val customIcons: CustomIconManager,
+    private val options: AppJarnAppOptions,
+) : JarnAppsData, JarnAppOptionsData by options {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val installed = packageChanges()
+    private val installed = combine(packageChanges(), options.iconPackChanges) { _, _ -> }
         .mapLatest { loadInstalled() }
         .shareIn(scope, SharingStarted.WhileSubscribed(INSTALLED_APPS_KEEP_ALIVE_MS), replay = 1)
 
-    override val snapshot: Flow<JarnAppsSnapshot> = combine(
+    private val customizedApps = combine(
         installed,
         customNames.customNames,
+        customIcons.customIconsMap,
+    ) { apps, names, icons ->
+        apps.map { app -> app.withCustomizations(names[app.packageName], icons[app.packageName]) }
+    }
+
+    override val snapshot: Flow<JarnAppsSnapshot> = combine(
+        customizedApps,
         visibility.hiddenAppsByPage,
         pageTypes.pageTypes,
         pins.pinnedState,
-    ) { apps, names, hiddenByPage, types, pinned ->
+    ) { apps, hiddenByPage, types, pinned ->
         JarnAppsSnapshot(
-            apps = apps.map { app -> names[app.packageName]?.let { app.copy(label = it) } ?: app },
+            apps = apps,
             pinned = pinned,
             hidden = jarnHiddenPackages(types, hiddenByPage),
         )
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(Dispatchers.IO)
 
-    override fun launch(host: Activity, packageName: String) {
-        canvas.get().launchApp(host, packageName)
-    }
-
-    override fun setPinned(packageName: String, pinned: Boolean) {
-        pins.setPinned(packageName, pinned)
-    }
-
-    override fun setHidden(packageName: String, hidden: Boolean) {
-        val pageCount = pageTypes.pageTypes.value.size
-        if (hidden) {
-            repeat(pageCount) { visibility.hideApp(it, packageName) }
-        } else {
-            jarnUnhidePages(pageCount, visibility.hiddenAppsByPage.value, packageName)
-                .forEach { visibility.showApp(it, packageName) }
-        }
+    private fun JarnDockApp.withCustomizations(name: String?, iconPath: String?): JarnDockApp {
+        val file = iconPath?.let(::File)?.takeIf { it.exists() }
+        return copy(
+            label = name ?: label,
+            iconPath = file?.absolutePath,
+            iconVersion = file?.lastModified() ?: 0L,
+        )
     }
 
     private fun packageChanges(): Flow<Unit> = callbackFlow {

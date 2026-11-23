@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +31,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppIcon
 import java.io.File
 
 private const val FOLDER_PREVIEW_COUNT = 4
@@ -124,16 +124,9 @@ private fun BoxScope.AppTile(app: JarnCanvasApp?) {
     }
 }
 
-/** Keyed on the file's version, because replacing a custom icon keeps the same path. */
 @Composable
 internal fun CanvasAppIcon(app: JarnCanvasApp, modifier: Modifier = Modifier) {
-    key(app.iconPath, app.iconVersion) {
-        AsyncImage(
-            model = app.iconPath?.let(::File) ?: app.icon,
-            contentDescription = null,
-            modifier = modifier,
-        )
-    }
+    JarnAppIcon(app.icon, app.iconPath, app.iconVersion, modifier)
 }
 
 @Composable
@@ -291,4 +284,9 @@ private fun LastPlayedRow(game: JarnCanvasRom, scale: ContentScale) {
 @Composable
 internal fun BoxScope.CanvasMenuTileContent() {
     Box(Modifier.fillMaxSize()) { LabelTile(stringResource(R.string.jarnfe_canvas_menu_tile)) }
+}
+
+@Composable
+internal fun BoxScope.CanvasLockedCellContent() {
+    LabelTile(stringResource(R.string.jarnfe_canvas_cell_locked))
 }

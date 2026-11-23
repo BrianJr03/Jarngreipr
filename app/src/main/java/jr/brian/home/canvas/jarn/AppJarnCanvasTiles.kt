@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.core.model.GameImageType
@@ -196,11 +195,6 @@ class AppJarnCanvasTiles @Inject constructor(
 
     override suspend fun pinnedRoms(): List<JarnCanvasRom> =
         pinnedRoms.allPinnedRoms.first().map { it.toJarnRom() }.sortedBy { it.title.lowercase() }
-
-    override fun openAppInfo(host: Activity, packageName: String) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri())
-        runCatching { host.startActivity(intent) }
-    }
 
     override fun widgetHealth(widgetId: Int): JarnWidgetHealth = when {
         widgetManager.getAppWidgetInfo(widgetId) != null -> JarnWidgetHealth.Live
