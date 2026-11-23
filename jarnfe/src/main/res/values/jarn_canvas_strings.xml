@@ -73,6 +73,7 @@
     <string name="jarnfe_canvas_notice_no_controls">This widget has no buttons to use.</string>
     <string name="jarnfe_canvas_notice_widget_failed">That widget could not be set up.</string>
     <string name="jarnfe_canvas_notice_photo_failed">That image could not be used.</string>
+    <string name="jarnfe_canvas_notice_folder_failed">Folder changes could not be saved.</string>
     <string name="jarnfe_canvas_notice_add_failed">That tile could not be added.</string>
     <string name="jarnfe_canvas_notice_no_audio">Add an audio feed in RSS to play music.</string>
     <string name="jarnfe_canvas_notice_rss_failed">That item could not be opened.</string>

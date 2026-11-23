@@ -57,8 +57,6 @@ import jr.brian.jarnfe.session.VisibleSettingsSections
 import jr.brian.jarnfe.shell.JarnNotices
 import jr.brian.jarnfe.systems.JarnSystems
 import jr.brian.jarnfe.systems.JarnSystemsSection
-import jr.brian.jarnfe.tools.JarnInputToolsPanel
-import jr.brian.jarnfe.utilities.JarnUtilitiesPanel
 import jr.brian.jarnfe.wallpaper.jarnDisabledRowBacking
 
 private val SideBySideMinWidth = 600.dp
@@ -90,29 +88,31 @@ internal fun JarnSettingsControls(section: SettingsSection, horizontalMargin: Dp
         JarnSettingsUnavailable()
         return
     }
-    var toolsOpen by rememberSaveable { mutableStateOf(false) }
-    if (toolsOpen) {
-        JarnInputToolsPanel(onClose = { toolsOpen = false })
+    var panelName by rememberSaveable { mutableStateOf<String?>(null) }
+    val panel = panelName?.let(JarnSettingsPanel::valueOf)
+    if (panel != null) {
+        JarnSettingsPanelHost(panel, onClose = { panelName = null })
         return
     }
-    var utilitiesOpen by rememberSaveable { mutableStateOf(false) }
-    if (utilitiesOpen) {
-        JarnUtilitiesPanel(onClose = { utilitiesOpen = false })
-        return
+    var overlay by remember { mutableStateOf<JarnSettingsOverlay?>(null) }
+    val overlayReturn = remember { FocusRequester() }
+    val actions = remember(overlayReturn) {
+        JarnSettingsActions(
+            openPanel = { panelName = it.name },
+            openOverlay = { overlay = it },
+            overlayReturn = overlayReturn,
+        )
     }
-    Column(Modifier.fillMaxSize()) {
-        SettingsSectionTabs(section, horizontalMargin)
-        key(section) {
-            SettingsSectionPage(horizontalMargin, Modifier.weight(1f).fillMaxWidth()) {
-                SettingsSectionContent(
-                    section = section,
-                    data = data,
-                    setup = setup,
-                    onOpenTools = { toolsOpen = true },
-                    onOpenUtilities = { utilitiesOpen = true },
-                )
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            SettingsSectionTabs(section, horizontalMargin)
+            key(section) {
+                SettingsSectionPage(horizontalMargin, Modifier.weight(1f).fillMaxWidth()) {
+                    SettingsSectionContent(section, data, setup, actions)
+                }
             }
         }
+        JarnSettingsOverlayHost(overlay, overlayReturn, onClose = { overlay = null })
     }
 }
 
@@ -141,6 +141,8 @@ private fun SettingsSection.labelRes(): Int = when (this) {
     SettingsSection.Art -> R.string.jarnfe_art_title
     SettingsSection.Look -> R.string.jarnfe_look_title
     SettingsSection.Display -> R.string.jarnfe_settings_section_display
+    SettingsSection.Apps -> R.string.jarnfe_settings_section_apps
+    SettingsSection.General -> R.string.jarnfe_settings_section_general
     SettingsSection.Data -> R.string.jarnfe_settings_section_data
 }
 
@@ -186,8 +188,7 @@ private fun SettingsSectionContent(
     section: SettingsSection,
     data: JarnLibraryData,
     setup: LibrarySetup,
-    onOpenTools: () -> Unit,
-    onOpenUtilities: () -> Unit,
+    actions: JarnSettingsActions,
 ) {
     when (section) {
         SettingsSection.Library -> LibrarySettings(setup)
@@ -196,33 +197,11 @@ private fun SettingsSectionContent(
             JarnLookSection()
             JarnWallpaperSection()
         }
-        SettingsSection.Display -> {
-            JarnDisplaySection()
-            InputToolsRow(onOpenTools)
-            UtilitiesRow(onOpenUtilities)
-        }
+        SettingsSection.Display -> JarnDisplaySection()
+        SettingsSection.Apps -> JarnAppsSettingsSection(actions)
+        SettingsSection.General -> JarnGeneralSection(actions)
         SettingsSection.Data -> JarnDataSection()
     }
-}
-
-@Composable
-private fun UtilitiesRow(onOpen: () -> Unit) {
-    JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_utilities_title),
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_utilities_settings_hint),
-    )
-}
-
-@Composable
-private fun InputToolsRow(onOpen: () -> Unit) {
-    JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_tools_title),
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_tools_settings_hint),
-    )
 }
 
 @Composable

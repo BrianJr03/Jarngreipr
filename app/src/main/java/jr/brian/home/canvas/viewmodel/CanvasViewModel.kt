@@ -429,8 +429,13 @@ class CanvasViewModel @Inject constructor(
     fun removeItemAndCleanup(item: CanvasItem) {
         val pageIndex = boundPage() ?: return
         when (item) {
-            is CanvasItem.FolderItem -> viewModelScope.launch {
-                folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+            is CanvasItem.FolderItem -> {
+                viewModelScope.launch {
+                    if (folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)) {
+                        canvasLayoutManager.removeItem(pageIndex, item.id)
+                    }
+                }
+                return
             }
             is CanvasItem.RomItem ->
                 pinnedRomManager.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)

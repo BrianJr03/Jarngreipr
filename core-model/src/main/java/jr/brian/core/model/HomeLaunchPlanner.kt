@@ -85,6 +85,19 @@ fun planHomeLaunches(
 }
 
 /**
+ * What leaving Jarn FE for Classic should fire. Jarn FE's windows are closing, so with two screens
+ * the launcher is pinned to the bottom display instead of following the caller onto the top one.
+ */
+fun planClassicReturnLaunches(
+    bottomDisplayId: Int?,
+    frontendEnabled: Boolean,
+): List<HomeLaunch> = when {
+    bottomDisplayId == null -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
+    frontendEnabled -> planLauncherHomeLaunches(bottomDisplayId, frontendEnabled = true)
+    else -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId))
+}
+
+/**
  * Launcher-path planner: what `routeHomeFromLauncher` should fire when
  * `jr.brian.home.HomeRouterActivity` is entered from the LAUNCHER intent
  * (an external launcher like Mjolnir, or the system when Jarngreipr is the

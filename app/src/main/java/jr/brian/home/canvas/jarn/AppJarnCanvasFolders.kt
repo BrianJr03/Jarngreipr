@@ -11,6 +11,7 @@ import jr.brian.jarnfe.apps.JarnAppOptionsData
 import jr.brian.jarnfe.canvas.JarnAppDisplay
 import jr.brian.jarnfe.canvas.JarnCanvasFolders
 import jr.brian.jarnfe.canvas.jarnFolderPackages
+import jr.brian.jarnfe.canvas.showJarnFolderEditFailed
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,7 +35,7 @@ class AppJarnCanvasFolders @Inject constructor(
 ) : JarnCanvasFolders, JarnAppOptionsData by appOptions {
 
     override suspend fun renameFolder(pageIndex: Int, folderId: String, name: String) = tiles.edit {
-        folders.renameFolder(pageIndex, folderId, name, CanvasTabType.VALUE)
+        folders.renameFolder(pageIndex, folderId, name, CanvasTabType.VALUE).noticeIfRefused()
     }
 
     override suspend fun editFolderApps(
@@ -49,6 +50,7 @@ class AppJarnCanvasFolders @Inject constructor(
             removeFolderAndTiles(pageIndex, folderId)
         } else {
             folders.updateFolder(pageIndex, folder.copy(appPackageNames = next), CanvasTabType.VALUE)
+                .noticeIfRefused()
         }
     }
 
@@ -80,7 +82,10 @@ class AppJarnCanvasFolders @Inject constructor(
 
     /** The folder goes first, so Classic's folder sync can never put a tile back. */
     private suspend fun removeFolderAndTiles(pageIndex: Int, folderId: String) {
-        folders.deleteFolder(pageIndex, folderId, CanvasTabType.VALUE)
+        if (!folders.deleteFolder(pageIndex, folderId, CanvasTabType.VALUE)) {
+            showJarnFolderEditFailed()
+            return
+        }
         layouts.getLayout(pageIndex).items
             .filter { it is CanvasItem.FolderItem && it.folderId == folderId }
             .forEach { layouts.removeItem(pageIndex, it.id) }
@@ -89,13 +94,19 @@ class AppJarnCanvasFolders @Inject constructor(
     override suspend fun setFolderBackgroundColor(pageIndex: Int, folderId: String, argb: Int?) =
         tiles.edit {
             folders.updateFolderBackground(pageIndex, folderId, argb, null, CanvasTabType.VALUE)
+                .noticeIfRefused()
         }
 
     override suspend fun setFolderBackgroundImage(pageIndex: Int, folderId: String, uri: String): Boolean {
         val path = folders.saveFolderBackgroundImage(folderId, uri.toUri()).getOrNull() ?: return false
-        tiles.edit {
+        val saved = tiles.edit {
             folders.updateFolderBackground(pageIndex, folderId, null, path, CanvasTabType.VALUE)
         }
-        return true
+        if (!saved) folders.discardFolderBackgroundImage(path)
+        return saved
+    }
+
+    private fun Boolean.noticeIfRefused() {
+        if (!this) showJarnFolderEditFailed()
     }
 }

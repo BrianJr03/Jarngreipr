@@ -25,9 +25,18 @@ class ExperienceStore @Inject constructor(
 
     val experience: Experience get() = _state.value
 
+    /** Null until something has saved a choice, which [experience] cannot distinguish. */
+    val storedExperience: Experience?
+        get() = prefs.getString(KEY_EXPERIENCE, null)?.let(Experience::fromNameOrDefault)
+
     fun setExperience(experience: Experience) {
         _state.value = experience
         prefs.edit { putString(KEY_EXPERIENCE, experience.name) }
+    }
+
+    /** Records a default that was actually opened, so backups report the real experience. */
+    fun adoptIfUnset(experience: Experience) {
+        if (storedExperience == null) setExperience(experience)
     }
 
     private fun load(): Experience =

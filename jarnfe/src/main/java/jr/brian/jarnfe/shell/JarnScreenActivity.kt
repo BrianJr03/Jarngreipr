@@ -21,6 +21,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.Lifecycle
 import jr.brian.frontend.look.JarnTapControl
+import jr.brian.jarnfe.audio.JarnAudio
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.connectJarnLibrary
@@ -70,6 +71,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             return
         }
         liveWindows += this
+        JarnAudio.attach(this)
         JarnWallpaperGate.track(this, screen)
         onBackPressedDispatcher.addCallback(this) { JarnInput.dispatchSystemBack() }
         setContent {
@@ -98,6 +100,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
         super.onTopResumedActivityChanged(isTopResumedActivity)
         JarnSession.update { onTopResumed(screen, isTopResumedActivity) }
         JarnWallpaperGate.onTopResumedChanged(this, isTopResumedActivity)
+        JarnAudio.onTopResumed(this, isTopResumedActivity)
     }
 
     /** A covered window cannot take keys, so game launch and return follow Android as usual. */
@@ -108,6 +111,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     override fun onDestroy() {
         liveWindows.remove(this)
+        JarnAudio.detach(this)
         super.onDestroy()
     }
 
@@ -194,10 +198,14 @@ abstract class JarnScreenActivity : ComponentActivity() {
         }
     }
 
-    private companion object {
-        const val KEY_SESSION = "jarnfe_session"
-        const val KEY_OPEN_SYSTEM = "jarnfe_open_system"
-        val liveWindows = LinkedHashSet<JarnScreenActivity>()
+    internal companion object {
+        private const val KEY_SESSION = "jarnfe_session"
+        private const val KEY_OPEN_SYSTEM = "jarnfe_open_system"
+        private val liveWindows = LinkedHashSet<JarnScreenActivity>()
+
+        fun finishAllWindows() {
+            liveWindows.toList().forEach { it.finish() }
+        }
     }
 }
 

@@ -9,7 +9,7 @@ enum class LibrarySection { Systems, Favorites, Recent }
 enum class DeckTab { Now, Apps, Canvas }
 
 /** [Data] holds backup, restore and updates. */
-enum class SettingsSection { Library, Art, Look, Display, Data }
+enum class SettingsSection { Library, Art, Look, Display, Apps, General, Data }
 
 val VisibleSettingsSections: List<SettingsSection> = SettingsSection.entries
 

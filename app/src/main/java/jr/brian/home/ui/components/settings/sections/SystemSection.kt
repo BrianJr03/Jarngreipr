@@ -33,10 +33,12 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import jr.brian.home.BuildConfig
 import jr.brian.home.R
 import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.SettingItem
+import jr.brian.home.ui.components.settings.SwitchToJarnSettingItem
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
@@ -156,6 +158,8 @@ fun SystemSection(
                 )
             }
         )
+
+        if (BuildConfig.DEBUG) SwitchToJarnSettingItem()
 
         SettingItem(
             title = stringResource(id = R.string.settings_crash_logs_title),

@@ -1029,6 +1029,7 @@
     <string name="folder_background_choose_png">Choose PNG</string>
     <string name="folder_background_choose_gif">Choose GIF</string>
     <string name="folder_background_remove">Remove background</string>
+    <string name="folder_edit_failed">Folder changes could not be saved.</string>
     <string name="folder_background_image_error">Unable to load image</string>
     <string name="folder_background_color_description">Background color</string>
 
@@ -1978,4 +1979,7 @@
     <string name="home_main_screen_description">Which screen the launcher occupies (and takes focus) in Both mode.</string>
     <string name="home_main_screen_option_top">Top</string>
     <string name="home_main_screen_option_bottom">Bottom</string>
+    <string name="settings_switch_to_jarn_title">Switch to Jarn FE</string>
+    <string name="settings_switch_to_jarn_description">Your canvases, widgets, photos and settings stay as they are</string>
+    <string name="settings_switch_to_jarn_failed">Couldn\'t open Jarn FE</string>
 </resources>

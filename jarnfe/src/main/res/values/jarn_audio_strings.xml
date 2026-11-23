@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_audio_title">Music and jingles</string>
+    <string name="jarnfe_audio_settings_hint">Background music and game jingles</string>
+    <string name="jarnfe_audio_unavailable">Music and jingles aren\'t available on this device.</string>
+    <string name="jarnfe_audio_picker_unavailable">This device has no file picker.</string>
+    <string name="jarnfe_audio_percent">%1$d%%</string>
+    <string name="jarnfe_audio_volume">Volume</string>
+    <string name="jarnfe_audio_remove">Remove</string>
+
+    <string name="jarnfe_audio_music">Background music</string>
+    <string name="jarnfe_audio_music_hint">Play your own music while you browse</string>
+    <string name="jarnfe_audio_music_play">Play music</string>
+    <string name="jarnfe_audio_music_folder">Music folder</string>
+    <string name="jarnfe_audio_music_folder_empty">Pick a folder to play in order</string>
+    <string name="jarnfe_audio_music_file">Single track</string>
+    <string name="jarnfe_audio_music_file_empty">Pick one track to loop</string>
+    <string name="jarnfe_audio_music_playing_from">Playing from %1$s</string>
+
+    <string name="jarnfe_audio_volume_help_title">Volume controls help</string>
+    <string name="jarnfe_audio_volume_help_body">Controlling the second screen\'s volume needs a system permission that can only be granted over ADB. Run this command from Termux or a computer, then come back here.</string>
+    <string name="jarnfe_audio_volume_help_command">ADB command</string>
+    <string name="jarnfe_audio_volume_help_adb">adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS</string>
+
+    <string name="jarnfe_audio_jingles">Jingles</string>
+    <string name="jarnfe_audio_jingles_hint">A short theme when you land on a game</string>
+    <string name="jarnfe_audio_jingles_enable">Play jingles</string>
+    <string name="jarnfe_audio_jingles_enable_hint">Plays a game\'s jingle when you select it</string>
+    <string name="jarnfe_audio_jingles_mute">Mute jingles</string>
+    <string name="jarnfe_audio_jingles_mute_hint">Keeps jingles on but silent</string>
+    <string name="jarnfe_audio_jingles_regex">Pattern match first</string>
+    <string name="jarnfe_audio_jingles_regex_hint">Try a pack\'s patterns before exact game names</string>
+    <string name="jarnfe_audio_jingles_normalize">Even out volume</string>
+    <string name="jarnfe_audio_jingles_normalize_hint">Boosts quieter jingles</string>
+
+    <string name="jarnfe_audio_about_title">About jingles</string>
+    <string name="jarnfe_audio_about_hint">How packs work and who hosts them</string>
+    <string name="jarnfe_audio_about_body">Jingles are short audio clips shared in packs. A pack is a folder or GitHub repository with an index.json file and a jingles folder.\n\nRepositories are hosted by third parties and may contain copyrighted material. Jarngreipr does not host, verify or control their content. You are responsible for having the rights to download or use them.\n\nTo start your own, copy the template at github.com/inssekt/cocoon-jingle-repo, then add it here as username/repo-name.</string>
+
+    <string name="jarnfe_audio_repos">GitHub repositories</string>
+    <string name="jarnfe_audio_repos_hint">Add, search and download packs</string>
+    <string name="jarnfe_audio_repo_add">Add repository</string>
+    <string name="jarnfe_audio_repo_add_hint">Enter username/repo-name or a GitHub link</string>
+    <string name="jarnfe_audio_repo_add_label">Repository</string>
+    <string name="jarnfe_audio_repo_search">Search repositories</string>
+    <string name="jarnfe_audio_repo_search_hint">Find jingle packs on GitHub</string>
+    <string name="jarnfe_audio_repo_search_label">Search GitHub</string>
+    <string name="jarnfe_audio_repo_searching">Searching…</string>
+    <string name="jarnfe_audio_repo_results">Search results</string>
+    <string name="jarnfe_audio_repo_no_results">No jingle packs found.</string>
+    <string name="jarnfe_audio_repo_already_added">Already added</string>
+    <string name="jarnfe_audio_repo_stars">%1$d stars</string>
+    <string name="jarnfe_audio_repo_empty">No repositories yet.</string>
+    <string name="jarnfe_audio_repo_supporting">%1$s, %2$s</string>
+    <string name="jarnfe_audio_repo_online">%1$d jingles</string>
+    <string name="jarnfe_audio_repo_offline">Saved for offline</string>
+    <string name="jarnfe_audio_repo_unreachable">Not loaded</string>
+    <string name="jarnfe_audio_repo_downloading">Downloading %1$d%%</string>
+    <string name="jarnfe_audio_repo_download">Download for offline</string>
+    <string name="jarnfe_audio_repo_update">Download again</string>
+    <string name="jarnfe_audio_repo_stop">Stop download</string>
+    <string name="jarnfe_audio_repo_added">Repository added</string>
+    <string name="jarnfe_audio_repo_duplicate">That repository is already added</string>
+    <string name="jarnfe_audio_repo_invalid">That isn\'t a valid GitHub repository</string>
+    <string name="jarnfe_audio_repo_download_done">Download finished</string>
+    <string name="jarnfe_audio_repo_download_failed">Download failed</string>
+    <string name="jarnfe_audio_repo_download_rejected">This pack has unsafe file paths, so it wasn\'t downloaded</string>
+    <string name="jarnfe_audio_repo_remove_title">Remove repository?</string>
+    <string name="jarnfe_audio_repo_remove_message">%1$s will stop playing jingles.</string>
+    <string name="jarnfe_audio_search_failed">Search failed. Check your connection.</string>
+
+    <string name="jarnfe_audio_folders">Local packs</string>
+    <string name="jarnfe_audio_folders_hint">Use or create packs on this device</string>
+    <string name="jarnfe_audio_folder_add">Add folder</string>
+    <string name="jarnfe_audio_folder_add_hint">Needs index.json and a jingles folder</string>
+    <string name="jarnfe_audio_folder_refresh">Refresh packs</string>
+    <string name="jarnfe_audio_folder_refresh_hint">Pick up changes made to your folders</string>
+    <string name="jarnfe_audio_folder_refreshed">Refreshing packs</string>
+    <string name="jarnfe_audio_folder_empty">No local packs yet.</string>
+    <string name="jarnfe_audio_folder_unreadable">Couldn\'t read this pack</string>
+    <string name="jarnfe_audio_folder_added">Folder added</string>
+    <string name="jarnfe_audio_folder_duplicate">That folder is already added</string>
+    <string name="jarnfe_audio_folder_invalid">That folder needs index.json and a jingles folder</string>
+    <string name="jarnfe_audio_folder_remove_title">Remove pack?</string>
+    <string name="jarnfe_audio_folder_remove_message">%1$s will stop playing jingles. Its files stay on your device.</string>
+
+    <string name="jarnfe_audio_pack_create">Create pack</string>
+    <string name="jarnfe_audio_pack_create_hint">Start a pack with your first jingle</string>
+    <string name="jarnfe_audio_pack_update">Add jingle to pack</string>
+    <string name="jarnfe_audio_pack_name">Pack name</string>
+    <string name="jarnfe_audio_pack_game">Game name</string>
+    <string name="jarnfe_audio_pack_platform">Platform folder</string>
+    <string name="jarnfe_audio_pack_file">File name</string>
+    <string name="jarnfe_audio_pack_audio">Audio file</string>
+    <string name="jarnfe_audio_pack_audio_empty">Pick the jingle to add</string>
+    <string name="jarnfe_audio_pack_audio_ready">Audio file selected</string>
+    <string name="jarnfe_audio_pack_unset">Not set</string>
+    <string name="jarnfe_audio_pack_save">Save jingle</string>
+    <string name="jarnfe_audio_pack_saved">Jingle saved</string>
+    <string name="jarnfe_audio_pack_failed">Couldn\'t save the jingle</string>
+    <string name="jarnfe_audio_pack_invalid">Fill in every field. Platform uses letters, numbers, - or _, and names can\'t contain slashes.</string>
+</resources>

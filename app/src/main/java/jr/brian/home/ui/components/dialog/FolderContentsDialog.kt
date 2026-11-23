@@ -112,6 +112,26 @@ fun FolderContentsDialog(
     val hasExternalDisplay = rememberHasExternalDisplay()
     val displayChooser = rememberDisplayChooser()
 
+    val saveFolderApps: (Set<String>, () -> Unit) -> Unit = { newPackages, onFolderDeleted ->
+        val previousPackages = folderAppPackages
+        folderAppPackages = newPackages
+        scope.launch {
+            val saved = if (newPackages.isEmpty()) {
+                folderManager.deleteFolder(pageIndex, folderId, tabType)
+            } else {
+                folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
+            }
+            when {
+                !saved -> folderAppPackages = previousPackages
+                newPackages.isEmpty() -> onFolderDeleted()
+            }
+        }
+    }
+    val closeAfterFolderDeleted: () -> Unit = {
+        editAppsDialogState.dismiss()
+        onDismiss()
+    }
+
     AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -134,9 +154,8 @@ fun FolderContentsDialog(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                folderManager.deleteFolder(pageIndex, folderId, tabType)
+                                if (folderManager.deleteFolder(pageIndex, folderId, tabType)) onDismiss()
                             }
-                            onDismiss()
                         },
                         modifier = Modifier.size(40.dp)
                     ) {
@@ -298,31 +317,13 @@ fun FolderContentsDialog(
                 } else {
                     folderAppPackages + packageName
                 }
-                folderAppPackages = newPackages
-                scope.launch {
-                    if (newPackages.isEmpty()) {
-                        folderManager.deleteFolder(pageIndex, folderId, tabType)
-                        editAppsDialogState.dismiss()
-                        onDismiss()
-                    } else {
-                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
-                    }
-                }
+                saveFolderApps(newPackages, closeAfterFolderDeleted)
             },
             onShowAllOverride = {
-                val newPackages = allApps.map { it.packageName }.toSet()
-                folderAppPackages = newPackages
-                scope.launch {
-                    folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
-                }
+                saveFolderApps(allApps.map { it.packageName }.toSet(), closeAfterFolderDeleted)
             },
             onHideAllOverride = {
-                folderAppPackages = emptySet()
-                scope.launch {
-                    folderManager.deleteFolder(pageIndex, folderId, tabType)
-                    editAppsDialogState.dismiss()
-                    onDismiss()
-                }
+                saveFolderApps(emptySet(), closeAfterFolderDeleted)
             }
         )
     }
@@ -345,17 +346,7 @@ fun FolderContentsDialog(
             },
             hasExternalDisplay = hasExternalDisplay,
             onHideApp = {
-                val newPackages = folderAppPackages - app.packageName
-                folderAppPackages = newPackages
-                scope.launch {
-                    if (newPackages.isEmpty()) {
-                        folderManager.deleteFolder(pageIndex, folderId, tabType)
-                        selectedAppForOptions = null
-                        onDismiss()
-                    } else {
-                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
-                    }
-                }
+                saveFolderApps(folderAppPackages - app.packageName, onDismiss)
                 selectedAppForOptions = null
             },
             onCustomIconClick = {

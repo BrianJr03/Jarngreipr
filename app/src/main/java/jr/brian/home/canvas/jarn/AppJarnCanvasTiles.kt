@@ -41,6 +41,7 @@ import jr.brian.jarnfe.canvas.JarnWidgetLease
 import jr.brian.jarnfe.canvas.JarnWidgetProvider
 import jr.brian.jarnfe.canvas.jarnLayoutWithArrival
 import jr.brian.jarnfe.canvas.jarnTileMayChangePage
+import jr.brian.jarnfe.canvas.showJarnFolderEditFailed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -152,8 +153,11 @@ class AppJarnCanvasTiles @Inject constructor(
     override suspend fun removeTile(pageIndex: Int, itemId: String) = edit {
         if (!isCanvasPage(pageIndex)) return@edit
         val item = layouts.getLayout(pageIndex).items.firstOrNull { it.id == itemId } ?: return@edit
-        if (item is CanvasItem.FolderItem) {
-            folders.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+        if (item is CanvasItem.FolderItem &&
+            !folders.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+        ) {
+            showJarnFolderEditFailed()
+            return@edit
         }
         layouts.removeItem(pageIndex, itemId)
         releaseAfterRemoval(pageIndex, item)
@@ -376,7 +380,7 @@ class AppJarnCanvasTiles @Inject constructor(
             appPackageNames = tile.packageNames,
             position = AppPosition(first, 0f, 0f),
         )
-        folders.createFolder(pageIndex, folder, CanvasTabType.VALUE)
+        if (!folders.createFolder(pageIndex, folder, CanvasTabType.VALUE)) return null
         return place(pageIndex, CanvasItem.FolderItem("folder-${folder.id}", folder.id))
     }
 

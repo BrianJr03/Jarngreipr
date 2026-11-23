@@ -3,7 +3,7 @@
 
 LIBRARY_TABS=(Systems Favorites Recent)
 DECK_TABS=(Now Apps Canvas)
-SETTINGS_TABS=(Library Art Look Display Data)
+SETTINGS_TABS=(Library Art Look Display Apps General Data)
 # Wallpaper showing through the gaps between tiles moved up to 5 cells on a real Thor idle.
 CONTENT_CHANGE_CELLS=12
 MIN_USABLE_CELLS=100
@@ -286,9 +286,9 @@ check_settings_by_ui() {
   local original name
   TAB_ROLE=deck
   original="$(ui_selected "${SETTINGS_TABS[@]}")"
-  press_times "$KEY_L1" 3 || return
+  press_times "$KEY_L1" "$((${#SETTINGS_TABS[@]} - 1))" || return
   expect_selected Library "L1 clamps to the first section" "${SETTINGS_TABS[@]}"
-  for name in Art Look Display Data; do
+  for name in Art Look Display Apps General Data; do
     key "$KEY_R1" || return
     expect_selected "$name" "R1 opens section" "${SETTINGS_TABS[@]}"
   done
@@ -300,7 +300,7 @@ check_settings_by_ui() {
 # The starting section can't be read here, so it ends on the first one, the session default.
 check_settings_by_frames() {
   check_tabs_by_frames "$DECK_PHYSICAL" "Settings" "${#SETTINGS_TABS[@]}" || return
-  press_times "$KEY_L1" 3 || return
+  press_times "$KEY_L1" "$((${#SETTINGS_TABS[@]} - 1))" || return
   echo "  info  Settings section could not be read, left on the first section"
 }
 

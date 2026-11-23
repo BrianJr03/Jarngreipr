@@ -3,6 +3,7 @@ package jr.brian.home.canvas.viewmodel
 import android.graphics.drawable.Drawable
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -324,12 +325,26 @@ class CanvasViewModelTest {
         vm.setPageIndex(2)
         advanceUntilIdle()
 
+        coEvery { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) } returns true
         val folderItem = CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x")
         vm.removeItemAndCleanup(folderItem)
         advanceUntilIdle()
 
         coVerify { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) }
         verify { canvasLayoutManager.removeItem(2, "folder-x") }
+    }
+
+    @Test
+    fun `removeItemAndCleanup keeps the tile when the folder delete is refused`() = runTest {
+        val vm = newVm()
+        vm.setPageIndex(2)
+        advanceUntilIdle()
+        coEvery { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) } returns false
+
+        vm.removeItemAndCleanup(CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x"))
+        advanceUntilIdle()
+
+        verify(exactly = 0) { canvasLayoutManager.removeItem(2, "folder-x") }
     }
 
     @Test

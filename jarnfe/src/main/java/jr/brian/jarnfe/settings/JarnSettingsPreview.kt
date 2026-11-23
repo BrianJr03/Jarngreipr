@@ -7,19 +7,33 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.library.JarnSystemTile
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppIcon
+import jr.brian.jarnfe.apps.JarnAppNameLabel
+import jr.brian.jarnfe.apps.jarnAppSections
+import jr.brian.jarnfe.apps.jarnAppsDataOrNull
+import jr.brian.jarnfe.dock.JarnDockApp
+import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.SettingsSection
 import jr.brian.jarnfe.library.GameCellMinSize
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
@@ -31,6 +45,8 @@ import jr.brian.jarnfe.library.gameCountText
 import jr.brian.jarnfe.look.rememberJarnDisplay
 
 private const val PREVIEW_TILE_COUNT = 8
+private val PreviewAppTileWidth = 88.dp
+private val PreviewAppIconSize = 48.dp
 
 /** Real tiles at the saved sizes. They can't take focus, so the preview never traps the controller. */
 @Composable
@@ -45,8 +61,44 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
     ) {
         PreviewHeading()
-        PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale)
-        PreviewGameRow(games, GameCellMinSize * display.gameTileScale)
+        if (JarnSession.state.settingsSection == SettingsSection.Apps) {
+            PreviewAppRow()
+        } else {
+            PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale)
+            PreviewGameRow(games, GameCellMinSize * display.gameTileScale)
+        }
+    }
+}
+
+@Composable
+private fun PreviewAppRow() {
+    val context = LocalContext.current
+    val data = remember(context) { context.jarnAppsDataOrNull() } ?: return
+    val snapshot by remember(data) { data.snapshot }.collectAsState(initial = null)
+    val labelSize = rememberJarnLauncherPrefs().appLabelSize
+    val apps = remember(snapshot) {
+        snapshot?.let { jarnAppSections(it) }?.let { it.pinned + it.all }.orEmpty().take(PREVIEW_TILE_COUNT)
+    }
+    JarnText(
+        text = stringResource(R.string.jarnfe_settings_preview_apps),
+        style = JarnTheme.type.caption,
+        color = JarnTheme.colors.textMid,
+        maxLines = 1,
+    )
+    PreviewRow {
+        apps.forEach { app -> PreviewAppTile(app, labelSize) }
+    }
+}
+
+@Composable
+private fun PreviewAppTile(app: JarnDockApp, labelSize: Int) {
+    Column(
+        modifier = Modifier.width(PreviewAppTileWidth),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
+    ) {
+        JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(PreviewAppIconSize))
+        JarnAppNameLabel(app.label, labelSize)
     }
 }
 
