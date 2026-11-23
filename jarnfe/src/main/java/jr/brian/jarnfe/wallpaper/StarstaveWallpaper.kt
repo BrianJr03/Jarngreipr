@@ -1,26 +1,17 @@
 package jr.brian.jarnfe.wallpaper
 
 import android.graphics.Canvas
-import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Shader
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import jr.brian.core.model.PRIMARY_DISPLAY_ID
-import jr.brian.core.ui.theme.JarnColors
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.LocalJarnScreen
-import jr.brian.jarnfe.session.JarnSession
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -43,39 +34,19 @@ private const val COORDS_PER_LINE = 4
 @Composable
 internal fun StarstaveWallpaper(modifier: Modifier) {
     val colors = JarnTheme.colors
-    val showsDial = rememberStarstaveShowsDial()
+    val showsDial = rememberJarnWallpaperIsBottomScreen()
     val hasDeckUi = LocalJarnScreen.current == JarnScreen.Deck
     val isMotionReduced = JarnTheme.motion.reduced
     val canAnimate = rememberJarnWallpaperCanAnimate()
     val painter = remember(colors, showsDial, hasDeckUi, isMotionReduced) {
-        StarstavePainter(colors.toStarstavePalette(), showsDial, hasDeckUi, isMotionReduced)
+        StarstavePainter(colors.toJarnWallpaperPalette(), showsDial, hasDeckUi, isMotionReduced)
     }
     Spacer(modifier.jarnWallpaperDraw(canAnimate, STARSTAVE_FPS, painter))
 }
 
-@Composable
-private fun rememberStarstaveShowsDial(): Boolean {
-    val windowDisplayId = LocalView.current.display?.displayId
-    val hasBothScreens by remember {
-        derivedStateOf {
-            val state = JarnSession.state
-            state.deckDisplayAvailable && state.deckHostReady
-        }
-    }
-    return starstaveShowsDial(windowDisplayId, PRIMARY_DISPLAY_ID, hasBothScreens)
-}
-
-private fun JarnColors.toStarstavePalette(): StarstavePalette = starstavePalette(
-    bg = bg.toArgb(),
-    accent = accent.toArgb(),
-    focus = focus.toArgb(),
-    textMid = textMid.toArgb(),
-    textLow = textLow.toArgb(),
-)
-
 /** Holds all drawing state up front, so a frame allocates nothing. */
 private class StarstavePainter(
-    private val palette: StarstavePalette,
+    private val palette: JarnWallpaperPalette,
     private val showsDial: Boolean,
     hasDeckUi: Boolean,
     private val isMotionReduced: Boolean,
@@ -83,18 +54,15 @@ private class StarstavePainter(
     private val levels = IntArray(StarstaveScene.STAR_COUNT)
     private val tickLines = FloatArray(StarstaveScene.DIAL_TICK_COUNT * COORDS_PER_LINE)
     private val signPath = Path()
-    private val bandStops = starstaveBandStops(hasDeckUi)
-    private val bandColors = starstaveBandColors(palette, hasDeckUi)
+    private val band = JarnWallpaperBand(palette, hasDeckUi)
     private val starPaint = fillPaint(palette.glow)
     private val dotPaint = fillPaint(palette.line)
-    private val bandPaint = Paint()
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = palette.line
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
-    private var bandHeight = -1f
 
     override fun DrawScope.paint(timeNanos: Long) {
         val height = size.height
@@ -105,26 +73,26 @@ private class StarstavePainter(
         val cycle = starstaveCycle(seconds)
         val reach = (starstaveDrawProgress(cycle, isStill) * StarstaveScene.TotalReach).toFloat()
         val fade = starstaveFade(cycle, isStill).toFloat()
-        val scale = starstaveScale(height)
+        val scale = jarnWallpaperScale(height)
 
         canvas.drawColor(palette.bg)
         val checkpoint = canvas.save()
-        canvas.translate(size.width / 2f, -starstaveOriginY(showsDial) * scale)
+        canvas.translate(size.width / 2f, -jarnWallpaperOriginY(showsDial) * scale)
         canvas.scale(scale, scale)
-        drawStars(canvas, seconds, starstaveHalfWidth(size.width, height), 1f / scale)
+        drawStars(canvas, seconds, jarnWallpaperHalfWidth(size.width, height), 1f / scale)
         if (showsDial) {
             drawDial(canvas, seconds, reach, fade, 1f / scale)
         } else {
             drawSign(canvas, reach, fade, 1f / scale)
         }
         canvas.restoreToCount(checkpoint)
-        drawBand(canvas, size.width, height)
+        band.draw(canvas, size.width, height)
     }
 
     private fun drawStars(canvas: Canvas, seconds: Double, halfWidth: Float, pixel: Float) {
         val stars = StarstaveScene.Stars
-        val top = starstaveOriginY(showsDial)
-        val bottom = top + StarstaveScene.SCREEN_HEIGHT
+        val top = jarnWallpaperOriginY(showsDial)
+        val bottom = top + JARN_WALLPAPER_SCREEN_HEIGHT
         val minSize = MIN_STAR_PX * pixel
         for (i in levels.indices) {
             val phase = stars[i * StarstaveScene.STAR_STRIDE + StarstaveScene.STAR_PHASE]
@@ -214,16 +182,6 @@ private class StarstavePainter(
             tickLines[at + 2] = cx + dirX * (outer - length)
             tickLines[at + 3] = cy + dirY * (outer - length)
         }
-    }
-
-    private fun drawBand(canvas: Canvas, width: Float, height: Float) {
-        if (bandHeight != height) {
-            bandPaint.shader = LinearGradient(
-                0f, 0f, 0f, height, bandColors, bandStops, Shader.TileMode.CLAMP,
-            )
-            bandHeight = height
-        }
-        canvas.drawRect(0f, 0f, width, height, bandPaint)
     }
 
     private fun fillPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {

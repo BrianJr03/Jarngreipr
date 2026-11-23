@@ -7,7 +7,6 @@ import kotlin.math.sin
 
 /** One virtual space, 1920 by 2160, with x centered and the hinge at y 1080. */
 internal object StarstaveScene {
-    const val SCREEN_HEIGHT = 1080f
     const val STAR_COUNT = 150
     const val STAR_STRIDE = 4
     const val STAR_X = 0
@@ -45,11 +44,8 @@ internal object StarstaveScene {
     }
 
     private fun seededStars(): FloatArray {
-        var seed = STAR_SEED
-        val next = {
-            seed = seed * LEHMER_MULTIPLIER % LEHMER_MODULUS
-            (seed - 1).toDouble() / (LEHMER_MODULUS - 1)
-        }
+        val random = JarnWallpaperRandom(STAR_SEED)
+        val next = random::next
         val stars = FloatArray(STAR_COUNT * STAR_STRIDE)
         for (i in 0 until STAR_COUNT) {
             val at = i * STAR_STRIDE
@@ -63,8 +59,6 @@ internal object StarstaveScene {
     }
 
     private const val STAR_SEED = 4242L
-    private const val LEHMER_MULTIPLIER = 16807L
-    private const val LEHMER_MODULUS = 2147483647L
     private const val FIELD_WIDTH = 1920.0
     private const val FIELD_HEIGHT = 2160.0
     private const val FULL_TURN = 6.283
@@ -132,21 +126,3 @@ internal fun starstaveHeadY(reach: Float): Float {
     return lerp(ys[segment - 1], ys[segment], starstaveSegmentProgress(reach, segment))
 }
 
-/**
- * True on the physical bottom screen. A swap trades the roles inside each window and never moves
- * a window, so the display id keeps the scene aligned across the hinge. One screen shows the sky.
- */
-internal fun starstaveShowsDial(
-    windowDisplayId: Int?,
-    primaryDisplayId: Int,
-    hasBothScreens: Boolean,
-): Boolean = hasBothScreens && windowDisplayId != null && windowDisplayId != primaryDisplayId
-
-/** Fits the window's height, so marks keep their size on either physical screen. */
-internal fun starstaveScale(heightPx: Float): Float = heightPx / StarstaveScene.SCREEN_HEIGHT
-
-internal fun starstaveHalfWidth(widthPx: Float, heightPx: Float): Float =
-    widthPx / (2f * starstaveScale(heightPx))
-
-internal fun starstaveOriginY(showsDial: Boolean): Float =
-    if (showsDial) StarstaveScene.SCREEN_HEIGHT else 0f
