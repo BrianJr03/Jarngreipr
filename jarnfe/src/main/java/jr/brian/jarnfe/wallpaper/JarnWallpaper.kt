@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.wallpaper
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,10 +18,15 @@ import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
 import jr.brian.core.ui.theme.JarnTheme
 
-/** Reads the wallpaper the user already chose. Backed by snapshot state, so changes recompose. */
+/** The shared frontend wallpaper. Backed by snapshot state, so changes recompose. */
 interface JarnWallpaperSource {
     /** The image or GIF to show, or null for the theme background. */
     val currentUri: String?
+
+    /** Saves a picked image or GIF as the wallpaper. False when the file can't be used. */
+    suspend fun applyPicked(uri: Uri): Boolean
+
+    fun useThemeBackground()
 }
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */

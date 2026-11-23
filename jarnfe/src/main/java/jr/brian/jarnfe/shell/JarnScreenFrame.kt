@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreenHintBar
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.splash.jarnSplashFade
 
 @Composable
@@ -33,6 +34,6 @@ internal fun JarnScreenFrame(
                 .jarnSplashFade(),
             contentAlignment = Alignment.Center,
         ) { content() }
-        JarnScreenHintBar(Modifier.jarnSplashFade())
+        if (rememberJarnDisplay().hintsVisible) JarnScreenHintBar(Modifier.jarnSplashFade())
     }
 }

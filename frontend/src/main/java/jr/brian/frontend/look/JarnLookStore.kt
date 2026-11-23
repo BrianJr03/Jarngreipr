@@ -30,6 +30,28 @@ class JarnLookStore @Inject constructor(
     val reducedMotionState: StateFlow<Boolean> = _reducedMotion.asStateFlow()
     val reducedMotion: Boolean get() = _reducedMotion.value
 
+    private val _display = MutableStateFlow(readDisplay())
+    val displayState: StateFlow<JarnDisplayPrefs> = _display.asStateFlow()
+    val display: JarnDisplayPrefs get() = _display.value
+
+    fun updateDisplay(transform: (JarnDisplayPrefs) -> JarnDisplayPrefs) {
+        val next = transform(_display.value).coerced()
+        _display.value = next
+        prefs.edit {
+            putFloat(KEY_SYSTEM_TILE_SCALE, next.systemTileScale)
+            putFloat(KEY_GAME_TILE_SCALE, next.gameTileScale)
+            putBoolean(KEY_HINTS_VISIBLE, next.hintsVisible)
+            putBoolean(KEY_BUTTON_HAPTICS, next.buttonHaptics)
+        }
+    }
+
+    private fun readDisplay() = JarnDisplayPrefs(
+        systemTileScale = prefs.getFloat(KEY_SYSTEM_TILE_SCALE, JarnDisplayPrefs.DEFAULT_TILE_SCALE),
+        gameTileScale = prefs.getFloat(KEY_GAME_TILE_SCALE, JarnDisplayPrefs.DEFAULT_TILE_SCALE),
+        hintsVisible = prefs.getBoolean(KEY_HINTS_VISIBLE, true),
+        buttonHaptics = prefs.getBoolean(KEY_BUTTON_HAPTICS, true),
+    ).coerced()
+
     fun setLookId(id: String) {
         _lookId.value = id
         prefs.edit { putString(KEY_LOOK, id) }
@@ -44,5 +66,9 @@ class JarnLookStore @Inject constructor(
         const val PREFS_NAME = "jarnfe_look_prefs"
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
+        const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
+        const val KEY_GAME_TILE_SCALE = "game_tile_scale"
+        const val KEY_HINTS_VISIBLE = "hints_visible"
+        const val KEY_BUTTON_HAPTICS = "button_haptics"
     }
 }

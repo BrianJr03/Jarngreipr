@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
 import jr.brian.frontend.library.art.ArtSourceStore
+import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.ManagerContainer
@@ -105,6 +106,47 @@ class JarnLookConfigImportTest {
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
         assertEquals("forge", store.lookId)
         assertFalse(store.reducedMotion)
+    }
+
+    @Test
+    fun `display choices round trip through the manager json`() {
+        val display = JarnDisplayConfig(1.25f, 0.8f, hintsVisible = false, buttonHaptics = false)
+        val exported = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = display))
+
+        val decoded = importExport.decodeFromJson(importExport.encodeToJson(exported)).feature
+
+        assertEquals(display, decoded.jarnDisplay)
+    }
+
+    @Test
+    fun `importing an older backup keeps the current display choices`() = runTest {
+        val current = JarnDisplayPrefs(1.25f, 0.8f, hintsVisible = false, buttonHaptics = false)
+        store.updateDisplay { current }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(current, store.display)
+    }
+
+    @Test
+    fun `a backup with null display fields only changes what it carries`() = runTest {
+        store.updateDisplay { JarnDisplayPrefs(1.25f, 0.8f, hintsVisible = false, buttonHaptics = false) }
+        val backup = """{ "version": 44, "feature": { "jarnDisplay": { "gameTileScale": 1.5, "hintsVisible": null } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnDisplayPrefs(1.25f, 1.5f, hintsVisible = false, buttonHaptics = false), store.display)
+    }
+
+    @Test
+    fun `a backup with an out of range tile size is clamped`() = runTest {
+        val backup = """{ "version": 44, "feature": { "jarnDisplay": { "systemTileScale": 9.0 } } }"""
+
+        importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertEquals(JarnDisplayPrefs.MAX_TILE_SCALE, store.display.systemTileScale)
     }
 
     private companion object {

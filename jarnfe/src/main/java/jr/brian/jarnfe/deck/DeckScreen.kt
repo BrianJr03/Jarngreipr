@@ -26,6 +26,8 @@ import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.settings.JarnSettingsControls
+import jr.brian.jarnfe.settings.JarnSettingsScraperHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.deckBindings
 import jr.brian.jarnfe.splash.JarnDeckSplash
@@ -42,8 +44,9 @@ internal fun DeckScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
         Box(Modifier.fillMaxSize()) {
             JarnScreenFrame(
-                header = { if (!deckShowsSearch(state)) DeckTabStrip(state.deckTab) },
+                header = { if (deckShowsTabs(state)) DeckTabStrip(state.deckTab) },
             ) { DeckBody(state) }
+            if (deckShowsSettings(state)) JarnSettingsScraperHost()
             JarnDeckSplash()
         }
     }
@@ -52,12 +55,18 @@ internal fun DeckScreen(state: JarnSessionState) {
 private fun deckShowsSearch(state: JarnSessionState) =
     state.stageRoute == StageRoute.Search && !JarnSearch.showingActions
 
+private fun deckShowsSettings(state: JarnSessionState) =
+    state.stageRoute == StageRoute.Settings && state.settingsOnDeck
+
+private fun deckShowsTabs(state: JarnSessionState) =
+    !deckShowsSearch(state) && !deckShowsSettings(state)
+
 @Composable
 private fun DeckBody(state: JarnSessionState) {
-    if (deckShowsSearch(state)) {
-        JarnSearchDeck()
-    } else {
-        Column(Modifier.fillMaxSize()) {
+    when {
+        deckShowsSearch(state) -> JarnSearchDeck()
+        deckShowsSettings(state) -> JarnSettingsControls(state.settingsSection, JarnTheme.space.deckMargin)
+        else -> Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 DeckTabContent(state)
             }

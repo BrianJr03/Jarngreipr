@@ -4,6 +4,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindings
 import jr.brian.jarnfe.input.JarnBindingsBuilder
+import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.jarnBindings
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
@@ -38,13 +39,21 @@ internal fun JarnBindingsBuilder.stageBindings(
     session: JarnSessionStore,
     library: JarnLibraryStore,
 ) {
-    confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
+    if (state.stageRoute == StageRoute.Settings && state.settingsOnDeck) {
+        on(JarnAction.Confirm, R.string.jarnfe_settings_hint_edit) {
+            session.update { activate(JarnScreen.Deck) }
+        }
+    } else if (library.bannerHasFocus(state)) {
+        hint(JarnAction.Confirm, R.string.jarnfe_hint_play)
+    } else {
+        confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
+    }
     backHint(state, session)
     gameActionsBinding(state, session, library)
     manageSystemBinding(state, session, library)
     if (state.stageRoute != StageRoute.Settings) {
         on(JarnAction.Menu, R.string.jarnfe_route_settings) {
-            session.update { openRoute(StageRoute.Settings) }
+            session.update { openSettings() }
         }
     }
     when (state.stageRoute) {
@@ -57,7 +66,8 @@ internal fun JarnBindingsBuilder.stageBindings(
             on(JarnAction.TabNext) { library.update { stepOpenSystem(1) } }
         }
         StageRoute.Search -> searchTabBindings(JarnSearch)
-        StageRoute.Settings, StageRoute.Systems -> Unit
+        StageRoute.Settings -> settingsTabBindings(session)
+        StageRoute.Systems -> Unit
     }
 }
 
@@ -75,11 +85,15 @@ private fun JarnBindingsBuilder.gameActionsBinding(
     }
 }
 
+private fun JarnLibraryStore.bannerHasFocus(state: JarnSessionState) =
+    heroFocused && canPlay && state.stageRoute == StageRoute.Library
+
 private fun JarnBindingsBuilder.manageSystemBinding(
     state: JarnSessionState,
     session: JarnSessionStore,
     library: JarnLibraryStore,
 ) {
+    if (library.bannerHasFocus(state)) return
     val selection = library.state.selection(state.stageRoute, state.librarySection)
     if (selection !is LibrarySelection.System || JarnSystems.manager == null) return
     on(JarnAction.Context, R.string.jarnfe_systems_manage_one) {
@@ -99,7 +113,17 @@ private fun JarnBindingsBuilder.confirmHint(confirm: LibraryConfirm) {
 
 internal fun JarnBindingsBuilder.deckBindings(state: JarnSessionState, session: JarnSessionStore) {
     backHint(state, session)
-    deckTabBindings(session)
+    if (state.stageRoute == StageRoute.Settings && state.settingsOnDeck) {
+        hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
+        settingsTabBindings(session)
+    } else {
+        deckTabBindings(session)
+    }
+}
+
+private fun JarnBindingsBuilder.settingsTabBindings(session: JarnSessionStore) {
+    on(JarnAction.TabPrevious) { session.update { stepSettingsSection(-1) } }
+    on(JarnAction.TabNext) { session.update { stepSettingsSection(1) } }
 }
 
 internal fun JarnBindingsBuilder.deckPanelBindings(session: JarnSessionStore) {

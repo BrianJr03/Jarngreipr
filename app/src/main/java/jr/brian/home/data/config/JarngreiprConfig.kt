@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
+import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
@@ -189,7 +190,9 @@ data class JarngreiprConfig(
         //      Null on older blobs, and import then keeps the current choices.
         // v43: added FeatureConfig.jarnPinnedApps, the Jarn FE pinned apps in order.
         //      Null on older blobs, and import then keeps the current pins.
-        const val CONFIG_VERSION = 43
+        // v44: added FeatureConfig.jarnDisplay, the Jarn FE tile sizes, hints and
+        //      button haptics. Null on older blobs or fields, and import keeps those.
+        const val CONFIG_VERSION = 44
     }
 }
 
@@ -364,7 +367,32 @@ data class FeatureConfig(
     /** v42: Jarn FE art per screen. Null on pre-v42 exports, and import keeps current choices. */
     val jarnArtChoices: JarnArtChoicesConfig? = null,
     /** v43: Jarn FE pinned apps in order. Null on pre-v43 exports, and import keeps current pins. */
-    val jarnPinnedApps: List<String>? = null
+    val jarnPinnedApps: List<String>? = null,
+    /** v44: Jarn FE display choices. Null on pre-v44 exports, and import keeps the current ones. */
+    val jarnDisplay: JarnDisplayConfig? = null
+)
+
+/** Each field is nullable so a partial backup only changes what it carries. */
+@Serializable
+data class JarnDisplayConfig(
+    val systemTileScale: Float? = null,
+    val gameTileScale: Float? = null,
+    val hintsVisible: Boolean? = null,
+    val buttonHaptics: Boolean? = null,
+)
+
+internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
+    systemTileScale = systemTileScale,
+    gameTileScale = gameTileScale,
+    hintsVisible = hintsVisible,
+    buttonHaptics = buttonHaptics,
+)
+
+internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
+    systemTileScale = systemTileScale ?: current.systemTileScale,
+    gameTileScale = gameTileScale ?: current.gameTileScale,
+    hintsVisible = hintsVisible ?: current.hintsVisible,
+    buttonHaptics = buttonHaptics ?: current.buttonHaptics,
 )
 
 @Serializable

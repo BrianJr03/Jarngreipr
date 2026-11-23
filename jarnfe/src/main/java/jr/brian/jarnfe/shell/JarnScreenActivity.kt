@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.connectJarnLibrary
+import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
@@ -33,7 +34,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     private var swap: JarnScreenSwap? = null
     private val buttonHaptic: () -> Unit = {
-        window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (jarnLookStoreOrNull()?.display?.buttonHaptics != false) {
+            window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        }
     }
 
     protected open fun canHostOnCurrentDisplay(): Boolean = true

@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
+import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
 
 interface JarnLookStoreProvider {
@@ -38,4 +39,11 @@ internal fun rememberJarnAppearance(): JarnAppearance {
     val savedId = store?.lookIdState?.collectAsState()?.value
     val reducedMotion = store?.reducedMotionState?.collectAsState()?.value ?: false
     return JarnAppearance(resolveJarnLook(savedId, JarnLookPreview.lookId), reducedMotion)
+}
+
+@Composable
+internal fun rememberJarnDisplay(): JarnDisplayPrefs {
+    val context = LocalContext.current
+    val store = remember(context) { context.jarnLookStoreOrNull() }
+    return store?.displayState?.collectAsState()?.value ?: JarnDisplayPrefs()
 }
