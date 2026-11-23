@@ -33,6 +33,12 @@ class JarnLookStore @Inject constructor(
     val reducedMotionState: StateFlow<Boolean> = _reducedMotion.asStateFlow()
     val reducedMotion: Boolean get() = _reducedMotion.value
 
+    private val _matchCommandPanel = MutableStateFlow(prefs.getBoolean(KEY_MATCH_COMMAND_PANEL, false))
+
+    /** Separate from the look id, so turning it off returns the saved look exactly. */
+    val matchCommandPanelState: StateFlow<Boolean> = _matchCommandPanel.asStateFlow()
+    val matchCommandPanel: Boolean get() = _matchCommandPanel.value
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -98,6 +104,11 @@ class JarnLookStore @Inject constructor(
         prefs.edit { putBoolean(KEY_REDUCED_MOTION, enabled) }
     }
 
+    fun setMatchCommandPanel(enabled: Boolean) {
+        _matchCommandPanel.value = enabled
+        prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL, enabled) }
+    }
+
     fun setLiveWallpaperId(id: String?) {
         val next = id.withoutOffValue()
         _liveWallpaperId.value = next
@@ -112,6 +123,7 @@ class JarnLookStore @Inject constructor(
         const val PREFS_NAME = "jarnfe_look_prefs"
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
+        const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"

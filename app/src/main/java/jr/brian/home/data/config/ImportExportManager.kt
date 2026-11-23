@@ -299,6 +299,7 @@ class ImportExportManager @Inject constructor(
             jarnDisplay = jarnLookStore.display.toConfig(),
             jarnLiveWallpaper = jarnLookStore.liveWallpaperBackup(),
             jarnFirstRunDone = jarnLookStore.firstRunDone,
+            jarnMatchCommandPanel = jarnLookStore.matchCommandPanel,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -707,6 +708,7 @@ class ImportExportManager @Inject constructor(
         config.jarnDisplay?.let { jarnLookStore.updateDisplay(it::applyTo) }
         jarnLookStore.restoreLiveWallpaper(config.jarnLiveWallpaper)
         if (config.jarnFirstRunDone == true) jarnLookStore.markFirstRunDone()
+        config.jarnMatchCommandPanel?.let(jarnLookStore::setMatchCommandPanel)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

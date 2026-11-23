@@ -204,7 +204,10 @@ data class JarngreiprConfig(
         //      older blobs, and import keeps current totals. Import only ever raises them.
         // v49: added FeatureConfig.jarnFirstRunDone, whether the Jarn FE tour was finished.
         //      Null on older blobs, and import keeps the current value. Import only sets it.
-        const val CONFIG_VERSION = 49
+        // v50: added FeatureConfig.jarnMatchCommandPanel, whether Jarn FE follows Command
+        //      Panel's colors. Null on older blobs, and import keeps the current value.
+        //      The palette itself is never backed up.
+        const val CONFIG_VERSION = 50
     }
 }
 
@@ -387,7 +390,9 @@ data class FeatureConfig(
     /** v48: play totals per game. Null on pre-v48 exports, and import keeps current totals. */
     val jarnPlayStats: List<JarnPlayStatConfig>? = null,
     /** v49: Jarn FE tour finished. Null on pre-v49 exports. Import never turns it back off. */
-    val jarnFirstRunDone: Boolean? = null
+    val jarnFirstRunDone: Boolean? = null,
+    /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
+    val jarnMatchCommandPanel: Boolean? = null
 )
 
 @Serializable

@@ -116,7 +116,7 @@ private fun JarnLookPreview(
 }
 
 @Composable
-private fun JarnLookSwatches(preview: JarnColors, modifier: Modifier) {
+fun JarnLookSwatches(preview: JarnColors, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.padding(JarnTheme.space.sm),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
