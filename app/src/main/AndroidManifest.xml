@@ -58,6 +58,7 @@
         </intent>
         <package android:name="moe.shizuku.privileged.api" />
         <package android:name="eu.es_de.frontend" />
+        <provider android:authorities="jr.brian.commandpannel.theme" />
     </queries>
     <application
         android:name=".JarngreiprApplication"
