@@ -24,6 +24,9 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
 
     val canPlay: Boolean get() = onPlay != null
 
+    /** True while the Continue playing banner holds focus, so hints describe the banner. */
+    var heroFocused by mutableStateOf(false)
+
     /** Grows each time Stage should take focus back on its current game. */
     var stageRefocus by mutableIntStateOf(0)
         private set

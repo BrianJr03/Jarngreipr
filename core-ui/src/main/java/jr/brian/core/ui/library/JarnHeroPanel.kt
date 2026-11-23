@@ -1,6 +1,7 @@
 package jr.brian.core.ui.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -13,14 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 
 private const val HERO_TEXT_FRACTION = 0.55f
@@ -32,11 +36,14 @@ fun JarnHeroPanel(
     title: String,
     body: String?,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     art: @Composable BoxScope.() -> Unit,
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
+    val source = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
+            .then(onClick?.let { Modifier.jarnInteractive(RectangleShape, source, onClick = it) } ?: Modifier)
             .clipToBounds()
             .background(JarnTheme.colors.raised),
     ) {
