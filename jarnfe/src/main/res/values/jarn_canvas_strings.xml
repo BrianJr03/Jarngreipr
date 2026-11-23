@@ -17,6 +17,7 @@
     <string name="jarnfe_canvas_tile_photo">Photo</string>
     <string name="jarnfe_canvas_tile_last_played">Last played</string>
     <string name="jarnfe_canvas_tile_missing">Not available</string>
+    <string name="jarnfe_canvas_notice_touch_moving_tile">Touch the moving tile to drag it, or press B to cancel.</string>
     <string name="jarnfe_canvas_notice_missing">This item is no longer available.</string>
     <string name="jarnfe_canvas_folder_empty">This folder is empty.</string>
     <string name="jarnfe_canvas_last_played_empty">Games you play will show up here.</string>
@@ -88,9 +89,13 @@
     <string name="jarnfe_canvas_action_choose_photo">Choose photo</string>
     <string name="jarnfe_canvas_action_random">Play a random game</string>
     <string name="jarnfe_canvas_action_games">Games shown</string>
+    <string name="jarnfe_canvas_action_media_type">Media type</string>
     <string name="jarnfe_canvas_action_scale">Image fit</string>
     <string name="jarnfe_canvas_scale_fit">Fit</string>
     <string name="jarnfe_canvas_scale_crop">Crop</string>
+    <string name="jarnfe_canvas_action_transparent_background">Transparent background</string>
+    <string name="jarnfe_canvas_state_on">On</string>
+    <string name="jarnfe_canvas_state_off">Off</string>
     <string name="jarnfe_canvas_action_app_info">App info</string>
     <string name="jarnfe_canvas_action_move">Move and resize</string>
     <string name="jarnfe_canvas_action_remove">Remove</string>

@@ -98,6 +98,10 @@ internal fun CanvasGrid(
     placements: Map<String, GridRect>,
     editing: Boolean,
     grabbedId: String?,
+    liftedId: String?,
+    touchHoldsGrab: Boolean,
+    boardModifier: Modifier,
+    onBoardGeometry: (CanvasBoardGeometry) -> Unit,
     focusRequesterFor: (String) -> FocusRequester,
     onFocused: (String) -> Unit,
     onCellSize: (Float) -> Unit,
@@ -132,13 +136,19 @@ internal fun CanvasGrid(
         SideEffect {
             onCellSize(cellPx)
             onVisibleCells(visibleCells)
+            onBoardGeometry(
+                with(density) {
+                    CanvasBoardGeometry(cellPx, CanvasCellSpacing.toPx(), CanvasOuterPadding.toPx())
+                },
+            )
         }
         val alignment = if (direction == PushDirection.DOWN) Alignment.TopCenter else Alignment.CenterStart
         Box(
             Modifier
                 .align(alignment)
                 .width(metrics.width)
-                .height(metrics.height),
+                .height(metrics.height)
+                .then(boardModifier),
         ) {
             if (menuRect != null && !editing) {
                 CanvasSlot(menuRect, metrics, grabbed = false) {
@@ -158,11 +168,12 @@ internal fun CanvasGrid(
                 val rect = placements[item.id] ?: return@forEach
                 val grabbed = item.id == grabbedId
                 key(item.id) {
-                    CanvasSlot(rect, metrics, grabbed) {
+                    CanvasSlot(rect, metrics, grabbed, followsGrab = grabbed && !touchHoldsGrab) {
                         CanvasTileFrame(
                             requester = focusRequesterFor(item.id),
                             editing = editing,
-                            grabbed = grabbed,
+                            grabbed = grabbed || item.id == liftedId,
+                            showCard = (item as? CanvasItem.EsdeArtItem)?.isCardTransparent != true,
                             onFocused = { onFocused(item.id) },
                             onClick = { onTileClick(item, cellPx) },
                         ) { tileContent(item) }
@@ -179,6 +190,7 @@ private fun CanvasSlot(
     rect: GridRect,
     metrics: CanvasMetrics,
     grabbed: Boolean,
+    followsGrab: Boolean = grabbed,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val glide = JarnTheme.motion.small.spec<Dp>()
@@ -188,8 +200,8 @@ private fun CanvasSlot(
     val width by animateDpAsState(metrics.extentOf(rect.colSpan), spec)
     val height by animateDpAsState(metrics.extentOf(rect.rowSpan), spec)
     val bringIntoView = remember { BringIntoViewRequester() }
-    LaunchedEffect(grabbed, rect) {
-        if (grabbed) bringIntoView.bringIntoView()
+    LaunchedEffect(followsGrab, rect) {
+        if (followsGrab) bringIntoView.bringIntoView()
     }
     Box(
         modifier = Modifier
@@ -218,6 +230,7 @@ private fun CanvasTileFrame(
     requester: FocusRequester,
     editing: Boolean,
     grabbed: Boolean,
+    showCard: Boolean = true,
     onFocused: () -> Unit,
     onClick: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
@@ -237,7 +250,7 @@ private fun CanvasTileFrame(
             .onFocusChanged { if (it.isFocused) onFocused() }
             .jarnInteractive(shape, source, onClick = onClick)
             .clip(shape)
-            .background(colors.raised)
+            .then(if (showCard) Modifier.background(colors.raised) else Modifier)
             .then(outline),
         content = content,
     )
