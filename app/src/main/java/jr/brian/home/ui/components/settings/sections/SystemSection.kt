@@ -75,6 +75,7 @@ fun SystemSection(
         }
 
     val backupSuccessMsg = stringResource(R.string.settings_backup_success)
+    val backupPartialMsg = stringResource(R.string.settings_backup_partial)
     val backupErrorMsg = stringResource(R.string.settings_backup_error)
     val restoreSuccessMsg = stringResource(R.string.settings_restore_success)
     val restoreErrorMsg = stringResource(R.string.settings_restore_error)
@@ -89,7 +90,13 @@ fun SystemSection(
                         importExportManager.exportToStream(stream)
                     }
                 }.fold(
-                    onSuccess = { Toast.makeText(context, backupSuccessMsg, Toast.LENGTH_SHORT).show() },
+                    onSuccess = { omittedPages ->
+                        if ((omittedPages ?: 0) > 0) {
+                            Toast.makeText(context, backupPartialMsg, Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, backupSuccessMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onFailure = { Toast.makeText(context, backupErrorMsg, Toast.LENGTH_SHORT).show() }
                 )
             }

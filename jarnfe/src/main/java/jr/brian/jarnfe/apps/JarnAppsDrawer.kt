@@ -57,6 +57,7 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.LocalJarnInputRouter
 import jr.brian.jarnfe.input.LocalJarnScreen
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.settings.rememberJarnLauncherPrefs
 import kotlinx.coroutines.flow.first
 
@@ -292,6 +293,7 @@ private fun JarnAppsList(
     onToggleHidden: () -> Unit,
 ) {
     val labelSize = rememberJarnLauncherPrefs().appLabelSize
+    val namesVisible = rememberJarnDisplay().appNamesVisible
     JarnRevealLazyItems(listState) {
         LazyColumn(
             state = listState,
@@ -307,7 +309,7 @@ private fun JarnAppsList(
         ) {
             items(rows, key = { it.key }, contentType = { it::class }) { row ->
                 when (row) {
-                    is JarnAppsRow.Apps -> JarnAppsRowContent(row, columns, labelSize, focus, onOpen)
+                    is JarnAppsRow.Apps -> JarnAppsRowContent(row, columns, labelSize, namesVisible, focus, onOpen)
                     is JarnAppsRow.HiddenHeader -> JarnHiddenHeader(row, focus, onToggleHidden)
                 }
             }
@@ -320,6 +322,7 @@ private fun JarnAppsRowContent(
     row: JarnAppsRow.Apps,
     columns: Int,
     labelSize: Int,
+    namesVisible: Boolean,
     focus: JarnAppsFocus,
     onOpen: (String) -> Unit,
 ) {
@@ -331,6 +334,7 @@ private fun JarnAppsRowContent(
                     JarnAppTile(
                         app = app,
                         labelSize = labelSize,
+                        nameVisible = namesVisible,
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(focus.requester(app.packageName))
@@ -360,8 +364,15 @@ private fun JarnAppsSectionTitle(section: JarnAppsSection) {
 }
 
 @Composable
-private fun JarnAppTile(app: JarnDockApp, labelSize: Int, modifier: Modifier, onClick: () -> Unit) {
+private fun JarnAppTile(
+    app: JarnDockApp,
+    labelSize: Int,
+    nameVisible: Boolean,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
     val shape = JarnTheme.radius.mdShape
+    val iconSize = jarnAppIconSize(AppIconSize, nameVisible)
     val source = remember { MutableInteractionSource() }
     Column(
         modifier = modifier
@@ -373,10 +384,10 @@ private fun JarnAppTile(app: JarnDockApp, labelSize: Int, modifier: Modifier, on
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        Box(Modifier.size(AppIconSize), contentAlignment = Alignment.Center) {
-            JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(AppIconSize))
+        Box(Modifier.size(iconSize), contentAlignment = Alignment.Center) {
+            JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(iconSize))
         }
-        JarnAppNameLabel(app.label, labelSize)
+        if (nameVisible) JarnAppNameLabel(app.label, labelSize)
     }
 }
 

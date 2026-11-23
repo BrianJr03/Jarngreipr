@@ -54,6 +54,8 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_HINTS_VISIBLE, next.hintsVisible)
             putBoolean(KEY_BUTTON_HAPTICS, next.buttonHaptics)
             putString(KEY_TAP_CONTROL, next.tapControl.id)
+            putBoolean(KEY_APP_NAMES_VISIBLE, next.appNamesVisible)
+            putBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, next.undoCountdownVisible)
         }
     }
 
@@ -63,6 +65,8 @@ class JarnLookStore @Inject constructor(
         hintsVisible = prefs.getBoolean(KEY_HINTS_VISIBLE, true),
         buttonHaptics = prefs.getBoolean(KEY_BUTTON_HAPTICS, true),
         tapControl = JarnTapControl.fromId(prefs.getString(KEY_TAP_CONTROL, null)) ?: JarnTapControl.FollowTap,
+        appNamesVisible = prefs.getBoolean(KEY_APP_NAMES_VISIBLE, true),
+        undoCountdownVisible = prefs.getBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -95,5 +99,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_HINTS_VISIBLE = "hints_visible"
         const val KEY_BUTTON_HAPTICS = "button_haptics"
         const val KEY_TAP_CONTROL = "tap_control"
+        const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
+        const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
     }
 }

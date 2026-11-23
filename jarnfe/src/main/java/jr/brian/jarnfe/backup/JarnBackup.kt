@@ -63,9 +63,11 @@ sealed interface JarnBackupInspection {
     data class Failed(val problem: JarnBackupProblem) : JarnBackupInspection
 }
 
+enum class JarnBackupExport { Saved, SavedWithoutSomeFolders, Failed }
+
 /** Implemented in `:app`, over the same backup format Classic uses. */
 interface JarnBackup {
-    suspend fun export(target: Uri): Boolean
+    suspend fun export(target: Uri): JarnBackupExport
 
     /** Reads and checks [source] without changing anything. */
     suspend fun inspect(source: Uri): JarnBackupInspection

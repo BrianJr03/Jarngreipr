@@ -197,7 +197,9 @@ data class JarngreiprConfig(
         //      Null on older blobs, and import keeps the current choice. "off" clears it.
         // v46: added JarnDisplayConfig.tapControl, the screen that keeps the controller
         //      after a tap. Null or unknown values leave the current choice alone.
-        const val CONFIG_VERSION = 46
+        // v47: added JarnDisplayConfig.appNamesVisible and undoCountdownVisible, the Jarn FE
+        //      show app names and undo timer choices. Null on older blobs, and import keeps them.
+        const val CONFIG_VERSION = 47
     }
 }
 
@@ -387,6 +389,8 @@ data class JarnDisplayConfig(
     val hintsVisible: Boolean? = null,
     val buttonHaptics: Boolean? = null,
     val tapControl: String? = null,
+    val appNamesVisible: Boolean? = null,
+    val undoCountdownVisible: Boolean? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -395,6 +399,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     hintsVisible = hintsVisible,
     buttonHaptics = buttonHaptics,
     tapControl = tapControl.id,
+    appNamesVisible = appNamesVisible,
+    undoCountdownVisible = undoCountdownVisible,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -403,6 +409,8 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     hintsVisible = hintsVisible ?: current.hintsVisible,
     buttonHaptics = buttonHaptics ?: current.buttonHaptics,
     tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
+    appNamesVisible = appNamesVisible ?: current.appNamesVisible,
+    undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
 )
 
 @Serializable

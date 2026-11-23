@@ -21,6 +21,7 @@ import jr.brian.home.util.UpdateInfo
 import jr.brian.home.util.VariantType
 import jr.brian.jarnfe.backup.JarnBackup
 import jr.brian.jarnfe.backup.JarnBackupCandidate
+import jr.brian.jarnfe.backup.JarnBackupExport
 import jr.brian.jarnfe.backup.JarnBackupInspection
 import jr.brian.jarnfe.backup.JarnBackupPreview
 import jr.brian.jarnfe.backup.JarnBackupProblem
@@ -57,11 +58,14 @@ class AppJarnBackup @Inject constructor(
 ) : JarnBackup {
 
     /** "wt" because plain "w" can leave old bytes behind when overwriting a longer file. */
-    override suspend fun export(target: Uri): Boolean = guarded(false) {
+    override suspend fun export(target: Uri): JarnBackupExport = guarded(JarnBackupExport.Failed) {
         context.contentResolver.openOutputStream(target, "wt")?.use { stream ->
-            manager.exportToStream(stream)
-            true
-        } ?: false
+            if (manager.exportToStream(stream) > 0) {
+                JarnBackupExport.SavedWithoutSomeFolders
+            } else {
+                JarnBackupExport.Saved
+            }
+        } ?: JarnBackupExport.Failed
     }
 
     override suspend fun inspect(source: Uri): JarnBackupInspection =

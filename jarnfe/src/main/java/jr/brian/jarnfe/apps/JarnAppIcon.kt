@@ -4,11 +4,24 @@ import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import coil.compose.AsyncImage
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.settings.jarnAppLabelScale
 import java.io.File
+
+private const val ICON_SCALE_WITHOUT_NAME = 1.25f
+
+/** Icons grow into the space a hidden name leaves. Tile bounds still cap the result. */
+internal fun jarnAppIconSize(base: Dp, nameVisible: Boolean): Dp =
+    if (nameVisible) base else base * ICON_SCALE_WITHOUT_NAME
+
+/** Keeps a hidden name available to screen readers. A visible name already speaks for itself. */
+internal fun Modifier.jarnHiddenAppName(label: String, nameVisible: Boolean): Modifier =
+    if (nameVisible) this else semantics { contentDescription = label }
 
 /** Keyed on the file's version, because replacing a custom icon keeps the same path. */
 @Composable

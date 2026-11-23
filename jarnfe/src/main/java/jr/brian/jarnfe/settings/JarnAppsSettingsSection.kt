@@ -14,9 +14,12 @@ import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSliderRow
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.components.JarnValueRow
+import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.JarnAppOptionsData
 import jr.brian.jarnfe.apps.jarnAppsDataOrNull
+import jr.brian.jarnfe.look.jarnLookStoreOrNull
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import kotlin.math.roundToInt
 
 @Composable
@@ -24,10 +27,13 @@ internal fun JarnAppsSettingsSection(actions: JarnSettingsActions) {
     val context = LocalContext.current
     val settings = remember(context) { context.jarnLauncherSettingsOrNull() } ?: return
     val apps = remember(context) { context.jarnAppsDataOrNull() }
+    val lookStore = remember(context) { context.jarnLookStoreOrNull() }
+    val namesVisible = rememberJarnDisplay().appNamesVisible
     val prefs = rememberJarnLauncherPrefs()
     SettingsSectionTitle(R.string.jarnfe_launcher_apps_title)
     apps?.let { IconPackRow(it, actions) }
-    AppLabelSizeRow(prefs.appLabelSize, settings::setAppLabelSize)
+    lookStore?.let { ShowAppNamesRow(it, namesVisible) }
+    if (namesVisible) AppLabelSizeRow(prefs.appLabelSize, settings::setAppLabelSize)
     SettingsSectionTitle(R.string.jarnfe_launcher_dock_title)
     JarnToggleRow(
         label = stringResource(R.string.jarnfe_launcher_dock_show),
@@ -56,6 +62,17 @@ private fun IconPackRow(data: JarnAppOptionsData, actions: JarnSettingsActions) 
         onClick = { actions.openOverlay(JarnSettingsOverlay.IconPacks) },
         modifier = Modifier.fillMaxWidth().focusRequester(actions.overlayReturn),
         supporting = stringResource(R.string.jarnfe_launcher_icon_pack_hint),
+    )
+}
+
+@Composable
+private fun ShowAppNamesRow(store: JarnLookStore, visible: Boolean) {
+    JarnToggleRow(
+        label = stringResource(R.string.jarnfe_launcher_show_app_names),
+        checked = visible,
+        onCheckedChange = { show -> store.updateDisplay { it.copy(appNamesVisible = show) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_launcher_show_app_names_hint),
     )
 }
 

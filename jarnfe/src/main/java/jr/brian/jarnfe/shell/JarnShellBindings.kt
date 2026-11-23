@@ -26,8 +26,10 @@ internal fun jarnGlobalBindings(
     onSearch: (() -> Unit)? = null,
     onSwap: (() -> Unit)? = null,
     onOppositeTab: ((Int) -> Unit)? = null,
+    deckMissing: Boolean = false,
 ): JarnBindings = jarnBindings {
-    on(JarnAction.SwitchScreen, R.string.jarnfe_hint_switch_screen) {
+    val selectLabel = if (deckMissing) R.string.jarnfe_hint_restore_bottom else R.string.jarnfe_hint_switch_screen
+    on(JarnAction.SwitchScreen, selectLabel) {
         session.update { switchActiveScreen() }
     }
     on(JarnAction.Back) { session.update { back() } }

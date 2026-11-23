@@ -177,8 +177,103 @@ class JarnLookConfigImportTest {
     }
 
     @Test
-    fun `schema version covers controller after tap`() {
-        assertEquals(46, JarngreiprConfig.CONFIG_VERSION)
+    fun `app names default to visible`() {
+        assertTrue(JarnDisplayPrefs().appNamesVisible)
+        assertTrue(store.display.appNamesVisible)
+    }
+
+    @Test
+    fun `hidden app names survive a store reload`() {
+        store.updateDisplay { it.copy(appNamesVisible = false) }
+
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext())
+
+        assertFalse(reloaded.display.appNamesVisible)
+    }
+
+    @Test
+    fun `hidden app names round trip through a backup`() = runTest {
+        val display = JarnDisplayConfig(appNamesVisible = false)
+        val exported = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = display))
+        val json = importExport.encodeToJson(exported)
+
+        assertEquals(display, importExport.decodeFromJson(json).feature.jarnDisplay)
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.appNamesVisible)
+        assertEquals(false, store.display.toConfig().appNamesVisible)
+    }
+
+    @Test
+    fun `a backup can turn app names back on`() = runTest {
+        store.updateDisplay { it.copy(appNamesVisible = false) }
+        val backup = """{ "version": 47, "feature": { "jarnDisplay": { "appNamesVisible": true } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(store.display.appNamesVisible)
+    }
+
+    @Test
+    fun `a null or missing app names value keeps the current choice`() = runTest {
+        store.updateDisplay { it.copy(appNamesVisible = false) }
+        listOf("""{ "appNamesVisible": null }""", """{ "hintsVisible": true }""").forEach { display ->
+            val backup = """{ "version": 46, "feature": { "jarnDisplay": $display } }"""
+
+            val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+            assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+            assertFalse(store.display.appNamesVisible)
+        }
+    }
+
+    @Test
+    fun `undo countdown defaults to visible`() {
+        assertTrue(JarnDisplayPrefs().undoCountdownVisible)
+        assertTrue(store.display.undoCountdownVisible)
+    }
+
+    @Test
+    fun `hidden undo countdown survives a store reload`() {
+        store.updateDisplay { it.copy(undoCountdownVisible = false) }
+
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext())
+
+        assertFalse(reloaded.display.undoCountdownVisible)
+    }
+
+    @Test
+    fun `hidden undo countdown round trips through a backup`() = runTest {
+        val display = JarnDisplayConfig(undoCountdownVisible = false)
+        val exported = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = display))
+        val json = importExport.encodeToJson(exported)
+
+        assertEquals(display, importExport.decodeFromJson(json).feature.jarnDisplay)
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.undoCountdownVisible)
+        assertEquals(false, store.display.toConfig().undoCountdownVisible)
+    }
+
+    @Test
+    fun `a null or missing undo countdown keeps the current choice`() = runTest {
+        store.updateDisplay { it.copy(undoCountdownVisible = false) }
+        listOf("""{ "undoCountdownVisible": null }""", """{ "hintsVisible": true }""").forEach { display ->
+            val backup = """{ "version": 46, "feature": { "jarnDisplay": $display } }"""
+
+            val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+            assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+            assertFalse(store.display.undoCountdownVisible)
+        }
+    }
+
+    @Test
+    fun `schema version covers app names`() {
+        assertEquals(47, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

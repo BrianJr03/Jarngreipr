@@ -4,6 +4,8 @@
     <string name="jarnfe_settings_section_general">General</string>
     <string name="jarnfe_launcher_apps_title">App icons and names</string>
     <string name="jarnfe_launcher_icon_pack_hint">Changes the icons for all your apps.</string>
+    <string name="jarnfe_launcher_show_app_names">Show app names</string>
+    <string name="jarnfe_launcher_show_app_names_hint">Shows names under apps in the drawer, Canvas and folders.</string>
     <string name="jarnfe_launcher_label_size">App name size</string>
     <string name="jarnfe_launcher_label_size_value">%1$d sp</string>
     <string name="jarnfe_launcher_dock_title">Dock</string>

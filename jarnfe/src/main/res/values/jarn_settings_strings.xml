@@ -19,6 +19,8 @@
     <string name="jarnfe_settings_show_hints_hint">Shows what each button does along the bottom of the screen.</string>
     <string name="jarnfe_settings_haptics">Button vibration</string>
     <string name="jarnfe_settings_haptics_hint">A short buzz when a button does something.</string>
+    <string name="jarnfe_settings_undo_countdown">Show undo countdown</string>
+    <string name="jarnfe_settings_undo_countdown_hint">Shows a timer bar on the Undo message. Undo still lasts 6 seconds.</string>
     <string name="jarnfe_settings_tap_control">Controller after tap</string>
     <string name="jarnfe_settings_tap_control_hint">Which screen keeps the controller after you touch either screen. Select still switches.</string>
     <string name="jarnfe_settings_tap_control_follow">Follow tap</string>

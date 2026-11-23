@@ -29,7 +29,13 @@ class JarnStageActivity : JarnScreenActivity() {
     override val screen = JarnScreen.Stage
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val deckLaunchTimeout = Runnable { JarnSession.update { deckLaunchFailed() } }
+    private val deckLaunchTimeout = Runnable { onDeckLaunchFailed() }
+    private val deckRecovery = JarnDeckRecoveryController(
+        handler = mainHandler,
+        deckDisplayId = { resolveDeckDisplayId(this) },
+        isFinishing = { isFinishing },
+        launch = ::launchDeck,
+    )
     private var playHandler: ((JarnLibraryGame) -> Unit)? = null
     private var folderHandler: ((Uri?) -> Unit)? = null
     private var actionsController: JarnGameActionsController? = null
@@ -42,6 +48,7 @@ class JarnStageActivity : JarnScreenActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        JarnDeckWatch.attach(deckRecovery)
         connectPlay()
         connectFolderPicker()
         getSystemService(DisplayManager::class.java)
@@ -74,9 +81,30 @@ class JarnStageActivity : JarnScreenActivity() {
         jarnLibrarySetupOrNull()?.recheck()
         jarnArtDetectorOrNull()?.check()
         syncDeck()
+        deckRecovery.onStageResumed()
+    }
+
+    override fun onPause() {
+        deckRecovery.onStagePaused()
+        super.onPause()
+    }
+
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        super.onTopResumedActivityChanged(isTopResumedActivity)
+        deckRecovery.onStageFocusChanged(isTopResumedActivity)
+    }
+
+    /** Anything Jarn opens outside itself may land on the Deck display while the Deck is gone. */
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        if (intent.component?.packageName != packageName) deckRecovery.onOtherAppOpening()
+        @Suppress("DEPRECATION")
+        super.startActivityForResult(intent, requestCode, options)
     }
 
     override fun onDestroy() {
+        deckRecovery.cancel()
+        JarnDeckWatch.detach(deckRecovery)
         if (JarnLibrary.onPlay === playHandler) JarnLibrary.onPlay = null
         if (JarnFolderPicker.open === folderHandler) JarnFolderPicker.open = null
         if (JarnGameActions.controller === actionsController) JarnGameActions.controller = null
@@ -88,13 +116,22 @@ class JarnStageActivity : JarnScreenActivity() {
 
     private fun syncDeck() {
         val deckDisplayId = resolveDeckDisplayId(this)
-        JarnSession.update { withDeckDisplay(deckDisplayId != null) }
+        if (deckDisplayId == null) JarnDeckWatch.onDisplayGone()
+        if (!JarnSession.state.deckWindowLost) {
+            JarnSession.update { withDeckDisplay(deckDisplayId != null) }
+        }
         val isStarted = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         if (deckDisplayId != null &&
             JarnSession.state.shouldLaunchDeck(isStarted, JarnSession.deckHostCreated)
         ) {
             launchDeck(deckDisplayId)
         }
+        deckRecovery.evaluate()
+    }
+
+    private fun onDeckLaunchFailed() {
+        JarnSession.update { deckLaunchFailed() }
+        deckRecovery.evaluate()
     }
 
     private fun launchDeck(displayId: Int) {
@@ -107,7 +144,7 @@ class JarnStageActivity : JarnScreenActivity() {
         runCatching { startActivity(intent, options.toBundle()) }
             .onFailure {
                 mainHandler.removeCallbacks(deckLaunchTimeout)
-                JarnSession.update { deckLaunchFailed() }
+                onDeckLaunchFailed()
             }
     }
 }
