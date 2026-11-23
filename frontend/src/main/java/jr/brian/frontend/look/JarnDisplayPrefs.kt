@@ -19,6 +19,8 @@ data class JarnDisplayPrefs(
     val hintsVisible: Boolean = true,
     val buttonHaptics: Boolean = true,
     val tapControl: JarnTapControl = JarnTapControl.FollowTap,
+    val appNamesVisible: Boolean = true,
+    val undoCountdownVisible: Boolean = true,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

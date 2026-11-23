@@ -32,6 +32,7 @@ import jr.brian.core.ui.components.JarnSurface
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.look.rememberJarnDisplay
 
 private val UndoToastMaxWidth = 420.dp
 private val UndoTimerHeight = 2.dp
@@ -76,7 +77,7 @@ internal fun CanvasUndoToast(entry: CanvasUndoEntry, onUndo: () -> Unit, modifie
                     variant = JarnButtonVariant.Secondary,
                 )
             }
-            CanvasUndoTimer(entry)
+            if (rememberJarnDisplay().undoCountdownVisible) CanvasUndoTimer(entry)
         }
     }
 }

@@ -91,6 +91,8 @@ internal fun buildBackupPreview(backup: JarngreiprConfig, current: JarngreiprCon
 private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): List<JarnBackupItem> {
     val b = backup.feature
     val c = current.feature
+    val foldersNow = current.app.folders.filterValues { it.isNotEmpty() }
+    val foldersAfter = foldersAfterRestore(backup.app.folders, current.app.folders)
     return listOf(
         replaced(
             JarnBackupArea.HomeLayout,
@@ -100,9 +102,9 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
         ),
         replaced(
             JarnBackupArea.Folders,
-            backup.app.folders.values.sumOf { it.size },
-            current.app.folders.values.sumOf { it.size },
-            backup.app.folders == current.app.folders,
+            foldersAfter.values.sumOf { it.size },
+            foldersNow.values.sumOf { it.size },
+            foldersAfter == foldersNow,
         ),
         replaced(JarnBackupArea.Dock, b.dock.apps.size, c.dock.apps.size, b.dock == c.dock),
         optional(JarnBackupArea.PinnedApps, b.jarnPinnedApps, c.jarnPinnedApps) { it.size },
@@ -189,6 +191,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             hintsVisible = it.hintsVisible ?: shown?.hintsVisible,
             buttonHaptics = it.buttonHaptics ?: shown?.buttonHaptics,
             tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
+            appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
+            undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

@@ -84,6 +84,56 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a different app names choice shows as a look change`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(appNamesVisible = true)),
+        )
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(appNamesVisible = false)),
+        )
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Replaces, look.change)
+    }
+
+    @Test
+    fun `a backup without app names shows the current choice as staying`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(hintsVisible = true, appNamesVisible = false)),
+        )
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(hintsVisible = true)),
+        )
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Same, look.change)
+    }
+
+    @Test
+    fun `a different undo countdown choice shows as a look change`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(undoCountdownVisible = true)),
+        )
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(undoCountdownVisible = false)),
+        )
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Replaces, look.change)
+    }
+
+    @Test
+    fun `a backup without undo countdown shows the current choice as staying`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(
+                jarnDisplay = JarnDisplayConfig(hintsVisible = true, undoCountdownVisible = false),
+            ),
+        )
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(hintsVisible = true)),
+        )
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Same, look.change)
+    }
+
+    @Test
     fun `fields an older backup lacks are shown as staying`() {
         val now = JarngreiprConfig(
             feature = FeatureConfig(

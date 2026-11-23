@@ -29,6 +29,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.JarnAppIcon
 import jr.brian.jarnfe.apps.JarnAppNameLabel
+import jr.brian.jarnfe.apps.jarnAppIconSize
 import jr.brian.jarnfe.apps.jarnAppSections
 import jr.brian.jarnfe.apps.jarnAppsDataOrNull
 import jr.brian.jarnfe.dock.JarnDockApp
@@ -76,6 +77,7 @@ private fun PreviewAppRow() {
     val data = remember(context) { context.jarnAppsDataOrNull() } ?: return
     val snapshot by remember(data) { data.snapshot }.collectAsState(initial = null)
     val labelSize = rememberJarnLauncherPrefs().appLabelSize
+    val namesVisible = rememberJarnDisplay().appNamesVisible
     val apps = remember(snapshot) {
         snapshot?.let { jarnAppSections(it) }?.let { it.pinned + it.all }.orEmpty().take(PREVIEW_TILE_COUNT)
     }
@@ -86,19 +88,20 @@ private fun PreviewAppRow() {
         maxLines = 1,
     )
     PreviewRow {
-        apps.forEach { app -> PreviewAppTile(app, labelSize) }
+        apps.forEach { app -> PreviewAppTile(app, labelSize, namesVisible) }
     }
 }
 
 @Composable
-private fun PreviewAppTile(app: JarnDockApp, labelSize: Int) {
+private fun PreviewAppTile(app: JarnDockApp, labelSize: Int, nameVisible: Boolean) {
     Column(
         modifier = Modifier.width(PreviewAppTileWidth),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(PreviewAppIconSize))
-        JarnAppNameLabel(app.label, labelSize)
+        val iconSize = jarnAppIconSize(PreviewAppIconSize, nameVisible)
+        JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(iconSize))
+        if (nameVisible) JarnAppNameLabel(app.label, labelSize)
     }
 }
 

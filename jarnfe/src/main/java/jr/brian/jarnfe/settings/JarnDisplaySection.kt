@@ -49,7 +49,19 @@ internal fun JarnDisplaySection() {
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
     )
+    UndoCountdownRow(store, display.undoCountdownVisible)
     if (JarnSession.state.deckDisplayAvailable) TapControlRow(store, display.tapControl)
+}
+
+@Composable
+private fun UndoCountdownRow(store: JarnLookStore, visible: Boolean) {
+    JarnToggleRow(
+        label = stringResource(R.string.jarnfe_settings_undo_countdown),
+        checked = visible,
+        onCheckedChange = { show -> store.updateDisplay { it.copy(undoCountdownVisible = show) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_settings_undo_countdown_hint),
+    )
 }
 
 @Composable

@@ -28,7 +28,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnButtonVariant
@@ -37,7 +36,10 @@ import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.jarnAppIconSize
+import jr.brian.jarnfe.apps.jarnHiddenAppName
 import jr.brian.jarnfe.input.JarnAction
+import jr.brian.jarnfe.look.rememberJarnDisplay
 
 private const val FOLDER_GRID_COLUMNS = 4
 private val FolderCellIconSize = 48.dp
@@ -191,8 +193,10 @@ private fun FolderAppCell(
     val source = remember { MutableInteractionSource() }
     val latestOpen by rememberUpdatedState(onOpen)
     val latestOptions by rememberUpdatedState(onOptions)
+    val nameVisible = rememberJarnDisplay().appNamesVisible
     Column(
         modifier = modifier
+            .jarnHiddenAppName(app.label, nameVisible)
             .onFocusChanged { if (it.hasFocus) onFocused() }
             .jarnInteractive(JarnTheme.radius.mdShape, source, onClick = onOpen)
             .pointerInput(app.packageName) {
@@ -202,13 +206,7 @@ private fun FolderAppCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        CanvasAppIcon(app, Modifier.size(FolderCellIconSize))
-        JarnText(
-            text = app.label,
-            style = JarnTheme.type.caption,
-            color = JarnTheme.colors.textHigh,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-        )
+        CanvasAppIcon(app, Modifier.size(jarnAppIconSize(FolderCellIconSize, nameVisible)))
+        if (nameVisible) CanvasAppName(app.label)
     }
 }

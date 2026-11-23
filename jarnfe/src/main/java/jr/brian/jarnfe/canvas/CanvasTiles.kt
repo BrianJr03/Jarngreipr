@@ -32,6 +32,9 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.JarnAppIcon
+import jr.brian.jarnfe.apps.jarnAppIconSize
+import jr.brian.jarnfe.apps.jarnHiddenAppName
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import java.io.File
 
 private const val FOLDER_PREVIEW_COUNT = 4
@@ -111,22 +114,29 @@ private fun BoxScope.AppTile(app: JarnCanvasApp?) {
         MissingTile()
         return
     }
+    val nameVisible = rememberJarnDisplay().appNamesVisible
     Column(
         modifier = Modifier
             .align(Alignment.Center)
+            .jarnHiddenAppName(app.label, nameVisible)
             .padding(JarnTheme.space.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        CanvasAppIcon(app, Modifier.size(AppIconSize))
-        JarnText(
-            text = app.label,
-            style = JarnTheme.type.caption,
-            color = JarnTheme.colors.textHigh,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-        )
+        CanvasAppIcon(app, Modifier.size(jarnAppIconSize(AppIconSize, nameVisible)))
+        if (nameVisible) CanvasAppName(app.label)
     }
+}
+
+@Composable
+internal fun CanvasAppName(label: String) {
+    JarnText(
+        text = label,
+        style = JarnTheme.type.caption,
+        color = JarnTheme.colors.textHigh,
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
