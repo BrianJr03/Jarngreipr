@@ -155,17 +155,28 @@ class JarnLibraryDataTest {
     }
 
     @Test
-    fun `shelf lists recent then most played without repeats`() = runBlocking {
+    fun `shelf lists recent, most played, then the rest without repeats`() = runBlocking {
         insert("gba", "Recent.gba", lastPlayed = 50L, playCount = 9)
         insert("gba", "Most.gba", playCount = 4)
         insert("gba", "Never.gba")
 
         val shelf = library.systemShelf("gba").first().games
-        assertEquals(listOf("Recent", "Most"), shelf.map { it.game.game.title })
+        assertEquals(listOf("Recent", "Most", "Never"), shelf.map { it.game.game.title })
         assertEquals(
-            listOf(SystemShelfGroup.Recent, SystemShelfGroup.MostPlayed),
+            listOf(SystemShelfGroup.Recent, SystemShelfGroup.MostPlayed, SystemShelfGroup.InSystem),
             shelf.map { it.group },
         )
+    }
+
+    @Test
+    fun `one played game still fills the shelf up to the cap`() = runBlocking {
+        insert("gba", "Played.gba", lastPlayed = 50L)
+        repeat(30) { insert("gba", "Game${it.toString().padStart(2, '0')}.gba") }
+
+        val shelf = library.systemShelf("gba").first().games
+        assertEquals(SHELF_MAX_GAMES, shelf.size)
+        assertEquals("Played", shelf.first().game.game.title)
+        assertEquals(shelf.size, shelf.map { it.game.game.id }.distinct().size)
     }
 
     @Test

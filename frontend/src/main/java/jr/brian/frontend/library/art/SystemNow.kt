@@ -22,7 +22,7 @@ data class SystemActivity(
     val favoriteCount: Int = 0,
 )
 
-/** Recent then most played. A system with neither shows its first games A to Z. */
+/** Recent, most played, then the rest A to Z so a lightly played system still fills the shelf. */
 internal fun pickShelf(
     recent: List<LibraryGame>,
     mostPlayed: List<LibraryGame>,
@@ -34,8 +34,10 @@ internal fun pickShelf(
     if (latest.isEmpty() && most.isEmpty()) {
         return browse.take(SHELF_BROWSE_GAMES).map { it to SystemShelfGroup.InSystem }
     }
-    return (latest.map { it to SystemShelfGroup.Recent } + most.map { it to SystemShelfGroup.MostPlayed })
-        .take(SHELF_MAX_GAMES)
+    val played = latest.map { it to SystemShelfGroup.Recent } + most.map { it to SystemShelfGroup.MostPlayed }
+    val playedIds = played.mapTo(HashSet()) { it.first.id }
+    val others = browse.filterNot { it.id in playedIds }.map { it to SystemShelfGroup.InSystem }
+    return (played + others).take(SHELF_MAX_GAMES)
 }
 
 /** [launches] are (system, launch time) pairs already checked against the hide rules. */

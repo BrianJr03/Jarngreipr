@@ -56,11 +56,12 @@ fun JarnGameTile(
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    aspectRatio: Float = GAME_TILE_ASPECT,
     art: @Composable BoxScope.() -> Unit,
 ) {
     JarnLibraryTileFrame(
         shape = JarnTheme.look.tileShape ?: JarnTheme.radius.smShape,
-        aspectRatio = GAME_TILE_ASPECT,
+        aspectRatio = aspectRatio,
         captioned = false,
         description = title,
         onClick = onClick,
