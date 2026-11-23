@@ -13,7 +13,7 @@ TOP = "4630946441858561667"
 BOTTOM = "4630946482288158084"
 LIBRARY = ["Systems", "Favorites", "Recent"]
 DECK = ["Now", "Apps", "Canvas"]
-SETTINGS = ["Library", "Art", "Look", "Display", "Data"]
+SETTINGS = ["Library", "Art", "Look", "Display", "Apps", "General", "Data"]
 
 
 def env(name, default=""):
@@ -148,7 +148,7 @@ def png(state, physical):
     else:
         slot = state["deck_focus"]
         tab = state["settings"] if state["route"] == "settings" else state["deck"]
-        draw.rectangle((40, 420, 900, 520), fill=(40 + tab * 50, 200, 80))
+        draw.rectangle((40, 420, 900, 520), fill=(40 + tab * 30, 200, 80))
         if env("DECK_FOLLOWS"):
             draw.rectangle((300, 100, 700, 280), fill=(30 + state["stage_focus"] * 45, 70, 150))
     if env("NO_FOCUS_MOVE"):

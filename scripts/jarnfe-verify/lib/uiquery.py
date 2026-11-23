@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 WORDMARK = "JARN"
 DECK_TABS = {"Now", "Apps", "Canvas"}
-SETTINGS_TABS = {"Library", "Art", "Look", "Display", "Data"}
+SETTINGS_TABS = {"Library", "Art", "Look", "Display", "Apps", "General", "Data"}
 
 
 def label(node):
