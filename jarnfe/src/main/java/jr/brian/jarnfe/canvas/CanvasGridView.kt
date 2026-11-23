@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -42,7 +43,7 @@ import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.GridRect
 
-private val CanvasOuterPadding = 12.dp
+private val CanvasOuterPadding = 20.dp
 private val CanvasCellSpacing = 8.dp
 private val CanvasMaxCellSize = 96.dp
 private val EditOutlineWidth = 1.dp
@@ -52,7 +53,7 @@ private const val GRABBED_Z_INDEX = 1f
 
 internal const val CANVAS_MENU_FOCUS_ID = "jarnfe-canvas-menu"
 
-/** The same sizing Classic uses, so a saved page looks the same in both experiences. */
+/** Classic's cell layout, with outer padding that keeps a focused tile clear of the edges. */
 private data class CanvasMetrics(val cell: Dp, val width: Dp, val height: Dp) {
     fun offsetOf(index: Int): Dp = CanvasOuterPadding + (cell + CanvasCellSpacing) * index
 
@@ -92,6 +93,7 @@ internal fun CanvasGrid(
     grabbedId: String?,
     focusRequesterFor: (String) -> FocusRequester,
     onFocused: (String) -> Unit,
+    onCellSize: (Float) -> Unit,
     onTileClick: (CanvasItem, cellSizePx: Float) -> Unit,
     onMenuClick: () -> Unit,
     tileContent: @Composable BoxScope.(CanvasItem) -> Unit,
@@ -110,6 +112,7 @@ internal fun CanvasGrid(
     BoxWithConstraints(Modifier.fillMaxSize().then(scrollModifier)) {
         val metrics = canvasMetrics(direction, crossAxisCount, pushAxisCells, maxWidth, maxHeight)
         val cellPx = with(LocalDensity.current) { metrics.cell.toPx() }
+        SideEffect { onCellSize(cellPx) }
         val alignment = if (direction == PushDirection.DOWN) Alignment.TopCenter else Alignment.CenterStart
         Box(
             Modifier

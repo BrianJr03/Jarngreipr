@@ -44,6 +44,7 @@ data class JarnCanvasMusic(
     val artist: String? = null,
     val imageUrl: String? = null,
     val isPlaying: Boolean = false,
+    val isBuffering: Boolean = false,
 )
 
 /** [apps], [folders] and [roms] resolve the references held by this page's tiles. */
@@ -66,7 +67,7 @@ data class JarnCanvasSnapshot(
 )
 
 /** The saved pages Classic also reads. Writes keep the stored format exactly as it is. */
-interface JarnCanvasData {
+interface JarnCanvasData : JarnCanvasTiles {
     val snapshot: Flow<JarnCanvasSnapshot>
 
     /** Writes one solved arrangement in a single save. The other orientation is left alone. */

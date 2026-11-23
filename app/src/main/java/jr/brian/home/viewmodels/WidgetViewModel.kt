@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jr.brian.home.canvas.jarn.JarnWidgetHostHandoff
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -46,6 +47,7 @@ class WidgetViewModel @Inject constructor(
         appWidgetManager = AppWidgetManager.getInstance(context)
 
         appWidgetHost?.startListening()
+        appWidgetHost?.let(JarnWidgetHostHandoff::classicStarted)
 
         val pageTypes = pageTypeManager.pageTypes.value
         val widgetPageCount = pageTypes.count { it != PageType.APPS_TAB }
@@ -461,5 +463,6 @@ class WidgetViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         appWidgetHost?.stopListening()
+        appWidgetHost?.let(JarnWidgetHostHandoff::classicStopped)
     }
 }

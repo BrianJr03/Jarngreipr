@@ -42,6 +42,7 @@ import jr.brian.jarnfe.canvas.JarnCanvasPage
 import jr.brian.jarnfe.canvas.JarnCanvasPageKind
 import jr.brian.jarnfe.canvas.JarnCanvasRom
 import jr.brian.jarnfe.canvas.JarnCanvasSnapshot
+import jr.brian.jarnfe.canvas.JarnCanvasTiles
 import jr.brian.jarnfe.canvas.jarnPageOrderAfterMove
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,7 +54,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -132,9 +132,10 @@ class AppJarnCanvasData @Inject constructor(
     private val widgetPreferences: WidgetPreferences,
     private val widgetPageApps: WidgetPageAppManager,
     private val nowPlaying: Provider<NowPlayingManager>,
-) : JarnCanvasData {
+    private val tiles: AppJarnCanvasTiles,
+) : JarnCanvasData, JarnCanvasTiles by tiles {
 
-    private val pageEdits = Mutex()
+    private val pageEdits get() = tiles.edits
     private val icons = ConcurrentHashMap<String, Drawable>()
 
     override val snapshot: Flow<JarnCanvasSnapshot> = combine(
@@ -234,7 +235,7 @@ class AppJarnCanvasData @Inject constructor(
         }
         if (!hasMusicTile) return flowOf(null)
         return nowPlaying.get().nowPlaying.map { info ->
-            info?.let { JarnCanvasMusic(it.title, it.artist, it.imageUrl, it.isPlaying) }
+            info?.let { JarnCanvasMusic(it.title, it.artist, it.imageUrl, it.isPlaying, it.isBuffering) }
         }
     }
 

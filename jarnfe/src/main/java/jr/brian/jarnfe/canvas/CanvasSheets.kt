@@ -58,6 +58,7 @@ internal fun CanvasModalSheet(
 
 @Composable
 internal fun CanvasOptionsSheet(
+    onAdd: () -> Unit,
     onEdit: () -> Unit,
     onPages: () -> Unit,
     canEdit: Boolean,
@@ -66,12 +67,20 @@ internal fun CanvasOptionsSheet(
     val first = remember { FocusRequester() }
     CanvasModalSheet(stringResource(R.string.jarnfe_canvas_options_title), first, onClose) {
         JarnNavigateRow(
+            label = stringResource(R.string.jarnfe_canvas_option_add),
+            supporting = stringResource(R.string.jarnfe_canvas_option_add_detail),
+            onClick = onAdd,
+            enabled = canEdit,
+            focusableWhenDisabled = true,
+            modifier = Modifier.fillMaxWidth().focusRequester(first),
+        )
+        JarnNavigateRow(
             label = stringResource(R.string.jarnfe_canvas_option_edit),
             supporting = stringResource(R.string.jarnfe_canvas_option_edit_detail),
             onClick = onEdit,
             enabled = canEdit,
             focusableWhenDisabled = true,
-            modifier = Modifier.fillMaxWidth().focusRequester(first),
+            modifier = Modifier.fillMaxWidth(),
         )
         JarnNavigateRow(
             label = stringResource(R.string.jarnfe_canvas_option_pages),
