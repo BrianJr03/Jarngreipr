@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarn_faq_example">Example</string>
+    <string name="jarn_faq_grouped_format">Grouped format</string>
+    <string name="jarn_faq_esde_wallpaper_action">ES-DE wallpaper action</string>
+    <string name="jarn_faq_standard_wallpaper_action">Standard wallpaper action</string>
+    <string name="jarn_faq_package">Package</string>
+    <string name="jarn_faq_class">Class</string>
+    <string name="jarn_faq_grant_command">Grant command</string>
+    <string name="jarn_faq_esde_wallpaper_value" translatable="false">jr.brian.SET_ESDE_WALLPAPER</string>
+    <string name="jarn_faq_standard_wallpaper_value" translatable="false">jr.brian.SET_STANDARD_WALLPAPER</string>
+    <string name="jarn_faq_class_value" translatable="false">jr.brian.home.WallpaperActionReceiver</string>
+</resources>
