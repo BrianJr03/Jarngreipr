@@ -17,6 +17,7 @@ import jr.brian.home.model.widget.WidgetPage
 import jr.brian.home.model.state.WidgetUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,7 +36,7 @@ class WidgetViewModel @Inject constructor(
     private var isDeletingPage = false
 
     companion object {
-        private const val APPWIDGET_HOST_ID = 1024
+        const val APPWIDGET_HOST_ID = 1024
         const val MAX_WIDGET_PAGES = 2
         private const val TAG = "WidgetViewModel"
     }
@@ -84,11 +85,18 @@ class WidgetViewModel @Inject constructor(
                     }
 
                     widgetPageCount < currentPages.size -> {
-                        val trimmedPages = currentPages.take(widgetPageCount)
-                        val removedPages = currentPages.drop(widgetPageCount)
+                        val savedPages = widgetPreferences.widgetConfigs.first()
+                            .associate { it.widgetId to it.pageIndex }
+                        val latestPages = _uiState.value.widgetPages
+                        val trimmedPages = latestPages.take(widgetPageCount)
+                        val removedPages = latestPages.drop(widgetPageCount)
 
                         removedPages.forEach { page ->
                             page.widgets.forEach { widget ->
+                                // A page removed outside this ViewModel has already moved its
+                                // neighbors down in storage, so those widgets must survive.
+                                val savedPage = savedPages[widget.widgetId]
+                                if (savedPage != null && savedPage < widgetPageCount) return@forEach
                                 appWidgetHost?.deleteAppWidgetId(widget.widgetId)
                                 viewModelScope.launch {
                                     widgetPreferences.removeWidgetConfig(widget.widgetId)

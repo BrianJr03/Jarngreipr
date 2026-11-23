@@ -13,6 +13,7 @@ import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.canvas.CanvasRoute
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
@@ -68,7 +69,7 @@ private fun DeckTabContent(state: JarnSessionState) {
             recent = JarnLibrary.state.recent.items,
         )
         DeckTab.Browse -> DeckTabPlaceholder(R.string.jarnfe_empty_browse_title, R.string.jarnfe_empty_browse_message)
-        DeckTab.Canvas -> DeckTabPlaceholder(R.string.jarnfe_empty_canvas_title, R.string.jarnfe_empty_canvas_message)
+        DeckTab.Canvas -> CanvasRoute(state)
     }
 }
 

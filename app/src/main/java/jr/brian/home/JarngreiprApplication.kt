@@ -14,6 +14,9 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.service.HomeInterceptionKeepAliveService
 import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
+import jr.brian.home.canvas.jarn.AppJarnCanvasData
+import jr.brian.jarnfe.canvas.JarnCanvasData
+import jr.brian.jarnfe.canvas.JarnCanvasDataProvider
 import jr.brian.jarnfe.launch.JarnGameLauncher
 import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
@@ -31,7 +34,8 @@ class JarngreiprApplication :
     Configuration.Provider,
     JarnGameLauncherProvider,
     JarnGameOptionsProvider,
-    JarnLibraryDataProvider {
+    JarnLibraryDataProvider,
+    JarnCanvasDataProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -58,6 +62,13 @@ class JarngreiprApplication :
 
     override val jarnGameOptions: JarnGameOptions
         get() = jarnGameOptionsProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's canvas bridge. */
+    @Inject
+    lateinit var jarnCanvasDataProvider: Provider<AppJarnCanvasData>
+
+    override val jarnCanvasData: JarnCanvasData
+        get() = jarnCanvasDataProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a
