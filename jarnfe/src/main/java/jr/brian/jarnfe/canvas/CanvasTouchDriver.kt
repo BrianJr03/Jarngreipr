@@ -10,6 +10,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -55,6 +56,8 @@ internal class CanvasTouchActions(
     val hasCarryTarget: (Int) -> Boolean = { false },
     val carry: (Int) -> Boolean = { false },
     val moveBetweenPages: ((CanvasGrabDrop.BetweenPages) -> Unit)? = null,
+    val addAt: (GridCell) -> Unit = {},
+    val addToFolder: (CanvasFolderDrop) -> Unit = {},
 )
 
 /** Turns gesture effects into moves on the one shared grab in [CanvasEditor]. */
@@ -99,6 +102,14 @@ internal class CanvasTouchDriver(
 
     val dock = CanvasRemoveDock()
 
+    val folderHover = CanvasFolderHover(thresholds.folderDwellMs)
+
+    /** True from a hold on an empty cell until that finger lifts, so it can't also swipe the page. */
+    var holdsEmptyCell = false
+        private set
+
+    private var reflowPaused = false
+
     /** The tile showing resize handles in Edit layout. */
     var selectedId by mutableStateOf<String?>(null)
         private set
@@ -132,6 +143,37 @@ internal class CanvasTouchDriver(
         val active = actions?.takeIf { it.enabled } ?: return null
         val layout = active.layout ?: return null
         return editor.placements(layout).entries.firstOrNull { board.contains(it.value, point) }?.key
+    }
+
+    /** A free cell a hold can add to. Never one while a grab is running. */
+    fun emptyCellAt(point: Offset): GridCell? {
+        val board = geometry ?: return null
+        val layout = actions?.takeIf { it.enabled }?.layout ?: return null
+        if (editor.grab != null) return null
+        return canvasEmptyCell(board, layout, editor.placements(layout), point)
+    }
+
+    fun handleEmptyHold(gesture: CanvasTouchGesture, effect: CanvasTouchEffect, cell: GridCell) {
+        when (effect) {
+            CanvasTouchEffect.Lift ->
+                if (actions?.enabled == true && editor.grab == null) {
+                    holdsEmptyCell = true
+                    actions?.haptic?.invoke()
+                } else {
+                    gesture.abandon()
+                }
+            CanvasTouchEffect.OpenMenu -> {
+                val active = actions?.takeIf { holdsEmptyCell && it.enabled && editor.grab == null }
+                holdsEmptyCell = false
+                active?.addAt?.invoke(cell)
+            }
+            CanvasTouchEffect.BeginDrag -> gesture.abandon()
+            else -> Unit
+        }
+    }
+
+    fun endEmptyHold() {
+        holdsEmptyCell = false
     }
 
     /** The handle under [point], remembered for the resize this press is about to start. */
@@ -203,6 +245,7 @@ internal class CanvasTouchDriver(
             CanvasTouchEffect.Unlift -> liftedId = null
             CanvasTouchEffect.CancelDrag -> {
                 dock.reset()
+                clearFolderHover()
                 if (editor.grab?.driver == CanvasGrabDriver.Touch) editor.cancelGrab()
             }
         }
@@ -284,6 +327,7 @@ internal class CanvasTouchDriver(
         }
         active.onGrabbed(id)
         dock.reset()
+        clearFolderHover()
         edgeDwell.reset()
         anchor(press)
         moveTo(point)
@@ -295,6 +339,7 @@ internal class CanvasTouchDriver(
             return
         }
         actions?.haptic?.invoke()
+        clearFolderHover()
         anchor(press)
         trackFinger(press)
     }
@@ -362,9 +407,11 @@ internal class CanvasTouchDriver(
         }
         val direction = if (side > 0f) 1 else if (side < 0f) -1 else 0
         val atEnd = !port.horizontal || scrolled == 0f
-        val flip = edgeDwell.step(direction, atEnd, active.hasCarryTarget(direction), nowMs)
+        val canFlip = folderHover.targetId == null && active.hasCarryTarget(direction)
+        val flip = edgeDwell.step(direction, atEnd, canFlip, nowMs)
         if (flip != 0 && editor.grab?.itemId == grab.itemId && active.carry(flip)) {
             arrivalDirection = flip
+            clearFolderHover()
             editor.grab?.rect?.let {
                 cellCol = it.col
                 cellRow = it.row
@@ -381,9 +428,15 @@ internal class CanvasTouchDriver(
         val board = geometry ?: return
         if (editor.grab?.driver != CanvasGrabDriver.Touch) return
         follow(point)
-        if (trackDock(point)) return
-        val col = board.axisCell(point.x - grabOffset.x, cellCol, thresholds.cellHysteresis)
-        val row = board.axisCell(point.y - grabOffset.y, cellRow, thresholds.cellHysteresis)
+        if (trackDock(point)) {
+            clearFolderHover()
+            return
+        }
+        if (trackFolder(board, point)) return
+        val hysteresis = if (reflowPaused) RESUME_HYSTERESIS else thresholds.cellHysteresis
+        reflowPaused = false
+        val col = board.axisCell(point.x - grabOffset.x, cellCol, hysteresis)
+        val row = board.axisCell(point.y - grabOffset.y, cellRow, hysteresis)
         if (col == cellCol && row == cellRow) return
         cellCol = col
         cellRow = row
@@ -406,6 +459,53 @@ internal class CanvasTouchDriver(
         return dock.armed
     }
 
+    /** True while the finger aims at a folder, which holds every tile at its frozen spot. */
+    private fun trackFolder(board: CanvasBoardGeometry, point: Offset): Boolean {
+        val active = actions ?: return false
+        val grab = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch } ?: return false
+        val targets = active.layout?.let { canvasFolderTargets(it, grab) }.orEmpty()
+        val folderId = canvasFolderUnder(board, targets, point, thresholds.folderInset)
+        val entering = folderId != null && folderHover.targetId == null
+        if (folderHover.update(folderId, clockMs())) active.haptic()
+        if (entering) {
+            reflowPaused = true
+            editor.drive(CanvasGrabDriver.Touch) { previewCleared() }
+            editor.grab?.rect?.let {
+                cellCol = it.col
+                cellRow = it.row
+            }
+        }
+        return folderId != null
+    }
+
+    fun folderDwellLeftMs(): Long = folderHover.remainingMs(clockMs())
+
+    fun tickFolderDwell() {
+        val target = folderHover.targetId ?: return
+        if (editor.grab?.driver != CanvasGrabDriver.Touch) {
+            clearFolderHover()
+            return
+        }
+        if (folderHover.update(target, clockMs())) actions?.haptic?.invoke()
+    }
+
+    /** What the board should show for [tileId], only while a finger holds the grab. */
+    fun folderDropState(tileId: String): CanvasFolderDropState? {
+        val grab = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch } ?: return null
+        val aimedAt = tileId == folderHover.targetId
+        return when {
+            aimedAt && folderHover.armed -> CanvasFolderDropState.Armed
+            aimedAt -> CanvasFolderDropState.Hover
+            tileId == grab.itemId && folderHover.armed -> CanvasFolderDropState.Armed
+            else -> null
+        }
+    }
+
+    private fun clearFolderHover() {
+        folderHover.reset()
+        reflowPaused = false
+    }
+
     /** A controller that took the grab mid-drag keeps it, so lifting the finger can't drop it. */
     private fun drop() {
         val finished = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch } ?: return
@@ -421,10 +521,27 @@ internal class CanvasTouchDriver(
             return
         }
         dock.reset()
+        if (dropIntoFolder(active, layout, finished)) return
+        clearFolderHover()
         editor.drop(moveBetweenPages = active.moveBetweenPages) { placements ->
             active.commit(layout, placements)
             active.onDropped(finished, placements)
         }
+    }
+
+    /** Only an armed folder takes the tile. Letting go before that puts it back where it was. */
+    private fun dropIntoFolder(active: CanvasTouchActions, layout: CanvasLayout, held: CanvasGrab): Boolean {
+        val target = folderHover.targetId ?: return false
+        folderHover.update(target, clockMs())
+        if (!folderHover.armed) return false
+        val app = layout.items.firstOrNull { it.id == held.itemId } as? CanvasItem.AppItem ?: return false
+        val folder = layout.items.firstOrNull { it.id == target } as? CanvasItem.FolderItem ?: return false
+        clearFolderHover()
+        val taken = editor.takeForFolder() ?: return false
+        visual.finish()
+        if (selectedId == taken.itemId) selectedId = null
+        active.addToFolder(CanvasFolderDrop(taken, app.packageName, folder.id, folder.folderId))
+        return true
     }
 
     /** Finishing the visual here skips the settle, so the tile leaves from under the finger. */
@@ -441,6 +558,7 @@ internal class CanvasTouchDriver(
 
 private const val NANOS_PER_MS = 1_000_000L
 private const val EDIT_TAP_CLAIM_MS = 400L
+private const val RESUME_HYSTERESIS = -0.5f
 
 /** Lets the board tell a widget about a finger that landed outside of it. */
 internal fun interface CanvasWidgetFinger {

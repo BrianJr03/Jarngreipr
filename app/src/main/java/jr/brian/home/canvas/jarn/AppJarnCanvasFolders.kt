@@ -52,6 +52,28 @@ class AppJarnCanvasFolders @Inject constructor(
         }
     }
 
+    override suspend fun moveAppTileToFolder(
+        tilePage: Int,
+        itemId: String,
+        folderPage: Int,
+        folderId: String,
+    ): Boolean = tiles.edit {
+        val tile = layouts.getLayout(tilePage).items.firstOrNull { it.id == itemId } as? CanvasItem.AppItem
+            ?: return@edit false
+        val hasFolderTile = layouts.getLayout(folderPage).items
+            .any { it is CanvasItem.FolderItem && it.folderId == folderId }
+        val folder = folders.getFolder(folderPage, folderId, CanvasTabType.VALUE)
+        if (!hasFolderTile || folder == null) return@edit false
+        if (tile.packageName !in folder.appPackageNames) {
+            val next = jarnFolderPackages(folder.appPackageNames, setOf(tile.packageName), emptySet())
+            folders.updateFolder(folderPage, folder.copy(appPackageNames = next), CanvasTabType.VALUE)
+            val saved = folders.getFolder(folderPage, folderId, CanvasTabType.VALUE)
+            if (saved == null || tile.packageName !in saved.appPackageNames) return@edit false
+        }
+        layouts.removeItem(tilePage, itemId)
+        true
+    }
+
     override suspend fun deleteFolder(pageIndex: Int, folderId: String) = tiles.edit {
         removeFolderAndTiles(pageIndex, folderId)
     }

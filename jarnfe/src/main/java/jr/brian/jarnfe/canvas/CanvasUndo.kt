@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.GridRect
+import jr.brian.jarnfe.R
+import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -18,7 +20,7 @@ internal const val CANVAS_UNDO_WINDOW_MS = 6_000L
 /** Long enough for the saved layout to arrive, so a finished removal never flashes back. */
 internal const val CANVAS_REMOVAL_HIDE_MS = 1_000L
 
-internal enum class CanvasUndoKind { Moved, Resized, Removed }
+internal enum class CanvasUndoKind { Moved, Resized, Removed, MovedToFolder }
 
 internal sealed interface CanvasUndoEntry {
     val pageIndex: Int
@@ -35,11 +37,27 @@ internal data class CanvasLayoutChange(
 ) : CanvasUndoEntry
 
 /** The tile is still saved while this exists, so losing the process simply brings it back. */
+internal sealed interface CanvasPendingTileExit : CanvasUndoEntry {
+    val itemId: String
+}
+
 internal data class CanvasPendingRemoval(
     override val pageIndex: Int,
-    val itemId: String,
-) : CanvasUndoEntry {
+    override val itemId: String,
+) : CanvasPendingTileExit {
     override val kind: CanvasUndoKind get() = CanvasUndoKind.Removed
+}
+
+/** [pageIndex] is the tile's saved page. A carried tile's folder can be on [folderPage]. */
+internal data class CanvasPendingFolderAdd(
+    override val pageIndex: Int,
+    override val itemId: String,
+    val packageName: String,
+    val folderPage: Int,
+    val folderId: String,
+    val app: JarnCanvasApp? = null,
+) : CanvasPendingTileExit {
+    override val kind: CanvasUndoKind get() = CanvasUndoKind.MovedToFolder
 }
 
 /** Already saved on both pages. Undo restores them, and letting the window end changes nothing. */
@@ -56,6 +74,9 @@ internal interface CanvasUndoWrites {
     suspend fun moveTile(move: JarnCanvasTileMove): JarnCanvasTileMoved? = null
 
     suspend fun undoTileMove(moved: JarnCanvasTileMoved): Boolean = false
+
+    /** False leaves the tile on the board. */
+    suspend fun addAppToFolder(add: CanvasPendingFolderAdd): Boolean = false
 }
 
 internal class CanvasDataUndoWrites(private val data: JarnCanvasData) : CanvasUndoWrites {
@@ -70,6 +91,14 @@ internal class CanvasDataUndoWrites(private val data: JarnCanvasData) : CanvasUn
     override suspend fun moveTile(move: JarnCanvasTileMove) = data.moveTile(move)
 
     override suspend fun undoTileMove(moved: JarnCanvasTileMoved) = data.undoTileMove(moved)
+
+    override suspend fun addAppToFolder(add: CanvasPendingFolderAdd): Boolean {
+        val saved = runCatching {
+            data.moveAppTileToFolder(add.pageIndex, add.itemId, add.folderPage, add.folderId)
+        }.getOrDefault(false)
+        if (!saved) JarnNotices.show(R.string.jarnfe_canvas_notice_folder_add_failed)
+        return saved
+    }
 }
 
 internal fun canvasUndoKind(
@@ -88,8 +117,8 @@ internal fun canvasPlacementsAgree(first: Map<String, GridRect>, second: Map<Str
     first.all { (id, rect) -> second[id]?.let { it == rect } ?: true }
 
 /**
- * One level of undo, held in memory only. A removal writes nothing until its window ends, and runs
- * in [scope], which must outlive every screen so leaving Canvas can never stop it partway.
+ * One level of undo, held in memory only. A tile leaving the board writes nothing until its window
+ * ends, and runs in [scope], which must outlive every screen so leaving Canvas can't stop it partway.
  */
 @Stable
 internal class CanvasUndoController(
@@ -100,14 +129,18 @@ internal class CanvasUndoController(
     var entry by mutableStateOf<CanvasUndoEntry?>(null)
         private set
 
-    private val finishing = mutableStateListOf<CanvasPendingRemoval>()
+    private val finishing = mutableStateListOf<CanvasPendingTileExit>()
     private var writes: CanvasUndoWrites? = null
     private var timer: Job? = null
 
     fun hiddenOn(pageIndex: Int): Set<String> = buildSet {
-        (entry as? CanvasPendingRemoval)?.takeIf { it.pageIndex == pageIndex }?.let { add(it.itemId) }
+        (entry as? CanvasPendingTileExit)?.takeIf { it.pageIndex == pageIndex }?.let { add(it.itemId) }
         finishing.forEach { if (it.pageIndex == pageIndex) add(it.itemId) }
     }
+
+    /** Apps on their way into a folder, until the saved folder can arrive. */
+    val pendingFolderAdds: List<CanvasPendingFolderAdd>
+        get() = (listOfNotNull(entry) + finishing).filterIsInstance<CanvasPendingFolderAdd>()
 
     fun recordLayout(target: CanvasUndoWrites, change: CanvasLayoutChange) {
         settle()
@@ -117,6 +150,11 @@ internal class CanvasUndoController(
     fun removeTile(target: CanvasUndoWrites, pageIndex: Int, itemId: String) {
         settle()
         open(target, CanvasPendingRemoval(pageIndex, itemId))
+    }
+
+    fun addToFolder(target: CanvasUndoWrites, add: CanvasPendingFolderAdd) {
+        settle()
+        open(target, add)
     }
 
     /**
@@ -168,7 +206,7 @@ internal class CanvasUndoController(
         val ended = entry
         val target = writes
         close()
-        if (ended is CanvasPendingRemoval && target != null) finishRemoval(target, ended)
+        if (ended is CanvasPendingTileExit && target != null) finishExit(target, ended)
     }
 
     private fun open(target: CanvasUndoWrites, next: CanvasUndoEntry) {
@@ -188,14 +226,20 @@ internal class CanvasUndoController(
     }
 
     /** Starts at once, so it takes the edit lock ahead of any page edit that follows this exit. */
-    private fun finishRemoval(target: CanvasUndoWrites, removal: CanvasPendingRemoval) {
-        finishing += removal
+    private fun finishExit(target: CanvasUndoWrites, exit: CanvasPendingTileExit) {
+        finishing += exit
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                runCatching { target.remove(removal.pageIndex, removal.itemId) }
-                delay(removalHideMs)
+                val staysHidden = when (exit) {
+                    is CanvasPendingRemoval -> {
+                        runCatching { target.remove(exit.pageIndex, exit.itemId) }
+                        true
+                    }
+                    is CanvasPendingFolderAdd -> runCatching { target.addAppToFolder(exit) }.getOrDefault(false)
+                }
+                if (staysHidden) delay(removalHideMs)
             } finally {
-                finishing -= removal
+                finishing -= exit
             }
         }
     }

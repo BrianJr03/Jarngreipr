@@ -14,6 +14,8 @@ import jr.brian.home.data.FolderManager
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppJarnCanvasFoldersTest {
@@ -86,7 +88,57 @@ class AppJarnCanvasFoldersTest {
         verify(exactly = 0) { layouts.removeItem(any(), any()) }
     }
 
+    @Test
+    fun `moving a tile saves the folder before clearing the tile`() = runBlocking {
+        givenFolderOnPage()
+        val saved = folder.copy(appPackageNames = listOf("gone", "a", "new"))
+        every { layouts.getLayout(OTHER_PAGE) } returns CanvasLayout(items = listOf(CanvasItem.AppItem("tile", "new")))
+        coEvery { folders.getFolder(PAGE, "id", CanvasTabType.VALUE) } returnsMany listOf(folder, saved)
+        assertTrue(subject.moveAppTileToFolder(OTHER_PAGE, "tile", PAGE, "id"))
+        coVerifyOrder {
+            folders.updateFolder(PAGE, saved, CanvasTabType.VALUE)
+            layouts.removeItem(OTHER_PAGE, "tile")
+        }
+    }
+
+    @Test
+    fun `an app already in the folder is not added twice, and its tile still goes`() = runBlocking {
+        givenFolderOnPage()
+        assertTrue(subject.moveAppTileToFolder(PAGE, "app", PAGE, "id"))
+        coVerify(exactly = 0) { folders.updateFolder(any(), any(), any()) }
+        verify { layouts.removeItem(PAGE, "app") }
+    }
+
+    @Test
+    fun `a folder save that did not stick keeps the tile`() = runBlocking {
+        givenFolderOnPage()
+        every { layouts.getLayout(OTHER_PAGE) } returns CanvasLayout(items = listOf(CanvasItem.AppItem("tile", "new")))
+        coEvery { folders.getFolder(PAGE, "id", CanvasTabType.VALUE) } returns folder
+        assertFalse(subject.moveAppTileToFolder(OTHER_PAGE, "tile", PAGE, "id"))
+        verify(exactly = 0) { layouts.removeItem(any(), any()) }
+    }
+
+    @Test
+    fun `a folder save that throws keeps the tile`() = runBlocking {
+        givenFolderOnPage()
+        every { layouts.getLayout(OTHER_PAGE) } returns CanvasLayout(items = listOf(CanvasItem.AppItem("tile", "new")))
+        coEvery { folders.updateFolder(any(), any(), any()) } throws IllegalStateException("disk")
+        assertTrue(runCatching { subject.moveAppTileToFolder(OTHER_PAGE, "tile", PAGE, "id") }.isFailure)
+        verify(exactly = 0) { layouts.removeItem(any(), any()) }
+    }
+
+    @Test
+    fun `a missing folder or a non-app tile changes nothing`() = runBlocking {
+        givenFolderOnPage()
+        coEvery { folders.getFolder(PAGE, "missing", CanvasTabType.VALUE) } returns null
+        assertFalse(subject.moveAppTileToFolder(PAGE, "app", PAGE, "missing"))
+        assertFalse(subject.moveAppTileToFolder(PAGE, "folder-other", PAGE, "id"))
+        coVerify(exactly = 0) { folders.updateFolder(any(), any(), any()) }
+        verify(exactly = 0) { layouts.removeItem(any(), any()) }
+    }
+
     private companion object {
+        const val OTHER_PAGE = 1
         const val PAGE = 2
     }
 }

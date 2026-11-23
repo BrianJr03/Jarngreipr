@@ -13,6 +13,8 @@ internal data class CanvasTouchThresholds(
     val cellHysteresis: Float = 0.25f,
     val palmContactDp: Float = 32f,
     val palmEdgeDp: Float = 16f,
+    val folderDwellMs: Long = 420L,
+    val folderInset: Float = 0.15f,
 )
 
 internal enum class CanvasTouchStart { Browse, BrowseWidget, Edit, Resize, TakeOver, Blocked }

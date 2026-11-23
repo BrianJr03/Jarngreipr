@@ -137,6 +137,7 @@ internal fun CanvasGrid(
     val port = remember(scroll, direction) { CanvasScrollPort(scroll, direction == PushDirection.RIGHT) }
     SideEffect { driver.scrollPort = port }
     CanvasEdgeDriveEffect(driver, touchHoldsGrab && !resizing && driver.inEdgeZone)
+    CanvasFolderDwellEffect(driver)
     LaunchedEffect(page.index) {
         val arrival = driver.takeArrivalDirection()
         if (arrival != 0) {
@@ -214,6 +215,8 @@ internal fun CanvasGrid(
                             editing = editing,
                             grabbed = outlined,
                             showCard = (item as? CanvasItem.EsdeArtItem)?.isCardTransparent != true,
+                            folderDrop = driver.folderDropState(item.id),
+                            growsAsDrop = item.id != grabbedId,
                             onFocused = { onFocused(item.id) },
                             onClick = { onTileClick(item, cellPx) },
                         ) { tileContent(item) }
@@ -288,6 +291,8 @@ private fun CanvasTileFrame(
     editing: Boolean,
     grabbed: Boolean,
     showCard: Boolean = true,
+    folderDrop: CanvasFolderDropState? = null,
+    growsAsDrop: Boolean = false,
     onFocused: () -> Unit,
     onClick: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
@@ -296,6 +301,7 @@ private fun CanvasTileFrame(
     val shape = JarnTheme.tileShape
     val source = remember { MutableInteractionSource() }
     val outline = when {
+        folderDrop != null -> Modifier
         grabbed -> Modifier.border(GrabOutlineWidth, colors.accent, shape)
         editing -> Modifier.border(EditOutlineWidth, colors.line, shape)
         else -> Modifier
@@ -303,6 +309,7 @@ private fun CanvasTileFrame(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .canvasFolderDropTarget(folderDrop, growsAsDrop)
             .focusRequester(requester)
             .onFocusChanged { if (it.isFocused) onFocused() }
             .jarnInteractive(shape, source, onClick = onClick)

@@ -136,7 +136,7 @@ internal class CanvasPageSwipeHost(
 
     private val blocked: Boolean
         get() = !enabled || editor.grab != null || editor.editing || driver.heldId != null ||
-            driver.widgetClaimedFinger
+            driver.widgetClaimedFinger || driver.holdsEmptyCell
 
     /** A page without the board, like RSS, has its own scrolling rows that keep their swipes. */
     val yieldsToContent: Boolean get() = driver.scrollPort == null

@@ -11,6 +11,12 @@ interface JarnCanvasFolders : JarnAppOptionsData {
     /** Applies the change to the stored list, so apps not installed right now are kept. */
     suspend fun editFolderApps(pageIndex: Int, folderId: String, added: Set<String>, removed: Set<String>)
 
+    /**
+     * Saves the app into the folder first and clears its tile only once that save is confirmed, so
+     * a failure can leave the app in both places but never in neither. Returns whether it moved.
+     */
+    suspend fun moveAppTileToFolder(tilePage: Int, itemId: String, folderPage: Int, folderId: String): Boolean
+
     /** Removes the folder and every tile that points at it, so no missing tile is left. */
     suspend fun deleteFolder(pageIndex: Int, folderId: String)
 
