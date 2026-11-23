@@ -35,7 +35,6 @@ class CanvasTouchDriverTest {
             driver.actions = CanvasTouchActions(
                 enabled = true,
                 layout = layout,
-                placements = rects,
                 minSpans = { 1 to 1 },
                 openMenu = { menus += it.id },
                 commit = { _, placements -> commits += placements },

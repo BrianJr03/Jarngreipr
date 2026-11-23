@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 
 internal class CanvasWidgetTouchBinding(
     val driver: CanvasTouchDriver,
@@ -117,7 +118,8 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
         swallowing = false
         claimDecided = false
         val active = binding?.takeIf { it.enabled && it.driver.widgetCanLift() } ?: return false
-        val board = active.space.fromScreen(ev.rawX, ev.rawY) ?: return false
+        val board = active.space.fromScreen(ev.rawX, ev.rawY)
+        if (!board.isSpecified) return false
         pointerId = ev.getPointerId(0)
         downTime = ev.downTime
         pressRawX = ev.rawX
@@ -144,8 +146,9 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
 
     private fun onPointerDown(ev: MotionEvent) {
         val index = ev.actionIndex
-        val point = binding?.space?.fromScreen(ev.getRawX(index), ev.getRawY(index))
-        val palm = point != null && binding?.space?.isPalm(ev.getTouchMajor(index), point) == true
+        val space = binding?.space ?: return onOtherFinger(false)
+        val point = space.fromScreen(ev.getRawX(index), ev.getRawY(index))
+        val palm = point.isSpecified && space.isPalm(ev.getTouchMajor(index), point)
         onOtherFinger(palm)
     }
 
@@ -154,7 +157,10 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
         if (index < 0) return
         val rawX = ev.getRawX(index)
         val rawY = ev.getRawY(index)
-        binding?.space?.fromScreen(rawX, rawY)?.let { lastBoard = it }
+        binding?.space?.let { space ->
+            val board = space.fromScreen(rawX, rawY)
+            if (board.isSpecified) lastBoard = board
+        }
         claimScrollIfAlongAxis(rawX - pressRawX, rawY - pressRawY)
         apply(gesture.moved(rawX, rawY))
         if (gesture.phase == CanvasTouchPhase.PassedThrough) removeCallbacks(lift)

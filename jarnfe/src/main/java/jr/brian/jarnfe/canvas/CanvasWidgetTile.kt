@@ -129,6 +129,7 @@ internal fun BoxScope.CanvasWidgetTile(
     revision: Int,
     editing: Boolean,
     interacting: Boolean,
+    frozen: Boolean,
     touch: CanvasWidgetTouchBinding,
     onEditTap: () -> Unit,
     onLeave: () -> Unit,
@@ -163,6 +164,7 @@ internal fun BoxScope.CanvasWidgetTile(
             )
         }
     }
+    CanvasWidgetFreeze(hostView, frozen)
     if (editing) {
         Box(
             Modifier

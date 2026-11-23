@@ -14,13 +14,19 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastFirstOrNull
+import androidx.compose.ui.util.fastForEach
 
 /** Holds the board's position so window and screen touches can be read in board coordinates. */
 internal class CanvasBoardSpace(private val density: Float) {
     var coordinates: LayoutCoordinates? = null
 
-    fun fromScreen(x: Float, y: Float): Offset? =
-        coordinates?.takeIf { it.isAttached }?.screenToLocal(Offset(x, y))
+    /** [Offset.Unspecified] until the board is attached, so a move never boxes a nullable. */
+    fun fromScreen(x: Float, y: Float): Offset {
+        val board = coordinates ?: return Offset.Unspecified
+        return if (board.isAttached) board.screenToLocal(Offset(x, y)) else Offset.Unspecified
+    }
 
     fun isPalm(contactPx: Float, boardPoint: Offset): Boolean {
         val board = coordinates?.takeIf { it.isAttached } ?: return false
@@ -66,10 +72,10 @@ private suspend fun AwaitPointerEventScope.watchWidgetFingers(
 ) {
     while (true) {
         val event = awaitPointerEvent(PointerEventPass.Initial)
-        newFingers(event, primary).forEach { point ->
+        forEachNewFinger(event, primary) { point ->
             driver.activeWidget?.onOtherFinger(space.isPalm(event.contactPx(), point))
         }
-        if (event.changes.none { it.pressed }) return
+        if (!event.changes.fastAny { it.pressed }) return
     }
 }
 
@@ -96,7 +102,7 @@ private suspend fun AwaitPointerEventScope.trackFinger(
             driver.handle(gesture, gesture.timeReached(now), id, press, last)
             continue
         }
-        val change = event.changes.firstOrNull { it.id == primary }
+        val change = event.changes.fastFirstOrNull { it.id == primary }
         if (change == null) {
             driver.handle(gesture, gesture.cancelled(), id, press, last)
             return
@@ -104,28 +110,29 @@ private suspend fun AwaitPointerEventScope.trackFinger(
         now = change.uptimeMillis
         last = change.position
         driver.handle(gesture, gesture.timeReached(now), id, press, last)
-        newFingers(event, primary).forEach { point ->
+        forEachNewFinger(event, primary) { point ->
             driver.handle(gesture, gesture.otherFinger(space.isPalm(event.contactPx(), point)), id, press, last)
         }
         if (!change.pressed) {
             val owned = gesture.ownsPointer
             val effect = if (event.motionEvent == null) gesture.cancelled() else gesture.up()
             driver.handle(gesture, effect, id, press, last)
-            if (owned) event.changes.forEach { it.consume() }
+            if (owned) event.changes.fastForEach { it.consume() }
             return
         }
         driver.handle(gesture, gesture.moved(last.x, last.y), id, press, last)
         if (gesture.ownsPointer) {
-            event.changes.forEach { it.consume() }
+            event.changes.fastForEach { it.consume() }
         } else {
             val settled = awaitPointerEvent(PointerEventPass.Final)
-            if (settled.changes.any { it.id == primary && it.pressed && it.isConsumed }) gesture.claimedElsewhere()
+            if (settled.changes.fastAny { it.id == primary && it.pressed && it.isConsumed }) gesture.claimedElsewhere()
         }
     }
 }
 
-private fun newFingers(event: PointerEvent, primary: PointerId): List<Offset> =
-    event.changes.filter { it.id != primary && it.changedToDownIgnoreConsumed() }.map { it.position }
+private inline fun forEachNewFinger(event: PointerEvent, primary: PointerId, action: (Offset) -> Unit) {
+    event.changes.fastForEach { if (it.id != primary && it.changedToDownIgnoreConsumed()) action(it.position) }
+}
 
 private fun PointerEvent.contactPx(): Float {
     val motion: MotionEvent = motionEvent ?: return 0f

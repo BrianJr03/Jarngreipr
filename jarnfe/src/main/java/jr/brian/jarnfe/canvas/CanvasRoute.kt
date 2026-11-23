@@ -339,11 +339,8 @@ private fun CanvasPageSurface(
                     val stageArt = rememberCanvasStageArt(state, page)
                     CanvasGrid(
                         page = page,
-                        placements = editor.placements(page.layout),
-                        editing = editor.editing,
-                        grabbedId = editor.grab?.itemId,
-                        liftedId = touch.driver.liftedId,
-                        touchHoldsGrab = editor.grab?.driver == CanvasGrabDriver.Touch,
+                        editor = editor,
+                        driver = touch.driver,
                         boardModifier = Modifier.canvasBoardTouch(touch.driver, touch.space),
                         onBoardGeometry = { touch.driver.geometry = it },
                         focusRequesterFor = requesterFor,
@@ -361,6 +358,7 @@ private fun CanvasPageSurface(
                                 revision = widgetRevision,
                                 editing = editor.editing,
                                 interacting = interactingId == item.id,
+                                frozen = touch.driver.visual.tileId == item.id,
                                 touch = CanvasWidgetTouchBinding(
                                     driver = touch.driver,
                                     space = touch.space,
