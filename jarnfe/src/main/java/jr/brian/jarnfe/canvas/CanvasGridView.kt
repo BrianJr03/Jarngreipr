@@ -120,6 +120,7 @@ internal fun CanvasGrid(
     val editing = editor.editing
     val grabbedId = editor.grab?.itemId
     val touchHoldsGrab = editor.grab?.driver == CanvasGrabDriver.Touch
+    val resizing = editor.grab?.resizeCorner != null
     val visual = driver.visual
     val direction = PushDirection.from(layout.activeOrientation)
     val crossAxisCount = layout.activeCrossAxis.coerceAtLeast(1)
@@ -154,7 +155,7 @@ internal fun CanvasGrid(
         }
         val floatingId = visual.tileId
         CanvasDragSettle(visual, driver.heldId, floatingId?.let(placements::get)?.let { metrics.originPx(it, density) })
-        val ghostRect = grabbedId?.takeIf { touchHoldsGrab }?.let(placements::get)
+        val ghostRect = grabbedId?.takeIf { touchHoldsGrab && !resizing }?.let(placements::get)
         val alignment = if (direction == PushDirection.DOWN) Alignment.TopCenter else Alignment.CenterStart
         Box(
             Modifier
@@ -182,9 +183,10 @@ internal fun CanvasGrid(
             }
             layout.items.forEach { item ->
                 val rect = placements[item.id] ?: return@forEach
-                val grabbed = item.id == grabbedId
+                val held = item.id == grabbedId
+                val grabbed = held && !resizing
                 val floating = item.id == floatingId
-                val outlined = grabbed || floating
+                val outlined = held || floating
                 key(item.id) {
                     CanvasSlot(
                         rect = rect,
@@ -205,6 +207,16 @@ internal fun CanvasGrid(
                         ) { tileContent(item) }
                     }
                 }
+            }
+            driver.handleTileId?.let(placements::get)?.let { rect ->
+                CanvasResizeHandles(
+                    rect = rect,
+                    x = metrics.offsetOf(rect.col),
+                    y = metrics.offsetOf(rect.row),
+                    width = metrics.extentOf(rect.colSpan),
+                    height = metrics.extentOf(rect.rowSpan),
+                    showSize = resizing,
+                )
             }
         }
     }

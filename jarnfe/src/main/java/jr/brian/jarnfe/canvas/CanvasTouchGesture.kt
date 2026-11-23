@@ -15,11 +15,24 @@ internal data class CanvasTouchThresholds(
     val palmEdgeDp: Float = 16f,
 )
 
-internal enum class CanvasTouchStart { Browse, BrowseWidget, Edit, TakeOver, Blocked }
+internal enum class CanvasTouchStart { Browse, BrowseWidget, Edit, Resize, TakeOver, Blocked }
 
-internal enum class CanvasTouchPhase { Idle, Pressing, Lifted, Dragging, PassedThrough, Blocked }
+internal enum class CanvasTouchPhase { Idle, Pressing, Lifted, Dragging, Resizing, PassedThrough, Blocked }
 
-internal enum class CanvasTouchEffect { None, Tap, Lift, OpenMenu, BeginDrag, TakeOver, Move, Drop, Unlift, CancelDrag }
+internal enum class CanvasTouchEffect {
+    None,
+    Tap,
+    Lift,
+    OpenMenu,
+    BeginDrag,
+    BeginResize,
+    TakeOver,
+    Move,
+    Resize,
+    Drop,
+    Unlift,
+    CancelDrag,
+}
 
 /**
  * Decides what one finger means and touches nothing else, so every path can be unit tested.
@@ -45,6 +58,7 @@ internal class CanvasTouchGesture(
     val ownsPointer: Boolean
         get() = phase == CanvasTouchPhase.Lifted ||
             phase == CanvasTouchPhase.Dragging ||
+            phase == CanvasTouchPhase.Resizing ||
             phase == CanvasTouchPhase.Blocked
 
     fun down(start: CanvasTouchStart, x: Float, y: Float, timeMs: Long): CanvasTouchEffect {
@@ -59,6 +73,10 @@ internal class CanvasTouchGesture(
                 dragsOnSlop = true
                 phase = CanvasTouchPhase.Pressing
                 CanvasTouchEffect.None
+            }
+            CanvasTouchStart.Resize -> {
+                phase = CanvasTouchPhase.Resizing
+                CanvasTouchEffect.BeginResize
             }
             CanvasTouchStart.TakeOver -> {
                 phase = CanvasTouchPhase.Dragging
@@ -92,6 +110,7 @@ internal class CanvasTouchGesture(
             }
             CanvasTouchPhase.Lifted -> if (distance > dragStartPx) beginDrag() else CanvasTouchEffect.None
             CanvasTouchPhase.Dragging -> CanvasTouchEffect.Move
+            CanvasTouchPhase.Resizing -> CanvasTouchEffect.Resize
             else -> CanvasTouchEffect.None
         }
     }
@@ -100,7 +119,7 @@ internal class CanvasTouchGesture(
         val effect = when (phase) {
             CanvasTouchPhase.Pressing -> CanvasTouchEffect.Tap
             CanvasTouchPhase.Lifted -> CanvasTouchEffect.OpenMenu
-            CanvasTouchPhase.Dragging -> CanvasTouchEffect.Drop
+            CanvasTouchPhase.Dragging, CanvasTouchPhase.Resizing -> CanvasTouchEffect.Drop
             else -> CanvasTouchEffect.None
         }
         finish()
@@ -153,7 +172,7 @@ internal class CanvasTouchGesture(
 
     private fun restoreEffect(): CanvasTouchEffect = when (phase) {
         CanvasTouchPhase.Lifted -> CanvasTouchEffect.Unlift
-        CanvasTouchPhase.Dragging -> CanvasTouchEffect.CancelDrag
+        CanvasTouchPhase.Dragging, CanvasTouchPhase.Resizing -> CanvasTouchEffect.CancelDrag
         else -> CanvasTouchEffect.None
     }
 
