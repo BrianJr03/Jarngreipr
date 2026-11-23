@@ -83,6 +83,7 @@ class LibraryStoreSync @Inject constructor(
         scope.launch {
             esdePreferencesManager.state.collect {
                 libraryRepository.setMediaRoots(currentMediaRoots())
+                libraryRepository.setKeepImportedMetadata(it.gamelistDecorationEnabled)
             }
         }
     }

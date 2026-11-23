@@ -48,16 +48,22 @@ class GamelistImporter @Inject constructor(
      * Parse [file] as a gamelist.xml and update every matching
      * GameEntity under [sourceId] / [systemId]. Returns the count of
      * rows updated.
+     *
+     * @param seenFavorites paths whose gamelist favorite was already
+     *   applied by an earlier import. Those aren't applied again, so a
+     *   game the user unfavorited here stays unfavorited while the XML
+     *   still says true. Updated in place after a successful parse.
      */
     suspend fun importFile(
         file: File,
         sourceId: Long,
         systemId: String,
+        seenFavorites: MutableSet<String>? = null,
     ): Int = withContext(Dispatchers.IO) {
         if (!file.exists() || !file.isFile) return@withContext 0
         try {
             file.inputStream().use { input ->
-                importStream(input, sourceId, systemId)
+                importStream(input, sourceId, systemId, seenFavorites)
             }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse gamelist ${file.absolutePath}", e)
@@ -69,6 +75,7 @@ class GamelistImporter @Inject constructor(
         input: InputStream,
         sourceId: Long,
         systemId: String,
+        seenFavorites: MutableSet<String>? = null,
     ): Int {
         val entries = try {
             parseEntries(input)
@@ -77,27 +84,37 @@ class GamelistImporter @Inject constructor(
             return 0
         }
         var updated = 0
+        val matchedFavorites = HashSet<String>()
         for (entry in entries) {
             val existing = gameDao.findByTriple(sourceId, systemId, entry.relativePath)
                 ?: continue
+            val xmlFavorite = entry.favorite == true
+            if (xmlFavorite) matchedFavorites += entry.relativePath
+            val isNewFavorite = xmlFavorite && seenFavorites?.contains(entry.relativePath) != true
             val merged = existing.copy(
                 displayName = entry.name ?: existing.displayName,
                 description = entry.description ?: existing.description,
-                rating = entry.rating ?: existing.rating,
+                rating = entry.rating?.takeIf { it > 0f } ?: existing.rating,
                 releaseDate = entry.releaseDate ?: existing.releaseDate,
                 developer = entry.developer ?: existing.developer,
                 publisher = entry.publisher ?: existing.publisher,
                 genre = entry.genre ?: existing.genre,
                 players = entry.players ?: existing.players,
-                isFavorite = entry.favorite ?: existing.isFavorite,
-                playCount = entry.playCount ?: existing.playCount,
-                playTimeMinutes = entry.playTimeMinutes ?: existing.playTimeMinutes,
-                lastPlayed = entry.lastPlayedEpochMillis ?: existing.lastPlayed,
+                // The XML can be older than this app's state, so it can
+                // add a favorite or raise a stat but never undo either.
+                isFavorite = existing.isFavorite || isNewFavorite,
+                playCount = maxOf(existing.playCount, entry.playCount ?: 0),
+                playTimeMinutes = maxOf(existing.playTimeMinutes, entry.playTimeMinutes ?: 0),
+                lastPlayed = listOfNotNull(existing.lastPlayed, entry.lastPlayedEpochMillis).maxOrNull(),
             )
             if (merged != existing) {
                 gameDao.update(merged)
                 updated++
             }
+        }
+        seenFavorites?.apply {
+            clear()
+            addAll(matchedFavorites)
         }
         return updated
     }

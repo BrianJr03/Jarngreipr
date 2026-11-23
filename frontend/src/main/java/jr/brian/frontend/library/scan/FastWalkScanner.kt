@@ -1,5 +1,6 @@
 package jr.brian.frontend.library.scan
 
+import android.os.Environment
 import android.util.Log
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
@@ -26,22 +27,22 @@ class FastWalkScanner @Inject constructor(
     private val catalog: SystemCatalog,
 ) : LibraryScanner {
 
-    override suspend fun scan(
+    override suspend fun scanWithReport(
         sourceRoot: String,
         systems: Set<String>?,
-    ): List<ScannedRom> = withContext(Dispatchers.IO) {
+    ): ScanReport = withContext(Dispatchers.IO) {
         val root = File(sourceRoot)
-        if (!root.exists() || !root.isDirectory) {
+        val rootEntries = root.takeIf { it.isDirectory }?.listFiles()
+        if (rootEntries == null) {
             Log.d(TAG, "Source root is not a readable directory: $sourceRoot")
-            return@withContext emptyList()
+            return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
         }
 
         val filter = systems?.map { it.lowercase() }?.toSet()
-        val systemDirs = root.listFiles()
-            ?.filter { it.isDirectory && ScanRules.shouldDescend(it.name) }
-            .orEmpty()
+        val systemDirs = rootEntries.filter { it.isDirectory && ScanRules.shouldDescend(it.name) }
 
         val out = mutableListOf<ScannedRom>()
+        val unreadable = mutableSetOf<String>()
         for (dir in systemDirs) {
             val def = catalog.findByFolderAlias(dir.name)
             if (def == null) {
@@ -49,16 +50,23 @@ class FastWalkScanner @Inject constructor(
                 continue
             }
             if (filter != null && def.id.lowercase() !in filter) continue
-            scanSystem(root = dir, systemDir = dir, def = def, out = out)
+            scanSystem(systemDir = dir, def = def, out = out, unreadable = unreadable)
         }
-        out
+        ScanReport(
+            roms = out,
+            unreadableSystems = unreadable,
+            listingTrusted = ScanRules.isListingTrusted(
+                path = root.absolutePath,
+                hasAllFilesAccess = { Environment.isExternalStorageManager() },
+            ),
+        )
     }
 
     private fun scanSystem(
-        root: File,
         systemDir: File,
         def: SystemDef,
         out: MutableList<ScannedRom>,
+        unreadable: MutableSet<String>,
     ) {
         if (def.extensions.isEmpty() && def.folderGameMarkers.isEmpty()) return
         walk(
@@ -66,6 +74,7 @@ class FastWalkScanner @Inject constructor(
             systemDir = systemDir,
             def = def,
             out = out,
+            unreadable = unreadable,
             depthRemaining = ScanRules.WALK_MAX_DEPTH,
         )
     }
@@ -75,12 +84,17 @@ class FastWalkScanner @Inject constructor(
         systemDir: File,
         def: SystemDef,
         out: MutableList<ScannedRom>,
+        unreadable: MutableSet<String>,
         depthRemaining: Int,
     ) {
         val systemId = def.id
         val extensions = def.extensions
         if (depthRemaining < 0) return
-        val children = dir.listFiles() ?: return
+        val children = dir.listFiles()
+        if (children == null) {
+            unreadable += systemId
+            return
+        }
         for (child in children) {
             val name = child.name
             if (!ScanRules.shouldDescend(name)) continue
@@ -93,7 +107,7 @@ class FastWalkScanner @Inject constructor(
                     // whose own name ends in a ROM extension is one game.
                     out += toScan(child, systemDir, systemId, isDirectoryAsFile = true)
                 } else {
-                    walk(child, systemDir, def, out, depthRemaining - 1)
+                    walk(child, systemDir, def, out, unreadable, depthRemaining - 1)
                 }
             } else if (child.isFile && ScanRules.matchesExtension(name, extensions)) {
                 out += toScan(child, systemDir, systemId, isDirectoryAsFile = false)

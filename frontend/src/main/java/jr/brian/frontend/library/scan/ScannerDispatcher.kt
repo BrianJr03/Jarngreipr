@@ -26,6 +26,11 @@ class ScannerDispatcher @Inject constructor(
         systems: Set<String>? = null,
     ): List<ScannedRom> = pickScanner(source).scan(source.treeUri, systems)
 
+    suspend fun scanWithReport(
+        source: SourceEntity,
+        systems: Set<String>? = null,
+    ): ScanReport = pickScanner(source).scanWithReport(source.treeUri, systems)
+
     private fun pickScanner(source: SourceEntity): LibraryScanner =
         if (source.treeUri.startsWith("content://")) saf else fastWalk
 }
