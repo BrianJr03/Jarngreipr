@@ -31,7 +31,9 @@ internal enum class CanvasTileAction(@param:StringRes val label: Int) {
     ChoosePhoto(R.string.jarnfe_canvas_action_choose_photo),
     PlayRandom(R.string.jarnfe_canvas_action_random),
     Games(R.string.jarnfe_canvas_action_games),
+    MediaType(R.string.jarnfe_canvas_action_media_type),
     Scale(R.string.jarnfe_canvas_action_scale),
+    TransparentBackground(R.string.jarnfe_canvas_action_transparent_background),
     AppOptions(R.string.jarnfe_app_options),
     Remove(R.string.jarnfe_canvas_action_remove),
 }
@@ -52,7 +54,11 @@ internal fun canvasTileActions(
             JarnWidgetHealth.Gone, null -> emptyList()
         }
         is CanvasItem.PhotoContainer -> listOf(CanvasTileAction.ChoosePhoto)
-        is CanvasItem.EsdeArtItem -> listOf(CanvasTileAction.Scale)
+        is CanvasItem.EsdeArtItem -> listOf(
+            CanvasTileAction.MediaType,
+            CanvasTileAction.Scale,
+            CanvasTileAction.TransparentBackground,
+        )
         is CanvasItem.LastPlayedItem -> buildList {
             if (hasRecent) add(CanvasTileAction.PlayRandom)
             add(CanvasTileAction.Games)
@@ -127,6 +133,12 @@ private fun actionDetail(action: CanvasTileAction, item: CanvasItem): String? = 
         )
     }
     CanvasTileAction.Games -> (item as? CanvasItem.LastPlayedItem)?.resolvedCount?.toString()
+    CanvasTileAction.MediaType -> (item as? CanvasItem.EsdeArtItem)
+        ?.let { canvasArtMediaLabel(it.resolvedImageType) }
+        ?.let { stringResource(it) }
+    CanvasTileAction.TransparentBackground -> (item as? CanvasItem.EsdeArtItem)?.let {
+        stringResource(if (it.isCardTransparent) R.string.jarnfe_canvas_state_on else R.string.jarnfe_canvas_state_off)
+    }
     else -> null
 }
 
