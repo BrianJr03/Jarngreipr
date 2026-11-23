@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,7 +33,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import jr.brian.core.ui.focus.JarnTabsFocus
+import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.splash.jarnSplashTile
 import kotlinx.coroutines.flow.first
 
 private const val HEADER_KEY = "library_header"
@@ -71,9 +75,10 @@ internal fun <T : Any> LibraryFocusGrid(
         HeaderRevealSpec(gridState, baseSpec) { if (headerHeight > 0) headerHeight + spacingPx else 0 }
     }
 
+    val tabsFocus = LocalJarnTabsFocus.current
     LaunchedEffect(target, refocusSignal) {
         val index = items.indexOfFirst { itemKey(it) == target }
-        if (index >= 0) gridState.restoreFocus(index + headerCount, requester)
+        if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus)
     }
 
     CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
@@ -87,15 +92,19 @@ internal fun <T : Any> LibraryFocusGrid(
         ) {
             header?.let { content ->
                 item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {
-                    Box(Modifier.onSizeChanged { headerHeight = it.height }) { content() }
+                    Box(Modifier.jarnSplashTile(0).onSizeChanged { headerHeight = it.height }) { content() }
                 }
             }
-            items(items, key = { ITEM_KEY_PREFIX + itemKey(it) }, contentType = { ITEM_KEY_PREFIX }) { item ->
+            itemsIndexed(
+                items,
+                key = { _, item -> ITEM_KEY_PREFIX + itemKey(item) },
+                contentType = { _, _ -> ITEM_KEY_PREFIX },
+            ) { index, item ->
                 val id = itemKey(item)
                 val restore = if (id == target) Modifier.focusRequester(requester) else Modifier
                 itemContent(
                     item,
-                    restore.onFocusChanged { focus ->
+                    Modifier.jarnSplashTile(index + 1).then(restore).onFocusChanged { focus ->
                         if (focus.isFocused) {
                             lastFocused = id
                             onFocused(id)
@@ -130,12 +139,17 @@ private class HeaderRevealSpec(
     }
 }
 
-private suspend fun LazyGridState.restoreFocus(index: Int, requester: FocusRequester) {
+private suspend fun LazyGridState.restoreFocus(
+    index: Int,
+    requester: FocusRequester,
+    tabsFocus: JarnTabsFocus,
+) {
     snapshotFlow { layoutInfo.totalItemsCount }.first { it > index }
+    if (tabsFocus.hasFocus) return
     if (layoutInfo.visibleItemsInfo.none { it.index == index }) scrollToItem(index)
     snapshotFlow { layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
     withFrameNanos { }
-    requester.requestFocus()
+    if (!tabsFocus.hasFocus) requester.requestFocus()
 }
 
 @Composable

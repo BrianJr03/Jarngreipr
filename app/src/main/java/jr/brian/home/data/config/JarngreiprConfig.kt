@@ -1,5 +1,7 @@
 package jr.brian.home.data.config
 
+import jr.brian.frontend.library.art.ArtChoice
+import jr.brian.frontend.library.art.GameArtChoices
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
@@ -181,7 +183,13 @@ data class JarngreiprConfig(
         // v40: added FeatureConfig.libraryFolders, the Jarn FE game folders.
         //      Null on older blobs, and import then leaves folders alone.
         //      Restored folders never carry a grant and never replace a row.
-        const val CONFIG_VERSION = 40
+        // v41: added FeatureConfig.jarnLook and jarnReducedMotion, the Jarn FE
+        //      appearance. Null on older blobs, and import then keeps both.
+        // v42: added FeatureConfig.jarnArtChoices, the Jarn FE art per screen.
+        //      Null on older blobs, and import then keeps the current choices.
+        // v43: added FeatureConfig.jarnPinnedApps, the Jarn FE pinned apps in order.
+        //      Null on older blobs, and import then keeps the current pins.
+        const val CONFIG_VERSION = 43
     }
 }
 
@@ -348,8 +356,41 @@ data class FeatureConfig(
      * v40: game folders, without their access grants. Null on pre-v40
      * exports. Import only adds missing folders, so games and favorites stay.
      */
-    val libraryFolders: List<LibraryFolderConfig>? = null
+    val libraryFolders: List<LibraryFolderConfig>? = null,
+    /** v41: Jarn FE look id. Null on pre-v41 exports, and import keeps the current look. */
+    val jarnLook: String? = null,
+    /** v41: Jarn FE reduced motion. Null on pre-v41 exports, and import keeps the current value. */
+    val jarnReducedMotion: Boolean? = null,
+    /** v42: Jarn FE art per screen. Null on pre-v42 exports, and import keeps current choices. */
+    val jarnArtChoices: JarnArtChoicesConfig? = null,
+    /** v43: Jarn FE pinned apps in order. Null on pre-v43 exports, and import keeps current pins. */
+    val jarnPinnedApps: List<String>? = null
 )
+
+@Serializable
+data class JarnArtChoicesConfig(
+    val topBySystem: Map<String, String> = emptyMap(),
+    val bottomBySystem: Map<String, String> = emptyMap(),
+    val topByGame: Map<String, String> = emptyMap(),
+    val bottomByGame: Map<String, String> = emptyMap()
+)
+
+internal fun GameArtChoices.toConfig() = JarnArtChoicesConfig(
+    topBySystem = topBySystem.mapValues { it.value.name },
+    bottomBySystem = bottomBySystem.mapValues { it.value.name },
+    topByGame = topByGame.mapValues { it.value.name },
+    bottomByGame = bottomByGame.mapValues { it.value.name }
+)
+
+internal fun JarnArtChoicesConfig.toChoices() = GameArtChoices(
+    topBySystem = topBySystem.knownArtChoices(),
+    bottomBySystem = bottomBySystem.knownArtChoices(),
+    topByGame = topByGame.knownArtChoices(),
+    bottomByGame = bottomByGame.knownArtChoices()
+)
+
+private fun Map<String, String>.knownArtChoices(): Map<String, ArtChoice> =
+    entries.mapNotNull { (key, name) -> ArtChoice.fromNameOrNull(name)?.let { key to it } }.toMap()
 
 @Serializable
 data class LibraryFolderConfig(

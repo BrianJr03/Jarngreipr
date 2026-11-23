@@ -154,7 +154,7 @@ class JarnSessionStateTest {
         val state = dual.openRoute(StageRoute.GameList).copy(
             activeScreen = JarnScreen.Deck,
             librarySection = LibrarySection.Recent,
-            deckTab = DeckTab.Browse,
+            deckTab = DeckTab.Apps,
             osFocusedScreen = JarnScreen.Deck,
             awaitingDeckLaunch = true,
         )
@@ -162,9 +162,14 @@ class JarnSessionStateTest {
         assertEquals(state.stageStack, restored.stageStack)
         assertEquals(JarnScreen.Deck, restored.activeScreen)
         assertEquals(LibrarySection.Recent, restored.librarySection)
-        assertEquals(DeckTab.Browse, restored.deckTab)
+        assertEquals(DeckTab.Apps, restored.deckTab)
         assertNull(restored.osFocusedScreen)
         assertFalse(restored.awaitingDeckLaunch)
+    }
+
+    @Test
+    fun `a session saved on the old Browse tab restores as Apps`() {
+        assertEquals(DeckTab.Apps, JarnSessionState.decode("Stage|Library|Systems|Browse")?.deckTab)
     }
 
     @Test
@@ -191,9 +196,9 @@ class JarnSessionStateTest {
     @Test
     fun `a new process restores saved state once`() {
         val store = JarnSessionStore()
-        store.restoreIfFresh(JarnSessionState(deckTab = DeckTab.Browse).encode())
-        assertEquals(DeckTab.Browse, store.state.deckTab)
+        store.restoreIfFresh(JarnSessionState(deckTab = DeckTab.Apps).encode())
+        assertEquals(DeckTab.Apps, store.state.deckTab)
         store.restoreIfFresh(JarnSessionState(deckTab = DeckTab.Canvas).encode())
-        assertEquals(DeckTab.Browse, store.state.deckTab)
+        assertEquals(DeckTab.Apps, store.state.deckTab)
     }
 }

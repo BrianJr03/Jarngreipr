@@ -52,6 +52,9 @@ class ExperienceConfigImportTest {
             experienceStore = experienceStore,
             artSourceStore = mockk(relaxed = true),
             libraryFolderBackup = mockk(relaxed = true),
+            jarnLookStore = mockk(relaxed = true),
+            artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(ApplicationProvider.getApplicationContext()),
+            appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
         )
     }
 
@@ -62,7 +65,7 @@ class ExperienceConfigImportTest {
 
     @Test
     fun `schema version includes the experience field`() {
-        assertEquals(40, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(43, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

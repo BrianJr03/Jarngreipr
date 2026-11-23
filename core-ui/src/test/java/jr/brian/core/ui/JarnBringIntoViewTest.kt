@@ -1,7 +1,10 @@
 package jr.brian.core.ui
 
+import jr.brian.core.ui.focus.jarnFitsAtScrollTop
 import jr.brian.core.ui.focus.jarnScrollDistance
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class JarnBringIntoViewTest {
@@ -32,5 +35,20 @@ class JarnBringIntoViewTest {
     @Test
     fun `item too large to fit lines up with the start`() {
         assertEquals(30f, distance(50f, size = 480f), 0f)
+    }
+
+    @Test
+    fun `item in the top zone reveals the page top when it still fits`() {
+        assertTrue(jarnFitsAtScrollTop(200f, 100f, 500f, topZone = 240f, margin = 20f))
+    }
+
+    @Test
+    fun `item below the top zone keeps normal scrolling`() {
+        assertFalse(jarnFitsAtScrollTop(260f, 100f, 500f, topZone = 240f, margin = 20f))
+    }
+
+    @Test
+    fun `item that would hit the bottom edge keeps normal scrolling`() {
+        assertFalse(jarnFitsAtScrollTop(230f, 100f, 340f, topZone = 240f, margin = 20f))
     }
 }

@@ -4,40 +4,72 @@ import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.connectJarnLibrary
+import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.splash.JarnSplash
 
 abstract class JarnScreenActivity : ComponentActivity() {
+    /** The role this window shows when screens are not swapped. */
     protected abstract val screen: JarnScreen
+
+    private var swap: JarnScreenSwap? = null
+    private val buttonHaptic: () -> Unit = {
+        window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+    }
 
     protected open fun canHostOnCurrentDisplay(): Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) JarnSplash.finish()
         JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION))
         JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
         connectJarnLibrary(this)
-        JarnInput.setGlobalBindings(jarnGlobalBindings(JarnSession))
+        swap = jarnScreenSwapOrNull()
+        swap?.let { saved -> JarnSession.update { withSwapRequested(saved.isSwapped) } }
+        JarnInput.setGlobalBindings(
+            jarnGlobalBindings(
+                session = JarnSession,
+                onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
+                onSwap = swap?.let { it::requestSwap },
+            ),
+        )
         if (!canHostOnCurrentDisplay()) {
             finish()
             return
         }
+        liveWindows += this
         onBackPressedDispatcher.addCallback(this) { JarnInput.dispatchSystemBack() }
         setContent {
-            val needsHandoff = JarnSession.state.needsFocusHandoff(screen)
+            val role = JarnSession.state.roleOn(screen)
+            val needsHandoff = JarnSession.state.needsFocusHandoff(role)
+            val isActive = JarnSession.state.activeScreen == role
+            val focusManager = LocalFocusManager.current
             LaunchedEffect(needsHandoff) { if (needsHandoff) bringToFront() }
-            JarnShellRoot(screen)
+            LaunchedEffect(isActive) { if (isActive) takeContentFocus(focusManager) }
+            LaunchedEffect(swap) {
+                swap?.swapped?.collect { JarnSession.update { withSwapRequested(it) } }
+            }
+            JarnShellRoot(role)
         }
         enterImmersive()
     }
@@ -53,12 +85,63 @@ abstract class JarnScreenActivity : ComponentActivity() {
         JarnSession.update { onTopResumed(screen, isTopResumedActivity) }
     }
 
+    override fun onDestroy() {
+        liveWindows.remove(this)
+        super.onDestroy()
+    }
+
     @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
-        JarnInput.dispatch(event) || super.dispatchKeyEvent(event)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (JarnSplash.isPlaying && event.isControllerNavigation()) {
+            if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
+            return true
+        }
+        JarnInput.onHintPressed = buttonHaptic
+        if (JarnInput.dispatch(event)) return true
+        val target = activeWindowFor(event)
+        return if (target == null || target === this) {
+            super.dispatchKeyEvent(event)
+        } else {
+            target.dispatchToContent(event)
+        }
+    }
+
+    /**
+     * Thor's Focus Lock can pin the controller to one display whichever screen is active, so
+     * navigation keys are handed to the active screen's window.
+     */
+    private fun activeWindowFor(event: KeyEvent): JarnScreenActivity? {
+        if (!event.isControllerNavigation()) return null
+        val state = JarnSession.state
+        if (!state.deckDisplayAvailable) return null
+        return liveWindows.firstOrNull { state.roleOn(it.screen) == state.activeScreen }
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun dispatchToContent(event: KeyEvent): Boolean {
+        if (currentFocus == null) requestContentViewFocus()
+        return super.dispatchKeyEvent(event)
+    }
+
+    private fun requestContentViewFocus() {
+        findViewById<ViewGroup>(android.R.id.content).getChildAt(0)?.requestFocus()
+    }
+
+    /** Gives a newly active screen a focused item, so its ring has something to land on. */
+    @OptIn(ExperimentalComposeUiApi::class)
+    private suspend fun takeContentFocus(focusManager: FocusManager) {
+        withFrameNanos { }
+        withFrameNanos { }
+        requestContentViewFocus()
+        focusManager.moveFocus(FocusDirection.Enter)
+    }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSession.update { activate(screen) }
+        if (JarnSplash.isPlaying) {
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSplash.finish()
+            return true
+        }
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSession.update { activate(roleOn(screen)) }
         return super.dispatchTouchEvent(event)
     }
 
@@ -69,6 +152,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     private fun bringToFront() {
         val displayId = display?.displayId ?: return
+        swap?.syncInputTo(displayId)
         val intent = Intent(this, javaClass)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         startActivity(intent, ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle())
@@ -85,5 +169,17 @@ abstract class JarnScreenActivity : ComponentActivity() {
     private companion object {
         const val KEY_SESSION = "jarnfe_session"
         const val KEY_OPEN_SYSTEM = "jarnfe_open_system"
+        val liveWindows = LinkedHashSet<JarnScreenActivity>()
     }
 }
+
+private fun KeyEvent.isControllerNavigation(): Boolean =
+    KeyEvent.isGamepadButton(keyCode) || when (keyCode) {
+        KeyEvent.KEYCODE_DPAD_UP,
+        KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_LEFT,
+        KeyEvent.KEYCODE_DPAD_RIGHT,
+        KeyEvent.KEYCODE_DPAD_CENTER,
+        -> true
+        else -> false
+    }

@@ -39,6 +39,29 @@ class JarnInputRouterTest {
         on(action, R.string.jarnfe_hint_confirm) { log += name }
 
     @Test
+    fun `hinted button reports one press and ignores its repeat`() {
+        var presses = 0
+        router.onHintPressed = { presses++ }
+        layer { logs(JarnAction.Context, "context") }
+
+        down(KeyEvent.KEYCODE_BUTTON_X)
+        down(KeyEvent.KEYCODE_BUTTON_X, time = 5, repeat = 1)
+        up(KeyEvent.KEYCODE_BUTTON_X)
+
+        assertEquals(1, presses)
+    }
+
+    @Test
+    fun `button without a hint reports nothing`() {
+        var presses = 0
+        router.onHintPressed = { presses++ }
+
+        tap(KeyEvent.KEYCODE_BUTTON_X)
+
+        assertEquals(0, presses)
+    }
+
+    @Test
     fun `full button map`() {
         val expected = mapOf(
             KeyEvent.KEYCODE_BUTTON_A to JarnAction.Confirm,

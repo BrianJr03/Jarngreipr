@@ -3,49 +3,79 @@ package jr.brian.jarnfe.deck
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppsRoute
 import jr.brian.jarnfe.canvas.CanvasRoute
+import jr.brian.jarnfe.dock.JarnDockRow
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
+import jr.brian.jarnfe.search.JarnSearch
+import jr.brian.jarnfe.search.JarnSearchDeck
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
+import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.deckBindings
+import jr.brian.jarnfe.splash.JarnDeckSplash
 
 @StringRes
 private fun DeckTab.labelRes(): Int = when (this) {
     DeckTab.Now -> R.string.jarnfe_tab_now
-    DeckTab.Browse -> R.string.jarnfe_tab_browse
+    DeckTab.Apps -> R.string.jarnfe_tab_apps
     DeckTab.Canvas -> R.string.jarnfe_tab_canvas
 }
 
 @Composable
 internal fun DeckScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
-        JarnScreenFrame(
-            header = { DeckTabStrip(state.deckTab) },
-        ) { DeckTabContent(state) }
+        Box(Modifier.fillMaxSize()) {
+            JarnScreenFrame(
+                header = { if (!deckShowsSearch(state)) DeckTabStrip(state.deckTab) },
+            ) { DeckBody(state) }
+            JarnDeckSplash()
+        }
+    }
+}
+
+private fun deckShowsSearch(state: JarnSessionState) =
+    state.stageRoute == StageRoute.Search && !JarnSearch.showingActions
+
+@Composable
+private fun DeckBody(state: JarnSessionState) {
+    if (deckShowsSearch(state)) {
+        JarnSearchDeck()
+    } else {
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                DeckTabContent(state)
+            }
+            JarnDockRow()
+        }
     }
 }
 
 @Composable
 internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier) {
     Column(modifier) {
-        DeckTabStrip(state.deckTab)
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            DeckTabContent(state)
+        if (deckShowsSearch(state)) {
+            JarnSearchDeck()
+        } else {
+            DeckTabStrip(state.deckTab)
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                DeckTabContent(state)
+            }
         }
     }
 }
@@ -68,12 +98,7 @@ private fun DeckTabContent(state: JarnSessionState) {
             selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
             recent = JarnLibrary.state.recent.items,
         )
-        DeckTab.Browse -> DeckTabPlaceholder(R.string.jarnfe_empty_browse_title, R.string.jarnfe_empty_browse_message)
+        DeckTab.Apps -> JarnAppsRoute()
         DeckTab.Canvas -> CanvasRoute(state)
     }
-}
-
-@Composable
-private fun DeckTabPlaceholder(@StringRes titleRes: Int, @StringRes messageRes: Int) {
-    JarnEmptyState(title = stringResource(titleRes), message = stringResource(messageRes))
 }

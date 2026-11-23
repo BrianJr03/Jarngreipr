@@ -17,8 +17,6 @@ import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
@@ -26,7 +24,6 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 
 private const val HERO_TEXT_FRACTION = 0.55f
-private const val HERO_TITLE_MAX_LINES = 2
 private const val HERO_BODY_MAX_LINES = 3
 
 @Composable
@@ -53,19 +50,17 @@ fun JarnHeroPanel(
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         ) {
             eyebrow?.let { JarnHeroEyebrow(it) }
-            JarnText(
-                text = title,
+            JarnBalancedTitle(
+                title = title,
                 style = JarnTheme.type.display,
                 color = JarnTheme.colors.textHigh,
-                modifier = Modifier.semantics { heading() },
-                maxLines = HERO_TITLE_MAX_LINES,
+                modifier = Modifier.weight(1f, fill = false),
             )
             body?.let {
                 JarnText(
                     text = it,
                     style = JarnTheme.type.body,
                     color = JarnTheme.colors.textMid,
-                    modifier = Modifier.weight(1f, fill = false),
                     maxLines = HERO_BODY_MAX_LINES,
                 )
             }

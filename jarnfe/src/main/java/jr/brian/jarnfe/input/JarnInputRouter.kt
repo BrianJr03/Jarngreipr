@@ -61,6 +61,9 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private val presses = HashMap<Int, Press>()
     private var nextSequence = 0L
 
+    /** Runs once per physical press of a button the active screen's hint bar shows. */
+    var onHintPressed: (() -> Unit)? = null
+
     fun activate(screen: JarnScreen) {
         activeScreen = screen
     }
@@ -154,6 +157,9 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private fun onKeyDown(input: JarnKeyInput, action: JarnAction): Boolean {
         val isDuplicate = presses.any { (code, press) ->
             code != input.keyCode && press.action == action && press.route != Route.PassThrough
+        }
+        if (!isDuplicate && action.hintKey != null && hintLabel(activeScreen, action) != null) {
+            onHintPressed?.invoke()
         }
         val route = if (isDuplicate) Route.Swallow else resolve(action)
         val press = Press(action, route, input.eventTimeMs)

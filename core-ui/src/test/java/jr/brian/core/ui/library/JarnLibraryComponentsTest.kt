@@ -153,7 +153,7 @@ class JarnLibraryComponentsTest {
             )
         }
         val panel = rule.onNodeWithTag("h")
-        val title = rule.onNodeWithText(LONG_TITLE)
+        val title = rule.onNodeWithContentDescription(LONG_TITLE)
         assertEquals(2, title.textLayout().lineCount)
         assertInside(title, panel)
         assertInside(rule.onNodeWithText("eyebrow"), panel)
