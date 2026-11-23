@@ -13,16 +13,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.os.Handler
 import android.os.Looper
-import jr.brian.core.model.Experience
-import jr.brian.core.model.HomeDestination
-import jr.brian.core.model.HomeEntry
 import jr.brian.core.model.HomeLaunch
 import jr.brian.core.model.HomeLaunchActivity
 import jr.brian.core.model.HomeTarget
 import jr.brian.core.model.MainScreen
 import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import jr.brian.core.model.ScreenAssignment
-import jr.brian.core.model.planHomeRoute
+import jr.brian.core.model.planHomeLaunches
+import jr.brian.core.model.planLauncherHomeLaunches
 import jr.brian.home.MainActivity
 import jr.brian.home.esde.ui.FrontEndActivity
 
@@ -77,7 +75,6 @@ fun launchBottomHost(context: Context) {
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 internal interface LaunchFrontendEntryPoint {
     fun screenAssignmentStore(): jr.brian.home.data.ScreenAssignmentStore
-    fun experienceStore(): jr.brian.home.data.ExperienceStore
 }
 
 /**
@@ -93,16 +90,6 @@ private fun currentAssignment(context: Context): ScreenAssignment = try {
     ).screenAssignmentStore().assignment
 } catch (_: Throwable) {
     ScreenAssignment.DEFAULT
-}
-
-/** Current persisted [Experience], or Classic if Hilt isn't reachable. */
-private fun currentExperience(context: Context): Experience = try {
-    dagger.hilt.android.EntryPointAccessors.fromApplication(
-        context.applicationContext,
-        LaunchFrontendEntryPoint::class.java,
-    ).experienceStore().experience
-} catch (_: Throwable) {
-    Experience.DEFAULT
 }
 
 /**
@@ -146,7 +133,16 @@ fun routeHome(
     mainScreen: MainScreen,
     frontendEnabled: Boolean,
 ) {
-    dispatchHomeEntry(context, HomeEntry.HomeKey(target, mainScreen), frontendEnabled)
+    dispatchPlan(
+        context,
+        planHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            target = target,
+            mainScreen = mainScreen,
+            frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
+        ),
+    )
 }
 
 /**
@@ -155,30 +151,14 @@ fun routeHome(
  * fires the intents.
  */
 fun routeHomeFromLauncher(context: Context, frontendEnabled: Boolean) {
-    dispatchHomeEntry(context, HomeEntry.Launcher, frontendEnabled)
-}
-
-/**
- * Opens Jarn FE for a Home press. Stays `null` until its activity exists, which
- * keeps every route on Classic regardless of the stored [Experience].
- */
-private val jarnFeHomeLauncher: ((Context) -> Unit)? = null
-
-private fun dispatchHomeEntry(context: Context, entry: HomeEntry, frontendEnabled: Boolean) {
-    val launchJarnFe = jarnFeHomeLauncher
-    val route = planHomeRoute(
-        entry = entry,
-        experience = currentExperience(context),
-        jarnFeAvailable = launchJarnFe != null,
-        bottomDisplayId = resolveBottomDisplayId(context),
-        frontendEnabled = frontendEnabled,
-        assignment = currentAssignment(context),
+    dispatchPlan(
+        context,
+        planLauncherHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
+        ),
     )
-    if (route.destination == HomeDestination.JARN_FE && launchJarnFe != null) {
-        launchJarnFe(context)
-    } else {
-        dispatchPlan(context, route.classicLaunches)
-    }
 }
 
 private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
