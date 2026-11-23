@@ -10,9 +10,11 @@ import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.home.data.ExperienceHomeRouter
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.core.model.HomeTarget
+import jr.brian.core.model.JarnHomePress
 import jr.brian.home.ui.util.routeHome
 import javax.inject.Inject
 
@@ -40,6 +42,9 @@ class HomeInterceptorService : AccessibilityService() {
 
     @Inject
     lateinit var esdePreferencesManager: ESDEPreferencesManager
+
+    @Inject
+    lateinit var experienceHomeRouter: ExperienceHomeRouter
 
     private val filter = HomeKeyEventFilter()
     private val gestureStateMachine = HomeGestureStateMachine()
@@ -137,6 +142,8 @@ class HomeInterceptorService : AccessibilityService() {
     }
 
     private fun routeViaHomeTarget(target: HomeTarget) {
+        val press = if (target == HomeTarget.BOTTOM) JarnHomePress.Single else JarnHomePress.Open
+        if (experienceHomeRouter.openJarnIfChosen(applicationContext, press)) return
         val frontendEnabled = esdePreferencesManager.state.value.frontendEnabled
         routeHome(
             context = applicationContext,

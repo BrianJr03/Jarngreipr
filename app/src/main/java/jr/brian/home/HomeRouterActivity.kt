@@ -1,15 +1,12 @@
 package jr.brian.home
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import jr.brian.core.model.Experience
-import jr.brian.core.model.resolveLauncherExperience
-import jr.brian.home.data.ExperienceStore
-import jr.brian.home.data.JarnFeOffer
+import jr.brian.core.model.JarnHomePress
+import jr.brian.home.data.ExperienceHomeRouter
 import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.ui.util.launchJarnFe
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import javax.inject.Inject
 
@@ -32,12 +29,18 @@ class HomeRouterActivity : ComponentActivity() {
     lateinit var esdePreferencesManager: ESDEPreferencesManager
 
     @Inject
-    lateinit var experienceStore: Lazy<ExperienceStore>
+    lateinit var experienceHomeRouter: ExperienceHomeRouter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!openJarnFeIfOffered()) {
+        val openedJarn = experienceHomeRouter.openJarnIfChosen(
+            context = this,
+            press = if (isSystemHomePress()) JarnHomePress.Single else JarnHomePress.Open,
+            forceClassic = intent.getBooleanExtra(EXTRA_CLASSIC, false),
+            entryDisplayId = display?.displayId,
+        )
+        if (!openedJarn) {
             routeHomeFromLauncher(
                 context = this,
                 frontendEnabled = esdePreferencesManager.state.value.frontendEnabled,
@@ -49,24 +52,12 @@ class HomeRouterActivity : ComponentActivity() {
         overridePendingTransition(0, 0)
     }
 
-    /**
-     * Builds with the Jarn FE offer follow the saved experience and open Jarn FE when none is saved.
-     * Others return before reading it. [EXTRA_CLASSIC] reaches Classic once without changing it.
-     */
-    private fun openJarnFeIfOffered(): Boolean {
-        if (!JarnFeOffer.isOffered(this)) return false
-        val store = experienceStore.get()
-        val choice = resolveLauncherExperience(
-            jarnAvailable = true,
-            stored = store.storedExperience,
-            forceClassic = intent.getBooleanExtra(EXTRA_CLASSIC, false),
-        )
-        if (choice != Experience.JarnFE || !launchJarnFe(this)) return false
-        store.adoptIfUnset(Experience.JarnFE)
-        return true
-    }
+    /** The system's Home has no double or long press. Launcher entries ask for Jarn outright. */
+    private fun isSystemHomePress(): Boolean =
+        intent.hasCategory(Intent.CATEGORY_HOME) || intent.hasCategory(Intent.CATEGORY_SECONDARY_HOME)
 
     private companion object {
+        /** Reaches Classic once without changing the saved experience. */
         const val EXTRA_CLASSIC = "classic"
     }
 }
