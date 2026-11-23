@@ -5,6 +5,8 @@ import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.art.LibraryGame
 import jr.brian.frontend.library.art.LibraryGameWithArt
+import jr.brian.frontend.library.art.SystemActivity
+import jr.brian.frontend.library.art.SystemShelfGroup
 import jr.brian.frontend.library.art.VisibleList
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.library.setup.LibrarySetupState
@@ -13,6 +15,7 @@ import jr.brian.jarnfe.systems.jarnSystemManagerOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import java.text.NumberFormat
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */
@@ -41,15 +44,23 @@ internal class JarnLibraryDataSource(
     private val setup: LibrarySetup,
 ) : JarnLibrarySource {
     override fun observeSystems(): Flow<JarnLibraryFeed<JarnLibrarySystem>> =
-        combine(data.systemsWithArt, setup.state) { list, setupState ->
+        combine(
+            data.systemsWithArt,
+            setup.state,
+            data.systemActivity.onStart { emit(emptyMap()) },
+        ) { list, setupState, activity ->
             JarnLibraryFeed(
                 items = list.items.map { (system, art) ->
+                    val played = activity[system.id] ?: SystemActivity()
                     JarnLibrarySystem(
                         id = system.id,
                         title = system.displayName,
                         gameCount = system.gameCount,
                         artPath = art.backgroundPath,
                         logoPath = art.logoPath,
+                        lastPlayedAtMs = played.lastPlayedAt,
+                        favoriteCount = played.favoriteCount,
+                        playtimeMinutes = played.playTimeMinutes.toLong(),
                     )
                 },
                 status = setupState.toFeedStatus(),
@@ -63,6 +74,18 @@ internal class JarnLibraryDataSource(
 
     override fun observeRecent() = data.recent().asFeed()
 
+    override fun observeSystemNow(systemId: String): Flow<JarnSystemNow> =
+        data.systemShelf(systemId).map { shelf ->
+            JarnSystemNow(
+                systemId = systemId,
+                shelf = shelf.games.map { JarnShelfGame(it.game.toJarnGame(), it.group.toJarnGroup()) },
+                sceneArtPath = shelf.sceneArtPath,
+                isLoaded = true,
+            )
+        }
+
+    override fun observeWideArt(gameId: String): Flow<String?> = data.wideArt(gameId)
+
     override fun refresh() {
         data.refreshArt()
         setup.retry()
@@ -72,6 +95,12 @@ internal class JarnLibraryDataSource(
         data.withArt(this).map { list ->
             JarnLibraryFeed.ready(list.items.map { it.toJarnGame() }, list.hiddenCount)
         }
+}
+
+private fun SystemShelfGroup.toJarnGroup(): JarnShelfGroup = when (this) {
+    SystemShelfGroup.Recent -> JarnShelfGroup.Recent
+    SystemShelfGroup.MostPlayed -> JarnShelfGroup.MostPlayed
+    SystemShelfGroup.InSystem -> JarnShelfGroup.InSystem
 }
 
 internal fun LibrarySetupState.toFeedStatus(): JarnLibraryStatus = when (this) {

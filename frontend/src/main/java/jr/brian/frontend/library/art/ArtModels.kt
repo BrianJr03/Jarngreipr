@@ -63,6 +63,9 @@ data class LibraryGameWithArt(
 /** One game's art for each screen, plus the art it has with no choices applied. */
 data class GameDisplayArt(val top: String?, val bottom: String?, val default: String?)
 
+/** [wide] follows the Deck art choice. [scene] is only ever fanart or a screenshot. */
+data class WideGameArt(val wide: String?, val scene: String?)
+
 /** A list after the user's hide rules, with how many entries those rules removed. */
 data class VisibleList<out T>(val items: List<T>, val hiddenCount: Int = 0)
 

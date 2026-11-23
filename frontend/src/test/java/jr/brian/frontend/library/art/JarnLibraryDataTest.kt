@@ -133,6 +133,83 @@ class JarnLibraryDataTest {
     }
 
     @Test
+    fun `a system keeps its recent games when others fill the library cap`() = runBlocking {
+        insert("nds", "Old.nds", lastPlayed = 1L)
+        repeat(25) { insert("gba", "Game$it.gba", lastPlayed = 100L + it) }
+
+        assertTrue(library.recent().first().items.none { it.systemId == "nds" })
+        val shelf = library.systemShelf("nds").first()
+        assertEquals(listOf("Old"), shelf.games.map { it.game.game.title })
+        assertEquals(SystemShelfGroup.Recent, shelf.games.single().group)
+        assertEquals(1L, library.systemActivity.first().getValue("nds").lastPlayedAt)
+    }
+
+    @Test
+    fun `shelf is capped and falls back to A to Z`() = runBlocking {
+        repeat(30) { insert("gba", "Game${it.toString().padStart(2, '0')}.gba") }
+
+        val shelf = library.systemShelf("gba").first().games
+        assertEquals(SHELF_BROWSE_GAMES, shelf.size)
+        assertEquals("Game00", shelf.first().game.game.title)
+        assertTrue(shelf.all { it.group == SystemShelfGroup.InSystem })
+    }
+
+    @Test
+    fun `shelf lists recent then most played without repeats`() = runBlocking {
+        insert("gba", "Recent.gba", lastPlayed = 50L, playCount = 9)
+        insert("gba", "Most.gba", playCount = 4)
+        insert("gba", "Never.gba")
+
+        val shelf = library.systemShelf("gba").first().games
+        assertEquals(listOf("Recent", "Most"), shelf.map { it.game.game.title })
+        assertEquals(
+            listOf(SystemShelfGroup.Recent, SystemShelfGroup.MostPlayed),
+            shelf.map { it.group },
+        )
+    }
+
+    @Test
+    fun `hidden games leave the shelf and system totals`() = runBlocking {
+        val hidden = insert("gba", "Hidden.gba", favorite = true, lastPlayed = 90L)
+        insert("gba", "Shown.gba", lastPlayed = 10L)
+        visibility.value = LibraryVisibility(hiddenGames = setOf("gba/${hidden.relativePath}"))
+
+        assertEquals(listOf("Shown"), library.systemShelf("gba").first().games.map { it.game.game.title })
+        val activity = library.systemActivity.first().getValue("gba")
+        assertEquals(10L, activity.lastPlayedAt)
+        assertEquals(0, activity.favoriteCount)
+    }
+
+    @Test
+    fun `system last played includes launches`() = runBlocking {
+        val game = insert("gba", "A.gba", lastPlayed = 10L)
+        launches.value = listOf(RecentLaunch("gba", game.relativePath, 500L))
+
+        assertEquals(500L, library.systemActivity.first().getValue("gba").lastPlayedAt)
+    }
+
+    @Test
+    fun `wide art prefers fanart and honors a deck choice`() = runBlocking {
+        write(esde, "gba/covers/A.png")
+        write(esde, "gba/screenshots/A.png")
+        write(esde, "gba/fanart/A.png")
+        val game = insert("gba", "A.gba").toLibraryGame()
+
+        assertTrue(library.wideArt(game.key).first()!!.endsWith("fanart/A.png"))
+        library.setGameArtChoice(ArtScreen.Bottom, game.key, "gba", ArtChoice.Screenshot)
+        assertTrue(library.wideArt(game.key).first()!!.endsWith("screenshots/A.png"))
+    }
+
+    @Test
+    fun `wide art falls back to the cover and is null for an unknown game`() = runBlocking {
+        write(esde, "gba/covers/A.png")
+        val game = insert("gba", "A.gba").toLibraryGame()
+
+        assertTrue(library.wideArt(game.key).first()!!.endsWith("covers/A.png"))
+        assertEquals(null, library.wideArt("1:gba:missing.gba").first())
+    }
+
+    @Test
     fun `art follows the preference and status reports each source`() = runBlocking {
         write(esde, "gba/covers/A.png")
         write(retroHrai, "gba/covers/A.png")
@@ -305,6 +382,7 @@ class JarnLibraryDataTest {
         favorite: Boolean = false,
         hidden: Boolean = false,
         lastPlayed: Long? = null,
+        playCount: Int = 0,
     ): GameEntity {
         val sourceId = db.sourceDao().findByTreeUri(TREE_URI)?.id ?: db.sourceDao().insert(
             SourceEntity(
@@ -323,6 +401,7 @@ class JarnLibraryDataTest {
             isFavorite = favorite,
             isHidden = hidden,
             lastPlayed = lastPlayed,
+            playCount = playCount,
         )
         return entity.copy(id = db.gameDao().insert(entity))
     }

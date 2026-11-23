@@ -45,10 +45,11 @@ internal data class JarnWallpaperConditions(
      * top-resumed from us, and a destroyed window must not read as a free display.
      */
     fun canAnimate(): Boolean =
+        !isBatterySaverOn && !isMotionReduced && !isSplashPlaying && isJarnInFront()
+
+    /** False while a game is up, so nothing decodes art behind it. */
+    fun isJarnInFront(): Boolean =
         isScreenOn &&
-            !isBatterySaverOn &&
-            !isMotionReduced &&
-            !isSplashPlaying &&
             hasEveryExpectedWindow &&
             windows.all { it.isResumed } &&
             windows.any { it.isTopResumed }
@@ -91,15 +92,18 @@ internal object JarnWallpaperGate {
         publishWindows()
     }
 
-    fun allowsAnimation(isMotionReduced: Boolean): Boolean =
-        JarnWallpaperConditions(
-            windows = windows,
-            deckDisplayAvailable = JarnSession.state.run { deckDisplayAvailable || deckWindowLost },
-            isScreenOn = isScreenOn,
-            isBatterySaverOn = isBatterySaverOn,
-            isMotionReduced = isMotionReduced,
-            isSplashPlaying = JarnSplash.isPlaying,
-        ).canAnimate()
+    fun allowsAnimation(isMotionReduced: Boolean): Boolean = conditions(isMotionReduced).canAnimate()
+
+    fun allowsArtWork(): Boolean = conditions(isMotionReduced = false).isJarnInFront()
+
+    private fun conditions(isMotionReduced: Boolean) = JarnWallpaperConditions(
+        windows = windows,
+        deckDisplayAvailable = JarnSession.state.run { deckDisplayAvailable || deckWindowLost },
+        isScreenOn = isScreenOn,
+        isBatterySaverOn = isBatterySaverOn,
+        isMotionReduced = isMotionReduced,
+        isSplashPlaying = JarnSplash.isPlaying,
+    )
 
     private fun untrack(activity: ComponentActivity) {
         hosts.remove(activity)

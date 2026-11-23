@@ -44,15 +44,16 @@ private val NowArtHeight = 132.dp
 private val NowTopZone = 240.dp
 
 @Composable
-internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibraryGame>) {
-    NowFocusKeeper(selection) {
-        when (selection) {
+internal fun LibraryNowPanel(selection: LibrarySelection) {
+    val settled = rememberSettledSelection(selection)
+    NowFocusKeeper(settled) {
+        when (settled) {
             LibrarySelection.None -> JarnEmptyState(
                 title = stringResource(R.string.jarnfe_empty_now_title),
                 message = stringResource(R.string.jarnfe_empty_now_message),
             )
-            is LibrarySelection.System -> NowColumn { SystemSummary(selection.system, recent) }
-            is LibrarySelection.Game -> NowColumn { GameNow(selection.game) }
+            is LibrarySelection.System -> NowColumn { SystemSummary(settled.system) }
+            is LibrarySelection.Game -> NowColumn { GameNow(settled.game) }
         }
     }
 }
@@ -84,7 +85,7 @@ private fun NowFocusKeeper(selection: LibrarySelection, content: @Composable () 
     ) { content() }
 }
 
-private fun LibrarySelection.focusKey(): String? = when (this) {
+internal fun LibrarySelection.focusKey(): String? = when (this) {
     LibrarySelection.None -> null
     is LibrarySelection.System -> "system:${system.id}"
     is LibrarySelection.Game -> "game:${game.id}"
@@ -105,10 +106,11 @@ private fun NowColumn(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SystemSummary(system: JarnLibrarySystem, recent: List<JarnLibraryGame>) {
+private fun SystemSummary(system: JarnLibrarySystem) {
     val colors = JarnTheme.colors
-    val recentHere = remember(system.id, recent) {
-        recent.asSequence().filter { it.systemId == system.id }.take(NOW_RECENT_LIMIT).toList()
+    val shelf = rememberSystemNow(system.id).shelf
+    val recentHere = remember(shelf) {
+        shelf.filter { it.group == JarnShelfGroup.Recent }.take(NOW_RECENT_LIMIT).map { it.game }
     }
     JarnText(system.title, JarnTheme.type.title, colors.textHigh, maxLines = 2)
     JarnText(systemSubtitle(system), JarnTheme.type.body, colors.textMid, maxLines = 2)
@@ -164,7 +166,7 @@ private fun GameDetails(game: JarnLibraryGame, actions: @Composable () -> Unit) 
             .fillMaxWidth()
             .height(NowArtHeight)
             .clip(JarnTheme.radius.mdShape),
-    ) { LibraryDeckArt(game) }
+    ) { LibraryHeldDeckArt(game) }
     JarnText(game.title, JarnTheme.type.heading, colors.textHigh, maxLines = 2)
     actions()
     game.metadata.description?.trim()?.takeIf { it.isNotEmpty() }?.let {

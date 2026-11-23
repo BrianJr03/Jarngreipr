@@ -52,36 +52,58 @@ class GameArtResolver @Inject constructor(
         games: List<LibraryGame>,
         preferred: ArtSource,
         choices: GameArtChoices,
-    ): Map<Long, GameDisplayArt> =
-        withContext(Dispatchers.IO) {
-            val built = indexes.current()
-            val stored = games.map { it.id }.chunked(QUERY_CHUNK)
-                .flatMap { mediaDao.findByGameIds(it) }
-                .associateBy { it.gameId }
-            val customBySystem = games.map { it.systemId }.distinct()
-                .associateWith(customArt::forSystem)
-            games.associate { game ->
-                val names = artBasenames(game.relativePath)
-                val custom = customBySystem[game.systemId]
-                    ?.get(customArtKey(game.absolutePath, game.relativePath))
-                val found = HashMap<MediaKind, ArtSlot?>()
-                fun slot(kind: MediaKind): ArtSlot? = found.getOrPut(kind) {
+    ): Map<Long, GameDisplayArt> = readSlots(games, preferred) { game, slot ->
+        fun first(screen: ArtScreen, choice: ArtChoice): String? =
+            artChain(screen, choice).firstNotNullOfOrNull(slot)?.path
+        GameDisplayArt(
+            top = first(ArtScreen.Top, choices.effective(ArtScreen.Top, game.key, game.systemId)),
+            bottom = first(
+                ArtScreen.Bottom,
+                choices.effective(ArtScreen.Bottom, game.key, game.systemId),
+            ),
+            default = first(ArtScreen.Top, ArtChoice.Default),
+        )
+    }
+
+    /** Wide art for a short list of games. Callers must cap the list. */
+    suspend fun wideArt(
+        games: List<LibraryGame>,
+        preferred: ArtSource,
+        choices: GameArtChoices,
+    ): Map<Long, WideGameArt> = readSlots(games, preferred) { game, slot ->
+        val choice = choices.effective(ArtScreen.Bottom, game.key, game.systemId)
+        WideGameArt(
+            wide = wideArtChain(choice).firstNotNullOfOrNull(slot)?.path,
+            scene = SCENE_KINDS.firstNotNullOfOrNull(slot)?.path,
+        )
+    }
+
+    private suspend fun <T> readSlots(
+        games: List<LibraryGame>,
+        preferred: ArtSource,
+        read: (LibraryGame, (MediaKind) -> ArtSlot?) -> T,
+    ): Map<Long, T> = withContext(Dispatchers.IO) {
+        val built = indexes.current()
+        val stored = games.map { it.id }.chunked(QUERY_CHUNK)
+            .flatMap { mediaDao.findByGameIds(it) }
+            .associateBy { it.gameId }
+        val customBySystem = games.map { it.systemId }.distinct()
+            .associateWith(customArt::forSystem)
+        games.associate { game ->
+            val names = artBasenames(game.relativePath)
+            val custom = customBySystem[game.systemId]
+                ?.get(customArtKey(game.absolutePath, game.relativePath))
+            val found = HashMap<MediaKind, ArtSlot?>()
+            val slot: (MediaKind) -> ArtSlot? = { kind ->
+                found.getOrPut(kind) {
                     fromCustom(custom, kind)
                         ?: fromSources(game.systemId, names, kind, preferred, built)
                         ?: fromLibraryRow(stored[game.id], kind)
                 }
-                fun first(screen: ArtScreen, choice: ArtChoice): String? =
-                    artChain(screen, choice).firstNotNullOfOrNull(::slot)?.path
-                game.id to GameDisplayArt(
-                    top = first(ArtScreen.Top, choices.effective(ArtScreen.Top, game.key, game.systemId)),
-                    bottom = first(
-                        ArtScreen.Bottom,
-                        choices.effective(ArtScreen.Bottom, game.key, game.systemId),
-                    ),
-                    default = first(ArtScreen.Top, ArtChoice.Default),
-                )
             }
+            game.id to read(game, slot)
         }
+    }
 
     private fun fromCustom(custom: CustomGameArt?, kind: MediaKind): ArtSlot? =
         custom?.pathFor(kind)?.takeIf(::isReadable)?.let { ArtSlot(it, source = null) }

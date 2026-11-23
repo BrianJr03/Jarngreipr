@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.library
 
+import android.content.Context
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -90,15 +91,14 @@ internal fun BoxScope.LibrarySystemArt(system: JarnLibrarySystem) {
 @Composable
 private fun rememberStillImage(path: String): ImageRequest {
     val context = LocalContext.current
-    return remember(context, path) {
-        val decoder = if (path.endsWith(SVG_SUFFIX, ignoreCase = true)) {
-            SvgDecoder.Factory()
-        } else {
-            BitmapFactoryDecoder.Factory()
-        }
-        ImageRequest.Builder(context)
-            .data(path)
-            .decoderFactory(decoder)
-            .build()
+    return remember(context, path) { stillImageBuilder(context, path).build() }
+}
+
+internal fun stillImageBuilder(context: Context, path: String): ImageRequest.Builder {
+    val decoder = if (path.endsWith(SVG_SUFFIX, ignoreCase = true)) {
+        SvgDecoder.Factory()
+    } else {
+        BitmapFactoryDecoder.Factory()
     }
+    return ImageRequest.Builder(context).data(path).decoderFactory(decoder)
 }

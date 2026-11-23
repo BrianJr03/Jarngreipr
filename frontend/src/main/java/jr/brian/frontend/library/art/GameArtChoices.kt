@@ -41,6 +41,20 @@ private val ART_CHAINS: Map<ArtScreen, Map<ArtChoice, List<MediaKind>>> =
 internal fun artChain(screen: ArtScreen, choice: ArtChoice): List<MediaKind> =
     ART_CHAINS.getValue(screen).getValue(choice)
 
+private val WIDE_KINDS = listOf(
+    MediaKind.Fanart,
+    MediaKind.Screenshot,
+    MediaKind.Titlescreen,
+    MediaKind.Miximage,
+    MediaKind.Cover,
+)
+
+internal val SCENE_KINDS = listOf(MediaKind.Fanart, MediaKind.Screenshot)
+
+/** The Deck's wide image: the user's choice if any, then the widest art the game has. */
+internal fun wideArtChain(choice: ArtChoice): List<MediaKind> =
+    (listOfNotNull(choice.kind) + WIDE_KINDS).distinct()
+
 /** Game entries use [LibraryGame.key], which survives a rescan. */
 data class GameArtChoices(
     val topBySystem: Map<String, ArtChoice> = emptyMap(),
