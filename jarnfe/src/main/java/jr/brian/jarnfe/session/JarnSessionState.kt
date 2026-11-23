@@ -23,6 +23,8 @@ val VisibleSettingsSections: List<SettingsSection> = SettingsSection.entries
  *
  * [activeScreen] and [osFocusedScreen] are roles. [swapRequested] is the saved swap, which only
  * takes effect while a Deck window exists, so Stage can never be left without a window.
+ *
+ * [tapHold] is set while a pinned Controller after tap choice keeps control off the touched window.
  */
 data class JarnSessionState(
     val activeScreen: JarnScreen = JarnScreen.Stage,
@@ -37,6 +39,7 @@ data class JarnSessionState(
     val deckHostReady: Boolean = false,
     val settingsSection: SettingsSection = SettingsSection.Library,
     val settingsReturnScreen: JarnScreen? = null,
+    val tapHold: JarnTapHold? = null,
 ) {
     val stageRoute: StageRoute get() = stageStack.last()
 
@@ -50,7 +53,8 @@ data class JarnSessionState(
         keepingOsFocus(copy(swapRequested = requested))
 
     fun withDeckHost(ready: Boolean): JarnSessionState =
-        keepingOsFocus(copy(deckHostReady = ready)).movingSettingsControls(this)
+        keepingOsFocus(copy(deckHostReady = ready, tapHold = tapHold.takeIf { ready }))
+            .movingSettingsControls(this)
 
     /** Settings controls need a real Deck window. Without one they stay on Stage. */
     val settingsOnDeck: Boolean
@@ -66,7 +70,7 @@ data class JarnSessionState(
     /** The focused window did not change, but the role it shows may have. */
     private fun keepingOsFocus(next: JarnSessionState): JarnSessionState =
         if (next.rolesSwapped != rolesSwapped) {
-            next.copy(osFocusedScreen = next.osFocusedScreen?.other())
+            next.copy(osFocusedScreen = next.osFocusedScreen?.other(), tapHold = null)
         } else {
             next
         }
@@ -74,6 +78,10 @@ data class JarnSessionState(
     /** With one display only Stage is composed, so the Deck panel takes input as a Stage layer. */
     val inputScreen: JarnScreen
         get() = if (deckDisplayAvailable) activeScreen else JarnScreen.Stage
+
+    /** The role the controller is not on. */
+    val oppositeScreen: JarnScreen
+        get() = activeScreen.other()
 
     val canGoBack: Boolean
         get() = deckPanelOpen || stageStack.size > 1 || activeScreen == JarnScreen.Deck
@@ -86,7 +94,8 @@ data class JarnSessionState(
             !awaitingDeckLaunch &&
             activeScreen == screen &&
             osFocusedScreen != null &&
-            osFocusedScreen != screen
+            osFocusedScreen != screen &&
+            tapHold?.kept != screen
 
     fun openRoute(route: StageRoute): JarnSessionState {
         val existing = stageStack.indexOf(route)
@@ -132,7 +141,7 @@ data class JarnSessionState(
         copy(deckTab = DeckTab.entries.stepped(deckTab, delta))
 
     fun switchActiveScreen(): JarnSessionState = when {
-        deckDisplayAvailable -> copy(activeScreen = activeScreen.other())
+        deckDisplayAvailable -> copy(activeScreen = activeScreen.other(), tapHold = null)
         else -> withDeckPanel(!deckPanelOpen)
     }
 
@@ -177,6 +186,7 @@ data class JarnSessionState(
             activeScreen = if (keepPanel) JarnScreen.Deck else JarnScreen.Stage,
             osFocusedScreen = osFocusedScreen?.let(::roleOn).takeUnless { it == JarnScreen.Deck },
             awaitingDeckLaunch = false,
+            tapHold = null,
         )
     }
 
@@ -197,7 +207,12 @@ data class JarnSessionState(
                 awaitingDeckLaunch = host != JarnScreen.Deck,
             )
             !deckDisplayAvailable -> copy(osFocusedScreen = role)
-            else -> copy(osFocusedScreen = role, activeScreen = role)
+            tapHold?.kept == activeScreen && role != activeScreen -> copy(osFocusedScreen = role)
+            else -> copy(
+                osFocusedScreen = role,
+                activeScreen = role,
+                tapHold = tapHold?.takeIf { it.kept == role && it.modalReturn != null },
+            )
         }
     }
 

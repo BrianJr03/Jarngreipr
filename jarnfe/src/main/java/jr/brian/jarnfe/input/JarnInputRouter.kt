@@ -137,6 +137,10 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         presses.entries.removeAll { it.value.route != Route.PassThrough }
     }
 
+    /** True while a sheet, keyboard, grab or other non-passive layer is open on [screen]. */
+    fun hasModalLayer(screen: JarnScreen): Boolean =
+        layers.any { it.screen == screen && it.mode != JarnLayerMode.Passive }
+
     fun hintsFor(screen: JarnScreen): List<JarnInputHint> {
         val hints = LinkedHashMap<JarnKey, JarnInputHint>()
         JarnAction.entries.forEach { action ->

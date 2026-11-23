@@ -25,6 +25,7 @@ internal fun jarnGlobalBindings(
     session: JarnSessionStore,
     onSearch: (() -> Unit)? = null,
     onSwap: (() -> Unit)? = null,
+    onOppositeTab: ((Int) -> Unit)? = null,
 ): JarnBindings = jarnBindings {
     on(JarnAction.SwitchScreen, R.string.jarnfe_hint_switch_screen) {
         session.update { switchActiveScreen() }
@@ -32,6 +33,10 @@ internal fun jarnGlobalBindings(
     on(JarnAction.Back) { session.update { back() } }
     onSearch?.let { on(JarnAction.Search, R.string.jarnfe_hint_search, onPress = it) }
     onSwap?.let { on(JarnAction.Swap, onPress = it) }
+    onOppositeTab?.let { step ->
+        on(JarnAction.OppositeTabPrevious) { step(-1) }
+        on(JarnAction.OppositeTabNext) { step(1) }
+    }
 }
 
 internal fun JarnBindingsBuilder.stageBindings(

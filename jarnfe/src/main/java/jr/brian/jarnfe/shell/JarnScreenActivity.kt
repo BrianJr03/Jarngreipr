@@ -19,13 +19,18 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.Lifecycle
+import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.connectJarnLibrary
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
+import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.onScreenTapped
+import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
 import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 
@@ -55,6 +60,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
                 session = JarnSession,
                 onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
                 onSwap = swap?.let { it::requestSwap },
+                onOppositeTab = { delta ->
+                    stepOppositeTabs(delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
+                },
             ),
         )
         if (!canHostOnCurrentDisplay()) {
@@ -74,6 +82,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             LaunchedEffect(swap) {
                 swap?.swapped?.collect { JarnSession.update { withSwapRequested(it) } }
             }
+            JarnTapControlEffects(role)
             JarnShellRoot(role)
         }
         enterImmersive()
@@ -89,6 +98,12 @@ abstract class JarnScreenActivity : ComponentActivity() {
         super.onTopResumedActivityChanged(isTopResumedActivity)
         JarnSession.update { onTopResumed(screen, isTopResumedActivity) }
         JarnWallpaperGate.onTopResumedChanged(this, isTopResumedActivity)
+    }
+
+    /** A covered window cannot take keys, so game launch and return follow Android as usual. */
+    override fun onStop() {
+        super.onStop()
+        JarnSession.update { onWindowCovered() }
     }
 
     override fun onDestroy() {
@@ -147,8 +162,16 @@ abstract class JarnScreenActivity : ComponentActivity() {
             if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSplash.finish()
             return true
         }
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSession.update { activate(roleOn(screen)) }
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) onTouchDown()
         return super.dispatchTouchEvent(event)
+    }
+
+    private fun onTouchDown() {
+        val choice = jarnLookStoreOrNull()?.display?.tapControl ?: JarnTapControl.FollowTap
+        val bothVisible = JarnScreen.entries.all { role ->
+            liveWindows.any { it.screen == role && it.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) }
+        }
+        JarnSession.update { onScreenTapped(screen, choice, bothVisible, JarnInput::hasModalLayer) }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

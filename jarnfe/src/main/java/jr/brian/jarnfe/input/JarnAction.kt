@@ -10,7 +10,8 @@ import jr.brian.core.ui.components.JarnKey
  * on whatever the action just opened. [reachesFocus] actions fall through to the focused composable
  * when no layer binds them, which keeps D-pad focus movement and A-to-click working.
  *
- * [hintKey] is null for Swap until Swap ships, because it spans both the L3 and R3 key caps.
+ * [hintKey] is null for Swap until Swap ships, because it spans both the L3 and R3 key caps. The
+ * opposite-screen tab actions are also unhinted, to keep the hint bar uncrowded.
  */
 enum class JarnAction(
     val hintKey: JarnKey?,
@@ -23,6 +24,8 @@ enum class JarnAction(
     Search(JarnKey.Y),
     TabPrevious(JarnKey.L1, firesOnPress = true),
     TabNext(JarnKey.R1, firesOnPress = true),
+    OppositeTabPrevious(hintKey = null, firesOnPress = true),
+    OppositeTabNext(hintKey = null, firesOnPress = true),
     Menu(JarnKey.Start),
     SwitchScreen(JarnKey.Select),
     Swap(hintKey = null, firesOnPress = true),
@@ -53,6 +56,8 @@ object JarnButtonMap {
         KeyEvent.KEYCODE_BUTTON_SELECT -> JarnAction.SwitchScreen
         KeyEvent.KEYCODE_BUTTON_L1 -> JarnAction.TabPrevious
         KeyEvent.KEYCODE_BUTTON_R1 -> JarnAction.TabNext
+        KeyEvent.KEYCODE_BUTTON_L2 -> JarnAction.OppositeTabPrevious
+        KeyEvent.KEYCODE_BUTTON_R2 -> JarnAction.OppositeTabNext
 
         KeyEvent.KEYCODE_BUTTON_THUMBL,
         KeyEvent.KEYCODE_BUTTON_THUMBR -> JarnAction.Swap
