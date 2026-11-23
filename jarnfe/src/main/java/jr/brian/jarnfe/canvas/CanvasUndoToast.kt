@@ -106,4 +106,5 @@ private val CanvasUndoKind.messageRes: Int
         CanvasUndoKind.Moved -> R.string.jarnfe_canvas_undo_moved
         CanvasUndoKind.Resized -> R.string.jarnfe_canvas_undo_resized
         CanvasUndoKind.Removed -> R.string.jarnfe_canvas_undo_removed
+        CanvasUndoKind.MovedToFolder -> R.string.jarnfe_canvas_undo_moved_to_folder
     }

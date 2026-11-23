@@ -59,6 +59,7 @@ internal fun CanvasTileOverlays(
     page: JarnCanvasPage?,
     snapshot: JarnCanvasSnapshot,
     commands: CanvasTileCommands,
+    addingHere: Boolean,
     onOverlay: (CanvasOverlay?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -82,6 +83,7 @@ internal fun CanvasTileOverlays(
     }
     when (overlay) {
         CanvasOverlay.Add -> CanvasAddSheet(
+            addingHere = addingHere,
             onChoice = { choice ->
                 when (choice) {
                     CanvasAddChoice.App -> onOverlay(CanvasOverlay.PickApp)

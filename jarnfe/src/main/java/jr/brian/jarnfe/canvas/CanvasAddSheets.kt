@@ -41,9 +41,10 @@ internal enum class CanvasAddChoice(@param:StringRes val label: Int) {
 }
 
 @Composable
-internal fun CanvasAddSheet(onChoice: (CanvasAddChoice) -> Unit, onClose: () -> Unit) {
+internal fun CanvasAddSheet(addingHere: Boolean, onChoice: (CanvasAddChoice) -> Unit, onClose: () -> Unit) {
     val first = remember { FocusRequester() }
-    CanvasModalSheet(stringResource(R.string.jarnfe_canvas_add_title), first, onClose) {
+    val title = if (addingHere) R.string.jarnfe_canvas_add_here_title else R.string.jarnfe_canvas_add_title
+    CanvasModalSheet(stringResource(title), first, onClose) {
         CanvasPickerColumn {
             CanvasAddChoice.entries.forEachIndexed { index, choice ->
                 JarnNavigateRow(

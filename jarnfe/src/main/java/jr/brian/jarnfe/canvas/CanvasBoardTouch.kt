@@ -17,6 +17,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
+import jr.brian.home.canvas.model.GridCell
 
 /** Holds the board's position so window and screen touches can be read in board coordinates. */
 internal class CanvasBoardSpace(private val density: Float) {
@@ -62,8 +63,11 @@ internal fun Modifier.canvasBoardTouch(driver: CanvasTouchDriver, space: CanvasB
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
             val corner = driver.pressCorner(down.position)
-            val id = (if (corner != null) driver.selectedId else driver.tileAt(down.position)) ?: run {
+            val id = if (corner != null) driver.selectedId else driver.tileAt(down.position)
+            if (id == null) {
                 driver.clearSelection()
+                val cell = driver.emptyCellAt(down.position)
+                if (cell != null) holdEmptyCell(driver, space, cell, down.id, down.position, down.uptimeMillis)
                 return@awaitEachGesture
             }
             val start = if (corner != null) CanvasTouchStart.Resize else driver.startFor(id)
@@ -74,7 +78,9 @@ internal fun Modifier.canvasBoardTouch(driver: CanvasTouchDriver, space: CanvasB
                 val press = down.position
                 driver.handle(gesture, gesture.down(start, press.x, press.y, down.uptimeMillis), id, press, press)
                 if (gesture.ownsPointer) down.consume()
-                trackFinger(driver, space, gesture, id, down.id, press, down.uptimeMillis)
+                trackFinger(space, gesture, down.id, press, down.uptimeMillis) { effect, point ->
+                    driver.handle(gesture, effect, id, press, point)
+                }
             }
         }
     }
@@ -93,14 +99,33 @@ private suspend fun AwaitPointerEventScope.watchWidgetFingers(
     }
 }
 
-private suspend fun AwaitPointerEventScope.trackFinger(
+/** Uses the browse gesture: its hold is this hold, and its release opens Add instead of a menu. */
+private suspend fun AwaitPointerEventScope.holdEmptyCell(
     driver: CanvasTouchDriver,
     space: CanvasBoardSpace,
-    gesture: CanvasTouchGesture,
-    id: String,
+    cell: GridCell,
     primary: PointerId,
     press: Offset,
     downTime: Long,
+) {
+    val gesture = CanvasTouchGesture(density)
+    gesture.down(CanvasTouchStart.Browse, press.x, press.y, downTime)
+    try {
+        trackFinger(space, gesture, primary, press, downTime) { effect, _ ->
+            driver.handleEmptyHold(gesture, effect, cell)
+        }
+    } finally {
+        driver.endEmptyHold()
+    }
+}
+
+private suspend fun AwaitPointerEventScope.trackFinger(
+    space: CanvasBoardSpace,
+    gesture: CanvasTouchGesture,
+    primary: PointerId,
+    press: Offset,
+    downTime: Long,
+    handle: (CanvasTouchEffect, Offset) -> Unit,
 ) {
     var now = downTime
     var last = press
@@ -113,28 +138,28 @@ private suspend fun AwaitPointerEventScope.trackFinger(
         }
         if (event == null) {
             now = liftAt ?: now
-            driver.handle(gesture, gesture.timeReached(now), id, press, last)
+            handle(gesture.timeReached(now), last)
             continue
         }
         val change = event.changes.fastFirstOrNull { it.id == primary }
         if (change == null) {
-            driver.handle(gesture, gesture.cancelled(), id, press, last)
+            handle(gesture.cancelled(), last)
             return
         }
         now = change.uptimeMillis
         last = change.position
-        driver.handle(gesture, gesture.timeReached(now), id, press, last)
+        handle(gesture.timeReached(now), last)
         forEachNewFinger(event, primary) { point ->
-            driver.handle(gesture, gesture.otherFinger(space.isPalm(event.contactPx(), point)), id, press, last)
+            handle(gesture.otherFinger(space.isPalm(event.contactPx(), point)), last)
         }
         if (!change.pressed) {
             val owned = gesture.ownsPointer
             val effect = if (event.motionEvent == null) gesture.cancelled() else gesture.up()
-            driver.handle(gesture, effect, id, press, last)
+            handle(effect, last)
             if (owned) event.changes.fastForEach { it.consume() }
             return
         }
-        driver.handle(gesture, gesture.moved(last.x, last.y), id, press, last)
+        handle(gesture.moved(last.x, last.y), last)
         if (gesture.ownsPointer) {
             event.changes.fastForEach { it.consume() }
         } else {

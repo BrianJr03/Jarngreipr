@@ -28,6 +28,7 @@ import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.model.CanvasItem
+import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.shouldAskDisplay
@@ -70,7 +71,8 @@ internal fun CanvasRoute(state: JarnSessionState) {
 @Composable
 private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, state: JarnSessionState) {
     var overlay by remember { mutableStateOf<CanvasOverlay?>(null) }
-    var pendingGrab by remember { mutableStateOf<String?>(null) }
+    var pendingGrab by remember { mutableStateOf<CanvasPendingGrab?>(null) }
+    var addTarget by remember { mutableStateOf<CanvasAddTarget?>(null) }
     var widgetRevision by remember { mutableIntStateOf(0) }
     var artPreview by remember { mutableStateOf<CanvasArtPreview?>(null) }
     var arrival by remember { mutableStateOf<CanvasCarriedTile?>(null) }
@@ -79,7 +81,8 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
     val undo = JarnCanvas.undo
     val undoWrites = remember(data) { CanvasDataUndoWrites(data) }
     val editor = remember { CanvasEditor(navigate = { JarnCanvas.selectedPage = it }) }
-    val shownPage = snapshot.pages.getOrNull(selected)?.let { it.withoutTiles(undo.hiddenOn(it.index)) }
+    val shownPage = snapshot.pages.getOrNull(selected)
+        ?.let { it.withoutTiles(undo.hiddenOn(it.index)).withPendingFolderApps(undo.pendingFolderAdds) }
     editor.showPage(shownPage?.index)
     val carried = editor.grab?.takeIf { it.isAwayFromHome }?.let { canvasCarriedTile(it, snapshot.pages) } ?: arrival
     val page = shownPage?.withCarriedTile(carried)
@@ -141,13 +144,20 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
                 onArrival = { arrival = it },
                 onPendingGrabHandled = { pendingGrab = null },
                 onOptions = { overlay = CanvasOverlay.Options },
+                onAddAt = { cell ->
+                    addTarget = page?.let { CanvasAddTarget(it.index, cell) }
+                    overlay = CanvasOverlay.Add
+                },
                 handlers = handlers,
                 overlays = { commands ->
                     if (overlay == CanvasOverlay.Options) {
                         CanvasOptionsSheet(
                             canEdit = page?.kind == JarnCanvasPageKind.Canvas,
                             alreadyEditing = commands.editing,
-                            onAdd = { overlay = CanvasOverlay.Add },
+                            onAdd = {
+                                addTarget = null
+                                overlay = CanvasOverlay.Add
+                            },
                             onEdit = {
                                 overlay = null
                                 commands.startEdit()
@@ -169,12 +179,17 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
                                 snapshot.recent.take(item.resolvedCount).randomOrNull()?.let(launchRom)
                             },
                             refreshWidgets = { widgetRevision += 1 },
-                            grabNewTile = { pendingGrab = it },
+                            grabNewTile = { id ->
+                                val cell = addTarget?.takeIf { it.pageIndex == page?.index }?.cell
+                                addTarget = null
+                                pendingGrab = CanvasPendingGrab(id, cell)
+                            },
                             previewArt = { artPreview = it },
                             removeTile = { item ->
                                 page?.let { undo.removeTile(undoWrites, it.index, item.id) }
                             },
                         ),
+                        addingHere = addTarget != null,
                         onOverlay = { overlay = it },
                     )
                 },
@@ -227,12 +242,13 @@ private fun CanvasPageSurface(
     sheetOpen: Boolean,
     widgetRevision: Int,
     artPreview: CanvasArtPreview?,
-    pendingGrab: String?,
+    pendingGrab: CanvasPendingGrab?,
     entryFocus: String?,
     onEntryFocus: (String?) -> Unit,
     onArrival: (CanvasCarriedTile?) -> Unit,
     onPendingGrabHandled: () -> Unit,
     onOptions: () -> Unit,
+    onAddAt: (GridCell) -> Unit,
     handlers: CanvasTileHandlers,
     overlays: @Composable (CanvasSurfaceCommands) -> Unit,
 ) {
@@ -291,6 +307,11 @@ private fun CanvasPageSurface(
             result == CanvasCarryResult.Moved
         },
         moveBetweenPages = moveBetweenPages,
+        addAt = onAddAt,
+        addToFolder = { drop ->
+            lastFocused = drop.folderTileId
+            undo.addToFolder(undoWrites, canvasPendingFolderAdd(drop, snapshot.pages))
+        },
     )
     val tapTile: (CanvasItem, Float) -> Unit = tap@{ item, tileCellPx ->
         if (touch.driver.claimEditTap(item.id)) return@tap
@@ -316,7 +337,7 @@ private fun CanvasPageSurface(
         if (!editor.editing) touch.driver.clearSelection()
     }
     LaunchedEffect(editor.grab?.itemId) {
-        if (editor.grab != null && undo.entry is CanvasPendingRemoval) undo.settle()
+        if (editor.grab != null && undo.entry is CanvasPendingTileExit) undo.settle()
     }
     LaunchedEffect(page?.layout, editor.settled) {
         val held = editor.settled ?: return@LaunchedEffect
@@ -324,12 +345,13 @@ private fun CanvasPageSurface(
         editor.settled = null
     }
     LaunchedEffect(pendingGrab, page?.layout) {
-        val id = pendingGrab ?: return@LaunchedEffect
+        val pending = pendingGrab ?: return@LaunchedEffect
+        val id = pending.itemId
         val item = page?.layout?.items?.firstOrNull { it.id == id } ?: return@LaunchedEffect
         if (id in page.layout.activeArrangement) {
             val (minCol, minRow) = minSpansFor(data, item, cellPx)
             lastFocused = id
-            editor.beginAdded(page.layout, id, minCol, minRow)
+            editor.beginAdded(page.layout, id, minCol, minRow, pending.cell)
             onPendingGrabHandled()
         }
     }

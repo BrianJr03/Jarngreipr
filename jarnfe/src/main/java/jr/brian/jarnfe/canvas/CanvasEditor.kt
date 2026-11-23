@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 
 /**
@@ -105,13 +106,21 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
         return taken
     }
 
-    /** Grabs a tile that was just added, so B can take it back off the page. */
-    fun beginAdded(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int) {
+    /** Ends the grab where it is with nothing saved, so a folder on this page stays on screen. */
+    fun takeForFolder(): CanvasGrab? {
+        val taken = grab ?: return null
+        endGrab(taken)
+        return taken
+    }
+
+    /** Grabs a tile that was just added, at [cell] if given, so B can take it back off the page. */
+    fun beginAdded(layout: CanvasLayout, itemId: String, minColSpan: Int, minRowSpan: Int, cell: GridCell? = null) {
         val wasEditing = editing
         enter()
         begin(layout, itemId, minColSpan, minRowSpan)
         grab?.takeIf { it.itemId == itemId }?.let { started ->
-            grab = started.copy(isNewTile = true, leaveEditOnUndo = !wasEditing)
+            val added = started.copy(isNewTile = true, leaveEditOnUndo = !wasEditing)
+            grab = if (cell == null) added else added.movedTo(cell.col, cell.row)
         }
     }
 

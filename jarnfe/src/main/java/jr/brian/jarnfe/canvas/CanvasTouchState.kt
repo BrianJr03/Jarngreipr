@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
@@ -41,6 +42,8 @@ internal fun rememberCanvasTouch(
     hasCarryTarget: (Int) -> Boolean,
     carry: (Int) -> Boolean,
     moveBetweenPages: (CanvasGrabDrop.BetweenPages) -> Unit,
+    addAt: (GridCell) -> Unit,
+    addToFolder: (CanvasFolderDrop) -> Unit,
 ): CanvasTouch {
     val density = LocalDensity.current.density
     val view = LocalView.current
@@ -73,6 +76,8 @@ internal fun rememberCanvasTouch(
             hasCarryTarget = hasCarryTarget,
             carry = carry,
             moveBetweenPages = moveBetweenPages,
+            addAt = addAt,
+            addToFolder = addToFolder,
         )
     }
     return touch
