@@ -22,15 +22,19 @@ import jr.brian.home.esde.data.getSystemEmulator
 import jr.brian.home.esde.data.setGameCore
 import jr.brian.home.esde.data.setGameEmulator
 import jr.brian.home.esde.data.setGameLaunchCommand
+import jr.brian.home.esde.data.setGameLaunchMaps
+import jr.brian.home.esde.data.setSystemEmulator
 import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.esde.util.compatibleEmulators
 import jr.brian.home.esde.util.documentIdToStoragePath
 import jr.brian.jarnfe.launch.JarnAppOption
 import jr.brian.jarnfe.launch.JarnCoreOption
+import jr.brian.jarnfe.launch.JarnEmulatorChoice
 import jr.brian.jarnfe.launch.JarnEmulatorOption
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameRef
 import jr.brian.jarnfe.launch.JarnGameSetup
+import jr.brian.jarnfe.systems.systemStorageKeys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -147,6 +151,33 @@ class AppJarnGameOptions @Inject constructor(
         EsdeCommandLauncher.getInstalledCores(context).map { (label, path) ->
             JarnCoreOption(label, path)
         }
+
+    override suspend fun retroArchCores(): List<JarnCoreOption> =
+        withContext(Dispatchers.IO) { installedCores() }
+
+    override suspend fun systemChoiceConflicts(systemId: String, choice: JarnEmulatorChoice): Int =
+        withContext(Dispatchers.Default) {
+            countSystemConflicts(savedLaunchMaps(), keysFor(systemId), choice)
+        }
+
+    /** The system default, with every game's own choice replaced so it takes effect. */
+    override suspend fun applyToSystem(systemId: String, choice: JarnEmulatorChoice) =
+        withContext(Dispatchers.IO) {
+            val keys = keysFor(systemId)
+            val games = gameDao.getBySystem(systemId).map {
+                SystemGameRow("$systemId/${it.absolutePath ?: it.relativePath}", it.emulatorPackage)
+            }
+            val planned = planSystemEmulator(savedLaunchMaps(), keys, choice, games)
+            keys.forEach { esdePrefs.setSystemEmulator(it, choice.packageName) }
+            esdePrefs.setGameLaunchMaps(planned.emulators, planned.commands, planned.cores)
+        }
+
+    private fun savedLaunchMaps(): GameEmulatorMaps = esdePrefs.state.value.let {
+        GameEmulatorMaps(it.gameEmulatorMap, it.gameCommandMap, it.gameCoreMap)
+    }
+
+    private fun keysFor(systemId: String): List<String> =
+        systemStorageKeys(systemId, catalog.findById(systemId)?.folderAliases.orEmpty())
 
     override suspend fun installedApps(): List<JarnAppOption> = withContext(Dispatchers.IO) {
         val pm = context.packageManager

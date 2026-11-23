@@ -66,6 +66,10 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE systemId = :systemId AND isHidden = 0 ORDER BY displayName COLLATE NOCASE")
     fun observeBySystem(systemId: String): Flow<List<GameEntity>>
 
+    /** Includes hidden games, for changes that must reach the whole system. */
+    @Query("SELECT * FROM games WHERE systemId = :systemId")
+    suspend fun getBySystem(systemId: String): List<GameEntity>
+
     @Query("SELECT * FROM games WHERE systemId = :systemId AND sourceId = :sourceId")
     suspend fun getBySystemAndSource(systemId: String, sourceId: Long): List<GameEntity>
 

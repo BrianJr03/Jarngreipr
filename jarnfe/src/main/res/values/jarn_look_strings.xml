@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_look_title">Look</string>
+    <string name="jarnfe_look_reduced_motion">Reduce motion</string>
+    <string name="jarnfe_look_reduced_motion_hint">Swaps movement for quick fades. Always on when Android animations are off.</string>
+</resources>

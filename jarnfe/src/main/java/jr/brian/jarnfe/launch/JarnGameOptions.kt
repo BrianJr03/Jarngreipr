@@ -36,6 +36,13 @@ interface JarnGameOptions {
     fun appOptions(packages: List<String>): List<JarnAppOption>
     fun chooseEmulator(game: JarnGameRef, option: JarnEmulatorOption)
     fun chooseCore(game: JarnGameRef, corePath: String)
+    suspend fun retroArchCores(): List<JarnCoreOption>
+
+    /** How many games have their own choice that [applyToSystem] would replace. */
+    suspend fun systemChoiceConflicts(systemId: String, choice: JarnEmulatorChoice): Int
+
+    /** Makes [choice] the system default and replaces every game's own emulator choice. */
+    suspend fun applyToSystem(systemId: String, choice: JarnEmulatorChoice)
     fun addCompanion(game: JarnGameRef, packageName: String)
     fun clearCompanions(game: JarnGameRef)
     fun openCompanion(host: Activity, packageName: String)

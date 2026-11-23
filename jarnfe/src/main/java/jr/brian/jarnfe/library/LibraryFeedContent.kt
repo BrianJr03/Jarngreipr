@@ -21,6 +21,7 @@ import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 
@@ -96,7 +97,8 @@ private fun LibraryUnavailableBanner(onRetry: () -> Unit) {
 @Composable
 private fun LibraryUnavailableState(onRetry: () -> Unit) {
     val requester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { requester.requestFocus() }
+    val tabsFocus = LocalJarnTabsFocus.current
+    LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) requester.requestFocus() }
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

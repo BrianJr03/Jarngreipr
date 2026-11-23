@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.LocalJarnColors
 import jr.brian.core.ui.theme.LocalJarnMotion
-import jr.brian.core.ui.theme.LocalJarnScreenActive
+import jr.brian.core.ui.theme.LocalJarnScreenActivation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -48,6 +48,7 @@ internal val JarnFocusRingWidth = 3.dp
 internal val JarnFocusGapWidth = 2.dp
 internal val JarnFocusOutset = JarnFocusRingWidth + JarnFocusGapWidth
 internal val JarnFocusGrowthCap = 6.dp
+private const val JarnFocusLandingSpread = 1.4f
 
 internal fun jarnFocusScale(widthPx: Float, heightPx: Float, capPx: Float, targetScale: Float): Float {
     val longest = max(widthPx, heightPx)
@@ -184,11 +185,12 @@ private class JarnFocusNode(
     }
 
     private fun currentScale(widthPx: Float, heightPx: Float, density: Density): Float {
-        if (!currentValueOf(LocalJarnScreenActive)) return 1f
+        val activation = currentValueOf(LocalJarnScreenActivation).value
+        if (activation <= 0f) return 1f
         val motion = currentValueOf(LocalJarnMotion)
         val capPx = with(density) { JarnFocusGrowthCap.toPx() }
         val focusScale = jarnFocusScale(widthPx, heightPx, capPx, motion.focusScale)
-        return jarnCombinedScale(focusScale, focusProgress.value, motion.pressScale, pressProgress.value)
+        return jarnCombinedScale(focusScale, focusProgress.value * activation, motion.pressScale, pressProgress.value)
     }
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
@@ -204,20 +206,19 @@ private class JarnFocusNode(
         drawContent()
     }
 
+    /** The ring exists only on the active screen, and lands inward as that screen takes control. */
     private fun DrawScope.drawIndicator(progress: Float) {
-        val path = outlinePath()
+        val activation = currentValueOf(LocalJarnScreenActivation).value
+        if (activation <= 0f) return
         val colors = currentValueOf(LocalJarnColors)
-        if (currentValueOf(LocalJarnScreenActive)) {
-            val scale = currentScale(size.width, size.height, this)
-            drawRing(path, scale, colors.focus, colors.focusGap, progress)
-        } else if (isFocused) {
-            drawRing(path, 1f, colors.raised, colors.focusGap, 1f)
-        }
+        val scale = currentScale(size.width, size.height, this)
+        val spread = 1f + (1f - activation) * JarnFocusLandingSpread
+        drawRing(outlinePath(), scale, colors.focus, colors.focusGap, progress * activation, spread)
     }
 
-    private fun DrawScope.drawRing(path: Path, scale: Float, ring: Color, gap: Color, alpha: Float) {
-        val ringStroke = 2f * JarnFocusOutset.toPx() / scale
-        val gapStroke = 2f * JarnFocusGapWidth.toPx() / scale
+    private fun DrawScope.drawRing(path: Path, scale: Float, ring: Color, gap: Color, alpha: Float, spread: Float) {
+        val ringStroke = 2f * JarnFocusOutset.toPx() * spread / scale
+        val gapStroke = 2f * JarnFocusGapWidth.toPx() * spread / scale
         withTransform({
             scale(scale, scale, center)
             clipPath(path, ClipOp.Difference)

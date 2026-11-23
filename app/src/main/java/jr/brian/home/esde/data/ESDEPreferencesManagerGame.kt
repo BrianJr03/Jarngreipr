@@ -1,5 +1,6 @@
 package jr.brian.home.esde.data
 
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMPANION_MAP
@@ -7,6 +8,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_EMULATOR_MAP
+import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -157,4 +159,24 @@ fun ESDEPreferencesManager.unhideAllGames(gameKeys: Collection<String>) {
     } else {
         prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
     }
+}
+
+/** Replaces all three per-game launch maps in one write. */
+fun ESDEPreferencesManager.setGameLaunchMaps(
+    emulators: Map<String, String>,
+    commands: Map<String, String>,
+    cores: Map<String, String>,
+) {
+    _state.update {
+        it.copy(gameEmulatorMap = emulators, gameCommandMap = commands, gameCoreMap = cores)
+    }
+    prefs.edit {
+        putOrRemoveMap(KEY_GAME_EMULATOR_MAP, emulators)
+        putOrRemoveMap(KEY_GAME_COMMAND_MAP, commands)
+        putOrRemoveMap(KEY_GAME_CORE_MAP, cores)
+    }
+}
+
+private fun SharedPreferences.Editor.putOrRemoveMap(key: String, map: Map<String, String>) {
+    if (map.isEmpty()) remove(key) else putString(key, JSONObject(map).toString())
 }

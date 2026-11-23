@@ -95,6 +95,7 @@ class JarnLibraryDataTest {
             scheduler = scheduler,
             recentLaunches = { launches },
             visibilitySource = { visibility },
+            artChoiceStore = GameArtChoiceStore(app),
         )
     }
 

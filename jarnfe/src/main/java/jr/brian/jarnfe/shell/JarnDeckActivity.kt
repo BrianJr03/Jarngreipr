@@ -29,6 +29,7 @@ class JarnDeckActivity : JarnScreenActivity() {
         if (isFinishing) return
         hostDisplayId = display?.displayId
         JarnSession.deckHostCreated = true
+        JarnSession.update { withDeckHost(true) }
         getSystemService(DisplayManager::class.java)
             .registerDisplayListener(displayListener, Handler(Looper.getMainLooper()))
     }
@@ -41,6 +42,7 @@ class JarnDeckActivity : JarnScreenActivity() {
     override fun onDestroy() {
         if (hostDisplayId != null) {
             JarnSession.deckHostCreated = false
+            JarnSession.update { withDeckHost(false) }
             getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener)
         }
         super.onDestroy()

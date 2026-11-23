@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.components.JarnButton
+import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnMetadataPlate
@@ -22,6 +24,8 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.launch.GameActionsDeck
 import jr.brian.jarnfe.launch.JarnGameActions
+import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.systems.JarnSystems
 import java.text.DateFormat
 import java.util.Date
 
@@ -29,6 +33,7 @@ private const val MINUTES_PER_HOUR = 60L
 private const val NOW_RECENT_LIMIT = 3
 private const val DESCRIPTION_MAX_LINES = 5
 private val NowArtHeight = 132.dp
+private val NowTopZone = 240.dp
 
 @Composable
 internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibraryGame>) {
@@ -45,7 +50,7 @@ internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibra
 @Composable
 private fun NowColumn(content: @Composable () -> Unit) {
     val scroll = rememberScrollState()
-    JarnRevealScrollTop(scroll) {
+    JarnRevealScrollTop(scroll, topZone = NowTopZone) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -64,7 +69,22 @@ private fun SystemSummary(system: JarnLibrarySystem, recent: List<JarnLibraryGam
     }
     JarnText(system.title, JarnTheme.type.title, colors.textHigh, maxLines = 2)
     JarnText(systemSubtitle(system), JarnTheme.type.body, colors.textMid, maxLines = 2)
+    ManageSystemButton(system.id)
     if (recentHere.isNotEmpty()) RecentGames(recentHere)
+}
+
+@Composable
+private fun ManageSystemButton(systemId: String) {
+    if (JarnSystems.manager == null) return
+    JarnButton(
+        label = stringResource(R.string.jarnfe_systems_manage_one),
+        onClick = {
+            JarnSystems.openAt(systemId)
+            JarnSession.update { openSystems() }
+        },
+        modifier = Modifier.fillMaxWidth(),
+        variant = JarnButtonVariant.Secondary,
+    )
 }
 
 @Composable
@@ -101,7 +121,7 @@ private fun GameDetails(game: JarnLibraryGame, actions: @Composable () -> Unit) 
             .fillMaxWidth()
             .height(NowArtHeight)
             .clip(JarnTheme.radius.mdShape),
-    ) { LibraryArt(game.artPath, game.title) }
+    ) { LibraryDeckArt(game) }
     JarnText(game.title, JarnTheme.type.heading, colors.textHigh, maxLines = 2)
     actions()
     game.metadata.description?.trim()?.takeIf { it.isNotEmpty() }?.let {

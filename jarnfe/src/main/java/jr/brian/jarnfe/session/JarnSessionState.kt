@@ -2,11 +2,11 @@ package jr.brian.jarnfe.session
 
 import jr.brian.jarnfe.input.JarnScreen
 
-enum class StageRoute { Library, GameList, Settings }
+enum class StageRoute { Library, GameList, Settings, Search, Systems }
 
 enum class LibrarySection { Systems, Favorites, Recent }
 
-enum class DeckTab { Now, Browse, Canvas }
+enum class DeckTab { Now, Apps, Canvas }
 
 /**
  * Shared state of both screens. [osFocusedScreen] mirrors which activity Android
@@ -15,6 +15,9 @@ enum class DeckTab { Now, Browse, Canvas }
  *
  * [awaitingDeckLaunch] keeps a freshly launched Deck from claiming the active
  * screen, because Android always gives focus to the activity started last.
+ *
+ * [activeScreen] and [osFocusedScreen] are roles. [swapRequested] is the saved swap, which only
+ * takes effect while a Deck window exists, so Stage can never be left without a window.
  */
 data class JarnSessionState(
     val activeScreen: JarnScreen = JarnScreen.Stage,
@@ -25,8 +28,30 @@ data class JarnSessionState(
     val deckPanelOpen: Boolean = false,
     val osFocusedScreen: JarnScreen? = null,
     val awaitingDeckLaunch: Boolean = false,
+    val swapRequested: Boolean = false,
+    val deckHostReady: Boolean = false,
 ) {
     val stageRoute: StageRoute get() = stageStack.last()
+
+    val rolesSwapped: Boolean
+        get() = swapRequested && deckDisplayAvailable && deckHostReady
+
+    /** The role shown by the window whose unswapped role is [host]. */
+    fun roleOn(host: JarnScreen): JarnScreen = if (rolesSwapped) host.other() else host
+
+    fun withSwapRequested(requested: Boolean): JarnSessionState =
+        keepingOsFocus(copy(swapRequested = requested))
+
+    fun withDeckHost(ready: Boolean): JarnSessionState =
+        keepingOsFocus(copy(deckHostReady = ready))
+
+    /** The focused window did not change, but the role it shows may have. */
+    private fun keepingOsFocus(next: JarnSessionState): JarnSessionState =
+        if (next.rolesSwapped != rolesSwapped) {
+            next.copy(osFocusedScreen = next.osFocusedScreen?.other())
+        } else {
+            next
+        }
 
     /** With one display only Stage is composed, so the Deck panel takes input as a Stage layer. */
     val inputScreen: JarnScreen
@@ -50,6 +75,10 @@ data class JarnSessionState(
         val stack = if (existing >= 0) stageStack.take(existing + 1) else stageStack + route
         return copy(stageStack = stack)
     }
+
+    /** System management always runs on Stage, so a Deck entry hands control back to it. */
+    fun openSystems(): JarnSessionState =
+        openRoute(StageRoute.Systems).copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
 
     fun back(): JarnSessionState = when {
         deckPanelOpen -> copy(deckPanelOpen = false, activeScreen = JarnScreen.Stage)
@@ -81,6 +110,13 @@ data class JarnSessionState(
             deckPanelOpen = !deckDisplayAvailable,
         )
 
+    /** Results stay on Stage while control moves to the keyboard on the Deck. */
+    fun openSearch(): JarnSessionState =
+        openRoute(StageRoute.Search).copy(
+            activeScreen = JarnScreen.Deck,
+            deckPanelOpen = !deckDisplayAvailable,
+        )
+
     fun withDeckPanel(open: Boolean): JarnSessionState {
         if (deckDisplayAvailable) return this
         return copy(
@@ -92,10 +128,12 @@ data class JarnSessionState(
     fun withDeckDisplay(available: Boolean): JarnSessionState {
         if (available) {
             if (deckDisplayAvailable) return this
-            return copy(
-                deckDisplayAvailable = true,
-                deckPanelOpen = false,
-                activeScreen = if (deckPanelOpen) JarnScreen.Stage else activeScreen,
+            return keepingOsFocus(
+                copy(
+                    deckDisplayAvailable = true,
+                    deckPanelOpen = false,
+                    activeScreen = if (deckPanelOpen) JarnScreen.Stage else activeScreen,
+                ),
             )
         }
         val keepPanel = !deckDisplayAvailable && deckPanelOpen
@@ -103,7 +141,7 @@ data class JarnSessionState(
             deckDisplayAvailable = false,
             deckPanelOpen = keepPanel,
             activeScreen = if (keepPanel) JarnScreen.Deck else JarnScreen.Stage,
-            osFocusedScreen = osFocusedScreen.takeUnless { it == JarnScreen.Deck },
+            osFocusedScreen = osFocusedScreen?.let(::roleOn).takeUnless { it == JarnScreen.Deck },
             awaitingDeckLaunch = false,
         )
     }
@@ -115,14 +153,18 @@ data class JarnSessionState(
 
     fun deckLaunchFailed(): JarnSessionState = copy(awaitingDeckLaunch = false)
 
-    fun onTopResumed(screen: JarnScreen, isTop: Boolean): JarnSessionState = when {
-        !isTop -> copy(osFocusedScreen = osFocusedScreen.takeUnless { it == screen })
-        awaitingDeckLaunch -> copy(
-            osFocusedScreen = screen,
-            awaitingDeckLaunch = screen != JarnScreen.Deck,
-        )
-        !deckDisplayAvailable -> copy(osFocusedScreen = screen)
-        else -> copy(osFocusedScreen = screen, activeScreen = screen)
+    /** [host] is the window reporting, which shows the opposite role while swapped. */
+    fun onTopResumed(host: JarnScreen, isTop: Boolean): JarnSessionState {
+        val role = roleOn(host)
+        return when {
+            !isTop -> copy(osFocusedScreen = osFocusedScreen.takeUnless { it == role })
+            awaitingDeckLaunch -> copy(
+                osFocusedScreen = role,
+                awaitingDeckLaunch = host != JarnScreen.Deck,
+            )
+            !deckDisplayAvailable -> copy(osFocusedScreen = role)
+            else -> copy(osFocusedScreen = role, activeScreen = role)
+        }
     }
 
     fun encode(): String = listOf(
@@ -138,6 +180,7 @@ data class JarnSessionState(
         private const val FIELD_SEPARATOR = "|"
         private const val ROUTE_SEPARATOR = ","
         private const val FIELD_COUNT = 4
+        private const val LEGACY_BROWSE_TAB = "Browse"
 
         fun decode(encoded: String?): JarnSessionState? {
             val fields = encoded?.split(FIELD_SEPARATOR)?.takeIf { it.size == FIELD_COUNT } ?: return null
@@ -147,9 +190,12 @@ data class JarnSessionState(
                 activeScreen = enumOrNull<JarnScreen>(fields[0]) ?: return null,
                 stageStack = routes,
                 librarySection = enumOrNull<LibrarySection>(fields[2]) ?: return null,
-                deckTab = enumOrNull<DeckTab>(fields[3]) ?: return null,
+                deckTab = enumOrNull<DeckTab>(fields[3].migratedDeckTab()) ?: return null,
             )
         }
+
+        /** Apps replaced Browse, so a session saved before the rename still restores. */
+        private fun String.migratedDeckTab(): String = if (this == LEGACY_BROWSE_TAB) DeckTab.Apps.name else this
 
         private inline fun <reified T : Enum<T>> enumOrNull(name: String): T? =
             enumValues<T>().firstOrNull { it.name == name }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_wordmark" translatable="false">JARN</string>
+    <string name="jarnfe_wordmark_suffix" translatable="false">GREIPR</string>
     <string name="jarnfe_battery_percent">%1$d%%</string>
 
     <string name="jarnfe_section_systems">Systems</string>
@@ -17,13 +18,11 @@
     <string name="jarnfe_empty_settings_message">Frontend settings will appear here.</string>
 
     <string name="jarnfe_tab_now">Now</string>
-    <string name="jarnfe_tab_browse">Browse</string>
+    <string name="jarnfe_tab_apps">Apps</string>
     <string name="jarnfe_tab_canvas">Canvas</string>
     <string name="jarnfe_deck_title">Deck</string>
     <string name="jarnfe_empty_now_title">Nothing selected</string>
     <string name="jarnfe_empty_now_message">Details and actions for your selection will appear here.</string>
-    <string name="jarnfe_empty_browse_title">Nothing to browse yet</string>
-    <string name="jarnfe_empty_browse_message">Your library will be browsable here.</string>
     <string name="jarnfe_empty_canvas_title">Canvas is on the way</string>
     <string name="jarnfe_empty_canvas_message">Your saved pages will appear here.</string>
 </resources>

@@ -145,7 +145,7 @@ class AppJarnGameLauncher @Inject constructor(
         val savedEmulator = esdePrefs.getGameEmulator(key)
         val gate = romLaunchGate(
             isAndroid = isAndroidSystem(game.systemName),
-            isRetroArch = (savedEmulator ?: game.emulatorPackage)
+            isRetroArch = (savedEmulator ?: esdePrefs.getSystemEmulator(game.systemName) ?: game.emulatorPackage)
                 ?.startsWith("com.retroarch") == true,
             hasCore = esdePrefs.getGameCore(key) != null,
             hasEmulator = esdePrefs.getGameLaunchCommand(key) != null ||

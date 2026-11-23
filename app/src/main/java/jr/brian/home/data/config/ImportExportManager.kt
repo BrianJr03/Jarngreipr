@@ -54,6 +54,9 @@ class ImportExportManager @Inject constructor(
     private val experienceStore: ExperienceStore,
     private val artSourceStore: jr.brian.frontend.library.art.ArtSourceStore,
     private val libraryFolderBackup: jr.brian.frontend.library.setup.LibraryFolderBackup,
+    private val jarnLookStore: jr.brian.frontend.look.JarnLookStore,
+    private val artChoiceStore: jr.brian.frontend.library.art.GameArtChoiceStore,
+    private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -317,6 +320,10 @@ class ImportExportManager @Inject constructor(
             experience = experienceStore.experience.name,
             artSource = artSourceStore.source.name,
             systemArtSource = artSourceStore.systemSource.name,
+            jarnLook = jarnLookStore.lookId,
+            jarnReducedMotion = jarnLookStore.reducedMotion,
+            jarnArtChoices = artChoiceStore.choices.toConfig(),
+            jarnPinnedApps = appPinStore.pinned,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -729,6 +736,12 @@ class ImportExportManager @Inject constructor(
         config.systemArtSource?.let {
             artSourceStore.setSystemSource(jr.brian.core.model.SystemArtSource.fromNameOrDefault(it))
         }
+
+        // Null means the blob predates v41, so keep the current appearance.
+        config.jarnLook?.let(jarnLookStore::setLookId)
+        config.jarnReducedMotion?.let(jarnLookStore::setReducedMotion)
+        config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
+        config.jarnPinnedApps?.let(appPinStore::restore)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

@@ -5,11 +5,15 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +23,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import jr.brian.core.ui.focus.JarnBringIntoViewSpec
+import jr.brian.core.ui.focus.JarnTabsFocus
+import jr.brian.core.ui.focus.LocalJarnTabsFocus
 
 val LocalJarnLook = staticCompositionLocalOf { JarnLooks.Default }
 val LocalJarnColors = staticCompositionLocalOf { JarnLooks.Default.resolvedColors }
@@ -27,6 +33,11 @@ val LocalJarnSpacing = staticCompositionLocalOf { JarnSpacing() }
 val LocalJarnRadius = staticCompositionLocalOf { JarnRadius() }
 val LocalJarnMotion = staticCompositionLocalOf { JarnMotion() }
 val LocalJarnScreenActive = staticCompositionLocalOf { true }
+
+/** 0 on an inactive screen, rising to 1 as this screen takes control. */
+val LocalJarnScreenActivation = staticCompositionLocalOf<State<Float>> { mutableFloatStateOf(1f) }
+
+private const val JARN_SCREEN_SWITCH_MILLIS = 300
 
 object JarnTheme {
     val look: JarnLook @Composable get() = LocalJarnLook.current
@@ -56,11 +67,22 @@ fun JarnTheme(
     val scrollSpec = remember(focusEdgePx, baseScrollSpec) {
         JarnBringIntoViewSpec(focusEdgePx, baseScrollSpec)
     }
+    val activation = remember { Animatable(if (screenActive) 1f else 0f) }
+    LaunchedEffect(screenActive, shouldReduce) {
+        when {
+            !screenActive -> activation.snapTo(0f)
+            shouldReduce -> activation.snapTo(1f)
+            else -> activation.animateTo(1f, tween(JARN_SCREEN_SWITCH_MILLIS, easing = motion.panel.easing))
+        }
+    }
+    val activationState = remember(activation) { activation.asState() }
     CompositionLocalProvider(
         LocalJarnLook provides look,
         LocalJarnColors provides colors,
         LocalJarnMotion provides motion,
         LocalJarnScreenActive provides screenActive,
+        LocalJarnScreenActivation provides activationState,
+        LocalJarnTabsFocus provides remember { JarnTabsFocus() },
         LocalBringIntoViewSpec provides scrollSpec,
         content = content,
     )

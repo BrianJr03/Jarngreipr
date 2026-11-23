@@ -11,6 +11,9 @@ import jr.brian.frontend.library.art.LibraryVisibilitySource
 import jr.brian.frontend.library.art.RecentLaunch
 import jr.brian.frontend.library.art.RecentLaunchSource
 import jr.brian.frontend.library.setup.LibraryScanPreparer
+import jr.brian.frontend.scrape.ScrapeChoices
+import jr.brian.frontend.scrape.ScrapeChoicesSource
+import jr.brian.frontend.scrape.ScraperMediaKind
 import jr.brian.home.data.LibraryStoreSync
 import jr.brian.home.data.RecentlyPlayedManager
 import jr.brian.home.data.readUserOverrideArt
@@ -56,6 +59,22 @@ object JarnArtModule {
     @Provides
     fun provideScanPreparer(sync: Provider<LibraryStoreSync>): LibraryScanPreparer =
         LibraryScanPreparer { sync.get().prepareForScan() }
+
+    /** Classic's saved source toggles and art types, so both experiences scrape the same. */
+    @Provides
+    fun provideScrapeChoices(prefs: ESDEPreferencesManager): ScrapeChoicesSource =
+        ScrapeChoicesSource {
+            val state = prefs.state.value
+            ScrapeChoices(
+                screenScraperEnabled = state.screenScraperEnabled,
+                screenScraperKinds = state.screenScraperMediaTypes.toScrapeKinds(),
+                steamGridDbEnabled = state.steamGridDbEnabled,
+                steamGridDbKinds = state.steamGridDbMediaTypes.toScrapeKinds(),
+            )
+        }
+
+    private fun Set<String>.toScrapeKinds(): Set<ScraperMediaKind> =
+        ScraperMediaKind.entries.filter { it.name in this }.toSet()
 
     @Provides
     fun provideRecentLaunches(manager: RecentlyPlayedManager): RecentLaunchSource =

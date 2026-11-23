@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +23,19 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -42,6 +51,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.R
+import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 
@@ -72,24 +82,39 @@ fun JarnTabs(
         }
         true
     }
+    val requesters = remember(labels.size) { List(labels.size) { FocusRequester() } }
+    val tabsFocus = LocalJarnTabsFocus.current
+    val group = remember { Any() }
+    var groupFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedIndex) {
+        if (groupFocused) runCatching { requesters.getOrNull(selectedIndex)?.requestFocus() }
+    }
+    DisposableEffect(tabsFocus, group) { onDispose { tabsFocus.update(group, false) } }
+    val focusModifier = shoulderModifier
+        .onFocusChanged {
+            groupFocused = it.hasFocus
+            tabsFocus.update(group, it.hasFocus)
+        }
+        .focusProperties { onEnter = { requesters.getOrNull(selectedIndex)?.requestFocus() } }
+        .focusGroup()
     val gap = Arrangement.spacedBy(JarnTheme.space.xs)
     val ringPadding = PaddingValues(JarnTheme.space.lg)
     when (style) {
         JarnTabsStyle.Top -> Row(
-            modifier = shoulderModifier
+            modifier = focusModifier
                 .selectableGroup()
                 .horizontalScroll(rememberScrollState())
                 .padding(ringPadding),
             horizontalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, onSelect, Modifier) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier) }
 
         JarnTabsStyle.Rail -> Column(
-            modifier = shoulderModifier
+            modifier = focusModifier
                 .selectableGroup()
                 .verticalScroll(rememberScrollState())
                 .padding(ringPadding),
             verticalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, onSelect, Modifier.fillMaxWidth()) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier.fillMaxWidth()) }
     }
 }
 
@@ -97,16 +122,23 @@ fun JarnTabs(
 private fun JarnTabItems(
     labels: List<String>,
     selectedIndex: Int,
+    requesters: List<FocusRequester>,
     onSelect: (Int) -> Unit,
     itemModifier: Modifier,
 ) {
     labels.forEachIndexed { index, label ->
-        JarnTab(label, index == selectedIndex, { onSelect(index) }, itemModifier)
+        JarnTab(label, index == selectedIndex, requesters[index], { onSelect(index) }, itemModifier)
     }
 }
 
 @Composable
-private fun JarnTab(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun JarnTab(
+    label: String,
+    selected: Boolean,
+    requester: FocusRequester,
+    onClick: () -> Unit,
+    modifier: Modifier,
+) {
     val colors = JarnTheme.colors
     val source = remember { MutableInteractionSource() }
     val shape = JarnTheme.radius.smShape
@@ -116,6 +148,8 @@ private fun JarnTab(label: String, selected: Boolean, onClick: () -> Unit, modif
     )
     Box(
         modifier = modifier
+            .focusRequester(requester)
+            .onFocusChanged { if (it.isFocused && !selected) onClick() }
             .semantics { this.selected = selected }
             .jarnInteractive(shape, source, role = Role.Tab, onClick = onClick)
             .heightIn(min = 36.dp)

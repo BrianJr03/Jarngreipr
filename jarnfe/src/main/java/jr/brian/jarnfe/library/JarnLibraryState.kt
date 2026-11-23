@@ -29,6 +29,7 @@ data class JarnLibraryState(
     val focusedFavoriteId: String? = null,
     val focusedRecentId: String? = null,
     val focusedGameBySystem: Map<String, String> = emptyMap(),
+    val searchSelection: LibrarySelection = LibrarySelection.None,
 ) {
     val focusedSystem: JarnLibrarySystem?
         get() = systems.items.firstOrNull { it.id == focusedSystemId } ?: systems.items.firstOrNull()
@@ -63,13 +64,20 @@ data class JarnLibraryState(
             LibrarySection.Recent -> focusedRecent.asSelection()
         }
         StageRoute.GameList -> focusedOpenGame?.let(LibrarySelection::Game) ?: openSystem.asSelection()
-        StageRoute.Settings -> LibrarySelection.None
+        StageRoute.Settings, StageRoute.Systems -> LibrarySelection.None
+        StageRoute.Search -> searchSelection
     }
 
     fun confirmFor(route: StageRoute, section: LibrarySection, canPlay: Boolean): LibraryConfirm {
         val play = if (canPlay) LibraryConfirm.Play else LibraryConfirm.None
         return when (route) {
             StageRoute.Settings -> LibraryConfirm.Generic
+            StageRoute.Search -> when (searchSelection) {
+                LibrarySelection.None -> LibraryConfirm.None
+                is LibrarySelection.System -> LibraryConfirm.Open
+                is LibrarySelection.Game -> play
+            }
+            StageRoute.Systems -> LibraryConfirm.None
             StageRoute.GameList -> when {
                 openGames.items.isNotEmpty() -> play
                 openGames.status == JarnLibraryStatus.Unavailable -> LibraryConfirm.Generic
@@ -106,6 +114,9 @@ data class JarnLibraryState(
     fun focusFavorite(gameId: String): JarnLibraryState = copy(focusedFavoriteId = gameId)
 
     fun focusRecent(gameId: String): JarnLibraryState = copy(focusedRecentId = gameId)
+
+    fun focusSearchResult(selection: LibrarySelection): JarnLibraryState =
+        copy(searchSelection = selection)
 
     fun focusOpenGame(gameId: String): JarnLibraryState {
         val systemId = openSystemId ?: return this

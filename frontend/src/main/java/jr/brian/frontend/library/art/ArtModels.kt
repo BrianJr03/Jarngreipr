@@ -49,7 +49,19 @@ data class LibraryGame(
     val launchCommand: String? = null,
 )
 
-data class LibraryGameWithArt(val game: LibraryGame, val artPath: String?)
+/**
+ * [artPath] and [deckArtPath] follow the user's art choices. [defaultArtPath] never does, so a
+ * launch recorded for Classic keeps Classic's art.
+ */
+data class LibraryGameWithArt(
+    val game: LibraryGame,
+    val artPath: String?,
+    val deckArtPath: String? = null,
+    val defaultArtPath: String? = artPath,
+)
+
+/** One game's art for each screen, plus the art it has with no choices applied. */
+data class GameDisplayArt(val top: String?, val bottom: String?, val default: String?)
 
 /** A list after the user's hide rules, with how many entries those rules removed. */
 data class VisibleList<out T>(val items: List<T>, val hiddenCount: Int = 0)

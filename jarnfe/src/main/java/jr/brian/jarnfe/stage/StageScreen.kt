@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.stage
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -29,6 +31,7 @@ import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnSheet
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.deck.DeckContent
@@ -44,6 +47,8 @@ import jr.brian.jarnfe.library.LibrarySetupPanel
 import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
+import jr.brian.jarnfe.search.JarnSearchResultsPanel
+import jr.brian.jarnfe.search.JarnSearchTabs
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.LibrarySection
@@ -54,6 +59,13 @@ import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.JarnStatusReadout
 import jr.brian.jarnfe.shell.deckPanelBindings
 import jr.brian.jarnfe.shell.stageBindings
+import jr.brian.jarnfe.splash.JarnSplash
+import jr.brian.jarnfe.splash.JarnStageSplash
+import jr.brian.jarnfe.splash.jarnSplashFade
+import jr.brian.jarnfe.splash.jarnSplashMark
+import jr.brian.jarnfe.wallpaper.JarnWallpaperBackdrop
+import jr.brian.jarnfe.systems.JarnSystems
+import jr.brian.jarnfe.systems.JarnSystemsRoute
 
 @StringRes
 private fun LibrarySection.labelRes(): Int = when (this) {
@@ -68,13 +80,20 @@ internal fun StageScreen(state: JarnSessionState) {
     LibraryOrphanGuard(JarnLibrary.state.gameListIsOrphaned(state.stageRoute)) {
         JarnSession.update { openRoute(StageRoute.Library) }
     }
+    val reducedMotion = JarnTheme.motion.reduced
+    LaunchedEffect(Unit) { JarnSplash.play(reducedMotion) }
     JarnInputLayer(bindings = { stageBindings(state, JarnSession, JarnLibrary) }) {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            Box(Modifier.jarnSplashFade()) {
+                JarnWallpaperBackdrop(showWallpaper = state.stageRoute != StageRoute.Settings)
+            }
             JarnScreenFrame(
                 header = { StageHeader(state) },
+                background = Color.Transparent,
             ) { StageRouteContent(state) }
             SingleScreenDeckPanel(state)
             JarnNoticeHost()
+            JarnStageSplash()
         }
     }
 }
@@ -89,9 +108,15 @@ private fun StageHeader(state: JarnSessionState) {
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        JarnText(stringResource(R.string.jarnfe_wordmark), JarnTheme.type.heading, colors.textHigh, maxLines = 1)
-        Box(Modifier.weight(1f)) { StageHeaderTitle(state) }
-        JarnStatusReadout()
+        JarnText(
+            text = stringResource(R.string.jarnfe_wordmark),
+            style = JarnTheme.type.heading,
+            color = colors.textHigh,
+            modifier = Modifier.jarnSplashMark(),
+            maxLines = 1,
+        )
+        Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
+        Box(Modifier.jarnSplashFade()) { JarnStatusReadout() }
     }
 }
 
@@ -101,6 +126,8 @@ private fun StageHeaderTitle(state: JarnSessionState) {
         StageRoute.Library -> LibrarySectionTabs(state.librarySection)
         StageRoute.GameList -> LibraryGameListTitle(JarnLibrary.state)
         StageRoute.Settings -> StageRouteTitle(R.string.jarnfe_route_settings)
+        StageRoute.Search -> JarnSearchTabs()
+        StageRoute.Systems -> StageRouteTitle(R.string.jarnfe_systems_title)
     }
 }
 
@@ -131,6 +158,8 @@ private fun StageRouteContent(state: JarnSessionState) {
         StageRoute.Library -> StageLibrary(state)
         StageRoute.GameList -> LibraryGameList(JarnLibrary)
         StageRoute.Settings -> StageSettings()
+        StageRoute.Search -> JarnSearchResultsPanel(state)
+        StageRoute.Systems -> StageSystems()
     }
 }
 
@@ -167,6 +196,19 @@ private fun StageSettings() {
     }
 }
 
+@Composable
+private fun StageSystems() {
+    val manager = JarnSystems.manager
+    if (manager != null) {
+        JarnSystemsRoute(manager, onExit = { JarnSession.update { back() } })
+    } else {
+        StageSubRoutePlaceholder(
+            R.string.jarnfe_systems_empty_title,
+            R.string.jarnfe_systems_empty_message,
+        )
+    }
+}
+
 private fun openSystem(systemId: String) {
     JarnLibrary.update { openSystem(systemId) }
     JarnSession.update { openRoute(StageRoute.GameList) }
@@ -175,7 +217,8 @@ private fun openSystem(systemId: String) {
 @Composable
 private fun LibraryRouteLinks(showDeckPanelLink: Boolean) {
     val firstLink = remember { FocusRequester() }
-    LaunchedEffect(Unit) { firstLink.requestFocus() }
+    val tabsFocus = LocalJarnTabsFocus.current
+    LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) firstLink.requestFocus() }
     Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
         StageLinkButton(R.string.jarnfe_route_settings, Modifier.focusRequester(firstLink)) {
             JarnSession.update { openRoute(StageRoute.Settings) }

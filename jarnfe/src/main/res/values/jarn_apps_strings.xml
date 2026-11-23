@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_apps_section_pinned">Pinned</string>
+    <string name="jarnfe_apps_section_all">All</string>
+    <string name="jarnfe_apps_section_hidden">Hidden</string>
+    <string name="jarnfe_apps_collapsed">Collapsed</string>
+    <string name="jarnfe_apps_expanded">Expanded</string>
+    <string name="jarnfe_apps_hint_expand">Expand</string>
+    <string name="jarnfe_apps_hint_collapse">Collapse</string>
+    <string name="jarnfe_apps_action_pin">Pin</string>
+    <string name="jarnfe_apps_action_unpin">Unpin</string>
+    <string name="jarnfe_apps_action_hide">Hide</string>
+    <string name="jarnfe_apps_action_unhide">Unhide</string>
+    <string name="jarnfe_apps_empty_title">No apps found</string>
+    <string name="jarnfe_apps_empty_message">Installed apps will appear here.</string>
+</resources>

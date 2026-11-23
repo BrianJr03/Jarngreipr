@@ -6,7 +6,10 @@ import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.MediaDao
 import jr.brian.frontend.library.db.SystemDao
+import jr.brian.frontend.library.media.MediaKind
 import jr.brian.frontend.scrape.LibraryScraper
+import jr.brian.frontend.scrape.ScrapeChoices
+import jr.brian.frontend.scrape.ScrapeChoicesSource
 import jr.brian.frontend.scrape.ScrapeState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,10 +37,13 @@ class JarnLibraryData @Inject constructor(
     private val scheduler: MissingArtScheduler,
     private val recentLaunches: RecentLaunchSource,
     private val visibilitySource: LibraryVisibilitySource,
+    private val artChoiceStore: GameArtChoiceStore,
+    private val choices: ScrapeChoicesSource = ScrapeChoicesSource { ScrapeChoices.All },
 ) {
     val artSource: StateFlow<ArtSource> = store.state
     val artRevision: StateFlow<Long> = indexes.revision
     val scrapeState: StateFlow<ScrapeState> = scraper.state
+    val artChoices: StateFlow<GameArtChoices> = artChoiceStore.state
 
     /** Systems with a visible game, by display name. Fully hidden ones are only counted. */
     val systems: Flow<VisibleList<LibrarySystem>> = combine(
@@ -75,6 +81,9 @@ class JarnLibraryData @Inject constructor(
     val favorites: Flow<VisibleList<LibraryGame>> =
         visible(gameDao.observeFavorites())
 
+    /** Every visible game, for searching across the whole library. */
+    val allGames: Flow<VisibleList<LibraryGame>> = visible(gameDao.observeAllVisible())
+
     fun games(systemId: String): Flow<VisibleList<LibraryGame>> =
         visible(gameDao.observeBySystem(systemId))
 
@@ -87,17 +96,21 @@ class JarnLibraryData @Inject constructor(
         VisibleList(mergeRecent(launches, imported, visibility, limit))
     }.distinctUntilChanged()
 
-    /** Adds each game's best tile art, re-resolving when the source or indexes change. */
+    /** Adds each game's art, re-resolving when the source, indexes, or art choices change. */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun withArt(games: Flow<VisibleList<LibraryGame>>): Flow<VisibleList<LibraryGameWithArt>> =
-        combine(games, store.state, indexes.revision) { list, source, _ -> list to source }
-            .mapLatest { (list, source) ->
-                val art = resolver.tileArt(list.items, source)
-                VisibleList(
-                    items = list.items.map { LibraryGameWithArt(it, art[it.id]) },
-                    hiddenCount = list.hiddenCount,
-                )
-            }
+        combine(games, store.state, indexes.revision, artChoiceStore.state) { list, source, _, picks ->
+            Triple(list, source, picks)
+        }.mapLatest { (list, source, picks) ->
+            val art = resolver.displayArt(list.items, source, picks)
+            VisibleList(
+                items = list.items.map { game ->
+                    val resolved = art[game.id]
+                    LibraryGameWithArt(game, resolved?.top, resolved?.bottom, resolved?.default)
+                },
+                hiddenCount = list.hiddenCount,
+            )
+        }
 
     /** Re-emits when the source, the indexes, or this game's library row change. */
     fun art(game: LibraryGame): Flow<GameArt> =
@@ -111,6 +124,20 @@ class JarnLibraryData @Inject constructor(
         return gameDao.findByTriple(parsed.sourceId, parsed.systemId, parsed.relativePath)
             ?.toLibraryGame()
     }
+
+    /** The art kinds this game actually has a file for. */
+    suspend fun availableArt(key: String): Set<MediaKind> {
+        val entity = parseGameKey(key)?.let {
+            gameDao.findByTriple(it.sourceId, it.systemId, it.relativePath)
+        } ?: return emptySet()
+        return resolver.resolve(entity, store.source).slots.keys
+    }
+
+    fun setGameArtChoice(screen: ArtScreen, gameKey: String, systemId: String, choice: ArtChoice) =
+        artChoiceStore.setForGame(screen, gameKey, systemId, choice)
+
+    fun setSystemArtChoice(screen: ArtScreen, systemId: String, choice: ArtChoice) =
+        artChoiceStore.setForSystem(screen, systemId, choice)
 
     fun setArtSource(source: ArtSource) = store.setSource(source)
 
@@ -127,14 +154,17 @@ class JarnLibraryData @Inject constructor(
         }
     }
 
-    fun canScrape(): Boolean = scraper.canScrape()
+    /** True when a source the user turned on has a saved account. */
+    fun canScrape(): Boolean = scraper.canScrape(choices.current().toRequest())
 
     /** Queues a scrape of missing art, for one system or the whole library. */
     fun scrapeMissingArt(systemId: String? = null): ScrapeMissingArtResult {
-        if (!scraper.canScrape()) return ScrapeMissingArtResult.NotConfigured
+        if (!canScrape()) return ScrapeMissingArtResult.NotConfigured
         scheduler.schedule(systemId)
         return ScrapeMissingArtResult.Started
     }
+
+    fun cancelScrape() = scheduler.cancel()
 
     private fun visible(games: Flow<List<GameEntity>>): Flow<VisibleList<LibraryGame>> =
         combine(games, visibilitySource.visibility()) { list, visibility ->

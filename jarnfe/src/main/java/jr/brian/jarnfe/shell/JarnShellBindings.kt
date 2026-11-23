@@ -9,19 +9,28 @@ import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.LibraryConfirm
 import jr.brian.jarnfe.library.LibrarySelection
+import jr.brian.jarnfe.search.JarnSearch
+import jr.brian.jarnfe.search.searchTabBindings
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.systems.JarnSystems
 
 /**
  * Back is bound here without a label so every press goes through the session's one-layer rule,
  * and the root stays silent. Screens add the visible hint only when Back can do something.
  */
-internal fun jarnGlobalBindings(session: JarnSessionStore): JarnBindings = jarnBindings {
+internal fun jarnGlobalBindings(
+    session: JarnSessionStore,
+    onSearch: (() -> Unit)? = null,
+    onSwap: (() -> Unit)? = null,
+): JarnBindings = jarnBindings {
     on(JarnAction.SwitchScreen, R.string.jarnfe_hint_switch_screen) {
         session.update { switchActiveScreen() }
     }
     on(JarnAction.Back) { session.update { back() } }
+    onSearch?.let { on(JarnAction.Search, R.string.jarnfe_hint_search, onPress = it) }
+    onSwap?.let { on(JarnAction.Swap, onPress = it) }
 }
 
 internal fun JarnBindingsBuilder.stageBindings(
@@ -32,6 +41,7 @@ internal fun JarnBindingsBuilder.stageBindings(
     confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
     backHint(state, session)
     gameActionsBinding(state, session, library)
+    manageSystemBinding(state, session, library)
     if (state.stageRoute != StageRoute.Settings) {
         on(JarnAction.Menu, R.string.jarnfe_route_settings) {
             session.update { openRoute(StageRoute.Settings) }
@@ -46,7 +56,8 @@ internal fun JarnBindingsBuilder.stageBindings(
             on(JarnAction.TabPrevious) { library.update { stepOpenSystem(-1) } }
             on(JarnAction.TabNext) { library.update { stepOpenSystem(1) } }
         }
-        StageRoute.Settings -> Unit
+        StageRoute.Search -> searchTabBindings(JarnSearch)
+        StageRoute.Settings, StageRoute.Systems -> Unit
     }
 }
 
@@ -58,8 +69,22 @@ private fun JarnBindingsBuilder.gameActionsBinding(
     val selection = library.state.selection(state.stageRoute, state.librarySection)
     if (selection !is LibrarySelection.Game || JarnGameActions.controller == null) return
     on(JarnAction.Context, R.string.jarnfe_hint_context) {
+        if (state.stageRoute == StageRoute.Search) JarnSearch.showActions()
         JarnGameActions.focusActions()
         session.update { openDeckNow() }
+    }
+}
+
+private fun JarnBindingsBuilder.manageSystemBinding(
+    state: JarnSessionState,
+    session: JarnSessionStore,
+    library: JarnLibraryStore,
+) {
+    val selection = library.state.selection(state.stageRoute, state.librarySection)
+    if (selection !is LibrarySelection.System || JarnSystems.manager == null) return
+    on(JarnAction.Context, R.string.jarnfe_systems_manage_one) {
+        JarnSystems.openAt(selection.system.id)
+        session.update { openSystems() }
     }
 }
 

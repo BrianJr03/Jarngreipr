@@ -65,7 +65,7 @@ internal class JarnPlayController(
         launching = true
         activity.lifecycleScope.launch {
             try {
-                val ref = data.findGame(game.id)?.toGameRef(game.artPath)?.let { located(it, game.id) }
+                val ref = data.findGame(game.id)?.toGameRef(game.defaultArtPath)?.let { located(it, game.id) }
                 if (ref == null) {
                     JarnNotices.show(R.string.jarnfe_launch_missing_rom)
                 } else {

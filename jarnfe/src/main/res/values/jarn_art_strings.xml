@@ -14,9 +14,10 @@
     </plurals>
     <string name="jarnfe_art_scrape_missing">Scrape missing art</string>
     <string name="jarnfe_art_scrape_hint">Downloads art only for games that have none. Your folders stay untouched.</string>
-    <string name="jarnfe_art_scrape_no_credentials">Add your scraper account in Classic settings to use this.</string>
-    <string name="jarnfe_art_scrape_running">Scraping is in progress.</string>
+    <string name="jarnfe_art_scrape_no_credentials">Press to add a scraper account.</string>
+    <string name="jarnfe_art_scrape_running">Scraping is in progress. Press to see progress.</string>
     <string name="jarnfe_art_scrape_finished">Last scrape finished. Press to check again.</string>
+    <string name="jarnfe_art_scrape_cancelled">Last scrape stopped. Press to pick up where it left off.</string>
     <string name="jarnfe_art_scrape_started">Scraping missing art.</string>
     <string name="jarnfe_system_art_title">System art</string>
     <string name="jarnfe_system_art_bundled">Jarngreipr logos</string>

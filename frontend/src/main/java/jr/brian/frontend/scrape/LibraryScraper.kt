@@ -103,7 +103,7 @@ class LibraryScraper @Inject constructor(
                         }
                         if (!ok) {
                             errors++
-                            errorMessages += ScrapeError(displayTitle, "Download failed: ${media.url}")
+                            errorMessages += ScrapeError(displayTitle, "Download failed")
                             continue
                         }
                     }
@@ -138,7 +138,11 @@ class LibraryScraper @Inject constructor(
             }
         }
         val processed = games.size
-        _state.value = ScrapeState.Finished(processed, downloads, errors, errorMessages.toList())
+        _state.value = if (isActive) {
+            ScrapeState.Finished(processed, downloads, errors, errorMessages.toList())
+        } else {
+            ScrapeState.Cancelled
+        }
         ScrapeSummary(processed = processed, downloads = downloads, errors = errors)
     }
 
@@ -232,6 +236,15 @@ class LibraryScraper @Inject constructor(
             .replace('.', ' ')
             .trim()
             .replace(Regex("\\s+"), " ")
+    }
+
+    /** For a run that stopped between games, so progress never stays stuck. */
+    internal fun reportCancelled() {
+        _state.value = ScrapeState.Cancelled
+    }
+
+    internal fun reportNothingMissing() {
+        _state.value = ScrapeState.Finished(processed = 0, downloads = 0, errors = 0)
     }
 
     fun canScrape(request: ScrapeRequest = ScrapeRequest()): Boolean =

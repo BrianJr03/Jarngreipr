@@ -29,6 +29,10 @@ import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.jarnfe.R
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.jarnfe.library.JarnFolderPicker
+import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.systems.JarnSystems
+import jr.brian.jarnfe.systems.JarnSystemsSection
+import jr.brian.jarnfe.scraper.JarnScraperSetupHost
 
 @Composable
 internal fun JarnSettingsRoute(data: JarnLibraryData, setup: LibrarySetup) {
@@ -44,9 +48,17 @@ internal fun JarnSettingsRoute(data: JarnLibraryData, setup: LibrarySetup) {
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         ) {
             GameFoldersSection(setup, Modifier.focusRequester(firstRow))
+            JarnSystemsSection(onOpen = ::openSystemManager)
             JarnArtSection(data)
+            JarnLookSection()
         }
     }
+    JarnScraperSetupHost(data)
+}
+
+private fun openSystemManager() {
+    JarnSystems.openAt(null)
+    JarnSession.update { openSystems() }
 }
 
 @Composable

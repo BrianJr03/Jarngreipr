@@ -36,6 +36,9 @@ data class JarnLibraryGame(
     val title: String,
     val artPath: String? = null,
     val metadata: JarnGameMetadata = JarnGameMetadata(),
+    val deckArtPath: String? = null,
+    /** The art this game has with no art choices applied. Launch records keep this one. */
+    val defaultArtPath: String? = artPath,
 )
 
 sealed interface JarnLibraryStatus {

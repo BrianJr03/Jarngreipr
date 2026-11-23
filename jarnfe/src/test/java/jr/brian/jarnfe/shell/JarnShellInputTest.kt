@@ -101,7 +101,7 @@ class JarnShellInputTest {
         assertEquals(DeckTab.Now, session.state.deckTab)
         press(KeyEvent.KEYCODE_BUTTON_SELECT)
         press(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(DeckTab.Browse, session.state.deckTab)
+        assertEquals(DeckTab.Apps, session.state.deckTab)
         assertEquals(LibrarySection.Favorites, session.state.librarySection)
     }
 
@@ -182,7 +182,7 @@ class JarnShellInputTest {
         assertEquals(JarnScreen.Stage, router.activeScreen)
         router.attach(panelLayer)
         press(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(DeckTab.Browse, session.state.deckTab)
+        assertEquals(DeckTab.Apps, session.state.deckTab)
         press(KeyEvent.KEYCODE_BACK)
         assertFalse(session.state.deckPanelOpen)
         assertEquals(StageRoute.GameList, session.state.stageRoute)

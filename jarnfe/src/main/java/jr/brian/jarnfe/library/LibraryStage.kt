@@ -119,7 +119,7 @@ private fun LibraryHeroBanner(hero: LibraryHero) {
             title = heroTitle(hero.game.title),
             body = playSummary(hero.game.metadata),
             modifier = Modifier.fillMaxWidth().height(HeroHeight),
-            art = { LibraryArt(hero.game.artPath, hero.game.title) },
+            art = { LibraryCoverArt(hero.game, Alignment.CenterEnd) },
         )
         is LibraryHero.FocusedSystem -> JarnHeroPanel(
             eyebrow = null,
@@ -162,7 +162,7 @@ private fun LibraryGames(
                 title = game.title,
                 onClick = { library.play(game) },
                 modifier = modifier.fillMaxWidth(),
-            ) { LibraryArt(game.artPath, game.title) }
+            ) { LibraryCoverArt(game) }
         }
     }
 }

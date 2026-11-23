@@ -7,6 +7,8 @@ import jr.brian.frontend.library.art.LibraryGameWithArt
 import jr.brian.frontend.library.art.VisibleList
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.library.setup.LibrarySetupState
+import jr.brian.jarnfe.systems.JarnSystems
+import jr.brian.jarnfe.systems.jarnSystemManagerOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -78,6 +80,8 @@ internal fun LibraryGameWithArt.toJarnGame() = JarnLibraryGame(
     systemId = game.systemId,
     title = game.title,
     artPath = artPath,
+    deckArtPath = deckArtPath,
+    defaultArtPath = defaultArtPath,
     metadata = JarnGameMetadata(
         description = game.description,
         developer = game.developer,
@@ -97,6 +101,7 @@ internal fun ratingText(rating: Float?): String? =
 
 /** Safe to call from every activity: an already connected library is left as it is. */
 internal fun connectJarnLibrary(context: Context) {
+    JarnSystems.manager = context.jarnSystemManagerOrNull()
     if (JarnLibrary.source is JarnLibraryDataSource) return
     val data = context.jarnLibraryDataOrNull() ?: return
     val setup = context.jarnLibrarySetupOrNull() ?: return

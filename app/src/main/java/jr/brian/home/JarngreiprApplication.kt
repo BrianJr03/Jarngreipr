@@ -11,10 +11,23 @@ import coil.decode.ImageDecoderDecoder
 import dagger.hilt.android.HiltAndroidApp
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.launch.AppJarnSystemManager
 import jr.brian.home.service.HomeInterceptionKeepAliveService
 import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
+import jr.brian.home.jarn.AppJarnAppsData
+import jr.brian.home.jarn.AppJarnDockData
+import jr.brian.home.jarn.AppJarnScreenSwap
+import jr.brian.home.jarn.AppJarnWallpaperSource
+import jr.brian.jarnfe.apps.JarnAppsData
+import jr.brian.jarnfe.apps.JarnAppsDataProvider
+import jr.brian.jarnfe.dock.JarnDockData
+import jr.brian.jarnfe.dock.JarnDockDataProvider
+import jr.brian.jarnfe.shell.JarnScreenSwap
+import jr.brian.jarnfe.shell.JarnScreenSwapProvider
+import jr.brian.jarnfe.wallpaper.JarnWallpaperProvider
+import jr.brian.jarnfe.wallpaper.JarnWallpaperSource
 import jr.brian.jarnfe.canvas.JarnCanvasData
 import jr.brian.jarnfe.canvas.JarnCanvasDataProvider
 import jr.brian.jarnfe.launch.JarnGameLauncher
@@ -22,8 +35,14 @@ import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
+import jr.brian.jarnfe.look.JarnLookStoreProvider
+import jr.brian.jarnfe.systems.JarnSystemManager
+import jr.brian.jarnfe.systems.JarnSystemManagerProvider
+import jr.brian.jarnfe.scraper.JarnScraperSetup
+import jr.brian.jarnfe.scraper.JarnScraperSetupProvider
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.setup.LibrarySetup
+import jr.brian.frontend.look.JarnLookStore
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -35,7 +54,14 @@ class JarngreiprApplication :
     JarnGameLauncherProvider,
     JarnGameOptionsProvider,
     JarnLibraryDataProvider,
-    JarnCanvasDataProvider {
+    JarnCanvasDataProvider,
+    JarnLookStoreProvider,
+    JarnScreenSwapProvider,
+    JarnWallpaperProvider,
+    JarnDockDataProvider,
+    JarnAppsDataProvider,
+    JarnSystemManagerProvider,
+    JarnScraperSetupProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -69,6 +95,50 @@ class JarngreiprApplication :
 
     override val jarnCanvasData: JarnCanvasData
         get() = jarnCanvasDataProvider.get()
+
+    /** A [Provider] so Classic never reads Jarn FE's appearance. */
+    @Inject
+    lateinit var jarnLookStoreProvider: Provider<JarnLookStore>
+
+    override val jarnLookStore: JarnLookStore
+        get() = jarnLookStoreProvider.get()
+    @Inject
+    lateinit var jarnScreenSwapProvider: Provider<AppJarnScreenSwap>
+
+    override val jarnScreenSwap: JarnScreenSwap
+        get() = jarnScreenSwapProvider.get()
+
+    @Inject
+    lateinit var jarnWallpaperSourceProvider: Provider<AppJarnWallpaperSource>
+
+    override val jarnWallpaperSource: JarnWallpaperSource
+        get() = jarnWallpaperSourceProvider.get()
+
+    @Inject
+    lateinit var jarnDockDataProvider: Provider<AppJarnDockData>
+
+    override val jarnDockData: JarnDockData
+        get() = jarnDockDataProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's Apps drawer data. */
+    @Inject
+    lateinit var jarnAppsDataProvider: Provider<AppJarnAppsData>
+
+    override val jarnAppsData: JarnAppsData
+        get() = jarnAppsDataProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's system manager. */
+    @Inject
+    lateinit var jarnSystemManagerProvider: Provider<AppJarnSystemManager>
+
+    override val jarnSystemManager: JarnSystemManager
+        get() = jarnSystemManagerProvider.get()
+    /** A [Provider] so Classic never builds Jarn FE's scraper setup. */
+    @Inject
+    lateinit var jarnScraperSetupProvider: Provider<JarnScraperSetup>
+
+    override val jarnScraperSetup: JarnScraperSetup
+        get() = jarnScraperSetupProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a
