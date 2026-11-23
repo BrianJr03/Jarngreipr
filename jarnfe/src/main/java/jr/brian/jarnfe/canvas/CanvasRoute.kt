@@ -32,6 +32,7 @@ import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.shouldAskDisplay
+import jr.brian.jarnfe.canvas.tour.CanvasTourGate
 import jr.brian.jarnfe.input.LocalJarnInputRouter
 import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.rss.JarnRssRoute
@@ -64,7 +65,7 @@ internal fun CanvasRoute(state: JarnSessionState) {
             color = JarnTheme.colors.textMid,
         )
     } else {
-        CanvasWorkspace(data, snapshot, state)
+        CanvasTourGate { CanvasWorkspace(data, snapshot, state) }
     }
 }
 
@@ -370,6 +371,7 @@ private fun CanvasPageSurface(
         next?.let { id -> runCatching { requesterFor(id).requestFocus() } }
     }
     val focusedTile = page?.layout?.items?.firstOrNull { it.id == lastFocused }
+    PublishCanvasStageStatus(editor, page, pageCount, lastFocused, isActive)
     val restoreUndo: () -> Unit = {
         val restored = undo.undo(page?.layout?.activeArrangement.orEmpty()) { moved, undone ->
             if (undone) {

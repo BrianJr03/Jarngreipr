@@ -26,6 +26,7 @@ import jr.brian.core.ui.components.JarnKey
 import jr.brian.core.ui.components.JarnKeyCap
 import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
+import jr.brian.core.ui.components.JarnSurface
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -179,14 +180,19 @@ private fun FirstRunStageShowcase(run: JarnFirstRunState, modifier: Modifier) {
         FirstRunArtWall()
         JarnScrim(JarnScrimEdge.Full, Modifier.fillMaxSize())
         Crossfade(run.step, animationSpec = JarnTheme.motion.panel.spec(), label = "firstRunStage") { step ->
-            FirstRunStageCaption(step, run)
+            JarnSurface(Modifier.padding(JarnTheme.space.lg)) {
+                FirstRunStageCaption(step, run)
+            }
         }
     }
 }
 
+/** Decoration only, so systems without art are left out rather than showing their names. */
 @Composable
 private fun FirstRunArtWall() {
-    val systems = JarnLibrary.state.systems.items.take(ART_WALL_TILES)
+    val systems = JarnLibrary.state.systems.items
+        .filter { !it.artPath.isNullOrBlank() }
+        .take(ART_WALL_TILES)
     if (systems.isEmpty()) return
     Row(
         modifier = Modifier.fillMaxSize(),
@@ -194,7 +200,7 @@ private fun FirstRunArtWall() {
     ) {
         systems.forEach { system ->
             Box(Modifier.weight(1f).fillMaxHeight().clip(JarnTheme.radius.smShape)) {
-                LibraryArt(system.artPath, system.title)
+                LibraryArt(system.artPath, title = "")
             }
         }
     }
