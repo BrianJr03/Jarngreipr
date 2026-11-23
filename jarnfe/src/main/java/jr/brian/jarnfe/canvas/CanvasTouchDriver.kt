@@ -283,20 +283,23 @@ internal class CanvasTouchDriver(
         val grab = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch } ?: return
         val corner = grab.resizeCorner ?: return
         val from = resizeFrom ?: return
+        val deltaCol = ((point.x - press.x) / board.pitch).roundToInt()
+        val deltaRow = ((point.y - press.y) / board.pitch).roundToInt()
         val target = canvasResizeTarget(
             from = from,
             corner = corner,
-            deltaCol = ((point.x - press.x) / board.pitch).roundToInt(),
-            deltaRow = ((point.y - press.y) / board.pitch).roundToInt(),
+            deltaCol = deltaCol,
+            deltaRow = deltaRow,
             minColSpan = grab.minColSpan,
             minRowSpan = grab.minRowSpan,
             crossAxisCount = grab.baseline.config.crossAxisCount,
             direction = grab.baseline.config.pushDirection,
         )
-        if (target == resizeTarget) return
+        val refusal = canvasResizeRefusal(from, corner, deltaCol, deltaRow, target)
+        if (target == resizeTarget && refusal == grab.refusal) return
         resizeTarget = target
         val shown = grab.rect
-        editor.drive(CanvasGrabDriver.Touch) { resizedTo(target) }
+        editor.drive(CanvasGrabDriver.Touch) { resizedTo(target, refusal) }
         if (editor.grab?.rect != shown) actions?.tick?.invoke()
     }
 
@@ -440,7 +443,7 @@ internal class CanvasTouchDriver(
         if (col == cellCol && row == cellRow) return
         cellCol = col
         cellRow = row
-        editor.drive(CanvasGrabDriver.Touch) { movedTo(col, row) }
+        editor.drive(CanvasGrabDriver.Touch) { steppedTo(col, row) }
     }
 
     /** True while the tile is over the remove bar, where its neighbors go back and stay put. */

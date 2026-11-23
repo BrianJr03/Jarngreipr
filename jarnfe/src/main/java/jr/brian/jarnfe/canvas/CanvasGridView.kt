@@ -157,14 +157,13 @@ internal fun CanvasGrid(
                 paddingPx = CanvasOuterPadding.toPx(),
             )
         }
+        val boardGeometry = with(density) {
+            CanvasBoardGeometry(cellPx, CanvasCellSpacing.toPx(), CanvasOuterPadding.toPx())
+        }
         SideEffect {
             onCellSize(cellPx)
             onVisibleCells(visibleCells)
-            onBoardGeometry(
-                with(density) {
-                    CanvasBoardGeometry(cellPx, CanvasCellSpacing.toPx(), CanvasOuterPadding.toPx())
-                },
-            )
+            onBoardGeometry(boardGeometry)
         }
         val floatingId = visual.tileId
         CanvasDragSettle(visual, driver.heldId, floatingId?.let(placements::get)?.let { metrics.originPx(it, density) })
@@ -177,6 +176,16 @@ internal fun CanvasGrid(
                 .height(metrics.height)
                 .then(boardModifier),
         ) {
+            editor.grab?.let { held ->
+                CanvasGridCells(
+                    board = boardGeometry,
+                    columns = if (direction == PushDirection.DOWN) crossAxisCount else pushAxisCells,
+                    rows = if (direction == PushDirection.DOWN) pushAxisCells else crossAxisCount,
+                )
+                held.home.rect.takeIf { !held.isAwayFromHome && it != held.rect }?.let { homeRect ->
+                    CanvasSlot(homeRect, metrics, grabbed = false) { CanvasHomeGhost() }
+                }
+            }
             if (menuRect != null && !editing) {
                 CanvasSlot(menuRect, metrics, grabbed = false) {
                     CanvasTileFrame(
@@ -231,6 +240,16 @@ internal fun CanvasGrid(
                     width = metrics.extentOf(rect.colSpan),
                     height = metrics.extentOf(rect.rowSpan),
                     showSize = resizing,
+                )
+            }
+            editor.grab?.let { held ->
+                CanvasMoveChip(
+                    grab = held,
+                    board = boardGeometry,
+                    visual = visual,
+                    boardWidth = with(density) { metrics.width.toPx() },
+                    boardHeight = with(density) { metrics.height.toPx() },
+                    showSize = driver.handleTileId == null,
                 )
             }
         }
