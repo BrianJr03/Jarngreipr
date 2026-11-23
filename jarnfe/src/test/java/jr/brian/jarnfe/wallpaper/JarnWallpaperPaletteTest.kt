@@ -10,8 +10,8 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-class StarstavePaletteTest {
-    private fun paletteOf(colors: JarnColors) = starstavePalette(
+class JarnWallpaperPaletteTest {
+    private fun paletteOf(colors: JarnColors) = jarnWallpaperPalette(
         bg = colors.bg.toArgb(),
         accent = colors.accent.toArgb(),
         focus = colors.focus.toArgb(),
@@ -70,14 +70,31 @@ class StarstavePaletteTest {
     }
 
     @Test
-    fun `band stops line up with their colors`() {
-        val palette = paletteOf(JarnLooks.Fjord.colors)
-        for (isDeck in listOf(false, true)) {
-            assertEquals(starstaveBandStops(isDeck).size, starstaveBandColors(palette, isDeck).size)
+    fun `the brightest art stays under the measured Forge ceiling`() {
+        assertTrue(luminance(peak(paletteOf(JarnLooks.Forge.colors))) <= 0.077)
+    }
+
+    @Test
+    fun `the mid glow sits between the background and the glow in every look`() {
+        JarnLooks.All.forEach { look ->
+            val palette = paletteOf(look.colors)
+            for (shift in listOf(16, 8, 0)) {
+                val mid = palette.midGlow shr shift and 0xFF
+                assertTrue(look.id, mid >= (palette.bg shr shift and 0xFF))
+                assertTrue(look.id, mid <= (palette.glow shr shift and 0xFF))
+            }
         }
     }
 
-    private fun peak(palette: StarstavePalette): Int = rgb(
+    @Test
+    fun `band stops line up with their colors`() {
+        val palette = paletteOf(JarnLooks.Fjord.colors)
+        for (isDeck in listOf(false, true)) {
+            assertEquals(jarnWallpaperBandStops(isDeck).size, jarnWallpaperBandColors(palette, isDeck).size)
+        }
+    }
+
+    private fun peak(palette: JarnWallpaperPalette): Int = rgb(
         max(palette.glow shr 16 and 0xFF, palette.line shr 16 and 0xFF),
         max(palette.glow shr 8 and 0xFF, palette.line shr 8 and 0xFF),
         max(palette.glow and 0xFF, palette.line and 0xFF),

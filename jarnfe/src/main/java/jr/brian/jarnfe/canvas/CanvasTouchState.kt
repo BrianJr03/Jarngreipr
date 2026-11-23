@@ -44,12 +44,10 @@ internal fun rememberCanvasTouch(
         CanvasTouch(CanvasTouchDriver(editor), CanvasBoardSpace(density))
     }
     val layout = page?.takeIf { it.kind == JarnCanvasPageKind.Canvas }?.layout
-    val placements = layout?.let(editor::placements).orEmpty()
     SideEffect {
         touch.driver.actions = CanvasTouchActions(
             enabled = enabled && layout != null,
             layout = layout,
-            placements = placements,
             minSpans = minSpans,
             openMenu = openMenu,
             commit = commit,

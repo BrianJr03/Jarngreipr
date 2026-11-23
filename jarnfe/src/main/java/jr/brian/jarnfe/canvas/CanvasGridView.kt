@@ -2,6 +2,7 @@ package jr.brian.jarnfe.canvas
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -33,7 +34,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import jr.brian.core.ui.focus.jarnInteractive
@@ -50,6 +53,7 @@ private val EditOutlineWidth = 1.dp
 private val GrabOutlineWidth = 3.dp
 private const val PUSH_AXIS_HEADROOM = 1
 private const val GRABBED_Z_INDEX = 1f
+private const val GHOST_Z_INDEX = 0.5f
 
 internal const val CANVAS_MENU_FOCUS_ID = "jarnfe-canvas-menu"
 
@@ -58,6 +62,10 @@ private data class CanvasMetrics(val cell: Dp, val width: Dp, val height: Dp) {
     fun offsetOf(index: Int): Dp = CanvasOuterPadding + (cell + CanvasCellSpacing) * index
 
     fun extentOf(span: Int): Dp = cell * span + CanvasCellSpacing * (span - 1).coerceAtLeast(0)
+
+    fun originPx(rect: GridRect, density: Density): IntOffset = with(density) {
+        IntOffset(offsetOf(rect.col).roundToPx(), offsetOf(rect.row).roundToPx())
+    }
 }
 
 private fun canvasMetrics(
@@ -95,11 +103,8 @@ internal fun canvasVisibleCells(viewportPx: Float, cellPx: Float, spacingPx: Flo
 @Composable
 internal fun CanvasGrid(
     page: JarnCanvasPage,
-    placements: Map<String, GridRect>,
-    editing: Boolean,
-    grabbedId: String?,
-    liftedId: String?,
-    touchHoldsGrab: Boolean,
+    editor: CanvasEditor,
+    driver: CanvasTouchDriver,
     boardModifier: Modifier,
     onBoardGeometry: (CanvasBoardGeometry) -> Unit,
     focusRequesterFor: (String) -> FocusRequester,
@@ -111,6 +116,11 @@ internal fun CanvasGrid(
     tileContent: @Composable BoxScope.(CanvasItem) -> Unit,
 ) {
     val layout = page.layout
+    val placements = editor.placements(layout)
+    val editing = editor.editing
+    val grabbedId = editor.grab?.itemId
+    val touchHoldsGrab = editor.grab?.driver == CanvasGrabDriver.Touch
+    val visual = driver.visual
     val direction = PushDirection.from(layout.activeOrientation)
     val crossAxisCount = layout.activeCrossAxis.coerceAtLeast(1)
     val menuRect = reservedRectsForActive(layout).firstOrNull()
@@ -142,6 +152,9 @@ internal fun CanvasGrid(
                 },
             )
         }
+        val floatingId = visual.tileId
+        CanvasDragSettle(visual, driver.heldId, floatingId?.let(placements::get)?.let { metrics.originPx(it, density) })
+        val ghostRect = grabbedId?.takeIf { touchHoldsGrab }?.let(placements::get)
         val alignment = if (direction == PushDirection.DOWN) Alignment.TopCenter else Alignment.CenterStart
         Box(
             Modifier
@@ -164,15 +177,28 @@ internal fun CanvasGrid(
             if (menuRect != null && editing) {
                 CanvasSlot(menuRect, metrics, grabbed = false) { CanvasLockedCell() }
             }
+            if (ghostRect != null) {
+                CanvasSlot(ghostRect, metrics, grabbed = false, restingZ = GHOST_Z_INDEX) { CanvasDragGhost() }
+            }
             layout.items.forEach { item ->
                 val rect = placements[item.id] ?: return@forEach
                 val grabbed = item.id == grabbedId
+                val floating = item.id == floatingId
+                val outlined = grabbed || floating
                 key(item.id) {
-                    CanvasSlot(rect, metrics, grabbed, followsGrab = grabbed && !touchHoldsGrab) {
+                    CanvasSlot(
+                        rect = rect,
+                        metrics = metrics,
+                        grabbed = grabbed,
+                        followsGrab = grabbed && !touchHoldsGrab,
+                        floating = floating,
+                        visual = visual,
+                        tileId = item.id,
+                    ) {
                         CanvasTileFrame(
                             requester = focusRequesterFor(item.id),
                             editing = editing,
-                            grabbed = grabbed || item.id == liftedId,
+                            grabbed = outlined,
                             showCard = (item as? CanvasItem.EsdeArtItem)?.isCardTransparent != true,
                             onFocused = { onFocused(item.id) },
                             onClick = { onTileClick(item, cellPx) },
@@ -191,23 +217,30 @@ private fun CanvasSlot(
     metrics: CanvasMetrics,
     grabbed: Boolean,
     followsGrab: Boolean = grabbed,
+    floating: Boolean = false,
+    visual: CanvasDragVisual? = null,
+    tileId: String? = null,
+    restingZ: Float = 0f,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val glide = JarnTheme.motion.small.spec<Dp>()
-    val spec: AnimationSpec<Dp> = if (grabbed) snap() else glide
-    val x by animateDpAsState(metrics.offsetOf(rect.col), spec)
-    val y by animateDpAsState(metrics.offsetOf(rect.row), spec)
+    val motion = JarnTheme.motion
+    val tileShape = JarnTheme.tileShape
+    val spec: AnimationSpec<Dp> = if (grabbed || floating) snap() else motion.small.spec()
     val width by animateDpAsState(metrics.extentOf(rect.colSpan), spec)
     val height by animateDpAsState(metrics.extentOf(rect.rowSpan), spec)
+    val origin = metrics.originPx(rect, LocalDensity.current)
+    val glide = rememberCanvasSlotGlide(origin.x, origin.y, glides = !grabbed && !floating && !motion.reduced)
+    val grabLift = animateFloatAsState(if (grabbed) 1f else 0f, motion.small.spec())
     val bringIntoView = remember { BringIntoViewRequester() }
     LaunchedEffect(followsGrab, rect) {
         if (followsGrab) bringIntoView.bringIntoView()
     }
     Box(
         modifier = Modifier
-            .zIndex(if (grabbed) GRABBED_Z_INDEX else 0f)
-            .offset(x, y)
+            .zIndex(if (grabbed || floating) GRABBED_Z_INDEX else restingZ)
+            .offset { origin }
             .size(width, height)
+            .canvasSlotLayer(glide, visual, tileId, origin.x, origin.y, grabLift, motion.reduced, tileShape)
             .bringIntoViewRequester(bringIntoView),
         content = content,
     )

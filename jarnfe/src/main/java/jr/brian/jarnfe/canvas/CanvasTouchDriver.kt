@@ -26,16 +26,11 @@ internal data class CanvasBoardGeometry(val cellPx: Float, val spacingPx: Float,
             point.y >= origin.y && point.y < origin.y + height
     }
 
-    /** Changes an axis only once the tile is past the cell's midpoint by [hysteresis]. */
-    fun cellFor(tile: Offset, current: Pair<Int, Int>, hysteresis: Float): Pair<Int, Int> {
+    /** Changes the index only once the tile is past the cell's midpoint by [hysteresis]. */
+    fun axisCell(tilePx: Float, current: Int, hysteresis: Float): Int {
         if (pitch <= 0f) return current
-        val col = (tile.x - paddingPx) / pitch
-        val row = (tile.y - paddingPx) / pitch
-        val limit = 0.5f + hysteresis
-        return Pair(
-            if (abs(col - current.first) > limit) col.roundToInt() else current.first,
-            if (abs(row - current.second) > limit) row.roundToInt() else current.second,
-        )
+        val exact = (tilePx - paddingPx) / pitch
+        return if (abs(exact - current) > 0.5f + hysteresis) exact.roundToInt() else current
     }
 }
 
@@ -43,7 +38,6 @@ internal data class CanvasBoardGeometry(val cellPx: Float, val spacingPx: Float,
 internal class CanvasTouchActions(
     val enabled: Boolean,
     val layout: CanvasLayout?,
-    val placements: Map<String, GridRect>,
     val minSpans: (CanvasItem) -> Pair<Int, Int>,
     val openMenu: (CanvasItem) -> Unit,
     val commit: (CanvasLayout, Map<String, GridRect>) -> Unit,
@@ -70,13 +64,22 @@ internal class CanvasTouchDriver(
     var liftedId by mutableStateOf<String?>(null)
         private set
 
+    /** The tile riding above the board, for its whole lift, drag and settle. */
+    val visual = CanvasDragVisual()
+
+    /** The tile a finger holds right now. A controller that took over isn't a finger. */
+    val heldId: String?
+        get() = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch }?.itemId ?: liftedId
+
     private var grabOffset = Offset.Zero
-    private var cell = 0 to 0
+    private var cellCol = 0
+    private var cellRow = 0
 
     fun tileAt(point: Offset): String? {
         val board = geometry ?: return null
         val active = actions?.takeIf { it.enabled } ?: return null
-        return active.placements.entries.firstOrNull { board.contains(it.value, point) }?.key
+        val layout = active.layout ?: return null
+        return editor.placements(layout).entries.firstOrNull { board.contains(it.value, point) }?.key
     }
 
     /** Only a widget with a live view runs its own hold. A broken one lifts like any other tile. */
@@ -107,9 +110,10 @@ internal class CanvasTouchDriver(
         actions?.enabled == true && editor.grab == null && !editor.editing
 
     fun handle(gesture: CanvasTouchGesture, effect: CanvasTouchEffect, id: String, press: Offset, point: Offset) {
+        if (gesture.phase == CanvasTouchPhase.Lifted && liftedId == id) follow(point)
         when (effect) {
             CanvasTouchEffect.None, CanvasTouchEffect.Tap -> Unit
-            CanvasTouchEffect.Lift -> lift(gesture, id)
+            CanvasTouchEffect.Lift -> lift(gesture, id, press, point)
             CanvasTouchEffect.OpenMenu -> {
                 liftedId = null
                 itemFor(id)?.let { actions?.openMenu?.invoke(it) }
@@ -123,12 +127,14 @@ internal class CanvasTouchDriver(
         }
     }
 
-    private fun lift(gesture: CanvasTouchGesture, id: String) {
+    private fun lift(gesture: CanvasTouchGesture, id: String, press: Offset, point: Offset) {
         if (editor.grab != null) {
             gesture.abandon()
             return
         }
         liftedId = id
+        actions?.layout?.let(editor::placements)?.get(id)?.let { floatFrom(id, it, press) }
+        follow(point)
         actions?.haptic?.invoke()
     }
 
@@ -161,17 +167,34 @@ internal class CanvasTouchDriver(
     }
 
     private fun anchor(press: Offset) {
-        val rect = editor.grab?.rect ?: return
-        grabOffset = press - (geometry?.originOf(rect) ?: Offset.Zero)
-        cell = rect.col to rect.row
+        val grab = editor.grab ?: return
+        val rect = grab.rect
+        floatFrom(grab.itemId, rect, press)
+        cellCol = rect.col
+        cellRow = rect.row
     }
 
+    private fun floatFrom(id: String, rect: GridRect, press: Offset) {
+        val origin = geometry?.originOf(rect) ?: Offset.Zero
+        grabOffset = press - origin
+        visual.hold(id, origin.x, origin.y)
+    }
+
+    private fun follow(point: Offset) {
+        visual.follow(point.x - grabOffset.x, point.y - grabOffset.y)
+    }
+
+    /** Every finger move lands here. It writes two floats and solves only on a new cell. */
     private fun moveTo(point: Offset) {
         val board = geometry ?: return
-        val next = board.cellFor(point - grabOffset, cell, thresholds.cellHysteresis)
-        if (next == cell) return
-        cell = next
-        editor.drive(CanvasGrabDriver.Touch) { movedTo(next.first, next.second) }
+        if (editor.grab?.driver != CanvasGrabDriver.Touch) return
+        follow(point)
+        val col = board.axisCell(point.x - grabOffset.x, cellCol, thresholds.cellHysteresis)
+        val row = board.axisCell(point.y - grabOffset.y, cellRow, thresholds.cellHysteresis)
+        if (col == cellCol && row == cellRow) return
+        cellCol = col
+        cellRow = row
+        editor.drive(CanvasGrabDriver.Touch) { movedTo(col, row) }
     }
 
     /** A controller that took the grab mid-drag keeps it, so lifting the finger can't drop it. */

@@ -74,17 +74,17 @@ class StarstaveSceneTest {
 
     @Test
     fun `both windows map into one continuous scene`() {
-        assertEquals(1f, starstaveScale(1080f), 0f)
-        assertEquals(960f, starstaveHalfWidth(1920f, 1080f), 0f)
-        assertEquals(620f, starstaveHalfWidth(1240f, 1080f), 0f)
-        assertEquals(0f, starstaveOriginY(showsDial = false), 0f)
-        assertEquals(1080f, starstaveOriginY(showsDial = true), 0f)
+        assertEquals(1f, jarnWallpaperScale(1080f), 0f)
+        assertEquals(960f, jarnWallpaperHalfWidth(1920f, 1080f), 0f)
+        assertEquals(620f, jarnWallpaperHalfWidth(1240f, 1080f), 0f)
+        assertEquals(0f, jarnWallpaperOriginY(isBottomScreen = false), 0f)
+        assertEquals(1080f, jarnWallpaperOriginY(isBottomScreen = true), 0f)
     }
 
     @Test
     fun `normal layout shows sky on top and dial on bottom`() {
-        assertFalse(starstaveShowsDial(TOP_DISPLAY, TOP_DISPLAY, hasBothScreens = true))
-        assertTrue(starstaveShowsDial(BOTTOM_DISPLAY, TOP_DISPLAY, hasBothScreens = true))
+        assertFalse(jarnWallpaperIsBottomScreen(TOP_DISPLAY, TOP_DISPLAY, hasBothScreens = true))
+        assertTrue(jarnWallpaperIsBottomScreen(BOTTOM_DISPLAY, TOP_DISPLAY, hasBothScreens = true))
     }
 
     @Test
@@ -96,19 +96,19 @@ class StarstaveSceneTest {
         )
         assertEquals(JarnScreen.Deck, swapped.roleOn(JarnScreen.Stage))
         assertEquals(JarnScreen.Stage, swapped.roleOn(JarnScreen.Deck))
-        assertFalse(starstaveShowsDial(TOP_DISPLAY, TOP_DISPLAY, swapped.deckHostReady))
-        assertTrue(starstaveShowsDial(BOTTOM_DISPLAY, TOP_DISPLAY, swapped.deckHostReady))
+        assertFalse(jarnWallpaperIsBottomScreen(TOP_DISPLAY, TOP_DISPLAY, swapped.deckHostReady))
+        assertTrue(jarnWallpaperIsBottomScreen(BOTTOM_DISPLAY, TOP_DISPLAY, swapped.deckHostReady))
     }
 
     @Test
     fun `a single screen always shows the sky`() {
-        assertFalse(starstaveShowsDial(TOP_DISPLAY, TOP_DISPLAY, hasBothScreens = false))
-        assertFalse(starstaveShowsDial(BOTTOM_DISPLAY, TOP_DISPLAY, hasBothScreens = false))
+        assertFalse(jarnWallpaperIsBottomScreen(TOP_DISPLAY, TOP_DISPLAY, hasBothScreens = false))
+        assertFalse(jarnWallpaperIsBottomScreen(BOTTOM_DISPLAY, TOP_DISPLAY, hasBothScreens = false))
     }
 
     @Test
     fun `an unknown display shows the sky`() {
-        assertFalse(starstaveShowsDial(null, TOP_DISPLAY, hasBothScreens = true))
+        assertFalse(jarnWallpaperIsBottomScreen(null, TOP_DISPLAY, hasBothScreens = true))
     }
 
     private companion object {

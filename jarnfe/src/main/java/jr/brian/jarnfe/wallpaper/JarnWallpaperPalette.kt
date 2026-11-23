@@ -17,45 +17,55 @@ private const val DECK_BODY_DIM = 0.2f
 
 private val StageBandStops = floatArrayOf(0f, 0.115f, 0.19f, 0.83f, 0.915f, 1f)
 private val DeckBandStops = floatArrayOf(0f, 0.1f, 0.17f, 0.84f, 0.91f, 1f)
+private const val MID_GLOW_AMOUNT = 0.42
 
 /** Every color is opaque ARGB. Marks stay under the cap that keeps text at 4.5:1. */
-internal data class StarstavePalette(
+internal data class JarnWallpaperPalette(
     val bg: Int,
     val glow: Int,
     val line: Int,
+    val midGlow: Int,
     val bandAlpha: Float,
 )
 
-internal fun starstavePalette(
+internal fun jarnWallpaperPalette(
     bg: Int,
     accent: Int,
     focus: Int,
     textMid: Int,
     textLow: Int,
-): StarstavePalette {
+): JarnWallpaperPalette {
     val base = channels(bg)
     val bodyCap = luminanceCapFor(textMid) * BODY_MARGIN
     val bandCap = luminanceCapFor(textLow) * BAND_MARGIN
     val glow = capped(base, channels(accent), bodyCap)
     val line = capped(base, channels(focus), bodyCap * LINE_MARGIN)
     val peak = DoubleArray(3) { max(glow[it], line[it]) }
-    return StarstavePalette(
+    return JarnWallpaperPalette(
         bg = argb(base),
         glow = argb(glow),
         line = argb(line),
+        midGlow = argb(DoubleArray(3) { floor(base[it] + (glow[it] - base[it]) * MID_GLOW_AMOUNT) }),
         bandAlpha = bandAlphaFor(peak, base, bandCap),
     )
 }
 
-internal fun starstaveBandStops(isDeck: Boolean): FloatArray =
+internal fun jarnWallpaperBandStops(isDeck: Boolean): FloatArray =
     if (isDeck) DeckBandStops else StageBandStops
 
-internal fun starstaveBandColors(palette: StarstavePalette, isDeck: Boolean): IntArray {
+internal fun jarnWallpaperBandColors(palette: JarnWallpaperPalette, isDeck: Boolean): IntArray {
     val edge = palette.bandAlpha
     val body = if (isDeck) DECK_BODY_DIM else 0f
     return floatArrayOf(edge, edge, body, body, edge, edge)
         .map { withAlpha(palette.bg, it) }
         .toIntArray()
+}
+
+/** Blends two opaque colors, rounding down so a mix never gets brighter than its inputs. */
+internal fun jarnWallpaperMix(from: Int, to: Int, amount: Float): Int {
+    val start = channels(from)
+    val end = channels(to)
+    return argb(DoubleArray(3) { floor(start[it] + (end[it] - start[it]) * amount) })
 }
 
 private fun bandAlphaFor(peak: DoubleArray, bg: DoubleArray, cap: Double): Float {

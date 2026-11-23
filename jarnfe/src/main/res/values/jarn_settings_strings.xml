@@ -32,6 +32,8 @@
     <string name="jarnfe_wallpaper_live_hint">An animated background for the frontend.</string>
     <string name="jarnfe_wallpaper_live_off">Off</string>
     <string name="jarnfe_wallpaper_starstave">Starstave</string>
+    <string name="jarnfe_wallpaper_ironweave">Ironweave</string>
+    <string name="jarnfe_wallpaper_hearthrise">Hearthrise</string>
     <string name="jarnfe_wallpaper_use_theme">Use theme background</string>
     <string name="jarnfe_wallpaper_use_theme_hint">Removes the wallpaper from the frontend.</string>
     <string name="jarnfe_wallpaper_failed">That file can\'t be used as a wallpaper</string>
