@@ -72,6 +72,9 @@ private fun NowPageGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             R.string.jarnfe_settings_show_last_played_text_hint,
             display.lastPlayedTextVisible,
         ) { show -> store.updateDisplay { it.copy(lastPlayedTextVisible = show) } }
+        NowPartRow(R.string.jarnfe_settings_show_game_row, R.string.jarnfe_settings_show_game_row_hint, display.gameRowVisible) { show ->
+            store.updateDisplay { it.copy(gameRowVisible = show) }
+        }
     }
 }
 

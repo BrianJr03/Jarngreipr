@@ -86,6 +86,7 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_SYSTEM_LOGO_VISIBLE, next.systemLogoVisible)
             putBoolean(KEY_GAME_COUNT_VISIBLE, next.gameCountVisible)
             putBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, next.lastPlayedTextVisible)
+            putBoolean(KEY_GAME_ROW_VISIBLE, next.gameRowVisible)
         }
     }
 
@@ -126,6 +127,7 @@ class JarnLookStore @Inject constructor(
         systemLogoVisible = prefs.getBoolean(KEY_SYSTEM_LOGO_VISIBLE, true),
         gameCountVisible = prefs.getBoolean(KEY_GAME_COUNT_VISIBLE, true),
         lastPlayedTextVisible = prefs.getBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, true),
+        gameRowVisible = prefs.getBoolean(KEY_GAME_ROW_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -190,6 +192,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_SYSTEM_LOGO_VISIBLE = "now_system_logo_visible"
         const val KEY_GAME_COUNT_VISIBLE = "now_game_count_visible"
         const val KEY_LAST_PLAYED_TEXT_VISIBLE = "now_last_played_text_visible"
+        const val KEY_GAME_ROW_VISIBLE = "now_game_row_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

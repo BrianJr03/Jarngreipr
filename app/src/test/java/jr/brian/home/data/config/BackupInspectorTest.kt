@@ -179,6 +179,16 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a hidden game row shows as a look change, and a missing one as staying`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameRowVisible = true)))
+        val off = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameRowVisible = false)))
+        val older = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig()))
+        val look = { backup: JarngreiprConfig -> buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look } }
+        assertEquals(JarnBackupChange.Replaces, look(off).change)
+        assertEquals(JarnBackupChange.Same, look(older).change)
+    }
+
+    @Test
     fun `a backup that changes matching shows the look as replaced`() {
         val now = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = false))
         val backup = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = true))

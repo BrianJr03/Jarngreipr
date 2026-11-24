@@ -109,6 +109,30 @@ class NowSystemViewTest {
     }
 
     @Test
+    fun `hiding the game row leaves no covers and focus starts on the first header icon`() {
+        val focusManager = showWithHeader(parts = NowSystemParts(showsGameRow = false))
+        rule.onNodeWithContentDescription("one").assertDoesNotExist()
+        rule.onNodeWithText("Recently played").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+        move(focusManager(), FocusDirection.Down)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+        rule.onNodeWithText("SNES").assertExists()
+    }
+
+    @Test
+    fun `with the game row and Random hidden, focus starts on Last Played`() {
+        showWithHeader(NowSystemActions(null, {}, {}, {}), NowSystemParts(showsGameRow = false))
+        rule.onNodeWithContentDescription("Last Played").assertIsFocused()
+    }
+
+    @Test
+    fun `with the game row and both icons hidden, nothing takes focus`() {
+        showWithHeader(NowSystemActions(null, null, {}, {}), NowSystemParts(showsGameRow = false))
+        rule.onNodeWithContentDescription("one").assertDoesNotExist()
+        rule.onAllNodes(isFocused()).assertCountEquals(0)
+    }
+
+    @Test
     fun `everything shows by default`() {
         showPlate(NowSystemParts())
         rule.onNodeWithText("SNES").assertExists()

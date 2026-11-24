@@ -81,6 +81,7 @@ internal data class NowSystemParts(
     val showsLogo: Boolean = true,
     val showsCount: Boolean = true,
     val showsLastPlayed: Boolean = true,
+    val showsGameRow: Boolean = true,
 )
 
 /** True when the name plate has anything left to show. */
@@ -128,6 +129,7 @@ internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
             showsLogo = display.systemLogoVisible,
             showsCount = display.gameCountVisible,
             showsLastPlayed = display.lastPlayedTextVisible,
+            showsGameRow = display.gameRowVisible,
         ),
     )
 }
@@ -151,6 +153,7 @@ internal fun NowSystemContent(
     parts: NowSystemParts = NowSystemParts(),
 ) {
     val focus = remember { NowSystemFocus() }
+    val shelf = if (parts.showsGameRow) shelf else emptyList()
     val shelfIds = remember(shelf) { shelf.map { it.game.id } }
     val buttons = actions.buttons
     SideEffect {
@@ -158,7 +161,7 @@ internal fun NowSystemContent(
         focus.actions = buttons
     }
     PublishNowShortcuts(actions, focus)
-    val entry = focus.coverEntryFor(shelfIds)
+    val entry = focus.coverEntryFor(shelfIds) ?: focus.shortcutEntryFor(buttons)
     NowEntryFocus(focus, entry, pendingCoverId != null)
     NowCoverRestore(focus, entry, isLoaded, pendingCoverId, onCoverRestored)
     JarnInputLayer(
@@ -295,6 +298,7 @@ private fun NowLowerArea(
     actions: NowSystemActions,
 ) {
     val layout = nowShelfLayout(system.gameCount, shelf.size)
+    if (layout == NowShelfLayout.Hidden) return
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.md),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
