@@ -157,6 +157,7 @@ private fun LibrarySectionTabs(selected: LibrarySection) {
         labels = sections.map { stringResource(it.labelRes()) },
         selectedIndex = sections.indexOf(selected),
         onSelect = { index -> JarnSession.update { copy(librarySection = sections[index]) } },
+        showsSwitchMark = true,
     )
 }
 

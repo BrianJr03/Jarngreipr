@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStore
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnTapControl
@@ -337,36 +338,38 @@ class JarnLookConfigImportTest {
     }
 
     @Test
-    fun `screen switch length survives a backup`() = runTest {
-        store.updateDisplay { it.copy(screenSwitchMillis = 700) }
+    fun `switch cue survives a backup`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.TabMark) }
         val json = importExport.encodeToJson(
             JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
         )
-        store.updateDisplay { it.copy(screenSwitchMillis = 300) }
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Pulse) }
 
         val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
-        assertEquals(700, store.display.screenSwitchMillis)
+        assertEquals(JarnSwitchCue.TabMark, store.display.switchCue)
     }
 
     @Test
-    fun `an older backup leaves the screen switch length alone`() = runTest {
-        store.updateDisplay { it.copy(screenSwitchMillis = 800) }
+    fun `an older backup leaves the switch cue alone`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
 
         val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
-        assertEquals(800, store.display.screenSwitchMillis)
+        assertEquals(JarnSwitchCue.Dim, store.display.switchCue)
     }
 
     @Test
-    fun `a hand edited screen switch length stays in range`() {
-        store.updateDisplay { it.copy(screenSwitchMillis = 99_999) }
-        assertEquals(1000, store.display.screenSwitchMillis)
-        store.updateDisplay { it.copy(screenSwitchMillis = 1) }
-        assertEquals(300, store.display.screenSwitchMillis)
-        assertEquals(500, JarnDisplayPrefs.snappedScreenSwitchMillis(512f))
+    fun `an unknown switch cue falls back to pulse`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
+        val backup = """{ "version": 51, "feature": { "jarnDisplay": { "switchCue": "future" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnSwitchCue.Pulse, store.display.switchCue)
     }
 
     @Test

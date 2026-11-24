@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.firstrun
 
 import jr.brian.core.model.ArtSource
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.jarnfe.session.StageRoute
 import org.junit.Assert.assertEquals
@@ -68,6 +69,34 @@ class JarnFirstRunTest {
         assertEquals(
             JarnFirstRunStep.Done,
             JarnFirstRunState(JarnFirstRunStep.PressOtherTabs).settled(twoScreens = false).step,
+        )
+    }
+
+    @Test
+    fun `the cue step follows the look step on two screens only`() {
+        val two = JarnFirstRunStep.available(twoScreens = true)
+        assertEquals(two.indexOf(JarnFirstRunStep.Look) + 1, two.indexOf(JarnFirstRunStep.SwitchCue))
+        assertFalse(JarnFirstRunStep.SwitchCue in JarnFirstRunStep.available(twoScreens = false))
+        assertEquals(
+            JarnFirstRunStep.PressA,
+            JarnFirstRunState(JarnFirstRunStep.SwitchCue).settled(twoScreens = false).step,
+        )
+    }
+
+    @Test
+    fun `the cue step resumes by name and has no gesture for A to trigger`() {
+        val progress = FakeProgress(savedStep = JarnFirstRunStep.SwitchCue.name)
+        assertEquals(JarnFirstRunStep.SwitchCue, JarnFirstRunController(progress).state?.step)
+        assertNull(JarnFirstRunStep.SwitchCue.gesture)
+    }
+
+    @Test
+    fun `a highlighted cue previews until focus leaves it`() {
+        assertEquals(JarnSwitchCue.Dim, nextPreviewCue(null, JarnSwitchCue.Dim, isFocused = true))
+        assertNull(nextPreviewCue(JarnSwitchCue.Dim, JarnSwitchCue.Dim, isFocused = false))
+        assertEquals(
+            JarnSwitchCue.TabMark,
+            nextPreviewCue(JarnSwitchCue.TabMark, JarnSwitchCue.Dim, isFocused = false),
         )
     }
 

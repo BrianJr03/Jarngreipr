@@ -69,6 +69,7 @@ internal fun FirstRunStepContent(
         JarnFirstRunStep.Library -> FirstRunLibraryStep()
         JarnFirstRunStep.Media -> FirstRunMediaStep(actions)
         JarnFirstRunStep.Look -> FirstRunLookStep()
+        JarnFirstRunStep.SwitchCue -> FirstRunSwitchCueStep(actions)
         JarnFirstRunStep.Done -> FirstRunDoneStep(twoScreens)
         else -> FirstRunLesson(step, run, twoScreens)
     }

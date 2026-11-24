@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnSliderRow
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.components.JarnValueRow
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.frontend.look.JarnTapControl
@@ -50,7 +51,7 @@ internal fun JarnDisplaySection() {
         supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
     )
     UndoCountdownRow(store, display.undoCountdownVisible)
-    if (JarnSession.state.deckDisplayAvailable) ScreenSwitchLengthRow(store, display.screenSwitchMillis)
+    if (JarnSession.state.deckDisplayAvailable) SwitchCueRow(store, display.switchCue)
     if (JarnSession.state.deckDisplayAvailable) TapControlRow(store, display.tapControl)
 }
 
@@ -66,22 +67,34 @@ private fun UndoCountdownRow(store: JarnLookStore, visible: Boolean) {
 }
 
 @Composable
-private fun ScreenSwitchLengthRow(store: JarnLookStore, millis: Int) {
-    JarnSliderRow(
-        label = stringResource(R.string.jarnfe_settings_screen_switch_length),
-        value = millis.toFloat(),
-        valueText = stringResource(R.string.jarnfe_settings_milliseconds, millis),
-        onValueChange = { value ->
-            store.updateDisplay {
-                it.copy(screenSwitchMillis = JarnDisplayPrefs.snappedScreenSwitchMillis(value))
-            }
-        },
+private fun SwitchCueRow(store: JarnLookStore, cue: JarnSwitchCue) {
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_settings_switch_cue),
+        value = stringResource(cue.cueLabelRes),
+        onClick = { store.updateDisplay { it.copy(switchCue = cue.nextCue()) } },
         modifier = Modifier.fillMaxWidth(),
-        valueRange = JarnDisplayPrefs.MIN_SCREEN_SWITCH_MILLIS.toFloat()..
-            JarnDisplayPrefs.MAX_SCREEN_SWITCH_MILLIS.toFloat(),
-        steps = JarnDisplayPrefs.SCREEN_SWITCH_STEPS,
+        supporting = stringResource(cue.cueHintRes),
     )
 }
+
+@get:StringRes
+internal val JarnSwitchCue.cueLabelRes: Int
+    get() = when (this) {
+        JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse
+        JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim
+        JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark
+    }
+
+@get:StringRes
+internal val JarnSwitchCue.cueHintRes: Int
+    get() = when (this) {
+        JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse_hint
+        JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim_hint
+        JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark_hint
+    }
+
+private fun JarnSwitchCue.nextCue(): JarnSwitchCue =
+    JarnSwitchCue.entries[(ordinal + 1) % JarnSwitchCue.entries.size]
 
 @Composable
 private fun TapControlRow(store: JarnLookStore, choice: JarnTapControl) {

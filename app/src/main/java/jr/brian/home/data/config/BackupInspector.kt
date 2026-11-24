@@ -1,5 +1,6 @@
 package jr.brian.home.data.config
 
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
 import jr.brian.jarnfe.backup.JarnBackupArea
@@ -194,7 +195,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
             appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
             undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
-            screenSwitchMillis = it.screenSwitchMillis ?: shown?.screenSwitchMillis,
+            switchCue = it.switchCue?.let { id -> JarnSwitchCue.fromId(id).id } ?: shown?.switchCue,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

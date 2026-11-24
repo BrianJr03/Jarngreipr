@@ -14,6 +14,7 @@ internal enum class JarnFirstRunStep(
     Library,
     Media,
     Look,
+    SwitchCue(needsTwoScreens = true),
     PressA,
     PressB(JarnFirstRunGesture.Back),
     PressX(JarnFirstRunGesture.Context),
