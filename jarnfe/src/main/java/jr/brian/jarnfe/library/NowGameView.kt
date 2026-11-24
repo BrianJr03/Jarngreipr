@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -76,8 +77,14 @@ private val FavoriteIconSize = 22.dp
 
 private data class NowPosterSizes(val title: Dp, val caseWidth: Dp, val caseHeight: Dp, val peek: Dp)
 
-private val RegularPoster = NowPosterSizes(title = 76.dp, caseWidth = 118.dp, caseHeight = 150.dp, peek = 24.dp)
-private val CompactPoster = NowPosterSizes(title = 64.dp, caseWidth = 96.dp, caseHeight = 124.dp, peek = 20.dp)
+/**
+ * The case is about 10% larger than it first shipped (118 by 150, and 96 by 124 compact). The room
+ * comes from the disc's peek and the gap to the text, so the text column keeps its width.
+ */
+private val RegularPoster = NowPosterSizes(title = 76.dp, caseWidth = 130.dp, caseHeight = 165.dp, peek = 16.dp)
+private val CompactPoster = NowPosterSizes(title = 64.dp, caseWidth = 106.dp, caseHeight = 137.dp, peek = 14.dp)
+internal const val NOW_CASE_TAG = "now_case"
+internal const val NOW_POSTER_TEXT_TAG = "now_poster_text"
 
 /** The selected game's foreground. Call it outside a vertical scroller, since it scrolls itself. */
 @Composable
@@ -202,12 +209,12 @@ private fun NowPoster(
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.sm),
-            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
             verticalAlignment = Alignment.Bottom,
         ) {
-            key(game.id) { NowGameCase(game.title, art, sizes, Modifier.alpha(artAlpha)) }
+            key(game.id) { NowGameCase(game.title, art, sizes, Modifier.alpha(artAlpha).testTag(NOW_CASE_TAG)) }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag(NOW_POSTER_TEXT_TAG),
                 verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
             ) {
                 if (resume.isResume) {
