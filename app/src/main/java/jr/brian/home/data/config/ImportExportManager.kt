@@ -56,6 +56,7 @@ class ImportExportManager @Inject constructor(
     private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
     private val playStatsBackup: jr.brian.frontend.library.play.PlayStatsBackup,
     private val backupExtras: SettingsBackupExtras,
+    private val jarnPreviewStore: jr.brian.home.data.preview.JarnPreviewStore,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -302,6 +303,7 @@ class ImportExportManager @Inject constructor(
             jarnFirstRunDone = jarnLookStore.firstRunDone,
             jarnMatchCommandPanel = jarnLookStore.matchCommandPanel,
             jarnWallpaperScreens = jarnLookStore.wallpaperScreensBackup(),
+            jarnPreview = jarnPreviewStore.previewBackup(),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -714,6 +716,7 @@ class ImportExportManager @Inject constructor(
         if (config.jarnFirstRunDone == true) jarnLookStore.markFirstRunDone()
         config.jarnMatchCommandPanel?.let(jarnLookStore::setMatchCommandPanel)
         jarnLookStore.restoreWallpaperScreens(config.jarnWallpaperScreens)
+        jarnPreviewStore.restorePreview(config.jarnPreview)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

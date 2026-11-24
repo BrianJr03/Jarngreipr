@@ -9,13 +9,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.frontend.arrival.JarnArrival
 import jr.brian.frontend.look.JarnLookStore
+import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryHero
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.look.JarnLookPreview
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
+import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.session.SettingsSection
 import jr.brian.jarnfe.session.StageRoute
 
@@ -68,6 +72,15 @@ internal class JarnFirstRunController(private val progress: JarnFirstRunProgress
         isArtDetour = false
         if (isReplay) isReplay = false else progress.markDone()
     }
+
+    /** Only a tour that hasn't started yet becomes the short one. Replays always stay full. */
+    fun startArrival() {
+        val current = state ?: return
+        if (isReplay || current.step != JarnFirstRunStep.Welcome || current.confirmingSkip) return
+        move { JarnFirstRunState(JarnFirstRunStep.Ready, path = JarnFirstRunPath.Arrival) }
+    }
+
+    fun showLessons(twoScreens: Boolean) = move { it.withLessons(twoScreens) }
 
     fun replay() {
         isReplay = true
@@ -154,6 +167,11 @@ internal class JarnFirstRunActions(
 
     fun back() = controller.back(twoScreens)
 
+    fun showLessons() = controller.showLessons(twoScreens)
+
+    /** The short tour's link for people with no games: straight to Look. */
+    fun skipToLook() = advanceFrom(JarnFirstRunStep.Ready)
+
     fun skip() {
         controller.finish()
         land()
@@ -180,7 +198,8 @@ internal class JarnFirstRunActions(
 
     private fun land() {
         JarnLookPreview.lookId = null
-        session.update { landedOnLibrary() }
+        session.update { landedOnLibrary().copy(librarySection = LibrarySection.Systems) }
+        if (JarnLibrary.state.hero is LibraryHero.ContinuePlaying) JarnLibrary.requestHeroFocus()
     }
 }
 
@@ -191,6 +210,7 @@ internal fun rememberJarnFirstRun(route: StageRoute): JarnFirstRunController? {
     val store = remember(context) { context.jarnLookStoreOrNull() }
     val isDone = store?.firstRunDoneState?.collectAsState()?.value == true
     LaunchedEffect(isDone) { if (isDone) controller.onDoneElsewhere() }
+    LaunchedEffect(controller) { if (JarnArrival.takeFromClassic(context)) controller.startArrival() }
     LaunchedEffect(route, controller.isArtDetour) {
         if (controller.isArtDetour && route != StageRoute.Settings) controller.endArtDetour()
     }

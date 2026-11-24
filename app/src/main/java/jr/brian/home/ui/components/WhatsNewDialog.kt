@@ -68,7 +68,8 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun WhatsNewDialog(
     versionName: String,
     patchNotes: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    showJarnCard: Boolean = true,
 ) {
 //    val whatsNewManager = LocalWhatsNewManager.current
 //    val selectedPreset = whatsNewManager.selectedKonfettiPreset
@@ -117,7 +118,7 @@ fun WhatsNewDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                JarnFeWhatsNewPreview(onOpened = onDismiss)
+                if (showJarnCard) JarnFeWhatsNewPreview(onOpened = onDismiss)
 
                 Column(
                     modifier = Modifier

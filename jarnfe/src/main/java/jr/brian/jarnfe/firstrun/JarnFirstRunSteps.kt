@@ -68,11 +68,12 @@ internal fun FirstRunStepContent(
             R.string.jarnfe_first_run_welcome_title,
             if (twoScreens) R.string.jarnfe_first_run_welcome_body else R.string.jarnfe_first_run_welcome_body_single,
         )
+        JarnFirstRunStep.Ready -> FirstRunReadyStep(twoScreens, actions)
         JarnFirstRunStep.Library -> FirstRunLibraryStep()
         JarnFirstRunStep.Media -> FirstRunMediaStep(actions)
         JarnFirstRunStep.Look -> FirstRunLookStep()
         JarnFirstRunStep.SwitchCue -> FirstRunSwitchCueStep(actions)
-        JarnFirstRunStep.Done -> FirstRunDoneStep(twoScreens)
+        JarnFirstRunStep.Done -> FirstRunDoneStep(twoScreens, fromClassic = run.path != JarnFirstRunPath.Full)
         else -> FirstRunLesson(step, run, twoScreens)
     }
 }
@@ -165,7 +166,7 @@ private fun FirstRunMediaStep(actions: JarnFirstRunActions) {
 
 /** Rechecks on every return, because file access is granted in a system screen. */
 @Composable
-private fun rememberFirstRunMedia(data: JarnLibraryData): JarnMediaSummary {
+internal fun rememberFirstRunMedia(data: JarnLibraryData): JarnMediaSummary {
     val context = LocalContext.current
     val detector = remember(context) { context.jarnArtDetectorOrNull() }
     val owner = LocalLifecycleOwner.current
@@ -230,20 +231,29 @@ private fun sourceName(source: ArtSource): String = stringResource(source.labelR
 
 @Composable
 private fun FirstRunFileAccessButton() {
-    val activity = LocalActivity.current
     FirstRunNote(R.string.jarnfe_first_run_media_access_why)
     JarnButton(
         label = stringResource(R.string.jarnfe_first_run_media_access),
-        onClick = {
-            val target = activity ?: return@JarnButton
-            val intent = Intent(
-                Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                "package:${target.packageName}".toUri(),
-            )
-            runCatching { target.startActivity(intent) }
-        },
+        onClick = rememberFileAccessOpener(),
         variant = JarnButtonVariant.Secondary,
     )
+}
+
+/** Opens Android's All files access screen for this app. */
+@Composable
+internal fun rememberFileAccessOpener(): () -> Unit {
+    val activity = LocalActivity.current
+    return remember(activity) {
+        {
+            activity?.let { target ->
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    "package:${target.packageName}".toUri(),
+                )
+                runCatching { target.startActivity(intent) }
+            }
+        }
+    }
 }
 
 @Composable
@@ -316,7 +326,7 @@ private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLess
 }
 
 @Composable
-private fun FirstRunDoneStep(twoScreens: Boolean) {
+private fun FirstRunDoneStep(twoScreens: Boolean, fromClassic: Boolean) {
     FirstRunHeading(R.string.jarnfe_first_run_done_title, R.string.jarnfe_first_run_done_body)
     FirstRunCheatRow(listOf(JarnKey.A), R.string.jarnfe_first_run_cheat_a)
     FirstRunCheatRow(listOf(JarnKey.B), R.string.jarnfe_first_run_cheat_b)
@@ -332,6 +342,7 @@ private fun FirstRunDoneStep(twoScreens: Boolean) {
         if (twoScreens) R.string.jarnfe_first_run_cheat_tabs else R.string.jarnfe_first_run_cheat_tabs_single,
     )
     if (twoScreens) FirstRunCheatRow(listOf(JarnKey.L2, JarnKey.R2), R.string.jarnfe_first_run_cheat_other_tabs)
+    if (fromClassic) FirstRunSwitchBackNote()
 }
 
 /** Focusable so the D-pad can scroll the whole list on a short screen. */

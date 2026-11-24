@@ -84,6 +84,13 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `preview showings never show as a settings change`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnPreview = JarnPreviewConfig(0, null, false)))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnPreview = JarnPreviewConfig(2, "3.1.0", true)))
+        assertEquals(0, buildBackupPreview(backup, now).changeCount)
+    }
+
+    @Test
     fun `a different app names choice shows as a look change`() {
         val now = JarngreiprConfig(
             feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(appNamesVisible = true)),
