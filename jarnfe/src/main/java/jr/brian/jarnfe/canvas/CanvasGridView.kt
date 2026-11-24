@@ -230,7 +230,6 @@ internal fun CanvasGrid(
                             editing = editing,
                             grabbed = outlined,
                             showCard = item.showsCard(page),
-                            focusStyle = if (item is CanvasItem.RomItem) JarnFocusStyle.Scale else JarnFocusStyle.Ring,
                             folderDrop = driver.folderDropState(item.id),
                             growsAsDrop = item.id != grabbedId,
                             onFocused = {
@@ -320,7 +319,6 @@ private fun CanvasTileFrame(
     editing: Boolean,
     grabbed: Boolean,
     showCard: Boolean = true,
-    focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
     folderDrop: CanvasFolderDropState? = null,
     growsAsDrop: Boolean = false,
     onFocused: () -> Unit,
@@ -342,7 +340,7 @@ private fun CanvasTileFrame(
             .canvasFolderDropTarget(folderDrop, growsAsDrop)
             .focusRequester(requester)
             .onFocusChanged { if (it.isFocused) onFocused() }
-            .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
             .clip(shape)
             .then(if (showCard) Modifier.background(colors.raised) else Modifier)
             .then(outline),

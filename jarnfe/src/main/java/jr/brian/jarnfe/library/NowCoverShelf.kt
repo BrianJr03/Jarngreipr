@@ -142,7 +142,7 @@ internal fun NowSoloCard(
             .then(modifier)
             .fillMaxWidth()
             .height(coverHeight)
-            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.ScaleSubtle, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
             .clip(shape)
             .background(colors.bg.copy(alpha = PLATE_ALPHA)),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),

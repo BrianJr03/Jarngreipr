@@ -65,7 +65,6 @@ fun JarnGameTile(
         aspectRatio = aspectRatio,
         captioned = false,
         showCard = false,
-        focusStyle = JarnFocusStyle.Scale,
         description = title,
         onClick = onClick,
         modifier = modifier,
@@ -79,7 +78,6 @@ private fun JarnLibraryTileFrame(
     aspectRatio: Float,
     captioned: Boolean,
     showCard: Boolean = true,
-    focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
     description: String?,
     onClick: () -> Unit,
     modifier: Modifier,
@@ -91,7 +89,7 @@ private fun JarnLibraryTileFrame(
         modifier = modifier
             .aspectRatio(aspectRatio)
             .semantics { description?.let { contentDescription = it } }
-            .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
             .clip(shape)
             .then(if (showCard) Modifier.background(JarnTheme.colors.raised) else Modifier),
     ) {

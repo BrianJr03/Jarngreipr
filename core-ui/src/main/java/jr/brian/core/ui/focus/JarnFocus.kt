@@ -49,15 +49,25 @@ private const val JarnFocusLandingSpread = 1.4f
 internal fun jarnPressScale(pressScale: Float, pressProgress: Float): Float =
     (1f + (pressScale - 1f) * pressProgress).coerceAtMost(1f)
 
-/** [focusScale] is how much a [Ring]-less item grows while focused on the active screen. */
-enum class JarnFocusStyle(internal val focusScale: Float) {
-    Ring(1f),
-    Scale(1.08f),
-    ScaleSubtle(1.03f),
-}
+enum class JarnFocusStyle { Ring, Scale }
 
-internal fun jarnFocusScale(style: JarnFocusStyle, focusProgress: Float, activation: Float): Float =
-    1f + (style.focusScale - 1f) * focusProgress * activation
+private const val JarnFocusScale = 1.08f
+
+/** Under the 20dp focus edge, so a scaled item always clears the edges bring-into-view leaves. */
+internal val JarnFocusMaxGrowth = 10.dp
+
+/** Large items grow by less, so no side ever moves past [maxGrowthPx]. */
+internal fun jarnFocusScale(
+    style: JarnFocusStyle,
+    focusProgress: Float,
+    activation: Float,
+    maxSidePx: Int,
+    maxGrowthPx: Float,
+): Float {
+    if (style == JarnFocusStyle.Ring || maxSidePx <= 0) return 1f
+    val target = minOf(JarnFocusScale, 1f + 2f * maxGrowthPx / maxSidePx)
+    return 1f + (target - 1f) * focusProgress * activation
+}
 
 fun Modifier.jarnFocus(
     shape: Shape,
@@ -97,6 +107,7 @@ private class JarnFocusNode(
     private var activePresses = 0
     private var interactionJob: Job? = null
 
+    private var maxSidePx = 0
     private var cachedPath: Path? = null
     private var cachedSize = Size.Unspecified
     private var cachedDirection: LayoutDirection? = null
@@ -104,7 +115,8 @@ private class JarnFocusNode(
 
     private val layerBlock: GraphicsLayerScope.() -> Unit = {
         val activation = currentValueOf(LocalJarnScreenActivation).value
-        val scale = currentScale() * jarnFocusScale(style, focusProgress.value, activation)
+        val growth = jarnFocusScale(style, focusProgress.value, activation, maxSidePx, JarnFocusMaxGrowth.toPx())
+        val scale = currentScale() * growth
         scaleX = scale
         scaleY = scale
     }
@@ -192,6 +204,7 @@ private class JarnFocusNode(
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
+        maxSidePx = maxOf(placeable.width, placeable.height)
         return layout(placeable.width, placeable.height) {
             placeable.placeWithLayer(0, 0, zIndex = if (isFocused) 1f else 0f, layerBlock = layerBlock)
         }

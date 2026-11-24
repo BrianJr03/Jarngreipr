@@ -47,6 +47,7 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.focus.JarnRevealLazyItems
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -378,7 +379,7 @@ private fun JarnAppTile(
         modifier = modifier
             .testTag(app.packageName)
             .semantics { contentDescription = app.label }
-            .jarnInteractive(shape, source, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
             .background(JarnTheme.colors.raised, shape)
             .padding(JarnTheme.space.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
