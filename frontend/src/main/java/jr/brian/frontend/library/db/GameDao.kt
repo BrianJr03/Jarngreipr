@@ -16,6 +16,17 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE isHidden = 0 ORDER BY displayName COLLATE NOCASE")
     fun observeAllVisible(): Flow<List<GameEntity>>
 
+    @Query(
+        """
+        SELECT id, systemId, displayName, relativePath, absolutePath FROM games
+        WHERE isHidden = 0 ORDER BY displayName COLLATE NOCASE
+        """,
+    )
+    fun observeSearchRows(): Flow<List<GameSearchRow>>
+
+    @Query("SELECT * FROM games WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<GameEntity>
+
     @Query("SELECT * FROM games ORDER BY displayName COLLATE NOCASE")
     fun observeAll(): Flow<List<GameEntity>>
 

@@ -6,8 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import jr.brian.frontend.library.art.JarnLibraryData
-import jr.brian.frontend.library.art.LibraryGame
+import jr.brian.frontend.library.art.LibraryGameTitle
 import jr.brian.frontend.library.art.VisibleList
+import jr.brian.jarnfe.apps.JarnApps
+import jr.brian.jarnfe.apps.jarnShownApps
+import jr.brian.jarnfe.dock.JarnDockApp
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.JarnLibrarySystem
@@ -23,27 +26,41 @@ import kotlinx.coroutines.withContext
 
 private const val SEARCH_SETTLE_MS = 120L
 private const val MAX_GAME_RESULTS = 120
+private const val MAX_APP_RESULTS = 60
 internal const val MAX_QUERY_LENGTH = 60
 
-internal enum class JarnSearchTab { Games, Systems }
+internal enum class JarnSearchTab { Games, Systems, Apps }
 
 @Immutable
 internal data class JarnSearchResults(
     val games: List<JarnLibraryGame> = emptyList(),
     val systems: List<JarnLibrarySystem> = emptyList(),
+    val apps: List<JarnDockApp> = emptyList(),
 ) {
-    val isEmpty: Boolean get() = games.isEmpty() && systems.isEmpty()
+    val isEmpty: Boolean get() = games.isEmpty() && systems.isEmpty() && apps.isEmpty()
 
-    /** Falls over to the other tab so a query with matches never lands on an empty one. */
-    fun visibleTab(selected: JarnSearchTab): JarnSearchTab = when {
-        selected == JarnSearchTab.Games && games.isEmpty() && systems.isNotEmpty() -> JarnSearchTab.Systems
-        selected == JarnSearchTab.Systems && systems.isEmpty() && games.isNotEmpty() -> JarnSearchTab.Games
-        else -> selected
+    fun count(tab: JarnSearchTab): Int = when (tab) {
+        JarnSearchTab.Games -> games.size
+        JarnSearchTab.Systems -> systems.size
+        JarnSearchTab.Apps -> apps.size
     }
 
+    /** Falls over to the first tab with matches, so a query with matches never lands on an empty one. */
+    fun visibleTab(selected: JarnSearchTab): JarnSearchTab =
+        if (count(selected) > 0) selected else JarnSearchTab.entries.firstOrNull { count(it) > 0 } ?: selected
+
+    /** Skips tabs with no matches, so L1 and R1 never land on an empty one. */
+    fun stepTab(selected: JarnSearchTab, delta: Int): JarnSearchTab {
+        val shown = JarnSearchTab.entries.filter { count(it) > 0 }.ifEmpty { JarnSearchTab.entries }
+        val index = shown.indexOf(visibleTab(selected)).coerceAtLeast(0)
+        return shown[(index + delta).coerceIn(shown.indices)]
+    }
+
+    /** Apps aren't library items, so an app result leaves the library selection empty. */
     fun firstSelection(tab: JarnSearchTab): LibrarySelection = when (visibleTab(tab)) {
         JarnSearchTab.Games -> games.firstOrNull()?.let(LibrarySelection::Game)
         JarnSearchTab.Systems -> systems.firstOrNull()?.let(LibrarySelection::System)
+        JarnSearchTab.Apps -> null
     } ?: LibrarySelection.None
 
     fun contains(selection: LibrarySelection): Boolean = when (selection) {
@@ -54,6 +71,7 @@ internal data class JarnSearchResults(
 
     /** Keeps the selected result but with its latest art, so the Deck updates live. */
     fun refreshed(selection: LibrarySelection, tab: JarnSearchTab): LibrarySelection = when {
+        visibleTab(tab) == JarnSearchTab.Apps -> LibrarySelection.None
         !contains(selection) -> firstSelection(tab)
         selection is LibrarySelection.Game ->
             LibrarySelection.Game(games.first { it.id == selection.game.id })
@@ -72,6 +90,9 @@ internal class JarnSearchStore {
     var results by mutableStateOf(JarnSearchResults())
         private set
 
+    /** The focused app result, which Options and the hints act on. */
+    var focusedApp by mutableStateOf<String?>(null)
+
     /** True while the Deck shows a result's actions in place of the keyboard. */
     var showingActions by mutableStateOf(false)
         private set
@@ -82,6 +103,7 @@ internal class JarnSearchStore {
         scopeSystemId = scope
         results = JarnSearchResults()
         showingActions = false
+        focusedApp = null
     }
 
     fun type(text: String) {
@@ -108,20 +130,25 @@ internal class JarnSearchStore {
         showingActions = true
     }
 
+    fun selectTab(next: JarnSearchTab) {
+        tab = next
+    }
+
     fun stepTab(delta: Int) {
-        val current = results.visibleTab(tab)
-        val entries = JarnSearchTab.entries
-        tab = entries[(entries.indexOf(current) + delta).coerceIn(entries.indices)]
+        tab = results.stepTab(tab, delta)
     }
 
     /** Runs while Search is on screen. Newer input cancels any search still in progress. */
     suspend fun observe(data: JarnLibraryData, library: JarnLibraryStore) {
         combine(
             snapshotFlow { query to scopeSystemId },
-            data.allGames,
+            data.searchTitles,
             snapshotFlow { library.state.systems.items },
             data.artChoices,
-        ) { (text, scope), games, systems, _ -> SearchInput(text, scope, games.items, systems) }
+            snapshotFlow { JarnApps.snapshot },
+        ) { (text, scope), games, systems, _, apps ->
+            SearchInput(text, scope, games, systems, apps?.let(::jarnShownApps).orEmpty())
+        }
             .collectLatest { input ->
                 delay(SEARCH_SETTLE_MS)
                 val found = withContext(Dispatchers.Default) { input.run(data) }
@@ -136,19 +163,33 @@ internal class JarnSearchStore {
     private data class SearchInput(
         val text: String,
         val scope: String?,
-        val games: List<LibraryGame>,
+        val games: List<LibraryGameTitle>,
         val systems: List<JarnLibrarySystem>,
+        val apps: List<JarnDockApp>,
     ) {
+        /** Titles are matched first, so only the shown games load in full. */
         suspend fun run(data: JarnLibraryData): JarnSearchResults {
             val parsed = parseJarnSearchQuery(text)
             val allowed = allowedSystemIds(parsed, systems, scope)
-            val matches = searchGames(games, parsed, allowed, MAX_GAME_RESULTS, LibraryGame::systemId, LibraryGame::title)
-            val withArt = if (matches.isEmpty()) {
+            val matches = searchGames(
+                games,
+                parsed,
+                allowed,
+                MAX_GAME_RESULTS,
+                LibraryGameTitle::systemId,
+                LibraryGameTitle::title,
+            )
+            val full = data.gamesById(matches.map { it.id })
+            val withArt = if (full.isEmpty()) {
                 emptyList()
             } else {
-                data.withArt(flowOf(VisibleList(matches))).first().items.map { it.toJarnGame() }
+                data.withArt(flowOf(VisibleList(full))).first().items.map { it.toJarnGame() }
             }
-            return JarnSearchResults(withArt, searchSystems(systems, parsed, allowed))
+            return JarnSearchResults(
+                games = withArt,
+                systems = searchSystems(systems, parsed, allowed),
+                apps = searchApps(apps, parsed, allowed, MAX_APP_RESULTS, JarnDockApp::label),
+            )
         }
     }
 }
