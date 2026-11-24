@@ -120,7 +120,7 @@ private fun JarnBindingsBuilder.firstRunBindings(
     on(JarnAction.Search, R.string.jarnfe_first_run_skip, onPress = actions::skip)
     if (!run.confirmingSkip) gestureBindings(run.step, actions)
     if (run.confirmingSkip || run.step.gesture != JarnFirstRunGesture.SwitchScreen) {
-        val label = R.string.jarnfe_hint_switch_screen.takeIf { confirmHere }
+        val label = R.string.jarnfe_hint_switch_screen.takeIf { confirmHere || run.step == JarnFirstRunStep.SwitchCue }
         on(JarnAction.SwitchScreen, label, onPress = actions::switchScreen)
     }
 }
@@ -228,6 +228,7 @@ private fun FirstRunStageCaption(step: JarnFirstRunStep, run: JarnFirstRunState)
             maxLines = 2,
         )
         if (step == JarnFirstRunStep.PressOtherTabs) FirstRunPracticeTabs(run.practiceTab)
+        if (step == JarnFirstRunStep.SwitchCue) FirstRunCueSample()
     }
 }
 
@@ -237,6 +238,7 @@ private fun stageTitleRes(step: JarnFirstRunStep): Int = when (step) {
     JarnFirstRunStep.Library -> R.string.jarnfe_first_run_library_title
     JarnFirstRunStep.Media -> R.string.jarnfe_first_run_media_title
     JarnFirstRunStep.Look -> R.string.jarnfe_first_run_look_title
+    JarnFirstRunStep.SwitchCue -> R.string.jarnfe_first_run_cue_title
     JarnFirstRunStep.PressSelect -> R.string.jarnfe_first_run_stage_select
     JarnFirstRunStep.PressOtherTabs -> R.string.jarnfe_first_run_stage_other_tabs
     JarnFirstRunStep.Done -> R.string.jarnfe_first_run_done_title

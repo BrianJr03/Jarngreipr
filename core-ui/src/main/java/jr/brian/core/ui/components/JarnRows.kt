@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
@@ -134,6 +135,32 @@ fun JarnValueRow(
         JarnRowLabels(label, supporting, Modifier.weight(1f))
         JarnText(value, JarnTheme.type.label, JarnTheme.colors.textMid, maxLines = 1)
         JarnChevronGlyph(JarnTheme.colors.textMid)
+    }
+}
+
+/** One choice in a group. The check shows what is saved, separately from what has focus. */
+@Composable
+fun JarnChoiceRow(
+    label: String,
+    chosen: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    supporting: String? = null,
+) {
+    val state = stringResource(if (chosen) R.string.jarn_state_selected else R.string.jarn_state_not_selected)
+    JarnRowFrame(
+        onClick = onClick,
+        enabled = true,
+        focusableWhenDisabled = false,
+        role = Role.RadioButton,
+        modifier = modifier.semantics {
+            selected = chosen
+            stateDescription = state
+        },
+        interactionSource = null,
+    ) {
+        JarnRowLabels(label, supporting, Modifier.weight(1f))
+        if (chosen) JarnCheckGlyph(JarnTheme.colors.accent)
     }
 }
 

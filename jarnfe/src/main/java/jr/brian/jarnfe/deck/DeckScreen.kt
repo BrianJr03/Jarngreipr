@@ -117,6 +117,7 @@ private fun DeckTabStrip(selected: DeckTab) {
                 selectedIndex = tabs.indexOf(selected),
                 onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
                 modifier = Modifier.weight(1f),
+                showsSwitchMark = true,
             )
             if (selected == DeckTab.Canvas) CanvasHeaderControls()
         }

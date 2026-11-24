@@ -1,5 +1,6 @@
 package jr.brian.core.ui.focus
 
+import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -40,10 +41,16 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.theme.JARN_PULSE_RING_EXTRA
+import jr.brian.core.ui.theme.JarnFocusMaxReach
+import jr.brian.core.ui.theme.JarnPulseExtra
 import jr.brian.core.ui.theme.LocalJarnColors
 import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.core.ui.theme.LocalJarnMotion
 import jr.brian.core.ui.theme.LocalJarnScreenActivation
+import jr.brian.core.ui.theme.LocalJarnSwitchPulse
+import jr.brian.core.ui.theme.jarnPulseAdmitsFocus
+import kotlin.math.abs
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -96,6 +103,23 @@ internal fun jarnFocusFloatOffset(
     return (-liftPx + amplitudePx * floatPhase) * focusProgress * activation
 }
 
+/** Extra scale for a switch pulse, limited so the tile stays within [reachLimitPx] of its slot. */
+internal fun jarnPulseScale(
+    style: JarnFocusStyle,
+    overshoot: Float,
+    focusProgress: Float,
+    baseScale: Float,
+    maxSidePx: Int,
+    translationPx: Float,
+    extraPx: Float,
+    reachLimitPx: Float,
+): Float {
+    if (style == JarnFocusStyle.Ring || maxSidePx <= 0) return 0f
+    val reach = (baseScale - 1f) * maxSidePx / 2f + abs(translationPx)
+    val extra = minOf(extraPx * overshoot * focusProgress, reachLimitPx - reach).coerceAtLeast(0f)
+    return 2f * extra / maxSidePx
+}
+
 fun Modifier.jarnFocus(
     shape: Shape,
     interactionSource: MutableInteractionSource,
@@ -135,6 +159,7 @@ private class JarnFocusNode(
     private var style by mutableStateOf(style)
     private var activePresses = 0
     private var interactionJob: Job? = null
+    private var ignoredPulse = -1
 
     private var maxSidePx = 0
     private var cachedPath: Path? = null
@@ -146,16 +171,31 @@ private class JarnFocusNode(
         val activation = currentValueOf(LocalJarnScreenActivation).value
         val maxGrowth = if (style == JarnFocusStyle.Float) JarnFocusFloatMaxGrowth else JarnFocusMaxGrowth
         val growth = jarnFocusScale(style, focusProgress.value, activation, maxSidePx, maxGrowth.toPx())
-        val scale = currentScale() * growth
-        scaleX = scale
-        scaleY = scale
-        translationY = jarnFocusFloatOffset(
+        val lift = jarnFocusFloatOffset(
             style = style,
             floatPhase = floatPhase.value,
             focusProgress = focusProgress.value,
             activation = activation,
             liftPx = JarnFocusLift.toPx(),
             amplitudePx = JarnFocusFloatAmplitude.toPx(),
+        )
+        val scale = currentScale() * (growth + pulseGrowth(growth, lift))
+        scaleX = scale
+        scaleY = scale
+        translationY = lift
+    }
+
+    private fun GraphicsLayerScope.pulseGrowth(growth: Float, lift: Float): Float {
+        if (focusProgress.value <= 0f) return 0f
+        return jarnPulseScale(
+            style = style,
+            overshoot = currentValueOf(LocalJarnSwitchPulse).overshootFor(ignoredPulse),
+            focusProgress = focusProgress.value,
+            baseScale = growth,
+            maxSidePx = maxSidePx,
+            translationPx = lift,
+            extraPx = JarnPulseExtra.toPx(),
+            reachLimitPx = JarnFocusMaxReach.toPx(),
         )
     }
 
@@ -220,12 +260,20 @@ private class JarnFocusNode(
 
     private fun animateFocus(focused: Boolean) {
         isFocused = focused
+        if (focused) notePulseOnFocus()
         updateFloat(focused)
         val motion = currentValueOf(LocalJarnMotion)
         val token = if (focused) motion.focusIn else motion.focusOut
         coroutineScope.launch {
             focusProgress.animateTo(if (focused) 1f else 0f, token.spec())
         }
+    }
+
+    /** A pulse belongs to the item holding focus at the switch, never to one moved to later. */
+    private fun notePulseOnFocus() {
+        val pulse = currentValueOf(LocalJarnSwitchPulse)
+        val admitted = jarnPulseAdmitsFocus(SystemClock.uptimeMillis() - pulse.startedAtMillis)
+        ignoredPulse = if (admitted) -1 else pulse.generation
     }
 
     private fun updateFloat(focused: Boolean) {
@@ -287,8 +335,14 @@ private class JarnFocusNode(
         val activation = currentValueOf(LocalJarnScreenActivation).value
         if (activation <= 0f) return
         val colors = currentValueOf(LocalJarnColors)
-        val spread = 1f + (1f - activation) * JarnFocusLandingSpread
-        drawRing(outlinePath(), currentScale(), colors.focus, colors.focusGap, progress * activation, spread)
+        val pulse = currentValueOf(LocalJarnSwitchPulse)
+        val spread = if (pulse.enabled) {
+            1f + JARN_PULSE_RING_EXTRA * pulse.ringExtraFor(ignoredPulse)
+        } else {
+            1f + (1f - activation) * JarnFocusLandingSpread
+        }
+        val alpha = progress * activation * if (pulse.enabled) pulse.ringFadeFor(ignoredPulse) else 1f
+        drawRing(outlinePath(), currentScale(), colors.focus, colors.focusGap, alpha, spread)
     }
 
     /** Clipped to the item's shape, so the ring can't reach a neighbor or be cut off by one. */

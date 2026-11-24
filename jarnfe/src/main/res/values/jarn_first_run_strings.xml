@@ -58,6 +58,9 @@
     <string name="jarnfe_first_run_look_title">Pick a look</string>
     <string name="jarnfe_first_run_look_body">Move up to try one on both screens, and press A to keep it. Fjord is the default.</string>
 
+    <string name="jarnfe_first_run_cue_title">Pick a switch cue</string>
+    <string name="jarnfe_first_run_cue_body">Highlight one and press Select to feel it. Press A to keep it. Pulse is the default.</string>
+
     <string name="jarnfe_first_run_a_title">A selects</string>
     <string name="jarnfe_first_run_a_body">Press A to open or confirm whatever is highlighted.</string>
     <string name="jarnfe_first_run_b_title">B goes back</string>

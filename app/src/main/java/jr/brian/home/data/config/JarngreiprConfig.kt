@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.home.canvas.model.CanvasLayout
@@ -207,8 +208,9 @@ data class JarngreiprConfig(
         // v50: added FeatureConfig.jarnMatchCommandPanel, whether Jarn FE follows Command
         //      Panel's colors. Null on older blobs, and import keeps the current value.
         //      The palette itself is never backed up.
-        // v51: added JarnDisplayConfig.screenSwitchMillis, how long Jarn FE's screen switch
-        //      ring plays. Null on older blobs, and import keeps the current value.
+        // v51: added JarnDisplayConfig.switchCue, how Jarn FE shows a screen switch (pulse, dim
+        //      or tab_mark). Null on older blobs, and import keeps the current value. An
+        //      unknown id falls back to pulse.
         const val CONFIG_VERSION = 51
     }
 }
@@ -421,7 +423,7 @@ data class JarnDisplayConfig(
     val tapControl: String? = null,
     val appNamesVisible: Boolean? = null,
     val undoCountdownVisible: Boolean? = null,
-    val screenSwitchMillis: Int? = null,
+    val switchCue: String? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -432,7 +434,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     tapControl = tapControl.id,
     appNamesVisible = appNamesVisible,
     undoCountdownVisible = undoCountdownVisible,
-    screenSwitchMillis = screenSwitchMillis,
+    switchCue = switchCue.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -443,7 +445,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
     appNamesVisible = appNamesVisible ?: current.appNamesVisible,
     undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
-    screenSwitchMillis = screenSwitchMillis ?: current.screenSwitchMillis,
+    switchCue = switchCue?.let(JarnSwitchCue::fromId) ?: current.switchCue,
 )
 
 @Serializable

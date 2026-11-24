@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -26,6 +28,7 @@ import androidx.compose.ui.platform.LocalDensity
 import jr.brian.core.ui.focus.JarnBringIntoViewSpec
 import jr.brian.core.ui.focus.JarnTabsFocus
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
+import kotlinx.coroutines.launch
 
 val LocalJarnLook = staticCompositionLocalOf { JarnLooks.Default }
 val LocalJarnColors = staticCompositionLocalOf { JarnLooks.Default.resolvedColors }
@@ -60,6 +63,7 @@ fun JarnTheme(
     look: JarnLook = JarnLooks.Default,
     reducedMotion: Boolean = false,
     screenActive: Boolean = true,
+    switchCue: JarnSwitchCue = JarnSwitchCue.Pulse,
     content: @Composable () -> Unit,
 ) {
     val animatorScale = rememberAnimatorDurationScale()
@@ -72,10 +76,31 @@ fun JarnTheme(
         JarnBringIntoViewSpec(focusEdgePx, baseScrollSpec)
     }
     val activation = remember { Animatable(if (screenActive) 1f else 0f) }
-    LaunchedEffect(screenActive, shouldReduce) {
+    val pulses = switchCue == JarnSwitchCue.Pulse
+    val marks = switchCue == JarnSwitchCue.TabMark
+    val pulse = remember { JarnSwitchPulse(pulses) }
+    val mark = remember { JarnSwitchMark(marks, screenActive) }
+    val wasActive = remember { booleanArrayOf(screenActive) }
+    SideEffect {
+        pulse.enabled = pulses
+        mark.enabled = marks
+    }
+    LaunchedEffect(screenActive, marks, shouldReduce) { mark.moveTo(screenActive && marks, shouldReduce) }
+    LaunchedEffect(screenActive, shouldReduce, pulses) {
+        val received = screenActive && !wasActive[0]
+        wasActive[0] = screenActive
+        if (received && pulses) {
+            val now = SystemClock.uptimeMillis()
+            val strength = JarnSwitchRhythm.Shared.strengthAt(now)
+            pulse.arm(strength, shouldReduce, now)
+            launch { pulse.play(strength, shouldReduce) }
+        } else {
+            pulse.rest()
+        }
         when {
             !screenActive -> activation.snapTo(0f)
             shouldReduce -> activation.snapTo(1f)
+            pulses -> activation.animateTo(1f, tween(JARN_PULSE_UP_MILLIS, easing = JarnEasingStandard))
             else -> activation.animateTo(1f, tween(JARN_SCREEN_SWITCH_MILLIS, easing = motion.panel.easing))
         }
     }
@@ -86,6 +111,8 @@ fun JarnTheme(
         LocalJarnMotion provides motion,
         LocalJarnScreenActive provides screenActive,
         LocalJarnScreenActivation provides activationState,
+        LocalJarnSwitchPulse provides pulse,
+        LocalJarnSwitchMark provides mark,
         LocalJarnTabsFocus provides remember { JarnTabsFocus() },
         LocalBringIntoViewSpec provides scrollSpec,
         content = content,
