@@ -3,4 +3,8 @@
     <string name="jarnfe_wallpaper_choose_hint">Pick a photo, or a GIF to play as a moving wallpaper.</string>
     <string name="jarnfe_wallpaper_paused_battery_saver">Wallpaper motion is paused while Battery Saver is on.</string>
     <string name="jarnfe_wallpaper_paused_reduce_motion">Wallpaper motion is paused while Reduce motion is on.</string>
+    <string name="jarnfe_wallpaper_same_on_both">Same on both screens</string>
+    <string name="jarnfe_wallpaper_same_on_both_hint">Turn off to give the top and bottom screens their own image or GIF.</string>
+    <string name="jarnfe_wallpaper_top_screen">Top screen</string>
+    <string name="jarnfe_wallpaper_bottom_screen">Bottom screen</string>
 </resources>

@@ -131,7 +131,8 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             null,
             null,
             backup.ui.wallpaper == current.ui.wallpaper &&
-                backup.ui.frontendWallpaper == current.ui.frontendWallpaper,
+                backup.ui.frontendWallpaper == current.ui.frontendWallpaper &&
+                wallpaperScreensAfter(b.jarnWallpaperScreens, c.jarnWallpaperScreens) == c.jarnWallpaperScreens,
         ),
         replaced(
             JarnBackupArea.Scraper,
@@ -146,6 +147,16 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             backup.otherSettings(current) == current.otherSettings(current),
         ),
     )
+}
+
+/** What restoring [backup] leaves, since a missing field keeps the current value. */
+private fun wallpaperScreensAfter(
+    backup: JarnWallpaperScreensConfig?,
+    current: JarnWallpaperScreensConfig?,
+): JarnWallpaperScreensConfig? {
+    backup ?: return current
+    val same = backup.sameOnBoth ?: current?.sameOnBoth
+    return JarnWallpaperScreensConfig(sameOnBoth = same, bottomUri = backup.bottomUri.takeUnless { same == true })
 }
 
 private fun replaced(area: JarnBackupArea, backupCount: Int?, currentCount: Int?, same: Boolean) =
@@ -246,6 +257,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnDisplay = null,
         jarnFirstRunDone = null,
         jarnMatchCommandPanel = null,
+        jarnWallpaperScreens = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,
@@ -269,6 +281,7 @@ private fun JarngreiprConfig.imageReferences(): Set<String> = buildSet {
             wallpaper.savedVideoUri,
         ).filterTo(this) { it.isNotBlank() }
     }
+    feature.jarnWallpaperScreens?.bottomUri?.takeIf { it.isNotBlank() }?.let(::add)
     app.folders.values.flatten().mapNotNullTo(this) { folder ->
         folder.backgroundImagePath?.takeIf { it.isNotBlank() }
     }

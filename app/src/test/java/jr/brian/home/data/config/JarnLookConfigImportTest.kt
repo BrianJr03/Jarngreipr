@@ -416,8 +416,59 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `per screen wallpapers survive a backup and a restart`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnWallpaperScreens = store.wallpaperScreensBackup())),
+        )
+        store.setSameWallpaperOnBoth(true)
+        store.setBottomWallpaperUri(null)
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext())
+        assertFalse(reloaded.sameWallpaperOnBoth)
+        assertEquals("file:///bottom.gif", reloaded.bottomWallpaperUri)
+    }
+
+    @Test
+    fun `an older backup leaves per screen wallpapers alone`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val v53 = """{ "version": 53, "feature": { "jarnLook": "forge" } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v53.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.sameWallpaperOnBoth)
+        assertEquals("file:///bottom.gif", store.bottomWallpaperUri)
+        assertNull(importExport.decodeFromJson(v53).feature.jarnWallpaperScreens)
+    }
+
+    @Test
+    fun `a backup that shares one wallpaper clears the bottom choice`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val backup = """{ "version": 54, "feature": { "jarnWallpaperScreens": { "sameOnBoth": true } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(store.sameWallpaperOnBoth)
+        assertNull(store.bottomWallpaperUri)
+    }
+
+    @Test
+    fun `sharing one wallpaper is the default`() {
+        assertTrue(store.sameWallpaperOnBoth)
+        assertNull(store.bottomWallpaperUri)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(53, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(54, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

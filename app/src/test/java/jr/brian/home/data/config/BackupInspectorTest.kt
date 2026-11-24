@@ -200,6 +200,27 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a different bottom screen wallpaper shows the wallpaper as replaced`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(true, null)))
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(false, "file:///b.gif")),
+        )
+        val items = buildBackupPreview(backup, now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.Wallpaper).change)
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+        assertEquals(1, buildBackupPreview(backup, now).imageReferenceCount)
+    }
+
+    @Test
+    fun `a backup without per screen wallpapers keeps the current choice`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(false, "file:///b.gif")),
+        )
+        val items = buildBackupPreview(JarngreiprConfig(), now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.Wallpaper).change)
+    }
+
+    @Test
     fun `image references are counted once`() {
         val backup = JarngreiprConfig(
             ui = UiConfig(wallpaper = WallpaperConfig(activeUri = "a", savedImageUri = "a")),

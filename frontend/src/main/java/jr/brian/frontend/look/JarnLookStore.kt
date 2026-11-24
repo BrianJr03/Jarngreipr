@@ -48,6 +48,18 @@ class JarnLookStore @Inject constructor(
     val liveWallpaperIdState: StateFlow<String?> = _liveWallpaperId.asStateFlow()
     val liveWallpaperId: String? get() = _liveWallpaperId.value
 
+    private val _sameWallpaperOnBoth = MutableStateFlow(prefs.getBoolean(KEY_SAME_WALLPAPER_ON_BOTH, true))
+
+    /** True shows the frontend wallpaper on both screens. False gives the bottom screen its own. */
+    val sameWallpaperOnBothState: StateFlow<Boolean> = _sameWallpaperOnBoth.asStateFlow()
+    val sameWallpaperOnBoth: Boolean get() = _sameWallpaperOnBoth.value
+
+    private val _bottomWallpaperUri = MutableStateFlow(prefs.getString(KEY_BOTTOM_WALLPAPER_URI, null))
+
+    /** The bottom screen's own image or GIF, used only while [sameWallpaperOnBoth] is off. */
+    val bottomWallpaperUriState: StateFlow<String?> = _bottomWallpaperUri.asStateFlow()
+    val bottomWallpaperUri: String? get() = _bottomWallpaperUri.value
+
     private val _display = MutableStateFlow(readDisplay())
     val displayState: StateFlow<JarnDisplayPrefs> = _display.asStateFlow()
     val display: JarnDisplayPrefs get() = _display.value
@@ -124,6 +136,18 @@ class JarnLookStore @Inject constructor(
         }
     }
 
+    fun setSameWallpaperOnBoth(same: Boolean) {
+        _sameWallpaperOnBoth.value = same
+        prefs.edit { putBoolean(KEY_SAME_WALLPAPER_ON_BOTH, same) }
+    }
+
+    fun setBottomWallpaperUri(uri: String?) {
+        _bottomWallpaperUri.value = uri
+        prefs.edit {
+            if (uri == null) remove(KEY_BOTTOM_WALLPAPER_URI) else putString(KEY_BOTTOM_WALLPAPER_URI, uri)
+        }
+    }
+
     private fun String?.withoutOffValue() = takeUnless { it == JARN_LIVE_WALLPAPER_OFF }
 
     private companion object {
@@ -132,6 +156,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
+        const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
+        const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"
         const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"
         const val KEY_HINTS_VISIBLE = "hints_visible"

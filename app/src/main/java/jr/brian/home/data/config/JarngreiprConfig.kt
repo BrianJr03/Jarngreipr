@@ -220,7 +220,9 @@ data class JarngreiprConfig(
         // v53: added JarnDisplayConfig.systemView and gameView, the Jarn FE Grid or Carousel
         //      choices (grid or carousel). Null on older blobs, and import keeps the current
         //      value. An unknown id falls back to grid.
-        const val CONFIG_VERSION = 53
+        // v54: added FeatureConfig.jarnWallpaperScreens, Jarn FE "Same on both screens" and the
+        //      bottom screen's own image or GIF. Null on older blobs, and import keeps both.
+        const val CONFIG_VERSION = 54
     }
 }
 
@@ -411,7 +413,9 @@ data class FeatureConfig(
     /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
     val jarnMatchCommandPanel: Boolean? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
-    val rssFeeds: List<RssFeedConfig>? = null
+    val rssFeeds: List<RssFeedConfig>? = null,
+    /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
+    val jarnWallpaperScreens: JarnWallpaperScreensConfig? = null
 )
 
 @Serializable
