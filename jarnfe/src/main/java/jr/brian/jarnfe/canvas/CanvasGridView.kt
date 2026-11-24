@@ -22,6 +22,8 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.grid.PushDirection
@@ -56,6 +59,7 @@ private val GrabOutlineWidth = 3.dp
 private const val PUSH_AXIS_HEADROOM = 1
 private const val GRABBED_Z_INDEX = 1f
 private const val GHOST_Z_INDEX = 0.5f
+private const val RAISED_Z_INDEX = GHOST_Z_INDEX / 2f
 
 internal const val CANVAS_MENU_FOCUS_ID = "jarnfe-canvas-menu"
 
@@ -203,6 +207,7 @@ internal fun CanvasGrid(
             if (ghostRect != null) {
                 CanvasSlot(ghostRect, metrics, grabbed = false, restingZ = GHOST_Z_INDEX) { CanvasDragGhost() }
             }
+            var raisedId by remember { mutableStateOf<String?>(null) }
             layout.items.forEach { item ->
                 val rect = placements[item.id] ?: return@forEach
                 val held = item.id == grabbedId
@@ -218,15 +223,20 @@ internal fun CanvasGrid(
                         floating = floating,
                         visual = visual,
                         tileId = item.id,
+                        restingZ = if (item.id == raisedId) RAISED_Z_INDEX else 0f,
                     ) {
                         CanvasTileFrame(
                             requester = focusRequesterFor(item.id),
                             editing = editing,
                             grabbed = outlined,
                             showCard = item.showsCard(page),
+                            focusStyle = if (item is CanvasItem.RomItem) JarnFocusStyle.Scale else JarnFocusStyle.Ring,
                             folderDrop = driver.folderDropState(item.id),
                             growsAsDrop = item.id != grabbedId,
-                            onFocused = { onFocused(item.id) },
+                            onFocused = {
+                                raisedId = item.id
+                                onFocused(item.id)
+                            },
                             onClick = { onTileClick(item, cellPx) },
                         ) { tileContent(item) }
                     }
@@ -310,6 +320,7 @@ private fun CanvasTileFrame(
     editing: Boolean,
     grabbed: Boolean,
     showCard: Boolean = true,
+    focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
     folderDrop: CanvasFolderDropState? = null,
     growsAsDrop: Boolean = false,
     onFocused: () -> Unit,
@@ -331,7 +342,7 @@ private fun CanvasTileFrame(
             .canvasFolderDropTarget(folderDrop, growsAsDrop)
             .focusRequester(requester)
             .onFocusChanged { if (it.isFocused) onFocused() }
-            .jarnInteractive(shape, source, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
             .clip(shape)
             .then(if (showCard) Modifier.background(colors.raised) else Modifier)
             .then(outline),

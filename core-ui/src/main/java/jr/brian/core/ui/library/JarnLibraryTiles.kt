@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 
@@ -64,6 +65,7 @@ fun JarnGameTile(
         aspectRatio = aspectRatio,
         captioned = false,
         showCard = false,
+        focusStyle = JarnFocusStyle.Scale,
         description = title,
         onClick = onClick,
         modifier = modifier,
@@ -77,6 +79,7 @@ private fun JarnLibraryTileFrame(
     aspectRatio: Float,
     captioned: Boolean,
     showCard: Boolean = true,
+    focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
     description: String?,
     onClick: () -> Unit,
     modifier: Modifier,
@@ -88,7 +91,7 @@ private fun JarnLibraryTileFrame(
         modifier = modifier
             .aspectRatio(aspectRatio)
             .semantics { description?.let { contentDescription = it } }
-            .jarnInteractive(shape, source, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
             .clip(shape)
             .then(if (showCard) Modifier.background(JarnTheme.colors.raised) else Modifier),
     ) {

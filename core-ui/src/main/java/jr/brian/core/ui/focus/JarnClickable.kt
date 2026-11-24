@@ -47,9 +47,10 @@ fun Modifier.jarnInteractive(
     enabled: Boolean = true,
     focusableWhenDisabled: Boolean = false,
     role: Role = Role.Button,
+    focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
     onClick: () -> Unit,
 ): Modifier = this
-    .jarnFocus(shape, interactionSource, enabled)
+    .jarnFocus(shape, interactionSource, enabled, focusStyle)
     .jarnClickable(interactionSource, enabled, focusableWhenDisabled, role, onClick)
     .jarnDisabledAlpha(enabled)
 

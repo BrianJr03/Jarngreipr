@@ -92,7 +92,7 @@ private fun JarnRowFrame(
     val shape = JarnTheme.radius.smShape
     Row(
         modifier = modifier
-            .jarnInteractive(shape, source, enabled, focusableWhenDisabled, role, onClick)
+            .jarnInteractive(shape, source, enabled, focusableWhenDisabled, role, onClick = onClick)
             .fillMaxWidth()
             .heightIn(min = 44.dp)
             .background(JarnTheme.colors.surface, shape)

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnEdgeScroll
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.theme.JarnTheme
@@ -141,7 +142,7 @@ internal fun NowSoloCard(
             .then(modifier)
             .fillMaxWidth()
             .height(coverHeight)
-            .jarnInteractive(shape, source, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.ScaleSubtle, onClick = onClick)
             .clip(shape)
             .background(colors.bg.copy(alpha = PLATE_ALPHA)),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),

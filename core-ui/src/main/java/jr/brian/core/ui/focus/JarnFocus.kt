@@ -49,20 +49,32 @@ private const val JarnFocusLandingSpread = 1.4f
 internal fun jarnPressScale(pressScale: Float, pressProgress: Float): Float =
     (1f + (pressScale - 1f) * pressProgress).coerceAtMost(1f)
 
+/** [focusScale] is how much a [Ring]-less item grows while focused on the active screen. */
+enum class JarnFocusStyle(internal val focusScale: Float) {
+    Ring(1f),
+    Scale(1.08f),
+    ScaleSubtle(1.03f),
+}
+
+internal fun jarnFocusScale(style: JarnFocusStyle, focusProgress: Float, activation: Float): Float =
+    1f + (style.focusScale - 1f) * focusProgress * activation
+
 fun Modifier.jarnFocus(
     shape: Shape,
     interactionSource: MutableInteractionSource,
     enabled: Boolean = true,
-): Modifier = this then JarnFocusElement(shape, interactionSource, enabled)
+    style: JarnFocusStyle = JarnFocusStyle.Ring,
+): Modifier = this then JarnFocusElement(shape, interactionSource, enabled, style)
 
 private data class JarnFocusElement(
     val shape: Shape,
     val interactionSource: InteractionSource,
     val enabled: Boolean,
+    val style: JarnFocusStyle,
 ) : ModifierNodeElement<JarnFocusNode>() {
-    override fun create() = JarnFocusNode(shape, interactionSource, enabled)
+    override fun create() = JarnFocusNode(shape, interactionSource, enabled, style)
 
-    override fun update(node: JarnFocusNode) = node.update(shape, interactionSource, enabled)
+    override fun update(node: JarnFocusNode) = node.update(shape, interactionSource, enabled, style)
 
     override fun InspectorInfo.inspectableProperties() {
         name = "jarnFocus"
@@ -75,11 +87,13 @@ private class JarnFocusNode(
     private var shape: Shape,
     private var interactionSource: InteractionSource,
     private var enabled: Boolean,
+    style: JarnFocusStyle,
 ) : Modifier.Node(), LayoutModifierNode, DrawModifierNode, CompositionLocalConsumerModifierNode {
 
     private val focusProgress = Animatable(0f)
     private val pressProgress = Animatable(0f)
     private var isFocused by mutableStateOf(false)
+    private var style by mutableStateOf(style)
     private var activePresses = 0
     private var interactionJob: Job? = null
 
@@ -89,14 +103,16 @@ private class JarnFocusNode(
     private var cachedDensity = 0f
 
     private val layerBlock: GraphicsLayerScope.() -> Unit = {
-        val scale = currentScale()
+        val activation = currentValueOf(LocalJarnScreenActivation).value
+        val scale = currentScale() * jarnFocusScale(style, focusProgress.value, activation)
         scaleX = scale
         scaleY = scale
     }
 
     override val shouldAutoInvalidate: Boolean = false
 
-    fun update(shape: Shape, interactionSource: InteractionSource, enabled: Boolean) {
+    fun update(shape: Shape, interactionSource: InteractionSource, enabled: Boolean, style: JarnFocusStyle) {
+        this.style = style
         val shapeChanged = this.shape != shape
         this.shape = shape
         this.enabled = enabled
@@ -184,7 +200,7 @@ private class JarnFocusNode(
     override fun ContentDrawScope.draw() {
         drawContent()
         val progress = focusProgress.value
-        if (isFocused || progress > 0f) drawIndicator(progress)
+        if (style == JarnFocusStyle.Ring && (isFocused || progress > 0f)) drawIndicator(progress)
     }
 
     /** The ring exists only on the active screen, and settles as that screen takes control. */
