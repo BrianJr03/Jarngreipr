@@ -70,7 +70,10 @@ class ExperienceHomeRouter @Inject constructor(
     }
 }
 
-/** Builds without Jarn FE return before reading the store, so their Classic path is untouched. */
+/**
+ * Builds without Jarn FE return before reading the store, so their Classic path is untouched. A
+ * Home press never saves a choice: only a saved Jarn opens it.
+ */
 internal fun openChosenJarn(
     jarnAvailable: Boolean,
     store: () -> ExperienceStore,
@@ -85,7 +88,5 @@ internal fun openChosenJarn(
         stored = experienceStore.storedExperience,
         forceClassic = forceClassic,
     )
-    if (choice != Experience.JarnFE || !isLoopFree() || !open()) return false
-    experienceStore.adoptIfUnset(Experience.JarnFE)
-    return true
+    return choice == Experience.JarnFE && isLoopFree() && open()
 }

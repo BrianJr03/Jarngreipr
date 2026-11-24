@@ -47,11 +47,6 @@ class ExperienceStore @Inject constructor(
         }
     }
 
-    /** Records a default that was actually opened, so backups report the real experience. */
-    fun adoptIfUnset(experience: Experience) {
-        if (storedExperience == null) setExperience(experience)
-    }
-
     private fun load(): Experience =
         Experience.fromNameOrDefault(prefs.getString(KEY_EXPERIENCE, null))
 

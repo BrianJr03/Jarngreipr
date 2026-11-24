@@ -59,14 +59,27 @@ class ExperienceHomeRouterTest {
     }
 
     @Test
-    fun `a failed launch falls back without saving a choice`() {
+    fun `a failed launch of a saved jarn falls back to classic`() {
+        store.setExperience(Experience.JarnFE)
         assertFalse(route(opened = false))
-        assertNull(store.storedExperience)
+        assertEquals(Experience.JarnFE, store.storedExperience)
     }
 
     @Test
-    fun `an opened default is saved`() {
+    fun `no saved choice stays in classic and saves nothing`() {
+        assertFalse(route())
+        assertEquals(0, opens)
+        assertNull(store.storedExperience)
+        assertEquals(Experience.Classic, store.experience)
+        assertFalse(store.everJarnFe)
+    }
+
+    @Test
+    fun `a saved jarn stays jarn and is kept`() {
+        store.setExperience(Experience.JarnFE)
         assertTrue(route())
+        assertTrue(route())
+        assertEquals(2, opens)
         assertEquals(Experience.JarnFE, store.storedExperience)
     }
 

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import jr.brian.core.model.Experience
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.home.data.ExperienceStore
+import jr.brian.home.data.openChosenJarn
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -99,6 +100,26 @@ class JarnPreviewGateTest {
 
         assertFalse(store.shouldShow("3.2.0"))
         assertTrue(store.shouldShow("3.3.0"))
+    }
+
+    @Test
+    fun `a fresh install's home press opens classic, so meet jarn shows`() {
+        var jarnOpened = false
+        val openedJarn = openChosenJarn(
+            jarnAvailable = true,
+            store = { experienceStore },
+            forceClassic = false,
+            isLoopFree = { true },
+        ) {
+            jarnOpened = true
+            true
+        }
+
+        assertFalse(openedJarn)
+        assertFalse(jarnOpened)
+        assertEquals(null, experienceStore.storedExperience)
+        assertFalse(experienceStore.everJarnFe)
+        assertTrue(store.shouldShow("4.0.0"))
     }
 
     @Test
