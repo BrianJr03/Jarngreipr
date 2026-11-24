@@ -4,6 +4,8 @@ import androidx.compose.ui.geometry.Rect
 import jr.brian.core.ui.focus.JarnFocusReach
 import jr.brian.core.ui.focus.jarnFocusBorderReach
 import jr.brian.core.ui.theme.JarnSpacing
+import jr.brian.jarnfe.library.LibraryGridColumnSpacing
+import jr.brian.jarnfe.library.LibraryGridRowSpacing
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -36,6 +38,14 @@ class JarnAppsFocusBorderGeometryTest {
         val columns = jarnAppColumns(available)
         assertTrue("columns on the Thor: $columns", columns >= 4)
         assertTrue(jarnAppCellWidth(available, columns) >= APP_TILE_MIN_WIDTH)
+    }
+
+    @Test
+    fun `app results in Search reuse a grid with room for the border`() {
+        val reach = AppTileFocusReach
+        assertTrue(LibraryGridColumnSpacing.value > reach.sides)
+        assertTrue(LibraryGridRowSpacing.value > maxOf(reach.top, reach.bottom))
+        assertTrue(spacing.stageMargin.value >= reach.sides && focusEdge >= reach.top)
     }
 
     private fun assertGrid(width: Float, tileHeight: Float) {
