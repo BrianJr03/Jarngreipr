@@ -10,5 +10,11 @@
             android:name=".esde.ui.FrontEndActivity"
             android:excludeFromRecents="true"
             tools:replace="android:excludeFromRecents" />
+        <activity
+            android:name="jr.brian.jarnfe.shell.JarnStageActivity"
+            android:excludeFromRecents="true" />
+        <activity
+            android:name="jr.brian.jarnfe.shell.JarnDeckActivity"
+            android:excludeFromRecents="true" />
     </application>
 </manifest>
