@@ -36,7 +36,7 @@ internal fun StarstaveWallpaper(modifier: Modifier) {
     val colors = JarnTheme.colors
     val showsDial = rememberJarnWallpaperIsBottomScreen()
     val hasDeckUi = LocalJarnScreen.current == JarnScreen.Deck
-    val isMotionReduced = JarnTheme.motion.reduced
+    val isMotionReduced = JarnTheme.motion.ambientReduced
     val canAnimate = rememberJarnWallpaperCanAnimate()
     val painter = remember(colors, showsDial, hasDeckUi, isMotionReduced) {
         StarstavePainter(colors.toJarnWallpaperPalette(), showsDial, hasDeckUi, isMotionReduced)

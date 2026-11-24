@@ -46,8 +46,34 @@ class JarnWallpaperGateTest {
     }
 
     @Test
-    fun `closes when the Deck display has no Deck window`() {
-        assertFalse(open.copy(windows = listOf(stage)).canAnimate())
+    fun `opens on a Deck display whose window is gone while Stage holds top resumed`() {
+        assertTrue(open.copy(windows = listOf(stage)).canAnimate())
+    }
+
+    @Test
+    fun `closes on a Deck display whose window is gone while a game runs`() {
+        assertFalse(open.copy(windows = listOf(stage), isGameRunning = true).canAnimate())
+    }
+
+    @Test
+    fun `closes on a Deck display whose window is gone when Stage lost top resumed`() {
+        val notTop = stage.copy(isTopResumed = false)
+        assertFalse(open.copy(windows = listOf(notTop)).canAnimate())
+    }
+
+    @Test
+    fun `a running game alone does not close it while both windows are up`() {
+        assertTrue(open.copy(isGameRunning = true).canAnimate())
+    }
+
+    @Test
+    fun `reports Battery Saver before Reduce motion`() {
+        assertEquals(
+            JarnWallpaperPause.BatterySaver,
+            open.copy(isBatterySaverOn = true, isMotionReduced = true).pause(),
+        )
+        assertEquals(JarnWallpaperPause.ReduceMotion, open.copy(isMotionReduced = true).pause())
+        assertEquals(null, open.pause())
     }
 
     @Test
@@ -91,6 +117,22 @@ class JarnWallpaperGateTest {
         timeline.advance(1_500L)
         timeline.rejoin(1_500L)
         assertEquals(500L, timeline.elapsedNanos)
+    }
+
+    @Test
+    fun `windows waking on different frames keep time moving`() {
+        val timeline = JarnWallpaperTimeline()
+        timeline.rejoin(0L)
+        var lastWake = 0L
+        for (index in 1..600) {
+            val frame = index * 16_666_667L
+            val stageWakes = index % 5 == 0
+            val deckWakes = index % 4 == 0
+            if (stageWakes) timeline.advance(frame)
+            if (deckWakes) timeline.advance(frame)
+            if (stageWakes || deckWakes) lastWake = frame
+        }
+        assertEquals(lastWake, timeline.elapsedNanos)
     }
 
     @Test

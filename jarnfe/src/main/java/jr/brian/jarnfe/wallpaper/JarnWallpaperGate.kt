@@ -16,9 +16,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import jr.brian.core.model.JarnGameCover
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.shell.JarnHomeEntry
 import jr.brian.jarnfe.splash.JarnSplash
 
 internal data class JarnWallpaperWindow(
@@ -27,6 +29,8 @@ internal data class JarnWallpaperWindow(
     val isTopResumed: Boolean,
 )
 
+internal enum class JarnWallpaperPause { BatterySaver, ReduceMotion }
+
 internal data class JarnWallpaperConditions(
     val windows: List<JarnWallpaperWindow>,
     val deckDisplayAvailable: Boolean,
@@ -34,18 +38,33 @@ internal data class JarnWallpaperConditions(
     val isBatterySaverOn: Boolean,
     val isMotionReduced: Boolean,
     val isSplashPlaying: Boolean,
+    val isGameRunning: Boolean = false,
 ) {
+    /**
+     * A Deck display without a Deck window (lost, or never opened) cannot prove it is free, so
+     * Stage alone counts only while it holds top-resumed and no game is up. Otherwise a window
+     * that never comes back would hold every wallpaper still.
+     */
     private val hasEveryExpectedWindow: Boolean
-        get() = windows.any { it.screen == JarnScreen.Stage } &&
-            (!deckDisplayAvailable || windows.any { it.screen == JarnScreen.Deck })
+        get() {
+            val stage = windows.firstOrNull { it.screen == JarnScreen.Stage } ?: return false
+            val hasDeck = windows.any { it.screen == JarnScreen.Deck }
+            return hasDeck || !deckDisplayAvailable || (stage.isTopResumed && !isGameRunning)
+        }
 
     /**
      * A game covers the Jarn window on its display, which stops only that window, so all of them
      * must be resumed. A game on a display with no Jarn window stops nothing but still takes
-     * top-resumed from us, and a destroyed window must not read as a free display.
+     * top-resumed from us.
      */
-    fun canAnimate(): Boolean =
-        !isBatterySaverOn && !isMotionReduced && !isSplashPlaying && isJarnInFront()
+    fun canAnimate(): Boolean = pause() == null && !isSplashPlaying && isJarnInFront()
+
+    /** Why wallpapers hold still by the player's own choice or the system's, if they do. */
+    fun pause(): JarnWallpaperPause? = when {
+        isBatterySaverOn -> JarnWallpaperPause.BatterySaver
+        isMotionReduced -> JarnWallpaperPause.ReduceMotion
+        else -> null
+    }
 
     /** False while a game is up, so nothing decodes art behind it. */
     fun isJarnInFront(): Boolean =
@@ -96,6 +115,8 @@ internal object JarnWallpaperGate {
 
     fun allowsArtWork(): Boolean = conditions(isMotionReduced = false).isJarnInFront()
 
+    fun pause(isMotionReduced: Boolean): JarnWallpaperPause? = conditions(isMotionReduced).pause()
+
     private fun conditions(isMotionReduced: Boolean) = JarnWallpaperConditions(
         windows = windows,
         deckDisplayAvailable = JarnSession.state.run { deckDisplayAvailable || deckWindowLost },
@@ -103,6 +124,7 @@ internal object JarnWallpaperGate {
         isBatterySaverOn = isBatterySaverOn,
         isMotionReduced = isMotionReduced,
         isSplashPlaying = JarnSplash.isPlaying,
+        isGameRunning = JarnHomeEntry.gameCover != JarnGameCover.None,
     )
 
     private fun untrack(activity: ComponentActivity) {
@@ -146,9 +168,27 @@ internal object JarnWallpaperGate {
     }
 }
 
-/** True while wallpapers may move. When false they hold their last frame. */
+/**
+ * True while wallpapers may move. When false they hold their last frame. Only Jarn's own Reduce
+ * motion stops them, not Android animations being off.
+ */
 @Composable
 internal fun rememberJarnWallpaperCanAnimate(): State<Boolean> {
-    val isMotionReduced by rememberUpdatedState(JarnTheme.motion.reduced)
+    val isMotionReduced by rememberUpdatedState(JarnTheme.motion.ambientReduced)
     return remember { derivedStateOf { JarnWallpaperGate.allowsAnimation(isMotionReduced) } }
+}
+
+/** The focus float is UI movement, so it also stops when Android animations are off. */
+@Composable
+internal fun rememberJarnFocusFloatAllowed(): State<Boolean> {
+    val canAnimate = rememberJarnWallpaperCanAnimate()
+    val isMotionReduced by rememberUpdatedState(JarnTheme.motion.reduced)
+    return remember(canAnimate) { derivedStateOf { canAnimate.value && !isMotionReduced } }
+}
+
+/** Why a moving wallpaper is held still right now, for Settings to explain. */
+@Composable
+internal fun rememberJarnWallpaperPause(): JarnWallpaperPause? {
+    val isMotionReduced = JarnTheme.motion.ambientReduced
+    return JarnWallpaperGate.pause(isMotionReduced)
 }

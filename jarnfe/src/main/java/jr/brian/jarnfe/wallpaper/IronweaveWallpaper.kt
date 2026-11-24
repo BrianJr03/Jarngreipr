@@ -28,7 +28,7 @@ internal fun IronweaveWallpaper(modifier: Modifier) {
     val colors = JarnTheme.colors
     val isBottomScreen = rememberJarnWallpaperIsBottomScreen()
     val hasDeckUi = LocalJarnScreen.current == JarnScreen.Deck
-    val isMotionReduced = JarnTheme.motion.reduced
+    val isMotionReduced = JarnTheme.motion.ambientReduced
     val canAnimate = rememberJarnWallpaperCanAnimate()
     val palette = remember(colors) { colors.toJarnWallpaperPalette() }
     val tile = remember(palette.bg) { IronweaveTile(palette.bg) }

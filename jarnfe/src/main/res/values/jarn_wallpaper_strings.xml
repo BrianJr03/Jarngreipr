@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_wallpaper_choose_hint">Pick a photo, or a GIF to play as a moving wallpaper.</string>
+    <string name="jarnfe_wallpaper_paused_battery_saver">Wallpaper motion is paused while Battery Saver is on.</string>
+    <string name="jarnfe_wallpaper_paused_reduce_motion">Wallpaper motion is paused while Reduce motion is on.</string>
+</resources>

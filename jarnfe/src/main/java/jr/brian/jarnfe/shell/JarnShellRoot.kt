@@ -19,7 +19,7 @@ import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.stage.StageScreen
-import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperCanAnimate
+import jr.brian.jarnfe.wallpaper.rememberJarnFocusFloatAllowed
 
 @Composable
 internal fun JarnShellRoot(screen: JarnScreen) {
@@ -34,7 +34,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
         screenActive = state.isLit(screen),
         switchCue = switchCue,
     ) {
-        CompositionLocalProvider(LocalJarnFocusFloatAllowed provides rememberJarnWallpaperCanAnimate()) {
+        CompositionLocalProvider(LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed()) {
             ProvideJarnInput(JarnInput, screen) {
                 val firstRun = rememberJarnFirstRun(state.stageRoute)
                 val dimTarget = jarnDimTarget(switchCue, state.isLit(screen), state.settingsOnDeck)
