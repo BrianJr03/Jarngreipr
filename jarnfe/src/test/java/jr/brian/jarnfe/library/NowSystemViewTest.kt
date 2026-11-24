@@ -1,6 +1,18 @@
 package jr.brian.jarnfe.library
 
 import android.app.Application
+import jr.brian.jarnfe.session.DeckTab
+import jr.brian.jarnfe.deck.showsNowShortcuts
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
@@ -24,6 +36,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,36 +53,105 @@ class NowSystemViewTest {
     private val games = listOf("one", "two", "three").map { JarnLibraryGame(it, "snes", it) }
     private val shelf = games.map { JarnShelfGame(it, JarnShelfGroup.Recent) }
 
-    @Test
-    fun `deck starts on Random and moves through the shelf and back`() {
+    private var showSystem by mutableStateOf(true)
+
+    @Before
+    fun clearBoard() {
+        NowShortcutBoard.status = null
+    }
+    private var clicked = 0
+
+    private fun showWithHeader(actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {})): () -> FocusManager {
         lateinit var focusManager: FocusManager
         rule.setContent {
             focusManager = LocalFocusManager.current
             ProvideJarnInput(JarnInputRouter(), JarnScreen.Deck) {
                 JarnTheme {
-                    Box(Modifier.size(540.dp, 400.dp)) {
-                        NowSystemContent(
-                            system = system,
-                            shelf = shelf,
-                            isLoaded = true,
-                            actions = NowSystemActions({}, {}, {}, {}),
-                            pendingCoverId = null,
-                            onCoverRestored = {},
-                        )
+                    Column(Modifier.size(540.dp, 460.dp)) {
+                        Row(Modifier.fillMaxWidth()) {
+                            Box(Modifier.weight(1f))
+                            NowShortcutControls()
+                        }
+                        if (showSystem) {
+                            NowSystemContent(
+                                system = system,
+                                shelf = shelf,
+                                isLoaded = true,
+                                actions = actions,
+                                pendingCoverId = null,
+                                onCoverRestored = {},
+                            )
+                        }
                     }
                 }
             }
         }
         rule.waitForIdle()
-        rule.onNodeWithText("Random").assertIsFocused()
-        move(focusManager, FocusDirection.Down)
+        return { focusManager }
+    }
+
+    @Test
+    fun `the deck starts on the shelf, Up reaches the header shortcuts and Down comes back`() {
+        val focusManager = showWithHeader()
         rule.onNodeWithContentDescription("one").assertIsFocused()
-        move(focusManager, FocusDirection.Right)
+        move(focusManager(), FocusDirection.Right)
+        move(focusManager(), FocusDirection.Up)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+        move(focusManager(), FocusDirection.Right)
+        rule.onNodeWithContentDescription("Last Played").assertIsFocused()
+        move(focusManager(), FocusDirection.Down)
         rule.onNodeWithContentDescription("two").assertIsFocused()
-        move(focusManager, FocusDirection.Up)
-        rule.onNodeWithText("Random").assertIsFocused()
-        move(focusManager, FocusDirection.Down)
-        rule.onNodeWithContentDescription("two").assertIsFocused()
+    }
+
+    @Test
+    fun `the header shows the shortcuts for a system, Random then Last Played, apart`() {
+        showWithHeader()
+        val random = rule.onNodeWithContentDescription("Random").getUnclippedBoundsInRoot()
+        val last = rule.onNodeWithContentDescription("Last Played").getUnclippedBoundsInRoot()
+        assertTrue(random.right.value + nowShortcutGap(12f) - 1f <= last.left.value)
+        assertEquals(random.top.value, last.top.value, 1f)
+    }
+
+    @Test
+    fun `pressing Random runs its jump`() {
+        showWithHeader()
+        rule.onNodeWithContentDescription("Random").performClick()
+        assertEquals(1, clicked)
+    }
+
+    @Test
+    fun `leaving the system hides the shortcuts and they let go of focus`() {
+        val focusManager = showWithHeader()
+        move(focusManager(), FocusDirection.Up)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+        rule.runOnIdle { showSystem = false }
+        rule.waitForIdle()
+        rule.onNodeWithTag(NOW_SHORTCUTS_TAG).assertDoesNotExist()
+        rule.onNodeWithContentDescription("Random").assertDoesNotExist()
+        assertNull(NowShortcutBoard.status)
+    }
+
+    @Test
+    fun `each toggle hides its shortcut, and with both off nothing is shown`() {
+        showWithHeader(NowSystemActions(null, {}, {}, {}))
+        rule.onNodeWithContentDescription("Random").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Last Played").assertExists()
+        rule.runOnIdle { NowShortcutBoard.status = null }
+        rule.waitForIdle()
+        rule.onNodeWithTag(NOW_SHORTCUTS_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `with both shortcuts off the header stays empty`() {
+        showWithHeader(NowSystemActions(null, null, {}, {}))
+        rule.onNodeWithTag(NOW_SHORTCUTS_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `only the Now tab carries the shortcuts`() {
+        assertTrue(DeckTab.Now.showsNowShortcuts())
+        assertFalse(DeckTab.Apps.showsNowShortcuts())
+        assertFalse(DeckTab.Canvas.showsNowShortcuts())
     }
 
     @Test

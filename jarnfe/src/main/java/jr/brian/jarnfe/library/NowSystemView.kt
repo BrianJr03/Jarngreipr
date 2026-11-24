@@ -1,6 +1,5 @@
 package jr.brian.jarnfe.library
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -26,15 +24,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import jr.brian.core.ui.components.JarnButton
-import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.core.ui.theme.JarnTheme
@@ -140,11 +135,8 @@ internal fun NowSystemContent(
         focus.shelfIds = shelfIds
         focus.actions = buttons
     }
-    val entry = when (buttons.firstOrNull()) {
-        NowFocusTarget.Random -> focus.random
-        NowFocusTarget.LastPlayed -> focus.lastPlayed
-        else -> null
-    }
+    PublishNowShortcuts(actions, focus)
+    val entry = focus.coverEntryFor(shelfIds)
     NowEntryFocus(focus, entry, pendingCoverId != null)
     NowCoverRestore(focus, entry, isLoaded, pendingCoverId, onCoverRestored)
     JarnInputLayer(
@@ -282,7 +274,6 @@ private fun NowLowerArea(
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
     ) {
         if (layout == NowShelfLayout.Empty && isLoaded) NowEmptyPlate()
-        NowActionRow(focus, actions)
         when (layout) {
             NowShelfLayout.Hidden, NowShelfLayout.Empty -> Unit
             NowShelfLayout.Single -> NowSoloShelf(shelf.first().game, coverHeight, focus, actions)
@@ -329,46 +320,5 @@ private fun NowSoloShelf(
         coverHeight = coverHeight,
         modifier = Modifier.nowCoverFocus(game, focus),
         onClick = { actions.onPlay?.invoke(game) },
-    )
-}
-
-/** Gone entirely when both buttons are turned off, so nothing empty can take focus. */
-@Composable
-private fun NowActionRow(focus: NowSystemFocus, actions: NowSystemActions) {
-    if (actions.buttons.isEmpty()) return
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
-    ) {
-        actions.onRandom?.let { random ->
-            NowShortcutButton(R.string.jarnfe_now_random, random, focus.random, NowFocusTarget.Random, focus)
-        }
-        actions.onLastPlayed?.let { lastPlayed ->
-            NowShortcutButton(
-                R.string.jarnfe_now_last_played,
-                lastPlayed,
-                focus.lastPlayed,
-                NowFocusTarget.LastPlayed,
-                focus,
-                variant = JarnButtonVariant.Secondary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun RowScope.NowShortcutButton(
-    @StringRes labelRes: Int,
-    onClick: () -> Unit,
-    requester: FocusRequester,
-    target: NowFocusTarget,
-    focus: NowSystemFocus,
-    variant: JarnButtonVariant = JarnButtonVariant.Primary,
-) {
-    JarnButton(
-        label = stringResource(labelRes),
-        onClick = onClick,
-        modifier = Modifier.weight(1f).nowActionFocus(requester, target, focus),
-        variant = variant,
     )
 }

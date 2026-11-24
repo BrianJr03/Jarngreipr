@@ -54,7 +54,10 @@ internal class NowSystemFocus {
     fun cover(id: String): FocusRequester = covers.getOrPut(id) { FocusRequester() }
 
     val coverEntry: FocusRequester
-        get() = nowShelfEntryId(shelfIds, lastCoverId)?.let(::cover) ?: FocusRequester.Default
+        get() = coverEntryFor(shelfIds) ?: FocusRequester.Default
+
+    /** The cover to enter on for [ids], usable before [shelfIds] catches up on the first frame. */
+    fun coverEntryFor(ids: List<String>): FocusRequester? = nowShelfEntryId(ids, lastCoverId)?.let(::cover)
 
     /** The last button used while it is still shown, otherwise the first, or none at all. */
     val actionEntry: FocusRequester
