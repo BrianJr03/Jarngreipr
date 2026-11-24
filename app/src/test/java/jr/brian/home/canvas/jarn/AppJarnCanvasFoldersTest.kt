@@ -16,6 +16,7 @@ import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.FolderManager
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,6 +35,7 @@ class AppJarnCanvasFoldersTest {
         widgetPreferences = mockk(relaxed = true),
         nowPlaying = mockk(relaxed = true),
         rss = mockk(relaxed = true),
+        removals = mockk(relaxed = true),
     )
     private val subject = AppJarnCanvasFolders(
         layouts = layouts,
@@ -51,17 +53,20 @@ class AppJarnCanvasFoldersTest {
                 CanvasItem.AppItem("app", "a"),
             ),
         )
+        every { layouts.layoutsByPage } returns MutableStateFlow(emptyMap())
+        coEvery { folders.readFolders(PAGE, CanvasTabType.VALUE) } returns listOf(folder)
         coEvery { folders.getFolder(PAGE, "id", CanvasTabType.VALUE) } returns folder
         coEvery { folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE) } returns true
         coEvery { folders.updateFolder(PAGE, any(), CanvasTabType.VALUE) } returns true
     }
 
     @Test
-    fun `a refused delete keeps every tile`() = runBlocking {
+    fun `an unreadable folder store keeps every tile and the folder`() = runBlocking {
         givenFolderOnPage()
-        coEvery { folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE) } returns false
+        coEvery { folders.readFolders(PAGE, CanvasTabType.VALUE) } returns null
         subject.deleteFolder(PAGE, "id")
         verify(exactly = 0) { layouts.removeItem(any(), any()) }
+        coVerify(exactly = 0) { folders.deleteFolder(any(), any(), any()) }
     }
 
     @Test
@@ -80,12 +85,12 @@ class AppJarnCanvasFoldersTest {
     }
 
     @Test
-    fun `deleting removes the folder first, then only its own tile`() = runBlocking {
+    fun `deleting removes only its own tile first, then the folder`() = runBlocking {
         givenFolderOnPage()
         subject.deleteFolder(PAGE, "id")
         coVerifyOrder {
-            folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE)
             layouts.removeItem(PAGE, "folder-id")
+            folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE)
         }
         verify(exactly = 0) { layouts.removeItem(PAGE, "folder-other") }
         verify(exactly = 0) { layouts.removeItem(PAGE, "app") }
@@ -96,8 +101,8 @@ class AppJarnCanvasFoldersTest {
         givenFolderOnPage()
         subject.editFolderApps(PAGE, "id", emptySet(), setOf("gone", "a"))
         coVerifyOrder {
-            folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE)
             layouts.removeItem(PAGE, "folder-id")
+            folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE)
         }
     }
 

@@ -55,6 +55,7 @@ class AppJarnCanvasTileMoveTest {
         widgetPreferences = mockk(relaxed = true),
         nowPlaying = mockk(relaxed = true),
         rss = mockk(relaxed = true),
+        removals = mockk(relaxed = true),
     )
 
     private fun page(item: CanvasItem, rect: GridRect = GridRect(1, 0, 1, 1)) = CanvasLayout(

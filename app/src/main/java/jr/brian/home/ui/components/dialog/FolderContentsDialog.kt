@@ -88,6 +88,7 @@ fun FolderContentsDialog(
     tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS,
     backgroundColorArgb: Int? = null,
     backgroundImagePath: String? = null,
+    deleteFolder: (suspend () -> Boolean)? = null,
     onDismiss: () -> Unit
 ) {
     var currentBackgroundColorArgb by remember(folderId) { mutableStateOf(backgroundColorArgb) }
@@ -104,6 +105,8 @@ fun FolderContentsDialog(
 
     var editableName by remember { mutableStateOf(folderName) }
     val editAppsDialogState = rememberDialogState<Unit>()
+    val deleteConfirmState = rememberDialogState<Unit>()
+    val removeFolder = deleteFolder ?: { folderManager.deleteFolder(pageIndex, folderId, tabType) }
     var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
     var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
     var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
@@ -117,7 +120,7 @@ fun FolderContentsDialog(
         folderAppPackages = newPackages
         scope.launch {
             val saved = if (newPackages.isEmpty()) {
-                folderManager.deleteFolder(pageIndex, folderId, tabType)
+                removeFolder()
             } else {
                 folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
             }
@@ -152,11 +155,7 @@ fun FolderContentsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = {
-                            scope.launch {
-                                if (folderManager.deleteFolder(pageIndex, folderId, tabType)) onDismiss()
-                            }
-                        },
+                        onClick = { deleteConfirmState.show() },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
@@ -401,7 +400,34 @@ fun FolderContentsDialog(
         )
     }
 
+    if (deleteConfirmState.isVisible) {
+        FolderDeleteConfirmation(
+            folderName = editableName,
+            onConfirm = {
+                deleteConfirmState.dismiss()
+                scope.launch { if (removeFolder()) onDismiss() }
+            },
+            onDismiss = deleteConfirmState::dismiss
+        )
+    }
+
     displayChooser.DialogIfNeeded()
+}
+
+@Composable
+private fun FolderDeleteConfirmation(
+    folderName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ConfirmationDialog(
+        title = stringResource(R.string.folder_delete),
+        message = stringResource(R.string.folder_delete_confirm_message, folderName),
+        confirmText = stringResource(R.string.common_delete),
+        cancelText = stringResource(R.string.common_cancel),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
