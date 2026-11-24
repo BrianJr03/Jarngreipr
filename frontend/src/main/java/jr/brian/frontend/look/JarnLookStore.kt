@@ -3,6 +3,7 @@ package jr.brian.frontend.look
 import android.content.Context
 import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.JarnSwitchCue
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,6 +79,7 @@ class JarnLookStore @Inject constructor(
             putString(KEY_SWITCH_CUE, next.switchCue.id)
             putString(KEY_SYSTEM_VIEW, next.systemView.id)
             putString(KEY_GAME_VIEW, next.gameView.id)
+            putString(KEY_PAGE_TRANSITION, next.pageTransition.id)
         }
     }
 
@@ -111,6 +113,7 @@ class JarnLookStore @Inject constructor(
         switchCue = JarnSwitchCue.fromId(prefs.getString(KEY_SWITCH_CUE, null)),
         systemView = JarnBrowseView.fromId(prefs.getString(KEY_SYSTEM_VIEW, null)),
         gameView = JarnBrowseView.fromId(prefs.getString(KEY_GAME_VIEW, null)),
+        pageTransition = JarnPageTransition.fromId(prefs.getString(KEY_PAGE_TRANSITION, null)),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -168,6 +171,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_SWITCH_CUE = "switch_cue"
         const val KEY_SYSTEM_VIEW = "system_view"
         const val KEY_GAME_VIEW = "game_view"
+        const val KEY_PAGE_TRANSITION = "page_transition"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

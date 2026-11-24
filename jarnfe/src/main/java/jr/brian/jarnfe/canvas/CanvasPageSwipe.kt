@@ -2,7 +2,6 @@ package jr.brian.jarnfe.canvas
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -10,13 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -26,25 +23,21 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirstOrNull
 import jr.brian.core.ui.components.JarnSurface
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.motion.rememberJarnPageEnter
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.sign
 
-private const val PAGE_ENTER_MS = 240
-private const val PAGE_FADE_REDUCED_MS = 120
 private const val RUBBER_SETTLE_MS = 160
-private val PageEnterShift = 24.dp
 private val PageEnterEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
 
 /** Starting values from the approved prototype. They still need tuning on a real device. */
@@ -283,34 +276,7 @@ internal fun CanvasPagePeek(host: CanvasPageSwipeHost, pageIndex: Int) {
     }
 }
 
-/** A new page eases in from the side it came from, or fades when motion is reduced. */
+/** A new page arrives with the chosen Page transition, or fades when motion is reduced. */
 @Composable
-internal fun rememberCanvasPageMotion(selected: Int): Modifier {
-    val reduced = JarnTheme.motion.reduced
-    val shiftPx = with(LocalDensity.current) { PageEnterShift.toPx() }
-    val alpha = remember { Animatable(1f) }
-    val shift = remember { Animatable(0f) }
-    var shown by remember { mutableIntStateOf(selected) }
-    LaunchedEffect(selected) {
-        val direction = (selected - shown).coerceIn(-1, 1)
-        shown = selected
-        if (direction == 0) return@LaunchedEffect
-        alpha.snapTo(0f)
-        shift.snapTo(if (reduced) 0f else shiftPx * direction)
-        coroutineScope {
-            launch {
-                alpha.animateTo(
-                    1f,
-                    if (reduced) tween(PAGE_FADE_REDUCED_MS, easing = LinearEasing) else tween(PAGE_ENTER_MS, easing = PageEnterEasing),
-                )
-            }
-            launch { shift.animateTo(0f, tween(PAGE_ENTER_MS, easing = PageEnterEasing)) }
-        }
-    }
-    return remember(alpha, shift) {
-        Modifier.graphicsLayer {
-            this.alpha = alpha.value
-            translationX = shift.value
-        }
-    }
-}
+internal fun rememberCanvasPageMotion(selected: Int): Modifier =
+    rememberJarnPageEnter(selected, rememberJarnDisplay().pageTransition)

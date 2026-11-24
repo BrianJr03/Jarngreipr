@@ -31,6 +31,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import jr.brian.core.ui.motion.JarnTilePress
+import jr.brian.core.ui.motion.rememberJarnTileEnter
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -97,14 +99,17 @@ internal fun JarnDockRow(modifier: Modifier = Modifier) {
 private fun JarnDockTile(app: JarnDockApp, onClick: () -> Unit) {
     val shape = JarnTheme.radius.mdShape
     val source = remember { MutableInteractionSource() }
-    Box(
-        modifier = Modifier
-            .size(DockTileSize)
-            .semantics { contentDescription = app.label }
-            .jarnInteractive(shape, source, onClick = onClick)
-            .background(JarnTheme.colors.raised, shape),
-        contentAlignment = Alignment.Center,
-    ) {
-        AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(DockIconSize))
+    JarnTilePress {
+        Box(
+            modifier = Modifier
+                .then(rememberJarnTileEnter())
+                .size(DockTileSize)
+                .semantics { contentDescription = app.label }
+                .jarnInteractive(shape, source, onClick = onClick)
+                .background(JarnTheme.colors.raised, shape),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(DockIconSize))
+        }
     }
 }

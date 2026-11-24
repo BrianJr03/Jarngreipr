@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
@@ -222,7 +223,9 @@ data class JarngreiprConfig(
         //      value. An unknown id falls back to grid.
         // v54: added FeatureConfig.jarnWallpaperScreens, Jarn FE "Same on both screens" and the
         //      bottom screen's own image or GIF. Null on older blobs, and import keeps both.
-        const val CONFIG_VERSION = 54
+        // v55: added JarnDisplayConfig.pageTransition, how a Jarn FE Canvas page arrives. Null on
+        //      older blobs, and import keeps the current value. An unknown id falls back to jarn_slide.
+        const val CONFIG_VERSION = 55
     }
 }
 
@@ -445,6 +448,7 @@ data class JarnDisplayConfig(
     val switchCue: String? = null,
     val systemView: String? = null,
     val gameView: String? = null,
+    val pageTransition: String? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -458,6 +462,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     switchCue = switchCue.id,
     systemView = systemView.id,
     gameView = gameView.id,
+    pageTransition = pageTransition.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -471,6 +476,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     switchCue = switchCue?.let(JarnSwitchCue::fromId) ?: current.switchCue,
     systemView = systemView?.let(JarnBrowseView::fromId) ?: current.systemView,
     gameView = gameView?.let(JarnBrowseView::fromId) ?: current.gameView,
+    pageTransition = pageTransition?.let(JarnPageTransition::fromId) ?: current.pageTransition,
 )
 
 @Serializable

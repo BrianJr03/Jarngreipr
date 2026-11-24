@@ -1,5 +1,6 @@
 package jr.brian.home.data.config
 
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnTapControl
@@ -211,6 +212,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             switchCue = it.switchCue?.let { id -> JarnSwitchCue.fromId(id).id } ?: shown?.switchCue,
             systemView = it.systemView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.systemView,
             gameView = it.gameView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.gameView,
+            pageTransition = it.pageTransition?.let { id -> JarnPageTransition.fromId(id).id } ?: shown?.pageTransition,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

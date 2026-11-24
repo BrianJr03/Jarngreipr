@@ -37,16 +37,22 @@ private val ReducedFade = JarnMotionToken(REDUCED_FADE_MILLIS, LinearEasing)
  * [ambientReduced] follows only the in-app toggle, for ambient motion such as live wallpapers
  * and GIFs, which many handheld players keep while turning Android animations off.
  * [instant] is Android animations being off, where route changes skip even their crossfade.
+ * [tilePress] gives Canvas tiles and dock items a firmer press, from Classic, toned down for Jarn.
  */
 @Immutable
 data class JarnMotion(
     val reduced: Boolean = false,
     val ambientReduced: Boolean = reduced,
     val instant: Boolean = false,
+    val tilePress: Boolean = false,
 ) {
     val focusIn = if (reduced) Instant else JarnMotionToken(90, JarnEasingStandard)
     val focusOut = if (reduced) Instant else JarnMotionToken(70, JarnEasingExit)
-    val press = if (reduced) Instant else JarnMotionToken(80, JarnEasingStandard)
+    val press = when {
+        reduced -> Instant
+        tilePress -> JarnMotionToken(100, JarnEasingStandard)
+        else -> JarnMotionToken(80, JarnEasingStandard)
+    }
     val small = if (reduced) Instant else JarnMotionToken(160, JarnEasingStandard)
     val panel = if (reduced) ReducedFade else JarnMotionToken(240, JarnEasingEmphasized)
     val screen = if (reduced) ReducedFade else JarnMotionToken(320, JarnEasingEmphasized)
@@ -58,7 +64,11 @@ data class JarnMotion(
     /** A short beat after [tabReveal] before focus lands, so it never arrives mid-slide. */
     val tabFocusSettleMillis: Long = if (reduced) 0L else 13L
 
-    val pressScale: Float = if (reduced) 1f else 0.97f
+    val pressScale: Float = when {
+        reduced -> 1f
+        tilePress -> 0.96f
+        else -> 0.97f
+    }
     val depthOffset: Dp = if (reduced) 0.dp else 24.dp
     val deckFollowDelayMillis: Int = if (reduced) 0 else 40
     val artDebounceMillis: Int = 150

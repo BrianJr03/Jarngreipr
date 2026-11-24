@@ -6,6 +6,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
+import jr.brian.core.ui.motion.PageTransitionMath
+import jr.brian.core.ui.motion.applyTo
 import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.sin
@@ -17,22 +19,7 @@ import kotlin.math.sin
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.pagerStackTransition(pagerState: PagerState, page: Int): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        val absOffset = offset.absoluteValue.coerceIn(0f, 1f)
-
-        if (offset <= 0f) {
-            // Current page slides left and off
-            translationX = size.width * offset
-            alpha = lerp(1f, 0f, absOffset)
-        } else {
-            // Pages behind: stacked, slightly smaller, don't move
-            val scale = lerp(0.85f, 1f, 1f - absOffset.coerceIn(0f, 1f))
-            val verticalOffset = lerp(0f, 24f * density, absOffset.coerceIn(0f, 1f))
-            scaleX = scale
-            scaleY = scale
-            translationY = verticalOffset
-            alpha = lerp(0.4f, 0.85f, 1f - absOffset)
-        }
+        PageTransitionMath.stack(pagerState.offsetForPage(page), size.width, density).applyTo(this)
     }
 
 
@@ -87,15 +74,7 @@ fun Modifier.pagerFlipVerticalTransition(pagerState: PagerState, page: Int): Mod
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.pagerCarouselTransition(pagerState: PagerState, page: Int): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        val absOffset = offset.absoluteValue.coerceIn(0f, 1f)
-
-        val scale = lerp(0.7f, 1f, 1f - absOffset)
-        scaleX = scale
-        scaleY = scale
-        alpha = lerp(0.4f, 1f, 1f - absOffset)
-        // Compress translation so neighbours peek in from the sides
-        translationX = size.width * offset * 0.75f
+        PageTransitionMath.carousel(pagerState.offsetForPage(page), size.width).applyTo(this)
     }
 
 
@@ -234,16 +213,7 @@ fun Modifier.pagerShutterTransition(
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.pagerGlideUpTransition(pagerState: PagerState, page: Int): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        val absOffset = offset.absoluteValue.coerceIn(0f, 1f)
-
-        if (offset <= 0f) {
-            translationY = -size.height * absOffset
-            alpha = lerp(1f, 0f, absOffset)
-        } else {
-            translationY = size.height * absOffset
-            alpha = lerp(0f, 1f, 1f - absOffset)
-        }
+        PageTransitionMath.glideUp(pagerState.offsetForPage(page), size.height).applyTo(this)
     }
 
 // Helper: normalised offset for the current page (-1f … 1f)
@@ -261,9 +231,7 @@ fun Modifier.pagerSlideTransition(
     page: Int
 ): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        translationX = size.width * offset
-        alpha = lerp(0.6f, 1f, 1f - offset.absoluteValue.coerceIn(0f, 1f))
+        PageTransitionMath.slide(pagerState.offsetForPage(page), size.width).applyTo(this)
     }
 
 
@@ -276,8 +244,7 @@ fun Modifier.pagerFadeTransition(
     page: Int
 ): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        alpha = lerp(0f, 1f, 1f - offset.absoluteValue.coerceIn(0f, 1f))
+        PageTransitionMath.fade(pagerState.offsetForPage(page)).applyTo(this)
     }
 
 
@@ -316,21 +283,7 @@ fun Modifier.pagerDepthTransition(
     page: Int
 ): Modifier =
     graphicsLayer {
-        val offset = pagerState.offsetForPage(page)
-        val absOffset = offset.absoluteValue.coerceIn(0f, 1f)
-
-        if (offset <= 0f) {
-            // Current / leaving page: scale down and fade
-            scaleX = lerp(1f, 0.75f, absOffset)
-            scaleY = lerp(1f, 0.75f, absOffset)
-            alpha = lerp(1f, 0f, absOffset)
-        } else {
-            // Incoming page: start small from behind, translate in from the right
-            scaleX = lerp(0.75f, 1f, 1f - absOffset)
-            scaleY = lerp(0.75f, 1f, 1f - absOffset)
-            translationX = size.width * offset
-            alpha = lerp(0f, 1f, 1f - absOffset)
-        }
+        PageTransitionMath.depth(pagerState.offsetForPage(page), size.width).applyTo(this)
     }
 
 
