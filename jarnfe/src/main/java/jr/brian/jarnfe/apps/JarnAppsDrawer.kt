@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -105,7 +104,7 @@ internal fun JarnAppsRoute() {
         JarnAppsEmpty()
         return
     }
-    val snapshot by remember(data) { data.snapshot }.collectAsState(null)
+    LaunchedEffect(data) { JarnApps.observe(data) }
     val host = LocalActivity.current
     val commands = remember(data, host) {
         JarnAppsCommands(
@@ -113,7 +112,7 @@ internal fun JarnAppsRoute() {
             options = data,
         )
     }
-    snapshot?.let { JarnAppsDrawer(it, commands) }
+    JarnApps.snapshot?.let { JarnAppsDrawer(it, commands) }
 }
 
 @Composable

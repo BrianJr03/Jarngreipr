@@ -1,8 +1,11 @@
 package jr.brian.jarnfe.apps
 
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,13 +34,27 @@ internal fun JarnAppIcon(
     iconVersion: Long,
     modifier: Modifier = Modifier,
 ) {
-    key(iconPath, iconVersion) {
-        AsyncImage(
-            model = iconPath?.let(::File) ?: icon,
-            contentDescription = null,
-            modifier = modifier,
-        )
+    if (iconPath == null) {
+        JarnDrawableIcon(icon, modifier)
+        return
     }
+    key(iconPath, iconVersion) {
+        AsyncImage(model = File(iconPath), contentDescription = null, modifier = modifier)
+    }
+}
+
+/**
+ * Draws on the first frame. Coil never memory caches a Drawable, so loading one through it leaves
+ * the icon blank for a frame each time a tile enters composition, and a whole grid flashes.
+ */
+@Composable
+internal fun JarnDrawableIcon(icon: Drawable?, modifier: Modifier = Modifier) {
+    if (icon == null) {
+        Spacer(modifier)
+        return
+    }
+    val painter = remember(icon) { JarnDrawablePainter(icon) }
+    Image(painter = painter, contentDescription = null, modifier = modifier)
 }
 
 @Composable

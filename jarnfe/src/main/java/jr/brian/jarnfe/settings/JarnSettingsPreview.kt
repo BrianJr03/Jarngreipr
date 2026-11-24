@@ -43,6 +43,7 @@ import jr.brian.jarnfe.library.LibraryBrowseSwitch
 import jr.brian.jarnfe.library.LibraryCoverArt
 import jr.brian.jarnfe.library.LibraryShelfKind
 import jr.brian.jarnfe.library.LibraryShelfPreview
+import jr.brian.jarnfe.library.LibrarySystemCard
 import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.SystemCellMinSize
 import jr.brian.jarnfe.library.gameCountText
@@ -70,7 +71,9 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
         } else {
             LibraryBrowseSwitch(
                 view = display.systemView,
-                grid = { PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale) },
+                grid = {
+                    PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
+                },
                 shelf = { PreviewSystemShelf(state.systems.items) },
             )
             LibraryBrowseSwitch(
@@ -148,10 +151,12 @@ private fun PreviewRow(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun PreviewSystemRow(systems: List<JarnLibrarySystem>, tileWidth: Dp) {
+private fun PreviewSystemRow(systems: List<JarnLibrarySystem>, tileWidth: Dp, namesVisible: Boolean) {
     val tileModifier = Modifier.width(tileWidth).focusProperties { canFocus = false }
     PreviewRow {
-        if (systems.isEmpty()) {
+        if (!namesVisible) {
+            previewSystems(systems).forEach { system -> LibrarySystemCard(system, onClick = {}, modifier = tileModifier) }
+        } else if (systems.isEmpty()) {
             repeat(PREVIEW_TILE_COUNT) {
                 JarnSystemTile(
                     title = stringResource(R.string.jarnfe_settings_preview_system),
@@ -171,6 +176,15 @@ private fun PreviewSystemRow(systems: List<JarnLibrarySystem>, tileWidth: Dp) {
                 ) { LibrarySystemArt(system) }
             }
         }
+    }
+}
+
+/** The real systems, or stand-ins named "System" when the library is still empty. */
+@Composable
+private fun previewSystems(systems: List<JarnLibrarySystem>): List<JarnLibrarySystem> {
+    val placeholder = stringResource(R.string.jarnfe_settings_preview_system)
+    return systems.take(PREVIEW_TILE_COUNT).ifEmpty {
+        List(PREVIEW_TILE_COUNT) { JarnLibrarySystem(id = "preview$it", title = placeholder, gameCount = 0) }
     }
 }
 

@@ -15,6 +15,8 @@
     <string name="jarnfe_settings_system_view_hint">Swipe through systems one at a time.</string>
     <string name="jarnfe_settings_game_view">Games view</string>
     <string name="jarnfe_settings_game_view_hint">Browse games as a grid or a carousel.</string>
+    <string name="jarnfe_settings_system_names">Show system names</string>
+    <string name="jarnfe_settings_system_names_hint">The name and game count under each system. Off gives the space to the cards.</string>
     <string name="jarnfe_browse_view_grid">Grid</string>
     <string name="jarnfe_browse_view_carousel">Carousel</string>
     <string name="jarnfe_settings_tiles_title">Tiles</string>

@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import jr.brian.core.model.GameImageType
+import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.art.GameArt
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.media.MediaKind
@@ -44,14 +45,40 @@ private val StillArtFallback = listOf(
 /** The image types a Frontend art tile can show. Classic can save exactly these. */
 internal val CanvasArtMediaTypes: List<GameImageType> = GameImageType.randomizableTypes()
 
-/** The art Stage is showing, which Frontend art tiles mirror. [media] is empty for a system. */
+/**
+ * The art Stage is showing, which Frontend art tiles mirror. [media] is empty for a system.
+ * [isPending] while a game's media is still being read: no path is known yet, so tiles keep what
+ * they show instead of falling back to some other kind of art.
+ */
 internal data class CanvasStageArt(
     val title: String,
     val path: String?,
     val logoPath: String? = null,
     val media: Map<MediaKind, String> = emptyMap(),
+    val isPending: Boolean = false,
 ) {
-    fun pathFor(type: GameImageType): String? = canvasArtPath(type, media, path, logoPath)
+    fun pathFor(type: GameImageType): String? =
+        if (isPending) null else canvasArtPath(type, media, path, logoPath)
+}
+
+/** A finished media lookup, tagged with the game it belongs to. */
+internal data class CanvasArtLookup(val gameKey: String, val media: Map<MediaKind, String>)
+
+/** Uses [lookup] only when it is this game's, so another game's media never shows for it. */
+internal fun canvasGameStageArt(
+    gameKey: String,
+    title: String,
+    defaultPath: String?,
+    lookup: CanvasArtLookup?,
+    lookupRuns: Boolean,
+): CanvasStageArt {
+    val own = lookup?.takeIf { it.gameKey == gameKey }
+    return CanvasStageArt(
+        title = title,
+        path = defaultPath,
+        media = own?.media.orEmpty(),
+        isPending = lookupRuns && own == null,
+    )
 }
 
 /** A choice shown on the tile but not saved yet. */
@@ -132,32 +159,44 @@ internal fun rememberCanvasStageArt(state: JarnSessionState, page: JarnCanvasPag
     val library = remember(context) { context.jarnLibraryDataOrNull() }
     val hasArtTile = page.layout.items.any { it is CanvasItem.EsdeArtItem }
     val gameKey = (selection as? LibrarySelection.Game)?.game?.id?.takeIf { hasArtTile }
-    var media by remember { mutableStateOf<Map<MediaKind, String>>(emptyMap()) }
+    var lookup by remember { mutableStateOf<CanvasArtLookup?>(null) }
     LaunchedEffect(library, gameKey) {
-        if (library == null || gameKey == null) {
-            media = emptyMap()
-            return@LaunchedEffect
-        }
+        if (library == null || gameKey == null) return@LaunchedEffect
         delay(ART_LOAD_DELAY_MS)
-        library.artFor(gameKey).collect { art -> media = art.slots.mapValues { it.value.path } }
+        library.artFor(gameKey).collect { art ->
+            lookup = CanvasArtLookup(gameKey, art.slots.mapValues { it.value.path })
+        }
     }
     return when (selection) {
-        is LibrarySelection.Game -> CanvasStageArt(selection.game.title, selection.game.artPath, media = media)
+        is LibrarySelection.Game -> canvasGameStageArt(
+            gameKey = selection.game.id,
+            title = selection.game.title,
+            defaultPath = selection.game.artPath,
+            lookup = lookup,
+            lookupRuns = library != null && gameKey != null,
+        )
         is LibrarySelection.System ->
             CanvasStageArt(selection.system.title, selection.system.artPath, selection.system.logoPath)
         LibrarySelection.None -> null
     }
 }
 
-/** System logos can be SVGs, which need their own decoder. */
+/**
+ * System logos can be SVGs, which need their own decoder. [previousPath] stays on screen while
+ * [path] loads, and the swap is a short crossfade, or instant with reduced motion.
+ */
 @Composable
-internal fun rememberCanvasArtModel(path: String?): Any? {
+internal fun rememberCanvasArtModel(path: String?, previousPath: String? = null): Any? {
     val context = LocalContext.current
-    return remember(context, path) {
-        if (path?.endsWith(SVG_SUFFIX, ignoreCase = true) == true) {
-            ImageRequest.Builder(context).data(path).decoderFactory(SvgDecoder.Factory()).build()
-        } else {
-            path
+    val fadeMillis = JarnTheme.motion.small.durationMillis
+    return remember(context, path, previousPath, fadeMillis) {
+        path?.let {
+            ImageRequest.Builder(context)
+                .data(it)
+                .placeholderMemoryCacheKey(previousPath?.takeIf { previous -> previous != it })
+                .crossfade(fadeMillis)
+                .apply { if (it.endsWith(SVG_SUFFIX, ignoreCase = true)) decoderFactory(SvgDecoder.Factory()) }
+                .build()
         }
     }
 }

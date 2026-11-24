@@ -7,6 +7,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,6 +24,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import jr.brian.core.model.GameImageType
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnArtPlaceholder
 import jr.brian.core.ui.theme.JarnTheme
@@ -101,15 +107,11 @@ private fun BoxScope.ArtTileImage(
     artModifier: Modifier,
     transparent: Boolean,
 ) {
-    val path = art.pathFor(item.resolvedImageType)
-    val scale = if (path != null && path == art.logoPath) {
-        ContentScale.Fit
-    } else {
-        item.resolvedContentScale.toContentScale()
-    }
+    val shown = rememberHeldCanvasArt(art, item.resolvedImageType) ?: return
+    val scale = if (shown.isLogo) ContentScale.Fit else item.resolvedContentScale.toContentScale()
     CanvasImage(
-        model = rememberCanvasArtModel(path),
-        title = art.title,
+        model = rememberCanvasArtModel(shown.path, shown.previousPath),
+        title = shown.title,
         scale = scale,
         imageModifier = artModifier,
         placeholder = { title ->
@@ -120,6 +122,30 @@ private fun BoxScope.ArtTileImage(
             }
         },
     )
+}
+
+/** What an art tile draws. [previousPath] is the image it showed before, kept while [path] loads. */
+internal data class CanvasHeldArt(
+    val title: String,
+    val path: String?,
+    val isLogo: Boolean,
+    val previousPath: String? = null,
+)
+
+/** Null only while nothing has resolved yet. Pending art keeps the last image instead of guessing. */
+internal fun canvasHeldArt(art: CanvasStageArt, type: GameImageType, held: CanvasHeldArt?): CanvasHeldArt? {
+    if (art.isPending) return held
+    val path = art.pathFor(type)
+    if (held != null && held.title == art.title && held.path == path) return held
+    return CanvasHeldArt(art.title, path, isLogo = path != null && path == art.logoPath, previousPath = held?.path)
+}
+
+@Composable
+private fun rememberHeldCanvasArt(art: CanvasStageArt, type: GameImageType): CanvasHeldArt? {
+    var held by remember { mutableStateOf<CanvasHeldArt?>(null) }
+    val next = canvasHeldArt(art, type, held)
+    SideEffect { held = next }
+    return next
 }
 
 /** With no card behind it, the scrim keeps an empty tile findable and its text readable on any wallpaper. */

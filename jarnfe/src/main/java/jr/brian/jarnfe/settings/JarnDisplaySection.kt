@@ -44,7 +44,19 @@ private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
         BrowseViewRow(R.string.jarnfe_settings_game_view, R.string.jarnfe_settings_game_view_hint, display.gameView) {
             store.updateDisplay { it.copy(gameView = it.gameView.next()) }
         }
+        SystemNamesRow(store, display.systemNamesVisible)
     }
+}
+
+@Composable
+private fun SystemNamesRow(store: JarnLookStore, visible: Boolean) {
+    JarnToggleRow(
+        label = stringResource(R.string.jarnfe_settings_system_names),
+        checked = visible,
+        onCheckedChange = { show -> store.updateDisplay { it.copy(systemNamesVisible = show) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_settings_system_names_hint),
+    )
 }
 
 @Composable

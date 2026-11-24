@@ -137,7 +137,7 @@ internal fun LibrarySystemShelf(
         LibraryShelf(
             items = state.systems.items,
             kind = LibraryShelfKind.Systems,
-            content = systemShelfContent(onOpenSystem),
+            content = systemShelfContent(onOpenSystem, rememberJarnDisplay().systemNamesVisible),
             focusedKey = state.focusedSystem?.id,
             onFocused = onFocused,
             modifier = Modifier.weight(1f),
@@ -153,6 +153,7 @@ private fun LibrarySystemGrid(
     onOpenSystem: (String) -> Unit,
 ) {
     val state = library.state
+    val namesVisible = rememberJarnDisplay().systemNamesVisible
     LibraryFocusGrid(
         items = state.systems.items,
         itemKey = JarnLibrarySystem::id,
@@ -170,21 +171,27 @@ private fun LibrarySystemGrid(
             }
         },
     ) { system, modifier ->
-        JarnSystemTile(
-            title = system.title,
-            subtitle = gameCountText(system.gameCount),
-            onClick = { onOpenSystem(system.id) },
-            modifier = modifier.librarySystemAnchor(system.id).fillMaxWidth(),
-            focusBorder = true,
-        ) { LibrarySystemArt(system) }
+        val tileModifier = modifier.librarySystemAnchor(system.id).fillMaxWidth()
+        if (namesVisible) {
+            JarnSystemTile(
+                title = system.title,
+                subtitle = gameCountText(system.gameCount),
+                onClick = { onOpenSystem(system.id) },
+                modifier = tileModifier,
+                focusBorder = true,
+            ) { LibrarySystemArt(system) }
+        } else {
+            LibrarySystemCard(system, onClick = { onOpenSystem(system.id) }, modifier = tileModifier)
+        }
     }
 }
 
-private fun systemShelfContent(onOpenSystem: (String) -> Unit) = LibraryShelfContent<JarnLibrarySystem>(
+private fun systemShelfContent(onOpenSystem: (String) -> Unit, namesVisible: Boolean) = LibraryShelfContent<JarnLibrarySystem>(
     itemKey = JarnLibrarySystem::id,
     itemTitle = JarnLibrarySystem::title,
     onOpen = { onOpenSystem(it.id) },
     itemModifier = { Modifier.librarySystemAnchor(it.id) },
+    showsCaption = namesVisible,
     headline = { stringResource(R.string.jarnfe_library_system_line, it.title, gameCountText(it.gameCount)) },
     art = { LibrarySystemArt(it, logoAlignment = Alignment.Center) },
 )

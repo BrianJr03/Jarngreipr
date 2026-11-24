@@ -52,9 +52,25 @@ class LibraryFocusBorderGeometryTest {
         }
     }
 
-    private fun assertShelf(stage: Stage, kind: LibraryShelfKind, shelfHeight: Float) {
+    @Test
+    fun `carousel systems with names off grow into the freed room and stay clear`() {
+        stages.forEach { stage ->
+            val shelfHeight = stage.height - FOCUS_EDGE - HERO_HEIGHT
+            val named = shelfFit(stage.width, shelfHeight, LibraryShelfKind.Systems, false, FOCUS_EDGE, SHELF_ONE_LINE_CAPTION)
+            val fit = assertShelf(stage, LibraryShelfKind.Systems, shelfHeight, captioned = false)
+            assertTrue("cards grow with names off on ${stage.width}dp", fit.cardHeight > named.cardHeight)
+        }
+    }
+
+    private fun assertShelf(
+        stage: Stage,
+        kind: LibraryShelfKind,
+        shelfHeight: Float,
+        captioned: Boolean = true,
+    ): ShelfFit {
         val isNarrow = stage.width < SHELF_NARROW_WIDTH.value
-        val fit = shelfFit(stage.width, shelfHeight, kind, isNarrow, FOCUS_EDGE, kind.captionReserve)
+        val reserve = if (captioned) kind.captionReserve else SHELF_NO_CAPTION
+        val fit = shelfFit(stage.width, shelfHeight, kind, isNarrow, FOCUS_EDGE, reserve)
         assertTrue("card must have room on ${stage.width}dp", fit.cardHeight > 0f)
         val center = centered(stage.width / 2, fit.centerY, fit.cardWidth, fit.cardHeight)
         val reach = jarnFocusBorderReach(fit.cardWidth, fit.cardHeight)
@@ -72,8 +88,13 @@ class LibraryFocusBorderGeometryTest {
             assertTrue("$kind border hits a neighbor on ${stage.width}dp", border.clearOf(neighbor))
         }
         assertTrue("$kind border leaves the top of the shelf", border.top >= 0f)
-        val titleTop = center.bottom + CAPTION_GAP
-        assertTrue("$kind border reaches the title", border.bottom < titleTop)
+        if (captioned) {
+            val titleTop = center.bottom + CAPTION_GAP
+            assertTrue("$kind border reaches the title", border.bottom < titleTop)
+        } else {
+            assertTrue("$kind border leaves the bottom of the shelf", border.bottom <= shelfHeight)
+        }
+        return fit
     }
 
     @Test
@@ -113,6 +134,16 @@ class LibraryFocusBorderGeometryTest {
                 val first = cells.first()
                 val reach = jarnFocusBorderReach(first.width, first.height)
                 assertTrue("first row border hits the continue card", first.envelope(reach).clearOf(hero))
+            }
+        }
+    }
+
+    @Test
+    fun `system grid with names off keeps the same tile, so it stays clear`() {
+        stages.forEach { stage ->
+            tileScales.forEach { scale ->
+                val firstRowTop = FOCUS_EDGE + HERO_HEIGHT + LibraryGridRowSpacing.value
+                assertGrid(stage, SystemCellMinSize.value * scale, JARN_SYSTEM_TILE_ASPECT, firstRowTop)
             }
         }
     }
