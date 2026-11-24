@@ -1,5 +1,6 @@
 package jr.brian.frontend.look
 
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 
 /** Which physical screen keeps the controller after a touch. */
@@ -26,6 +27,7 @@ data class JarnDisplayPrefs(
     val switchCue: JarnSwitchCue = JarnSwitchCue.Pulse,
     val systemView: JarnBrowseView = JarnBrowseView.Grid,
     val gameView: JarnBrowseView = JarnBrowseView.Grid,
+    val pageTransition: JarnPageTransition = JarnPageTransition.JarnSlide,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

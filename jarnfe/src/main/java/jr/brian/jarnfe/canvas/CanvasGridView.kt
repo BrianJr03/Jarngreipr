@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import jr.brian.core.ui.motion.JarnTilePress
 import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
@@ -312,16 +313,18 @@ private fun CanvasTileFrame(
         editing -> Modifier.border(EditOutlineWidth, colors.line, shape)
         else -> Modifier
     }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .canvasFolderDropTarget(folderDrop, growsAsDrop)
-            .focusRequester(requester)
-            .onFocusChanged { if (it.isFocused) onFocused() }
-            .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
-            .clip(shape)
-            .then(if (showCard) Modifier.background(colors.raised) else Modifier)
-            .then(outline),
-        content = content,
-    )
+    JarnTilePress {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .canvasFolderDropTarget(folderDrop, growsAsDrop)
+                .focusRequester(requester)
+                .onFocusChanged { if (it.isFocused) onFocused() }
+                .jarnInteractive(shape, source, focusStyle = focusStyle, onClick = onClick)
+                .clip(shape)
+                .then(if (showCard) Modifier.background(colors.raised) else Modifier)
+                .then(outline),
+            content = content,
+        )
+    }
 }

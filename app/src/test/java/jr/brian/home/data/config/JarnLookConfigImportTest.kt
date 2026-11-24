@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStore
 import jr.brian.frontend.look.JarnBrowseView
@@ -467,8 +468,45 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `page transition survives a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Carousel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.JarnSlide) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertEquals(JarnPageTransition.Carousel, reloaded.pageTransition)
+    }
+
+    @Test
+    fun `an older backup leaves the page transition alone`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Depth) }
+        val v54 = """{ "version": 54, "feature": { "jarnDisplay": { "gameView": "carousel" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v54.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnPageTransition.Depth, store.display.pageTransition)
+    }
+
+    @Test
+    fun `an unknown page transition falls back to the jarn slide`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Fade) }
+        val backup = """{ "version": 55, "feature": { "jarnDisplay": { "pageTransition": "cube" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnPageTransition.JarnSlide, store.display.pageTransition)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(54, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(55, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

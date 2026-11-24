@@ -111,6 +111,7 @@ private fun FeedbackGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             modifier = Modifier.fillMaxWidth(),
             supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
         )
+        PageTransitionRow(store, display.pageTransition)
         ReducedMotionRow(store)
     }
 }

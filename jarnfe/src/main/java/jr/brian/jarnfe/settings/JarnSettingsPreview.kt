@@ -78,6 +78,9 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
                 grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
                 shelf = { PreviewGameShelf(games) },
             )
+            if (JarnSession.state.settingsSection == SettingsSection.Display) {
+                PreviewPageTransition(display.pageTransition)
+            }
         }
     }
 }
