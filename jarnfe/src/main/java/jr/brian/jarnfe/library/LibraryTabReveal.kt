@@ -33,15 +33,19 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntSize
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.input.LocalJarnInputRouter
+import jr.brian.jarnfe.input.LocalJarnScreen
 import kotlinx.coroutines.delay
 
 /**
  * Holds a newly switched tab's first focus until its content has slid open. Content calls
  * [whenOpen] with its own focus request, which runs at once when the gate is already open.
- * [preferFirst] asks a grid for its first item rather than the one it remembers.
+ * [preferFirst] asks a grid for its first item rather than the one it remembers. [takesFocus]
+ * means the switch was made on the screen with the controller, so the content takes focus even
+ * from the tab row.
  */
 @Stable
-internal class LibraryRevealGate(closed: Boolean) {
+internal class LibraryRevealGate(closed: Boolean, val takesFocus: Boolean = false) {
     var isOpen by mutableStateOf(!closed)
         private set
     val preferFirst: Boolean = closed
@@ -51,23 +55,38 @@ internal class LibraryRevealGate(closed: Boolean) {
         if (isOpen) focus() else pendingFocus = focus
     }
 
+    /** True only while the gate's own opening runs a request that may take focus from the tab row. */
+    var forcing = false
+        private set
+
+    /** True while a switch that should take focus is still waiting to open. */
+    val willForce: Boolean get() = takesFocus && !isOpen
+
     /** Opens the gate and runs the waiting focus request. True when focus landed. */
     fun open(): Boolean {
         if (isOpen) return false
         isOpen = true
         val focus = pendingFocus ?: return false
         pendingFocus = null
-        return focus()
+        forcing = takesFocus
+        return try {
+            focus()
+        } finally {
+            forcing = false
+        }
     }
 }
 
 internal val LocalLibraryRevealGate = compositionLocalOf { LibraryRevealGate(closed = false) }
 
 /**
- * Slides a newly switched Library tab open, then focuses its content once it has settled. Until
- * then a holder keeps focus on the new tab, and a press that arrives early opens the gate and
- * goes straight to the item it would have reached, so nothing is lost or lands on the old tab.
- * The first tab shown when Library opens appears as before, with no slide.
+ * Slides a newly switched Library tab open, then focuses its content once it has settled, from
+ * the content or the tab row alike. A switch made from the other screen changes the tab but never
+ * takes focus. When focus was in the old content, a holder keeps it on the new tab until then, and
+ * a press that arrives early opens the gate and goes straight to the item it would have reached.
+ * On the tab row focus stays put until the gate opens, so a held D-pad keeps stepping tabs, and
+ * each newer switch drops the older one's pending focus. The first tab shown when Library opens
+ * appears as before, with no slide.
  */
 @Composable
 internal fun <S : Any> LibraryTabReveal(tab: S, content: @Composable () -> Unit) {
@@ -76,7 +95,9 @@ internal fun <S : Any> LibraryTabReveal(tab: S, content: @Composable () -> Unit)
     SideEffect { shown = tab }
     key(tab) {
         val animate = remember { switched }
-        val gate = remember { LibraryRevealGate(closed = animate) }
+        val router = LocalJarnInputRouter.current
+        val screen = LocalJarnScreen.current
+        val gate = remember { LibraryRevealGate(closed = animate, takesFocus = animate && router.activeScreen == screen) }
         val holder = remember { FocusRequester() }
         LibraryRevealTiming(gate, holder, animate)
         CompositionLocalProvider(LocalLibraryRevealGate provides gate) {

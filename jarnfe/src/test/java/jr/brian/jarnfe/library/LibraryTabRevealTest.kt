@@ -12,11 +12,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnMotion
+import jr.brian.jarnfe.input.JarnInputRouter
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.core.ui.theme.JarnTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,6 +39,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+@OptIn(ExperimentalTestApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w1280dp-h720dp")
 class LibraryTabRevealTest {
@@ -59,9 +72,40 @@ class LibraryTabRevealTest {
         }
     }
 
+    private val router = JarnInputRouter()
+    private val tabs = listOf("a", "b", "c")
+
     private fun show(reducedMotion: Boolean = false, content: @Composable () -> Unit) {
-        rule.setContent { JarnTheme(reducedMotion = reducedMotion) { Column { content() } } }
+        rule.setContent {
+            JarnTheme(reducedMotion = reducedMotion) {
+                ProvideJarnInput(router, JarnScreen.Stage) { Column { content() } }
+            }
+        }
         rule.waitForIdle()
+    }
+
+    @Composable
+    private fun TabsAndGrid() {
+        JarnTabs(
+            labels = tabs,
+            selectedIndex = tabs.indexOf(tab),
+            onSelect = { index ->
+                switchedAt = rule.mainClock.currentTime
+                tab = tabs[index]
+            },
+        )
+        Grid()
+    }
+
+    private fun press(key: Key) {
+        rule.onRoot().performKeyInput { pressKey(key) }
+        rule.waitForIdle()
+    }
+
+    private fun focusTabRow() {
+        rule.onNodeWithText("a").requestFocus()
+        rule.waitForIdle()
+        rule.onNodeWithText("a").assertIsFocused()
     }
 
     private fun switchTab(to: String) {
@@ -109,6 +153,45 @@ class LibraryTabRevealTest {
         switchTab("b")
         rule.onNodeWithTag("b1").assertIsFocused()
         assertTrue("focused after ${delayOf("b1")}ms", delayOf("b1") < revealMillis)
+    }
+
+    @Test
+    fun `a d-pad switch on the tab row moves focus into the new tab's content`() {
+        show { TabsAndGrid() }
+        rule.onNodeWithTag("a9").assertIsFocused()
+        focusTabRow()
+        press(Key.DirectionRight)
+        rule.onNodeWithTag("b1").assertIsFocused()
+        assertTrue("focused after ${delayOf("b1")}ms", delayOf("b1") >= revealMillis)
+    }
+
+    @Test
+    fun `an r1 switch on the tab row moves focus into the new tab's content`() {
+        show { TabsAndGrid() }
+        focusTabRow()
+        press(Key.ButtonR1)
+        rule.onNodeWithTag("b1").assertIsFocused()
+        assertTrue("focused after ${delayOf("b1")}ms", delayOf("b1") >= revealMillis)
+    }
+
+    @Test
+    fun `up from the content still returns to the tabs`() {
+        show { TabsAndGrid() }
+        focusTabRow()
+        press(Key.DirectionRight)
+        rule.onNodeWithTag("b1").assertIsFocused()
+        press(Key.DirectionUp)
+        rule.onNodeWithText("b").assertIsFocused()
+    }
+
+    @Test
+    fun `a switch from the other screen changes the tab but never takes focus`() {
+        show { TabsAndGrid() }
+        focusTabRow()
+        rule.runOnIdle { router.activate(JarnScreen.Deck) }
+        switchTab("b")
+        assertFalse("content took focus", focusedAt.keys.any { it.startsWith("b") })
+        rule.onNodeWithTag("b1").assertIsNotFocused()
     }
 
     @Test
