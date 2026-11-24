@@ -24,6 +24,8 @@ data class JarnDisplayPrefs(
     val appNamesVisible: Boolean = true,
     val undoCountdownVisible: Boolean = true,
     val switchCue: JarnSwitchCue = JarnSwitchCue.Pulse,
+    val systemView: JarnBrowseView = JarnBrowseView.Grid,
+    val gameView: JarnBrowseView = JarnBrowseView.Grid,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

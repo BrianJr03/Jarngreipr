@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
 import jr.brian.core.ui.theme.JarnSwitchCue
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.home.canvas.model.CanvasLayout
@@ -216,7 +217,10 @@ data class JarngreiprConfig(
         //      PageConfig.widgetProviders. All null on older blobs, and import keeps current values.
         //      Feeds, repos and custom themes are only ever added. Restore also clears photo tiles
         //      whose file is missing and widget tiles whose widget isn't the one backed up.
-        const val CONFIG_VERSION = 52
+        // v53: added JarnDisplayConfig.systemView and gameView, the Jarn FE Grid or Carousel
+        //      choices (grid or carousel). Null on older blobs, and import keeps the current
+        //      value. An unknown id falls back to grid.
+        const val CONFIG_VERSION = 53
     }
 }
 
@@ -435,6 +439,8 @@ data class JarnDisplayConfig(
     val appNamesVisible: Boolean? = null,
     val undoCountdownVisible: Boolean? = null,
     val switchCue: String? = null,
+    val systemView: String? = null,
+    val gameView: String? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -446,6 +452,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     appNamesVisible = appNamesVisible,
     undoCountdownVisible = undoCountdownVisible,
     switchCue = switchCue.id,
+    systemView = systemView.id,
+    gameView = gameView.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -457,6 +465,8 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     appNamesVisible = appNamesVisible ?: current.appNamesVisible,
     undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
     switchCue = switchCue?.let(JarnSwitchCue::fromId) ?: current.switchCue,
+    systemView = systemView?.let(JarnBrowseView::fromId) ?: current.systemView,
+    gameView = gameView?.let(JarnBrowseView::fromId) ?: current.gameView,
 )
 
 @Serializable

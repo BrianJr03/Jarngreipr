@@ -64,6 +64,8 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_APP_NAMES_VISIBLE, next.appNamesVisible)
             putBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, next.undoCountdownVisible)
             putString(KEY_SWITCH_CUE, next.switchCue.id)
+            putString(KEY_SYSTEM_VIEW, next.systemView.id)
+            putString(KEY_GAME_VIEW, next.gameView.id)
         }
     }
 
@@ -95,6 +97,8 @@ class JarnLookStore @Inject constructor(
         appNamesVisible = prefs.getBoolean(KEY_APP_NAMES_VISIBLE, true),
         undoCountdownVisible = prefs.getBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, true),
         switchCue = JarnSwitchCue.fromId(prefs.getString(KEY_SWITCH_CUE, null)),
+        systemView = JarnBrowseView.fromId(prefs.getString(KEY_SYSTEM_VIEW, null)),
+        gameView = JarnBrowseView.fromId(prefs.getString(KEY_GAME_VIEW, null)),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -136,6 +140,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
         const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
         const val KEY_SWITCH_CUE = "switch_cue"
+        const val KEY_SYSTEM_VIEW = "system_view"
+        const val KEY_GAME_VIEW = "game_view"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

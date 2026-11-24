@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStore
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.frontend.look.JarnLookStore
@@ -374,8 +375,49 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `browse views survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Carousel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Grid, gameView = JarnBrowseView.Grid) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertEquals(JarnBrowseView.Carousel, reloaded.systemView)
+        assertEquals(JarnBrowseView.Carousel, reloaded.gameView)
+    }
+
+    @Test
+    fun `an older backup leaves the browse views alone`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Grid) }
+        val v52 = """{ "version": 52, "feature": { "jarnDisplay": { "switchCue": "dim" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v52.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnBrowseView.Carousel, store.display.systemView)
+        assertEquals(JarnBrowseView.Grid, store.display.gameView)
+        assertEquals(JarnSwitchCue.Dim, store.display.switchCue)
+    }
+
+    @Test
+    fun `an unknown browse view falls back to grid`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Carousel) }
+        val backup = """{ "version": 53, "feature": { "jarnDisplay": { "systemView": "wall", "gameView": "carousel" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnBrowseView.Grid, store.display.systemView)
+        assertEquals(JarnBrowseView.Carousel, store.display.gameView)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(52, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(53, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

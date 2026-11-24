@@ -1,6 +1,7 @@
 package jr.brian.home.data.config
 
 import jr.brian.core.ui.theme.JarnSwitchCue
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
 import jr.brian.home.canvas.model.CanvasItem
@@ -197,6 +198,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
             undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
             switchCue = it.switchCue?.let { id -> JarnSwitchCue.fromId(id).id } ?: shown?.switchCue,
+            systemView = it.systemView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.systemView,
+            gameView = it.gameView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.gameView,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
