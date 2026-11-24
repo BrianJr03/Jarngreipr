@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnHint
 import jr.brian.core.ui.components.JarnHintBar
 import jr.brian.core.ui.components.JarnKey
+import java.util.Locale
 
 val LocalJarnInputRouter = staticCompositionLocalOf<JarnInputRouter> {
     error("No JarnInputRouter provided. Wrap the screen in ProvideJarnInput.")
@@ -70,15 +71,18 @@ fun JarnScreenHintBar(modifier: Modifier = Modifier) {
     val router = LocalJarnInputRouter.current
     val screen = LocalJarnScreen.current
     val hints = (router.hintsFor(screen) + listOfNotNull(router.tabHintFor(screen)))
-        .map { JarnHint(it.key, stringResource(it.labelRes)) }
+        .map { JarnHint(it.key, jarnHintCase(stringResource(it.labelRes))) }
     val (trailing, leading) =
         if (isOnTopScreen()) jarnSplitTrailingHints(hints) else emptyList<JarnHint>() to hints
     JarnHintBar(leading, modifier, active = router.activeScreen == screen, trailing = trailing)
 }
 
-private val TrailingHintKeys = listOf(JarnKey.Start, JarnKey.Select, JarnKey.L1R1, JarnKey.L1, JarnKey.R1)
+private val TrailingHintKeys = listOf(JarnKey.Start, JarnKey.X, JarnKey.L1R1, JarnKey.L1, JarnKey.R1)
 
-/** Start, Select, then the tab keys, in that order, and everything else as given. */
+/**
+ * The system keys on the right: Start, X (switch screen), then the tab keys, in that order.
+ * Everything else, including Select's options, stays on the left as given.
+ */
 internal fun jarnSplitTrailingHints(hints: List<JarnHint>): Pair<List<JarnHint>, List<JarnHint>> {
     val trailing = hints.filter { it.key in TrailingHintKeys }.sortedBy { TrailingHintKeys.indexOf(it.key) }
     return trailing to hints.filterNot { it.key in TrailingHintKeys }
@@ -87,3 +91,10 @@ internal fun jarnSplitTrailingHints(hints: List<JarnHint>): Pair<List<JarnHint>,
 @Composable
 private fun isOnTopScreen(): Boolean =
     (LocalView.current.display?.displayId ?: Display.DEFAULT_DISPLAY) == Display.DEFAULT_DISPLAY
+
+/**
+ * Hint labels capitalize every word ("Switch Screen"), whatever case the string has, so a string
+ * shared with a title or a button keeps its sentence case there.
+ */
+internal fun jarnHintCase(label: String): String =
+    label.split(' ').joinToString(" ") { word -> word.replaceFirstChar { it.titlecase(Locale.getDefault()) } }

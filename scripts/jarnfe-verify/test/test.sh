@@ -48,7 +48,7 @@ assert_safe() {
   fi
   local keys
   keys="$(grep -oE 'keyevent [0-9]+' "$LOG" | awk '{print $2}')"
-  if [ -n "$keys" ] && grep -qvE '^(19|20|21|22|97|102|103|104|105|108|109)$' <<<"$keys"; then
+  if [ -n "$keys" ] && grep -qvE '^(19|20|21|22|97|99|102|103|104|105|108)$' <<<"$keys"; then
     bad "$1: key outside the allow list"
   else
     ok "$1: only allowed keys"
@@ -85,7 +85,7 @@ test_clean_run() {
   scenario clean FAKE_MODE=Top --
   expect "clean run exits 0" 0 "$CODE"
   has "clean run summary" "FAIL 0"
-  has "switching checked" "Select moved focus to display 4"
+  has "switching checked" "X moved focus to display 4"
   has "dpad deck checked" "Deck active: focus ring moved on the active screen only"
   has "dpad stage checked" "Stage active: focus ring moved on the active screen only"
   has "tab focus checked" "focusing a tab selects it: Favorites"
@@ -115,18 +115,18 @@ test_focus_lock_gate() {
   scenario follow FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 --
   expect "Follow mode has no failures" 0 "$CODE"
   has "Follow holds back switching" "may rewrite screen_focus_lock"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "Follow mode sent Select or Start"; else ok "Follow mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "Follow mode sent X or Start"; else ok "Follow mode sent no X or Start"; fi
   expect "Follow leaves lock alone" 1 "$(state_field lock)"
   scenario default-mode FAKE_MODE=MISSING FAKE_FOLLOW_WRITES=1 --
   has "missing pref counts as Follow" "Focus Lock mode Follow"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "default mode sent Select or Start"; else ok "default mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "default mode sent X or Start"; else ok "default mode sent no X or Start"; fi
   scenario runas FAKE_RUNAS_FAIL=1 FAKE_FOLLOW_WRITES=1 --
   has "unreadable mode holds back" "Focus Lock mode is unreadable"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "unreadable mode sent Select or Start"; else ok "unreadable mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "unreadable mode sent X or Start"; else ok "unreadable mode sent no X or Start"; fi
   scenario top-mismatch FAKE_MODE=Top FAKE_LOCK=2 --
   has "Top mode at 2 holds back" "Focus Lock mode Top may rewrite"
   scenario opt-in FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 -- --allow-app-focus-sync
-  has "opt-in runs switching" "Select moved focus to display 4"
+  has "opt-in runs switching" "X moved focus to display 4"
   has "opt-in lock returns" "screen_focus_lock still 1"
   assert_safe "opt-in"
 }
@@ -147,12 +147,12 @@ test_failures_are_caught() {
 }
 
 test_input_stops_when_focus_is_lost() {
-  scenario foreign FAKE_FOREIGN_AFTER=109 --
+  scenario foreign FAKE_FOREIGN_AFTER=99 --
   expect "focus loss fails" 1 "$CODE"
   has "focus loss reported" "Jarn FE lost focus"
   has "focus loss summary" "Input was stopped early"
   local after
-  after="$(awk '/keyevent 109/ { seen = 1; next } seen && /keyevent/' "$LOG" | wc -l | tr -d ' ')"
+  after="$(awk '/keyevent 99/ { seen = 1; next } seen && /keyevent/' "$LOG" | wc -l | tr -d ' ')"
   expect "no key sent after focus loss" 0 "$after"
 }
 
@@ -243,7 +243,7 @@ test_shoulders_377() {
   has "old map reported" "did not move the Deck tabs"
   SCRIPT="$script" scenario shoulders-follow FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 --
   expect "Follow mode still passes" 0 "$CODE"
-  if grep -qE 'keyevent (106|108|109)' "$LOG"; then bad "Follow mode sent Select or Swap"; else ok "Follow mode sent no Select or Swap"; fi
+  if grep -qE 'keyevent (106|108|99)' "$LOG"; then bad "Follow mode sent X or Swap"; else ok "Follow mode sent no X or Swap"; fi
 }
 
 test_device_selection() {

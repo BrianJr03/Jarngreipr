@@ -41,7 +41,7 @@ data class JarnDeckSelectResult(val next: JarnDeckRecovery, val action: JarnDeck
 
 /**
  * Android offers no way to see which app is on another display, so ownership is inferred and
- * every doubt counts as owned. An owned display is only reclaimed by a confirmed Select press.
+ * every doubt counts as owned. An owned display is only reclaimed by a confirmed press of X, the switch screen button.
  *
  * [isFocusUnclear] covers the moment after Stage loses focus: a cover of Stage pauses it soon
  * after, while an app opening on the Deck display leaves it resumed.
@@ -56,7 +56,7 @@ data class JarnDeckRecovery(
 ) {
     val isOutOfRetries: Boolean get() = attempts >= DECK_RETRY_LIMIT
 
-    /** Automatic recovery has stopped, so only Select can bring the Deck back. */
+    /** Automatic recovery has stopped, so only X can bring the Deck back. */
     val needsSelect: Boolean get() = isMissing && !isFocusUnclear && (isDisplayHeld || isOutOfRetries)
 
     fun onDeckUp(nowMs: Long): JarnDeckRecovery = JarnDeckRecovery(attempts = attempts, upSinceMs = nowMs)

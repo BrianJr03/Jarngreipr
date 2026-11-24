@@ -2,7 +2,7 @@
 # Reporting, read-only device access, and the one guarded path for sending keys.
 
 KEY_UP=19 KEY_DOWN=20 KEY_LEFT=21 KEY_RIGHT=22
-KEY_B=97 KEY_L1=102 KEY_R1=103 KEY_L2=104 KEY_R2=105 KEY_L3=106 KEY_START=108 KEY_SELECT=109
+KEY_B=97 KEY_L1=102 KEY_R1=103 KEY_L2=104 KEY_R2=105 KEY_L3=106 KEY_X=99 KEY_START=108
 # Keys a script may add to the allow list on top of the navigation keys, such as L3 for Swap.
 EXTRA_KEYS=""
 
@@ -42,7 +42,7 @@ read_prefs() {
 key_allowed() {
   case "$1" in
     "$KEY_UP"|"$KEY_DOWN"|"$KEY_LEFT"|"$KEY_RIGHT"|"$KEY_B"|"$KEY_L1"|"$KEY_R1"|"$KEY_L2"|"$KEY_R2") return 0 ;;
-    "$KEY_START"|"$KEY_SELECT") return 0 ;;
+    "$KEY_START"|"$KEY_X") return 0 ;;
   esac
   case " $EXTRA_KEYS " in *" $1 "*) return 0 ;; esac
   return 1

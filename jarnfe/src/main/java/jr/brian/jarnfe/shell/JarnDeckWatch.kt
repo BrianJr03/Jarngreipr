@@ -4,6 +4,8 @@ import android.os.Handler
 import android.os.SystemClock
 import android.view.KeyEvent
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.JarnAction
+import jr.brian.jarnfe.input.JarnButtonMap
 import jr.brian.jarnfe.session.DECK_FOCUS_SETTLE_MS
 import jr.brian.jarnfe.session.JarnDeckClose
 import jr.brian.jarnfe.session.JarnDeckRecovery
@@ -60,9 +62,12 @@ internal object JarnDeckWatch {
         controller?.cancel()
     }
 
-    /** Claims Select while the Deck is missing. A claimed press also owns its repeats and key-up. */
-    fun consumeSelect(event: KeyEvent): Boolean {
-        if (event.keyCode != KeyEvent.KEYCODE_BUTTON_SELECT) return false
+    /**
+     * Claims the switch screen button (X) while the Deck is missing, so it brings the Deck back. A
+     * claimed press also owns its repeats and key-up.
+     */
+    fun consumeSwitchScreen(event: KeyEvent): Boolean {
+        if (JarnButtonMap.actionFor(event.keyCode) != JarnAction.SwitchScreen) return false
         if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
             isSelectConsumed = JarnSession.state.deckWindowLost && controller != null
             if (isSelectConsumed) controller?.onSelectPressed()

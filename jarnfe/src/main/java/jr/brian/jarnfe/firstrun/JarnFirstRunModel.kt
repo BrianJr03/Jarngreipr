@@ -31,7 +31,10 @@ internal enum class JarnFirstRunStep(
     SwitchCue(needsTwoScreens = true),
     PressA,
     PressB(JarnFirstRunGesture.Back),
+    /** Saved by name, so it keeps its old name: options moved from X to Select in #393. */
     PressX(JarnFirstRunGesture.Context),
+
+    /** Saved by name, so it keeps its old name: switching screens moved from Select to X in #393. */
     PressSelect(JarnFirstRunGesture.SwitchScreen, needsTwoScreens = true),
     PressTabs(JarnFirstRunGesture.Tabs),
     PressOtherTabs(JarnFirstRunGesture.OtherTabs, needsTwoScreens = true),

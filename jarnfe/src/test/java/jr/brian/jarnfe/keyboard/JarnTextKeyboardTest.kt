@@ -66,7 +66,7 @@ class JarnTextKeyboardTest {
     fun `buttons edit prefilled text and start finishes`() {
         var result: String? = null
         showKeyboard(initialText = "ab", onDone = { result = it })
-        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_X) }
+        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_SELECT) }
         rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_R1) }
         rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_START) }
         rule.runOnIdle { assertEquals("a ", result) }

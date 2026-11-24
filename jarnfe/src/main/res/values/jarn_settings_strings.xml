@@ -30,7 +30,7 @@
     <string name="jarnfe_settings_undo_countdown">Show undo countdown</string>
     <string name="jarnfe_settings_undo_countdown_hint">Shows a timer bar on the Undo message. Undo still lasts 2 seconds.</string>
     <string name="jarnfe_settings_tap_control">Controller after tap</string>
-    <string name="jarnfe_settings_tap_control_hint">Which screen the controller moves to after you touch one. Select still switches screens.</string>
+    <string name="jarnfe_settings_tap_control_hint">Which screen the controller moves to after you touch one. X still switches screens.</string>
     <string name="jarnfe_settings_tap_control_follow">Follow tap</string>
     <string name="jarnfe_settings_tap_control_top">Always top</string>
     <string name="jarnfe_settings_tap_control_bottom">Always bottom</string>

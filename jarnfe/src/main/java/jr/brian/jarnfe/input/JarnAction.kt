@@ -15,6 +15,8 @@ import jr.brian.core.ui.components.JarnKey
  *
  * L1/R1 and L2/R2 are tied to physical screens, not to the controller: in the shell L1/R1 step the
  * top screen's tabs and L2/R2 the bottom screen's. A layer can still claim either pair for itself.
+ *
+ * X switches screens and holding it swaps them (see [heldAction]). Select is the options button.
  */
 enum class JarnAction(
     val hintKey: JarnKey?,
@@ -23,14 +25,14 @@ enum class JarnAction(
 ) {
     Confirm(JarnKey.A, reachesFocus = true),
     Back(JarnKey.B),
-    Context(JarnKey.X),
+    Context(JarnKey.Select),
     Search(JarnKey.Y),
     TabPrevious(JarnKey.L1, firesOnPress = true),
     TabNext(JarnKey.R1, firesOnPress = true),
     BottomTabPrevious(hintKey = null, firesOnPress = true),
     BottomTabNext(hintKey = null, firesOnPress = true),
     Menu(JarnKey.Start),
-    SwitchScreen(JarnKey.Select),
+    SwitchScreen(JarnKey.X),
     Swap(hintKey = null, firesOnPress = true),
     MoveUp(JarnKey.Dpad, firesOnPress = true, reachesFocus = true),
     MoveDown(JarnKey.Dpad, firesOnPress = true, reachesFocus = true),
@@ -39,6 +41,13 @@ enum class JarnAction(
 
     val isDirection: Boolean
         get() = hintKey == JarnKey.Dpad
+
+    /**
+     * What holding this action's button does in every layer that doesn't give it a long press of its
+     * own. Holding X swaps the screens, so a tap switches on release and a hold never also switches.
+     */
+    internal val heldAction: JarnAction?
+        get() = if (this == SwitchScreen) Swap else null
 }
 
 /** A shoulder pair and the physical screen whose tabs it steps in the shell. */
@@ -67,10 +76,10 @@ object JarnButtonMap {
         KeyEvent.KEYCODE_BACK,
         KeyEvent.KEYCODE_ESCAPE -> JarnAction.Back
 
-        KeyEvent.KEYCODE_BUTTON_X -> JarnAction.Context
+        KeyEvent.KEYCODE_BUTTON_X -> JarnAction.SwitchScreen
         KeyEvent.KEYCODE_BUTTON_Y -> JarnAction.Search
         KeyEvent.KEYCODE_BUTTON_START -> JarnAction.Menu
-        KeyEvent.KEYCODE_BUTTON_SELECT -> JarnAction.SwitchScreen
+        KeyEvent.KEYCODE_BUTTON_SELECT -> JarnAction.Context
         KeyEvent.KEYCODE_BUTTON_L1 -> JarnAction.TabPrevious
         KeyEvent.KEYCODE_BUTTON_R1 -> JarnAction.TabNext
         KeyEvent.KEYCODE_BUTTON_L2 -> JarnAction.BottomTabPrevious

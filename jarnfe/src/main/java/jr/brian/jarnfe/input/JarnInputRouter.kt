@@ -206,6 +206,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private fun onKeyRepeat(input: JarnKeyInput): Boolean {
         val press = presses[input.keyCode] ?: return true
         if (press.route == Route.PassThrough) return false
+        if (press.firesHeldAction(input)) return true
         val binding = press.binding() ?: return true
         when {
             binding.repeats -> (binding.onRepeat ?: binding.onPress)?.invoke()
@@ -225,6 +226,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
             activate(JarnScreen.Stage)
             return true
         }
+        if (press.firesHeldAction(input)) return true
         val binding = press.binding() ?: return true
         val longPress = binding.onLongPress
         if (longPress != null && press.isLong(input)) longPress() else binding.onPress?.invoke()
@@ -276,6 +278,16 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         }
 
         fun isLong(input: JarnKeyInput) = input.eventTimeMs - downTimeMs >= longPressMs
+
+        /** Runs [JarnAction.heldAction] once a press is long, unless the binding has its own long press. */
+        fun firesHeldAction(input: JarnKeyInput): Boolean {
+            val held = action.heldAction ?: return false
+            if (fired || !isLong(input) || binding()?.onLongPress != null) return false
+            fired = true
+            val route = resolve(held) as? Route.Bound
+            route?.layer?.entries?.get(held)?.onPress?.invoke()
+            return true
+        }
     }
 
     private sealed interface Route {

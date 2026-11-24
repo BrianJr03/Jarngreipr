@@ -12,8 +12,8 @@
     <string name="jarnfe_canvas_tour_intro_body">Practice on a sample board. Your real layout stays exactly as it is.</string>
     <string name="jarnfe_canvas_tour_launch_title">A opens a tile</string>
     <string name="jarnfe_canvas_tour_launch_body">Press A to launch whatever is highlighted.</string>
-    <string name="jarnfe_canvas_tour_options_title">X shows tile options</string>
-    <string name="jarnfe_canvas_tour_options_body">Press X on a tile to see what you can do with it.</string>
+    <string name="jarnfe_canvas_tour_options_title">Select shows tile options</string>
+    <string name="jarnfe_canvas_tour_options_body">Press Select on a tile to see what you can do with it.</string>
     <string name="jarnfe_canvas_tour_move_title">Move one tile</string>
     <string name="jarnfe_canvas_tour_move_body">Press A on Move, use the D-pad to nudge the tile, then press A to drop it.</string>
     <string name="jarnfe_canvas_tour_arrange_title">Arrange many tiles</string>

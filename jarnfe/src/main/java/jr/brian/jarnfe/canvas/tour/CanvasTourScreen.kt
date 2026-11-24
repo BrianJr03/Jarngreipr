@@ -250,7 +250,7 @@ internal fun lessonFor(step: CanvasTourStep): CanvasTourLessonCopy = when (step)
     CanvasTourStep.TileOptions -> CanvasTourLessonCopy(
         R.string.jarnfe_canvas_tour_options_title,
         R.string.jarnfe_canvas_tour_options_body,
-        listOf(JarnKey.X),
+        listOf(JarnKey.Select),
     )
     CanvasTourStep.OneShotMove -> CanvasTourLessonCopy(
         R.string.jarnfe_canvas_tour_move_title,

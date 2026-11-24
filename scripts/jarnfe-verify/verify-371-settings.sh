@@ -17,7 +17,7 @@
 #
 # Safety: never uninstalls, clears data, changes or restores settings, or writes
 # screen_focus_lock. Keys are D-pad Up and Down, B, the Deck's tab shoulders (L2/R2 on the bottom
-# screen, L1/R1 on the top), Start and Select. A is pressed once,
+# screen, L1/R1 on the top), Start and X. A is pressed once,
 # only while the dump shows the Clear row focused, and the dialog it opens is cancelled with B.
 # Input stops as soon as Jarn FE loses focus. On exit it returns to the starting section, leaves
 # Settings, and gives control back to the starting screen.
@@ -314,7 +314,7 @@ restore_start() {
     key "$KEY_B" && IN_SETTINGS=0
   fi
   if [ -n "$START_DISPLAY" ] && [ "$(top_display)" != "$START_DISPLAY" ]; then
-    key "$KEY_SELECT" && wait_top_display "$START_DISPLAY"
+    key "$KEY_X" && wait_top_display "$START_DISPLAY"
   fi
   if [ -n "$LIBRARY_TAB_AT_START" ] && ui_wait_role stage; then
     [ "$(ui_selected "${LIBRARY_TABS[@]}")" = "$LIBRARY_TAB_AT_START" ] || fail "Library tab changed from $LIBRARY_TAB_AT_START"

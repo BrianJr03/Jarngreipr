@@ -156,7 +156,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
             return true
         }
-        if (JarnDeckWatch.consumeSelect(event)) return true
+        if (JarnDeckWatch.consumeSwitchScreen(event)) return true
         JarnInput.onHintPressed = buttonHaptic
         if (JarnInput.dispatch(event)) return true
         val target = activeWindowFor(event)

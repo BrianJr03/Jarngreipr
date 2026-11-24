@@ -120,7 +120,7 @@ private fun CanvasPickerStatus(loading: Boolean, searched: Boolean) {
 }
 
 /**
- * A press of A toggles a row. X confirms the picks, or just the focused row when nothing is picked,
+ * A press of A toggles a row. Select confirms the picks, or just the focused row when nothing is picked,
  * so adding one item stays a single press. [isLocked] rows show as picked and can't change.
  */
 @Composable

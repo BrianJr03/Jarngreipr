@@ -6,7 +6,7 @@
 #
 #   --launch                Open Jarn FE (JarnStageActivity) first if it is not already on screen.
 #   --out DIR               Where screenshots and logs go (default: a new temp folder).
-#   --allow-app-focus-sync  Run the Select and Swap phases even if the app's Focus Lock mode would
+#   --allow-app-focus-sync  Run the X and Swap phases even if the app's Focus Lock mode would
 #                           rewrite screen_focus_lock. The script still never writes it.
 #   --no-swap               Skip the swapped phases.
 #
@@ -18,7 +18,7 @@
 # the controller, and from screenshots otherwise. The swap and the active screen are restored.
 #
 # Safety: never uninstalls, clears data, writes settings or presses A. Keys are L1, R1, L2, R2,
-# Select and L3 (Swap) only, and input stops as soon as Jarn FE loses focus.
+# X and L3 (Swap) only, and input stops as soon as Jarn FE loses focus.
 #
 # Exit codes: 0 no failures, 1 at least one failure, 2 could not run.
 set -uo pipefail

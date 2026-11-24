@@ -30,7 +30,7 @@ internal object JarnLookPreview {
     var lookId by mutableStateOf<String?>(null)
 }
 
-/** An unsaved cue, so Select can play whichever choice is highlighted in the tour. */
+/** An unsaved cue, so X can play whichever choice is highlighted in the tour. */
 internal object JarnSwitchCuePreview {
     var cue by mutableStateOf<JarnSwitchCue?>(null)
 }

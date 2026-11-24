@@ -68,11 +68,11 @@ class JarnInputComposeTest {
                 JarnInputLayer(enabled = enabled, bindings = { on(JarnAction.Context) { log += "x" } })
             }
         }
-        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_X) }
+        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_SELECT) }
         rule.runOnIdle { assertEquals(emptyList<String>(), log) }
         enabled = true
         rule.waitForIdle()
-        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_X) }
+        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_SELECT) }
         rule.runOnIdle { assertEquals(listOf("x"), log) }
     }
 
@@ -88,7 +88,7 @@ class JarnInputComposeTest {
         }
         name = "second"
         rule.waitForIdle()
-        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_X) }
+        rule.runOnIdle { tap(KeyEvent.KEYCODE_BUTTON_SELECT) }
         rule.runOnIdle { assertEquals(listOf("second"), log) }
     }
 

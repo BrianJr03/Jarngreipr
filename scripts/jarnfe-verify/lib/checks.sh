@@ -37,7 +37,7 @@ wait_top_display() {
 
 activate_display() {
   [ "$(top_display)" = "$1" ] && return 0
-  key "$KEY_SELECT" || return 1
+  key "$KEY_X" || return 1
   wait_top_display "$1"
 }
 
@@ -109,17 +109,17 @@ check_focus_lock() {
 }
 
 check_switching() {
-  section "Select switches the active screen"
+  section "X switches the active screen"
   need_handoff "screen switching" || return
   local from to
   from="$(top_display)"
   if [ "$from" = "$TOP_DISPLAY" ]; then to="$BOTTOM_DISPLAY"; else to="$TOP_DISPLAY"; fi
-  key "$KEY_SELECT" || return
-  if wait_top_display "$to"; then pass "Select moved focus to display $to"
-  else fail "Select did not move focus to display $to (now $(top_display))"; fi
-  key "$KEY_SELECT" || return
-  if wait_top_display "$from"; then pass "Select moved focus back to display $from"
-  else fail "Select did not return focus to display $from (now $(top_display))"; fi
+  key "$KEY_X" || return
+  if wait_top_display "$to"; then pass "X moved focus to display $to"
+  else fail "X did not move focus to display $to (now $(top_display))"; fi
+  key "$KEY_X" || return
+  if wait_top_display "$from"; then pass "X moved focus back to display $from"
+  else fail "X did not return focus to display $from (now $(top_display))"; fi
 }
 
 # One D-pad move on the active screen. Sets the frame diff results for both screens.

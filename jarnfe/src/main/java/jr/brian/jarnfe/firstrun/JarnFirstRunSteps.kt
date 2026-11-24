@@ -261,6 +261,7 @@ private fun FirstRunLesson(step: JarnFirstRunStep, run: JarnFirstRunState, twoSc
     val lesson = lessonFor(step, twoScreens)
     FirstRunHeading(lesson.titleRes, lesson.bodyRes)
     FirstRunKeys(lesson.keys)
+    lesson.noteRes?.let { FirstRunNote(it) }
     if (step == JarnSession.state.practiceTabsStepOn(JarnScreen.Deck)) FirstRunPracticeTabs(run.practiceTab)
     if (run.practiced) {
         JarnText(
@@ -272,10 +273,12 @@ private fun FirstRunLesson(step: JarnFirstRunStep, run: JarnFirstRunState, twoSc
     }
 }
 
+/** [noteRes] is one extra line under the keys, such as holding X to swap the screens. */
 private class FirstRunLessonCopy(
     @param:StringRes val titleRes: Int,
     @param:StringRes val bodyRes: Int,
     val keys: List<JarnKey>,
+    @param:StringRes val noteRes: Int? = null,
 )
 
 private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLessonCopy = when (step) {
@@ -285,14 +288,15 @@ private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLess
         listOf(JarnKey.B),
     )
     JarnFirstRunStep.PressX -> FirstRunLessonCopy(
-        R.string.jarnfe_first_run_x_title,
-        if (twoScreens) R.string.jarnfe_first_run_x_body else R.string.jarnfe_first_run_x_body_single,
-        listOf(JarnKey.X),
+        R.string.jarnfe_first_run_options_title,
+        if (twoScreens) R.string.jarnfe_first_run_options_body else R.string.jarnfe_first_run_options_body_single,
+        listOf(JarnKey.Select),
     )
     JarnFirstRunStep.PressSelect -> FirstRunLessonCopy(
-        R.string.jarnfe_first_run_select_title,
-        R.string.jarnfe_first_run_select_body,
-        listOf(JarnKey.Select),
+        R.string.jarnfe_first_run_switch_title,
+        R.string.jarnfe_first_run_switch_body,
+        listOf(JarnKey.X),
+        noteRes = R.string.jarnfe_first_run_switch_hold,
     )
     JarnFirstRunStep.PressTabs -> FirstRunLessonCopy(
         R.string.jarnfe_first_run_tabs_title,
@@ -316,12 +320,12 @@ private fun FirstRunDoneStep(twoScreens: Boolean) {
     FirstRunHeading(R.string.jarnfe_first_run_done_title, R.string.jarnfe_first_run_done_body)
     FirstRunCheatRow(listOf(JarnKey.A), R.string.jarnfe_first_run_cheat_a)
     FirstRunCheatRow(listOf(JarnKey.B), R.string.jarnfe_first_run_cheat_b)
-    FirstRunCheatRow(listOf(JarnKey.X), R.string.jarnfe_hint_context)
+    FirstRunCheatRow(listOf(JarnKey.Select), R.string.jarnfe_hint_context)
     FirstRunCheatRow(listOf(JarnKey.Y), R.string.jarnfe_hint_search)
     FirstRunCheatRow(listOf(JarnKey.Start), R.string.jarnfe_route_settings)
     FirstRunCheatRow(
-        listOf(JarnKey.Select),
-        if (twoScreens) R.string.jarnfe_first_run_cheat_select else R.string.jarnfe_first_run_cheat_select_single,
+        listOf(JarnKey.X),
+        if (twoScreens) R.string.jarnfe_first_run_cheat_switch else R.string.jarnfe_first_run_cheat_switch_single,
     )
     FirstRunCheatRow(
         listOf(JarnKey.L1, JarnKey.R1),

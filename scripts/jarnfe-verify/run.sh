@@ -13,7 +13,7 @@
 #                           screen_focus_lock. The suite still never writes it. See the note below.
 #
 # Safety: never uninstalls, clears data, changes settings, restores, launches a game, or presses A.
-# Keys are limited to D-pad, B, L1, R1, L2, R2, Start and Select, and stop as soon as Jarn FE loses
+# Keys are limited to D-pad, B, L1, R1, L2, R2, Start and X (a tap, never a hold), and stop as soon as Jarn FE loses
 # focus. L1/R1 step the top screen's tabs and L2/R2 the bottom screen's.
 #
 # Focus Lock note: on a Thor, moving control between screens calls the app's own focus lock sync.
@@ -186,7 +186,7 @@ restore_start() {
     step_to_tab "$(index_of "$START_LIBRARY_TAB" "${LIBRARY_TABS[@]}")" "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY"
   fi
   if [ -n "$START_DISPLAY" ] && [ "$(top_display)" != "$START_DISPLAY" ]; then
-    key "$KEY_SELECT" && wait_top_display "$START_DISPLAY"
+    key "$KEY_X" && wait_top_display "$START_DISPLAY"
   fi
   if [ -n "$START_DISPLAY" ] && [ "$(top_display)" != "$START_DISPLAY" ]; then
     fail "could not restore the starting screen (display $START_DISPLAY)"

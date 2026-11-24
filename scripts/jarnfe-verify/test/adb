@@ -73,7 +73,7 @@ def step_tabs(state, code):
 
 def press(state, code):
     in_settings = state["route"] == "settings"
-    if code == 109:
+    if code == 99:
         state["active"] = other(state["active"])
     elif code == 108 and not in_settings:
         state["route"] = "settings"
@@ -92,7 +92,7 @@ def press(state, code):
         step_tabs(state, code)
     elif code in (19, 20, 21, 22):
         move_focus(state, code)
-    if env("FOLLOW_WRITES") and code in (108, 109, 97):
+    if env("FOLLOW_WRITES") and code in (108, 99, 97):
         state["lock"] = "2" if state["active"] == 4 else "1"
     if env("FOREIGN_AFTER") and code == int(env("FOREIGN_AFTER")):
         state["foreign"] = True

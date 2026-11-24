@@ -94,7 +94,7 @@ class JarnShellInputTest {
 
     @Test
     fun `select switches the router and the session together`() {
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         assertEquals(JarnScreen.Deck, session.state.activeScreen)
         assertEquals(JarnScreen.Deck, router.activeScreen)
         press(KeyEvent.KEYCODE_BACK)
@@ -109,7 +109,7 @@ class JarnShellInputTest {
         assertEquals(DeckTab.Now, session.state.deckTab)
         press(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Now, session.state.deckTab)
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         press(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Apps, session.state.deckTab)
         press(KeyEvent.KEYCODE_BUTTON_R1)
@@ -170,11 +170,11 @@ class JarnShellInputTest {
 
     @Test
     fun `hints only declare working actions`() {
-        assertEquals(listOf(JarnKey.A, JarnKey.Start, JarnKey.Select), hintKeys(JarnScreen.Stage))
-        assertEquals(listOf(JarnKey.Select), hintKeys(JarnScreen.Deck))
+        assertEquals(listOf(JarnKey.A, JarnKey.Start, JarnKey.X), hintKeys(JarnScreen.Stage))
+        assertEquals(listOf(JarnKey.X), hintKeys(JarnScreen.Deck))
         session.update { openRoute(StageRoute.Settings) }
         refreshLayers()
-        assertEquals(listOf(JarnKey.A, JarnKey.B, JarnKey.Select), hintKeys(JarnScreen.Stage))
+        assertEquals(listOf(JarnKey.A, JarnKey.B, JarnKey.X), hintKeys(JarnScreen.Stage))
     }
 
     @Test
@@ -183,7 +183,7 @@ class JarnShellInputTest {
         assertEquals(null, router.tabHintFor(JarnScreen.Deck))
         session.update { withDeckHost(true) }
         assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Deck)?.key)
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
         assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Deck)?.key)
     }
@@ -216,7 +216,7 @@ class JarnShellInputTest {
     @Test
     fun `single screen panel owns input and closes one layer at a time`() {
         session.update { withDeckDisplay(false).openRoute(StageRoute.GameList) }
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         assertTrue(session.state.deckPanelOpen)
         assertEquals(JarnScreen.Stage, router.activeScreen)
         router.attach(panelLayer)

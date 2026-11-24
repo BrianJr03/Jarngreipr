@@ -240,7 +240,7 @@ private fun stageTitleRes(step: JarnFirstRunStep, practiceStep: JarnFirstRunStep
     JarnFirstRunStep.Media -> R.string.jarnfe_first_run_media_title
     JarnFirstRunStep.Look -> R.string.jarnfe_first_run_look_title
     JarnFirstRunStep.SwitchCue -> R.string.jarnfe_first_run_cue_title
-    JarnFirstRunStep.PressSelect -> R.string.jarnfe_first_run_stage_select
+    JarnFirstRunStep.PressSelect -> R.string.jarnfe_first_run_stage_switch
     JarnFirstRunStep.Done -> R.string.jarnfe_first_run_done_title
     else -> R.string.jarnfe_first_run_stage_practice
 }
