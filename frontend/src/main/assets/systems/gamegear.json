@@ -1,0 +1,8 @@
+{
+  "id": "gamegear",
+  "displayName": "Sega Game Gear",
+  "folderAliases": ["gg", "sega-gg"],
+  "extensions": ["gg", "bin", "zip", "7z"],
+  "screenScraperSystemId": 21,
+  "retroArchSystemId": null
+}

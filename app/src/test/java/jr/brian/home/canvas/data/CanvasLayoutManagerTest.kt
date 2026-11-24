@@ -627,4 +627,53 @@ class CanvasLayoutManagerTest {
         assertNotNull(loaded.horizontalArrangement["rss"])
         assertTrue(loaded.satisfiesInvariant())
     }
+
+    @Test
+    fun `a tile on the menu cell moves aside without landing on another tile`() {
+        val first = CanvasItem.AppItem("first", "pkg.first")
+        val second = CanvasItem.AppItem("second", "pkg.second")
+        manager.replaceLayout(
+            0,
+            CanvasLayout(
+                verticalColumns = 2,
+                items = listOf(first, second),
+                verticalArrangement = mapOf(
+                    first.id to GridRect(1, 0, 1, 1),
+                    second.id to GridRect(0, 0, 1, 1),
+                ),
+                horizontalArrangement = mapOf(
+                    first.id to GridRect(1, 0, 1, 1),
+                    second.id to GridRect(2, 0, 1, 1),
+                ),
+            ),
+        )
+
+        manager.reconcileReservedCells()
+
+        val layout = manager.getLayout(0)
+        val moved = layout.verticalArrangement.getValue(first.id)
+        assertTrue(!moved.overlaps(GridRect(1, 0, 1, 1)))
+        assertTrue(!moved.overlaps(layout.verticalArrangement.getValue(second.id)))
+        assertEquals(GridRect(0, 0, 1, 1), layout.verticalArrangement[second.id])
+        assertTrue(layout.menuButtonVisible)
+    }
+
+    @Test
+    fun `a layout clear of the menu cell is left alone`() {
+        val item = CanvasItem.AppItem("clear", "pkg.clear")
+        manager.replaceLayout(
+            0,
+            CanvasLayout(
+                verticalColumns = 2,
+                items = listOf(item),
+                verticalArrangement = mapOf(item.id to GridRect(0, 0, 1, 1)),
+                horizontalArrangement = mapOf(item.id to GridRect(1, 0, 1, 1)),
+            ),
+        )
+        val before = manager.getLayout(0)
+
+        manager.reconcileReservedCells()
+
+        assertTrue(before === manager.getLayout(0))
+    }
 }

@@ -117,6 +117,27 @@ class ShellService : IShellService.Stub() {
     }
     
     /**
+     * Write a [value] to [key] in Settings.[namespace] via the shell
+     * `settings` command. Namespace is one of "system", "secure",
+     * "global". Returns 0 on success.
+     *
+     * Used by [jr.brian.home.data.ScreenFocusLockWriter] to flip AYN's
+     * `screen_focus_lock` system key, which rejects writes from
+     * non-privileged apps even with WRITE_SETTINGS /
+     * WRITE_SECURE_SETTINGS granted. Running `settings put` through the
+     * Shizuku-elevated shell bypasses that gate the same way
+     * `adb shell settings put` does.
+     */
+    override fun putSetting(namespace: String, key: String, value: String): Int {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("settings", "put", namespace, key, value))
+            process.waitFor()
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
+    /**
      * Clean up and destroy the service.
      */
     override fun destroy() {

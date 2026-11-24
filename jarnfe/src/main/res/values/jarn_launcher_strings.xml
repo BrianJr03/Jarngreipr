@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_settings_section_apps">Apps</string>
+    <string name="jarnfe_settings_section_general">General</string>
+    <string name="jarnfe_launcher_apps_title">App icons and names</string>
+    <string name="jarnfe_launcher_icon_pack_hint">Changes the icons for all your apps.</string>
+    <string name="jarnfe_launcher_show_app_names">Show app names</string>
+    <string name="jarnfe_launcher_show_app_names_hint">Shows names under apps in the drawer, Canvas and folders.</string>
+    <string name="jarnfe_launcher_label_size">App name size</string>
+    <string name="jarnfe_launcher_label_size_value">%1$d sp</string>
+    <string name="jarnfe_launcher_dock_title">Dock</string>
+    <string name="jarnfe_launcher_dock_show">Show dock</string>
+    <string name="jarnfe_launcher_dock_show_hint">Keeps your favorite apps one press away.</string>
+    <string name="jarnfe_launcher_dock_apps">Dock apps</string>
+    <string name="jarnfe_launcher_dock_count">%1$d of %2$d slots used</string>
+    <string name="jarnfe_launcher_dock_full">The dock is full. Remove an app first.</string>
+    <string name="jarnfe_launcher_dock_no_apps">No apps found</string>
+    <string name="jarnfe_launcher_tools_title">Tools</string>
+    <string name="jarnfe_launcher_feeds_title">RSS feeds</string>
+    <string name="jarnfe_launcher_about_title">About and support</string>
+    <string name="jarnfe_launcher_whats_new">What\'s new</string>
+    <string name="jarnfe_launcher_whats_new_hint">See what changed in this version.</string>
+    <string name="jarnfe_launcher_support_discord">Join the Discord</string>
+    <string name="jarnfe_launcher_support_coffee">Buy Me A Coffee</string>
+    <string name="jarnfe_launcher_support_kofi">Support on Ko-fi</string>
+    <string name="jarnfe_launcher_link_failed">Couldn\'t open that link</string>
+    <string name="jarnfe_settings_preview_apps">Your apps</string>
+</resources>

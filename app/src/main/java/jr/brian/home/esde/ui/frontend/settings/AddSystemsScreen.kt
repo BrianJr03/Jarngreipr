@@ -62,8 +62,8 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.addSystemFolderMapping
 import jr.brian.home.esde.data.removeSystemFolderMapping
+import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.home.esde.model.SystemFolderMapping
-import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.documentIdToStoragePath
 import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -468,10 +468,10 @@ private sealed interface ValidationResult {
 }
 
 /**
- * Walks [mapping] with the same extension rules the real scan uses and
- * reports the count. Runs on IO; safe to call from a coroutine launched by
- * the caller. Not the full [RomScanner.scan] — we don't need dedup, metadata,
- * or cache stamps, just "does this folder contain ROMs?"
+ * Walks [mapping] with the extension set the Phase 2 scanner uses and
+ * reports the count. Runs on IO; safe to call from a coroutine launched
+ * by the caller. Not a full scan — we don't need dedup, metadata, or
+ * row writes, just "does this folder contain ROMs?"
  */
 private fun validateMapping(
     context: Context,
@@ -480,9 +480,19 @@ private fun validateMapping(
     val treeUri = runCatching { mapping.treeUri.toUri() }.getOrNull()
         ?: return ValidationResult.Zero
     val root = DocumentFile.fromTreeUri(context, treeUri) ?: return ValidationResult.Zero
-    val extensions = RomScanner.extensionsFor(mapping.systemName, emptyMap())
+    val catalog = dagger.hilt.android.EntryPointAccessors
+        .fromApplication(context.applicationContext, AddSystemsEntryPoint::class.java)
+        .systemCatalog()
+    val extensions = catalog.findByFolderAlias(mapping.systemName)?.extensions ?: emptySet()
+    if (extensions.isEmpty()) return ValidationResult.Zero
     val count = countRoms(root, extensions, depthRemaining = 6)
     return if (count == 0) ValidationResult.Zero else ValidationResult.Ok(count)
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+internal interface AddSystemsEntryPoint {
+    fun systemCatalog(): SystemCatalog
 }
 
 private fun countRoms(

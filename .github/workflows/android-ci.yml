@@ -36,6 +36,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests
+        env:
+          SCREENSCRAPER_DEV_ID: ${{ secrets.SCREENSCRAPER_DEV_ID }}
+          SCREENSCRAPER_DEV_PASSWORD: ${{ secrets.SCREENSCRAPER_DEV_PASSWORD }}
         run: ./gradlew testStandardDebugUnitTest --stacktrace
 
       - name: Upload test results
@@ -66,6 +69,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run lint
+        env:
+          SCREENSCRAPER_DEV_ID: ${{ secrets.SCREENSCRAPER_DEV_ID }}
+          SCREENSCRAPER_DEV_PASSWORD: ${{ secrets.SCREENSCRAPER_DEV_PASSWORD }}
         run: ./gradlew lintStandardDebug --stacktrace
 
       - name: Upload lint results

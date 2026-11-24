@@ -17,7 +17,7 @@ import jr.brian.home.data.ESDECleanupManager
 import jr.brian.home.esde.data.MusicController
 import jr.brian.home.esde.data.MusicManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemImageType
@@ -44,6 +44,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
 import jr.brian.home.esde.util.mediaCandidatePaths
 import jr.brian.home.esde.util.mediaRoots
+import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
@@ -73,15 +74,17 @@ class ESDEViewModel @Inject constructor(
     private val bgMusicManager: BgMusicManager,
     private val romSearchStateHolder: RomSearchStateHolder,
     private val wallpaperStateHolder: WallpaperStateHolder,
+    private val scraperCoordinator: ScraperCoordinator,
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
     private val mediaPaths: List<String>
         get() {
-            val primary = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
-            val secondary = if (prefs.state.value.secondaryMediaEnabled)
-                SetupPreferences.RETRO_HRAI_PATH else null
-            return mediaRoots(primary, secondary)
+            val s = prefs.state.value
+            val primary = s.customMediaPath ?: setupPreferences.mediaPath
+            val secondary = if (s.secondaryMediaEnabled) SetupPreferences.RETRO_HRAI_PATH else null
+            val tertiary = if (s.jarngreiprMediaEnabled) scraperCoordinator.scrapedRoot() else null
+            return mediaRoots(primary, secondary, tertiary)
         }
 
     private val esdeRootPath: String?
@@ -175,16 +178,22 @@ class ESDEViewModel @Inject constructor(
         }
 
         val systemName = prefsState.lastSelectedSystem ?: return
-        val newPath = when (prefsState.systemImageType) {
-            SystemImageType.None -> null
-            else -> getSystemImagePath(systemName)
+        viewModelScope.launch {
+            val newPath = withContext(Dispatchers.IO) {
+                when (prefsState.systemImageType) {
+                    SystemImageType.None -> null
+                    else -> getSystemImagePath(systemName)
+                }
+            }
+            // Guard: the user may have moved on to a different system by the
+            // time our resolve returns.
+            if (currentSystem != null && currentSystem != systemName) return@launch
+            val isVideo = newPath != null && isVideoPath(newPath)
+            _wallpaperState.value = _wallpaperState.value.copy(
+                currentImagePath = if (isVideo) null else newPath,
+                systemBackgroundVideoPath = if (isVideo) newPath else null
+            )
         }
-
-        val isVideo = newPath != null && isVideoPath(newPath)
-        _wallpaperState.value = _wallpaperState.value.copy(
-            currentImagePath = if (isVideo) null else newPath,
-            systemBackgroundVideoPath = if (isVideo) newPath else null
-        )
     }
 
     private fun createInitialState(): WallpaperState {
@@ -235,16 +244,13 @@ class ESDEViewModel @Inject constructor(
 
         prefs.setLastSelectedSystem(systemName)
 
-        val systemPath = getSystemImagePath(systemName)
-        val isVideo = systemPath != null && isVideoPath(systemPath)
-
+        // First pass: synchronous, main-thread safe fields. Leave the heavy
+        // image / logo paths at their previous values so the wallpaper
+        // doesn't flash to black while we resolve the new ones off-main.
         _wallpaperState.value = _wallpaperState.value.copy(
-            currentImagePath = if (isVideo) null else systemPath,
-            systemBackgroundVideoPath = if (isVideo) systemPath else null,
             isVideoPlaying = false,
             videoPath = null,
             isGameRunning = false,
-            logoPath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.systemBackgroundDimmingFloat,
@@ -254,6 +260,26 @@ class ESDEViewModel @Inject constructor(
         )
 
         musicController.onSystemChanged(systemName)
+
+        // Second pass: resolve media paths on IO, then post. The heavy
+        // probe used to run on main every D-pad focus change.
+        viewModelScope.launch {
+            val resolved = withContext(Dispatchers.IO) {
+                val systemPath = getSystemImagePath(systemName)
+                val logoPath = getSystemLogoPath(systemName)
+                systemPath to logoPath
+            }
+            // Guard: user may have moved on to another system while we
+            // were resolving.
+            if (currentSystem != systemName) return@launch
+            val (systemPath, logoPath) = resolved
+            val isVideo = systemPath != null && isVideoPath(systemPath)
+            _wallpaperState.value = _wallpaperState.value.copy(
+                currentImagePath = if (isVideo) null else systemPath,
+                systemBackgroundVideoPath = if (isVideo) systemPath else null,
+                logoPath = logoPath,
+            )
+        }
     }
 
     fun updateForGame(
@@ -275,19 +301,21 @@ class ESDEViewModel @Inject constructor(
 
         val gameDescription = romSearchStateHolder.findGame(systemName, gameFilename)?.description
 
+        // First pass: synchronous. The old main-thread code called
+        // getGameImagePath / getGameMarqueePath / buildGameInfo, each of
+        // which walks every media folder for every image kind, every D-pad
+        // focus change. Keep the previous paths visible until the IO pass
+        // below replaces them so the wallpaper doesn't flash.
         _wallpaperState.value = _wallpaperState.value.copy(
-            currentImagePath = getGameImagePath(systemName, gameFilename),
             systemBackgroundVideoPath = null,
             isVideoPlaying = false,
             videoPath = null,
             isGameRunning = false,
-            logoPath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
             isShowingGameBackground = true,
-            currentGame = buildGameInfo(systemName, gameFilename),
-            currentSystemName = null
+            currentSystemName = null,
         )
 
         musicController.onGameSelected(systemName, gameFilename)
@@ -295,6 +323,27 @@ class ESDEViewModel @Inject constructor(
         viewModelScope.launch {
             _gameKonfettiEvent.emit(
                 GameKonfettiEvent(gameFilename, KonfettiTrigger.GAME_SELECT)
+            )
+        }
+
+        // Second pass: resolve game media paths and build the game info off
+        // the main thread. buildGameInfo itself issues 7 findFirstMedia
+        // probes, so routing it through Dispatchers.IO is the single
+        // biggest focus-change speedup.
+        viewModelScope.launch {
+            val resolved = withContext(Dispatchers.IO) {
+                Triple(
+                    getGameImagePath(systemName, gameFilename),
+                    getGameMarqueePath(systemName, gameFilename),
+                    buildGameInfo(systemName, gameFilename),
+                )
+            }
+            if (currentGameSystem != systemName || currentGameFilename != gameFilename) return@launch
+            val (imagePath, marqueePath, gameInfo) = resolved
+            _wallpaperState.value = _wallpaperState.value.copy(
+                currentImagePath = imagePath,
+                logoPath = marqueePath,
+                currentGame = gameInfo,
             )
         }
 
@@ -309,32 +358,42 @@ class ESDEViewModel @Inject constructor(
             return
         }
 
-        val videoPath = getGameVideoPath(systemName, gameFilename)
-        if (videoPath == null) {
-            Log.d(TAG, "No video found for: $systemName / $gameFilename")
-            return
-        }
-
-        val delayMs = prefs.state.value.videoDelaySeconds * 1000L
-        Log.d(TAG, "Scheduling video playback in ${delayMs}ms")
-
-        pendingVideoRunnable = Runnable {
-            if (currentGameSystem == systemName && currentGameFilename == gameFilename && isLauncherActive && !_wallpaperState.value.isGameRunning) {
-                viewModelScope.launch {
-                    _videoLaunchEvent.emit(
-                        VideoLaunchEvent(
-                            videoPath = videoPath,
-                            audioEnabled = prefs.state.value.videoAudioEnabled,
-                            scaleMode = prefs.state.value.videoScaleMode,
-                            overlayEnabled = prefs.state.value.videoOverlayEnabled
-                        )
-                    )
-                }
-                musicController.onVideoStarted()
+        // getGameVideoPath is a findFirstMedia probe across every media
+        // root × system alias × video extension — resolve it on IO. The
+        // posted runnable only fires if the user is still on this game,
+        // so a slightly-late video schedule just means the delay starts
+        // after the lookup finishes.
+        viewModelScope.launch {
+            val videoPath = withContext(Dispatchers.IO) {
+                getGameVideoPath(systemName, gameFilename)
             }
-        }
+            if (currentGameSystem != systemName || currentGameFilename != gameFilename) return@launch
+            if (videoPath == null) {
+                Log.d(TAG, "No video found for: $systemName / $gameFilename")
+                return@launch
+            }
 
-        videoDelayHandler.postDelayed(pendingVideoRunnable!!, delayMs)
+            val delayMs = prefs.state.value.videoDelaySeconds * 1000L
+            Log.d(TAG, "Scheduling video playback in ${delayMs}ms")
+
+            pendingVideoRunnable = Runnable {
+                if (currentGameSystem == systemName && currentGameFilename == gameFilename && isLauncherActive && !_wallpaperState.value.isGameRunning) {
+                    viewModelScope.launch {
+                        _videoLaunchEvent.emit(
+                            VideoLaunchEvent(
+                                videoPath = videoPath,
+                                audioEnabled = prefs.state.value.videoAudioEnabled,
+                                scaleMode = prefs.state.value.videoScaleMode,
+                                overlayEnabled = prefs.state.value.videoOverlayEnabled
+                            )
+                        )
+                    }
+                    musicController.onVideoStarted()
+                }
+            }
+
+            videoDelayHandler.postDelayed(pendingVideoRunnable!!, delayMs)
+        }
     }
 
     fun cancelPendingVideo() {
@@ -512,7 +571,7 @@ class ESDEViewModel @Inject constructor(
      * Only the path fields are filled — name/metadata are absent. The canvas
      * tile renderer treats this purely as a path bundle.
      */
-    private fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
+    fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
         val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
         val roots = mediaPaths
         fun media(folder: String) = findFirstMedia(
@@ -522,15 +581,27 @@ class ESDEViewModel @Inject constructor(
             gameFilename = gameFilename,
             extensions = IMAGE_EXTENSIONS
         )
-        // Prefer the scraped name from the built ROM index (which sources it
-        // from gamelist.xml or, later, another metadata provider); fall back
-        // to the file stem so the canvas placeholder never shows a raw path
-        // or extension.
-        val displayName = romSearchStateHolder.findGame(systemName, gameFilename)?.name
-            ?: File(gameFilename).nameWithoutExtension
+        // Prefer the scraped record from the built ROM index (name plus
+        // description / genre / developer / publisher / players / rating /
+        // play stats sourced from gamelist.xml or another metadata provider).
+        // Fall back to the file stem so the canvas placeholder never shows a
+        // raw path or extension.
+        val indexed = romSearchStateHolder.findGame(systemName, gameFilename)
+        val displayName = indexed?.name ?: File(gameFilename).nameWithoutExtension
         return GameInfo(
             path = gameFilename,
             name = displayName,
+            description = indexed?.description,
+            rating = indexed?.rating ?: 0f,
+            releaseDate = indexed?.releaseDate,
+            developer = indexed?.developer,
+            publisher = indexed?.publisher,
+            genre = indexed?.genre,
+            players = indexed?.players,
+            isFavorite = indexed?.isFavorite == true,
+            playCount = indexed?.playCount ?: 0,
+            playTimeMinutes = indexed?.playTimeMinutes ?: 0,
+            lastPlayed = indexed?.lastPlayed,
             systemName = systemName,
             artworkPath = media(FOLDER_COVERS),
             physicalMediaPath = media(FOLDER_PHYSICALMEDIA),
@@ -544,7 +615,10 @@ class ESDEViewModel @Inject constructor(
             screenshotPath = media(FOLDER_SCREENSHOTS),
             fanartPath = media(FOLDER_FANART),
             titlescreenPath = media(FOLDER_TITLESCREENS),
-            miximagePath = media(FOLDER_MIXIMAGES)
+            miximagePath = media(FOLDER_MIXIMAGES),
+            emulatorPackage = indexed?.emulatorPackage,
+            romAbsolutePath = indexed?.romAbsolutePath,
+            launchCommand = indexed?.launchCommand
         )
     }
 

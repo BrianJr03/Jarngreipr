@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_settings_section_data">Data</string>
+    <string name="jarnfe_data_backup_title">Backup</string>
+    <string name="jarnfe_data_updates_title">Updates</string>
+    <string name="jarnfe_data_backup">Create backup</string>
+    <string name="jarnfe_data_backup_hint">Saves your settings to a file. Scraper passwords and keys are left out.</string>
+    <string name="jarnfe_data_restore">Restore from backup</string>
+    <string name="jarnfe_data_restore_hint">Shows what will change before anything is applied.</string>
+    <string name="jarnfe_data_check_updates">Check for updates</string>
+    <string name="jarnfe_data_rc">Release candidates</string>
+    <string name="jarnfe_data_rc_hint">Also offers test builds before their final release.</string>
+    <string name="jarnfe_data_close">Close</string>
+    <string name="jarnfe_data_working_hint">This will only take a moment.</string>
+
+    <string name="jarnfe_backup_saving">Saving backup</string>
+    <string name="jarnfe_backup_saved">Backup saved</string>
+    <string name="jarnfe_backup_saved_without_folders">Backup saved, but some folders couldn\'t be read and were left out</string>
+    <string name="jarnfe_backup_failed_title">Backup not saved</string>
+    <string name="jarnfe_backup_failed_message">That location couldn\'t be written to. Try saving somewhere else.</string>
+
+    <string name="jarnfe_restore_checking">Checking backup</string>
+    <string name="jarnfe_restore_applying">Restoring backup</string>
+    <string name="jarnfe_restore_done">Backup restored</string>
+    <string name="jarnfe_restore_rejected_title">Can\'t restore this file</string>
+    <string name="jarnfe_restore_not_backup">This file isn\'t a Jarngreipr backup. Nothing was changed.</string>
+    <string name="jarnfe_restore_damaged">This backup is damaged or incomplete. Nothing was changed.</string>
+    <string name="jarnfe_restore_too_new">This backup came from a newer version of Jarngreipr. Update the app, then try again. Nothing was changed.</string>
+    <string name="jarnfe_restore_unreadable">This file couldn\'t be opened. Nothing was changed.</string>
+    <string name="jarnfe_restore_failed_title">Restore didn\'t finish</string>
+    <string name="jarnfe_restore_failed_message">Some settings may have been restored and others not. Check your setup, or restore the backup again.</string>
+    <string name="jarnfe_restore_preview_title">Restore this backup?</string>
+    <string name="jarnfe_restore_summary">Saved %1$s. Backup format %2$d, this app uses %3$d.</string>
+    <string name="jarnfe_restore_date_unknown">on an unknown date</string>
+    <plurals name="jarnfe_restore_change_count">
+        <item quantity="one">%1$d area will change</item>
+        <item quantity="other">%1$d areas will change</item>
+    </plurals>
+    <string name="jarnfe_restore_status_same">No change</string>
+    <string name="jarnfe_restore_status_changes">Will change</string>
+    <string name="jarnfe_restore_status_counts">%1$d now, %2$d after</string>
+    <string name="jarnfe_restore_status_adds">Adds %1$d</string>
+    <string name="jarnfe_restore_status_missing">Not in backup, stays as is</string>
+    <string name="jarnfe_restore_notice_experience">This backup was made in Classic, so restoring it switches the app back to Classic.</string>
+    <string name="jarnfe_restore_notice_images">Wallpapers and folder images are saved as file locations, so they may need to be picked again.</string>
+    <string name="jarnfe_restore_notice_icons">Custom app icons aren\'t part of backups.</string>
+    <string name="jarnfe_restore_cancel">Cancel</string>
+    <string name="jarnfe_restore_confirm">Restore</string>
+
+    <string name="jarnfe_backup_area_home">Home pages and app layout</string>
+    <string name="jarnfe_backup_area_folders">App folders</string>
+    <string name="jarnfe_backup_area_dock">Dock</string>
+    <string name="jarnfe_backup_area_pins">Pinned apps</string>
+    <string name="jarnfe_backup_area_game_folders">Game folders</string>
+    <string name="jarnfe_backup_area_hidden_systems">Hidden systems</string>
+    <string name="jarnfe_backup_area_art">Art choices</string>
+    <string name="jarnfe_backup_area_recent">Recently played</string>
+    <string name="jarnfe_backup_area_look">Look and display</string>
+    <string name="jarnfe_backup_area_wallpaper">Wallpapers</string>
+    <string name="jarnfe_backup_area_scraper">Scraper options</string>
+    <string name="jarnfe_backup_area_other">Other settings</string>
+
+    <string name="jarnfe_update_checking">Checking for updates</string>
+    <string name="jarnfe_update_current_title">You\'re up to date</string>
+    <string name="jarnfe_update_current_message">This is the newest version available.</string>
+    <string name="jarnfe_update_check_failed_title">Couldn\'t check for updates</string>
+    <string name="jarnfe_update_check_failed_message">Check your connection and try again.</string>
+    <string name="jarnfe_update_available_title">Update available</string>
+    <string name="jarnfe_update_versions">Version %1$s (you have %2$s)</string>
+    <string name="jarnfe_update_prerelease">Release candidate</string>
+    <string name="jarnfe_update_variant_standard">Download standard</string>
+    <string name="jarnfe_update_variant_hidden">Download hidden</string>
+    <string name="jarnfe_update_variant_match">%1$s, matches this install</string>
+    <string name="jarnfe_update_later">Later</string>
+    <string name="jarnfe_update_skip">Skip this version</string>
+    <string name="jarnfe_update_open_release">Open release page</string>
+    <string name="jarnfe_update_permission_title">Allow installs</string>
+    <string name="jarnfe_update_permission_message">Android needs your permission for Jarngreipr to install updates. Allow it, come back, then continue.</string>
+    <string name="jarnfe_update_permission_open">Open settings</string>
+    <string name="jarnfe_update_permission_continue">Continue</string>
+    <string name="jarnfe_update_downloading">Downloading update</string>
+    <string name="jarnfe_update_ready_title">Update ready</string>
+    <string name="jarnfe_update_ready_message">Android will ask you to confirm the install.</string>
+    <string name="jarnfe_update_install">Install</string>
+    <string name="jarnfe_update_failed_title">Download failed</string>
+    <string name="jarnfe_update_failed_message">The update couldn\'t be downloaded. Try again or get it from the release page.</string>
+    <string name="jarnfe_update_retry">Try again</string>
+    <string name="jarnfe_update_install_failed_title">Couldn\'t start the install</string>
+    <string name="jarnfe_update_install_failed_message">The downloaded update is in your Downloads folder.</string>
+    <string name="jarnfe_update_no_browser_title">Couldn\'t open the page</string>
+    <string name="jarnfe_update_no_browser_message">No browser is available on this device.</string>
+</resources>

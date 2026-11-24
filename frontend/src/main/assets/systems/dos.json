@@ -1,0 +1,8 @@
+{
+  "id": "dos",
+  "displayName": "DOS",
+  "folderAliases": ["dosbox", "pcdos"],
+  "extensions": ["bat", "exe", "com", "conf", "dosbox", "dos"],
+  "screenScraperSystemId": 135,
+  "retroArchSystemId": null
+}

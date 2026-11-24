@@ -2,11 +2,15 @@ package jr.brian.home.viewmodels
 
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jr.brian.home.canvas.data.isWidgetIdReferenced
+import jr.brian.home.canvas.jarn.JarnWidgetHostHandoff
+import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -17,6 +21,7 @@ import jr.brian.home.model.widget.WidgetPage
 import jr.brian.home.model.state.WidgetUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,7 +40,7 @@ class WidgetViewModel @Inject constructor(
     private var isDeletingPage = false
 
     companion object {
-        private const val APPWIDGET_HOST_ID = 1024
+        const val APPWIDGET_HOST_ID = 1024
         const val MAX_WIDGET_PAGES = 2
         private const val TAG = "WidgetViewModel"
     }
@@ -45,6 +50,7 @@ class WidgetViewModel @Inject constructor(
         appWidgetManager = AppWidgetManager.getInstance(context)
 
         appWidgetHost?.startListening()
+        appWidgetHost?.let(JarnWidgetHostHandoff::classicStarted)
 
         val pageTypes = pageTypeManager.pageTypes.value
         val widgetPageCount = pageTypes.count { it != PageType.APPS_TAB }
@@ -84,14 +90,21 @@ class WidgetViewModel @Inject constructor(
                     }
 
                     widgetPageCount < currentPages.size -> {
-                        val trimmedPages = currentPages.take(widgetPageCount)
-                        val removedPages = currentPages.drop(widgetPageCount)
+                        val savedPages = widgetPreferences.widgetConfigs.first()
+                            .associate { it.widgetId to it.pageIndex }
+                        val latestPages = _uiState.value.widgetPages
+                        val trimmedPages = latestPages.take(widgetPageCount)
+                        val removedPages = latestPages.drop(widgetPageCount)
 
                         removedPages.forEach { page ->
-                            page.widgets.forEach { widget ->
-                                appWidgetHost?.deleteAppWidgetId(widget.widgetId)
+                            page.allWidgetIds().forEach { widgetId ->
+                                // A page removed outside this ViewModel has already moved its
+                                // neighbors down in storage, so those widgets must survive.
+                                val savedPage = savedPages[widgetId]
+                                if (savedPage != null && savedPage < widgetPageCount) return@forEach
+                                appWidgetHost?.deleteAppWidgetId(widgetId)
                                 viewModelScope.launch {
-                                    widgetPreferences.removeWidgetConfig(widget.widgetId)
+                                    widgetPreferences.removeWidgetConfig(widgetId)
                                 }
                             }
                         }
@@ -112,12 +125,13 @@ class WidgetViewModel @Inject constructor(
                     return@collect
                 }
 
-                isLoadingFromPreferences = true
-
                 val currentPages = _uiState.value.widgetPages.toMutableList()
 
                 currentPages.forEachIndexed { index, page ->
-                    currentPages[index] = page.copy(widgets = emptyList())
+                    currentPages[index] = page.copy(
+                        widgets = emptyList(),
+                        unavailableWidgets = emptyList()
+                    )
                 }
 
                 // Detect if we need to migrate old data (all order values are 0)
@@ -139,29 +153,24 @@ class WidgetViewModel @Inject constructor(
                 sortedConfigs.forEach { config ->
                     try {
                         val appWidgetInfo = appWidgetManager?.getAppWidgetInfo(config.widgetId)
+                        val pageIndex = config.pageIndex.coerceIn(0, MAX_WIDGET_PAGES - 1)
+                        val page = currentPages[pageIndex]
 
                         if (appWidgetInfo != null) {
-                            val widgetInfo = WidgetInfo(
-                                widgetId = config.widgetId,
-                                providerInfo = appWidgetInfo,
-                                x = config.x,
-                                y = config.y,
-                                width = config.width,
-                                height = config.height,
-                                pageIndex = config.pageIndex,
-                                order = config.order
-                            )
-
-                            val pageIndex = config.pageIndex.coerceIn(0, MAX_WIDGET_PAGES - 1)
-                            val page = currentPages[pageIndex]
+                            val widgetInfo = config.toWidgetInfo(appWidgetInfo)
                             currentPages[pageIndex] = page.copy(widgets = page.widgets + widgetInfo)
 
                             if (needsMigration) {
                                 saveWidgetConfig(widgetInfo)
                             }
                         } else {
-                            appWidgetHost?.deleteAppWidgetId(config.widgetId)
-                            widgetPreferences.removeWidgetConfig(config.widgetId)
+                            currentPages[pageIndex] = page.copy(
+                                unavailableWidgets = page.unavailableWidgets + config
+                            )
+
+                            if (needsMigration) {
+                                persistWidgetConfig(config)
+                            }
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error restoring widget ${config.widgetId}", e)
@@ -169,17 +178,67 @@ class WidgetViewModel @Inject constructor(
                 }
 
                 _uiState.value = _uiState.value.copy(widgetPages = currentPages)
-                isLoadingFromPreferences = false
             }
         }
     }
+
+    /** Providers can vanish during an update or storage unmount, then return with the same id. */
+    fun refreshUnavailableWidgets() {
+        val manager = appWidgetManager ?: return
+        var anyRestored = false
+        val pages = _uiState.value.widgetPages.map { page ->
+            val restored = page.unavailableWidgets.mapNotNull { config ->
+                runCatching { manager.getAppWidgetInfo(config.widgetId) }.getOrNull()
+                    ?.let { config.toWidgetInfo(it) }
+            }
+            if (restored.isEmpty()) return@map page
+            anyRestored = true
+            val restoredIds = restored.map { it.widgetId }.toSet()
+            page.copy(
+                widgets = (page.widgets + restored).sortedBy { it.order },
+                unavailableWidgets = page.unavailableWidgets.filter { it.widgetId !in restoredIds }
+            )
+        }
+        if (anyRestored) _uiState.value = _uiState.value.copy(widgetPages = pages)
+    }
+
+    /** Keeps the id when storage can't confirm nothing else uses it. */
+    fun releaseWidgetIdIfUnreferenced(widgetId: Int, layouts: () -> Collection<CanvasLayout>) {
+        viewModelScope.launch {
+            val widgetPageIds = runCatching {
+                widgetPreferences.widgetConfigs.first().map { it.widgetId }
+            }.getOrNull() ?: return@launch
+            if (!isWidgetIdReferenced(layouts(), widgetPageIds, widgetId)) {
+                runCatching { appWidgetHost?.deleteAppWidgetId(widgetId) }
+            }
+        }
+    }
+
+    private fun WidgetPage.allWidgetIds(): List<Int> =
+        widgets.map { it.widgetId } + unavailableWidgets.map { it.widgetId }
+
+    private fun WidgetPage.nextOrder(): Int =
+        (widgets.map { it.order } + unavailableWidgets.map { it.order }).maxOrNull()?.plus(1) ?: 0
+
+    private fun WidgetConfig.toWidgetInfo(providerInfo: AppWidgetProviderInfo) = WidgetInfo(
+        widgetId = widgetId,
+        providerInfo = providerInfo,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        pageIndex = pageIndex,
+        order = order
+    )
 
     fun addWidgetToPage(widgetInfo: WidgetInfo, pageIndex: Int) {
         viewModelScope.launch {
             val currentPages = _uiState.value.widgetPages.toMutableList()
             val pageToUpdate = currentPages.getOrNull(pageIndex) ?: return@launch
-            val nextOrder = (pageToUpdate.widgets.maxOfOrNull { it.order } ?: -1) + 1
-            val updatedWidget = widgetInfo.copy(pageIndex = pageIndex, order = nextOrder)
+            val updatedWidget = widgetInfo.copy(
+                pageIndex = pageIndex,
+                order = pageToUpdate.nextOrder()
+            )
             val updatedWidgets = pageToUpdate.widgets + updatedWidget
             currentPages[pageIndex] = pageToUpdate.copy(widgets = updatedWidgets)
             _uiState.value = _uiState.value.copy(widgetPages = currentPages)
@@ -188,20 +247,25 @@ class WidgetViewModel @Inject constructor(
     }
 
     private fun saveWidgetConfig(widgetInfo: WidgetInfo) {
+        persistWidgetConfig(
+            WidgetConfig(
+                widgetId = widgetInfo.widgetId,
+                providerClassName = widgetInfo.providerInfo.provider.className,
+                providerPackageName = widgetInfo.providerInfo.provider.packageName,
+                x = widgetInfo.x,
+                y = widgetInfo.y,
+                width = widgetInfo.width,
+                height = widgetInfo.height,
+                pageIndex = widgetInfo.pageIndex,
+                order = widgetInfo.order
+            )
+        )
+    }
+
+    private fun persistWidgetConfig(config: WidgetConfig) {
         viewModelScope.launch {
             try {
                 isLoadingFromPreferences = true
-                val config = WidgetConfig(
-                    widgetId = widgetInfo.widgetId,
-                    providerClassName = widgetInfo.providerInfo.provider.className,
-                    providerPackageName = widgetInfo.providerInfo.provider.packageName,
-                    x = widgetInfo.x,
-                    y = widgetInfo.y,
-                    width = widgetInfo.width,
-                    height = widgetInfo.height,
-                    pageIndex = widgetInfo.pageIndex,
-                    order = widgetInfo.order
-                )
                 widgetPreferences.addWidgetConfig(config)
                 Log.d(TAG, "Saved widget config: ${config.providerClassName}")
             } catch (e: Exception) {
@@ -218,8 +282,11 @@ class WidgetViewModel @Inject constructor(
             try {
                 val currentPages = _uiState.value.widgetPages.toMutableList()
                 val pageToUpdate = currentPages.getOrNull(pageIndex) ?: return@launch
-                val updatedWidgets = pageToUpdate.widgets.filter { it.widgetId != widgetId }
-                currentPages[pageIndex] = pageToUpdate.copy(widgets = updatedWidgets)
+                currentPages[pageIndex] = pageToUpdate.copy(
+                    widgets = pageToUpdate.widgets.filter { it.widgetId != widgetId },
+                    unavailableWidgets = pageToUpdate.unavailableWidgets
+                        .filter { it.widgetId != widgetId }
+                )
                 _uiState.value = _uiState.value.copy(widgetPages = currentPages)
                 widgetPreferences.removeWidgetConfig(widgetId)
                 appWidgetHost?.deleteAppWidgetId(widgetId)
@@ -241,8 +308,10 @@ class WidgetViewModel @Inject constructor(
             val updatedFromWidgets = fromPage.widgets.filter { it.widgetId != widgetId }
             currentPages[fromPageIndex] = fromPage.copy(widgets = updatedFromWidgets)
 
-            val nextOrder = (toPage.widgets.maxOfOrNull { it.order } ?: -1) + 1
-            val updatedWidget = widgetToMove.copy(pageIndex = toPageIndex, order = nextOrder)
+            val updatedWidget = widgetToMove.copy(
+                pageIndex = toPageIndex,
+                order = toPage.nextOrder()
+            )
             val updatedToWidgets = toPage.widgets + updatedWidget
             currentPages[toPageIndex] = toPage.copy(widgets = updatedToWidgets)
 
@@ -419,9 +488,9 @@ class WidgetViewModel @Inject constructor(
                 val pageToDelete = currentPages[widgetPageIndexToDelete]
                 Log.d(TAG, "Deleting page with ${pageToDelete.widgets.size} widgets")
 
-                pageToDelete.widgets.forEach { widget ->
-                    appWidgetHost?.deleteAppWidgetId(widget.widgetId)
-                    widgetPreferences.removeWidgetConfig(widget.widgetId)
+                pageToDelete.allWidgetIds().forEach { widgetId ->
+                    appWidgetHost?.deleteAppWidgetId(widgetId)
+                    widgetPreferences.removeWidgetConfig(widgetId)
                 }
 
                 widgetPageAppManager.reindexPages(widgetPageIndexToDelete, currentPages.size - 1)
@@ -438,7 +507,18 @@ class WidgetViewModel @Inject constructor(
                             widget
                         }
                     }
-                    page.copy(index = newIndex, widgets = updatedWidgets)
+                    val updatedUnavailable = page.unavailableWidgets.map { config ->
+                        if (config.pageIndex != newIndex) {
+                            config.copy(pageIndex = newIndex).also(::persistWidgetConfig)
+                        } else {
+                            config
+                        }
+                    }
+                    page.copy(
+                        index = newIndex,
+                        widgets = updatedWidgets,
+                        unavailableWidgets = updatedUnavailable
+                    )
                 }
 
                 _uiState.value = _uiState.value.copy(widgetPages = reindexedPages)
@@ -453,5 +533,6 @@ class WidgetViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         appWidgetHost?.stopListening()
+        appWidgetHost?.let(JarnWidgetHostHandoff::classicStopped)
     }
 }

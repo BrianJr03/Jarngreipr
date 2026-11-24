@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarn_look_forge">Forge</string>
+    <string name="jarn_look_fjord">Fjord</string>
+    <string name="jarn_look_grove">Grove</string>
+    <string name="jarn_look_night">Night</string>
+    <string name="jarn_state_loading">Loading</string>
+    <string name="jarn_state_on">On</string>
+    <string name="jarn_state_off">Off</string>
+    <string name="jarn_state_selected">Selected</string>
+    <string name="jarn_state_not_selected">Not selected</string>
+    <string name="jarn_stepper_progress">Step %1$d of %2$d</string>
+
+    <string name="jarn_key_a" translatable="false">A</string>
+    <string name="jarn_key_b" translatable="false">B</string>
+    <string name="jarn_key_x" translatable="false">X</string>
+    <string name="jarn_key_y" translatable="false">Y</string>
+    <string name="jarn_key_l1" translatable="false">L1</string>
+    <string name="jarn_key_r1" translatable="false">R1</string>
+    <string name="jarn_key_l2" translatable="false">L2</string>
+    <string name="jarn_key_r2" translatable="false">R2</string>
+    <string name="jarn_key_l1_r1" translatable="false">L1/R1</string>
+    <string name="jarn_key_l2_r2" translatable="false">L2/R2</string>
+    <string name="jarn_key_l3" translatable="false">L3</string>
+    <string name="jarn_key_r3" translatable="false">R3</string>
+    <string name="jarn_key_start">Start</string>
+    <string name="jarn_key_select">Select</string>
+    <string name="jarn_key_dpad">D-pad</string>
+</resources>

@@ -42,6 +42,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.graphics.Color
+import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -58,6 +59,9 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.clearSafTreeUri
+import jr.brian.home.esde.data.clearSystemEmulator
+import jr.brian.home.esde.data.setSystemEmulator
+import jr.brian.home.esde.ui.EmulatorPickerDialog
 import jr.brian.home.esde.data.getSafTreeUri
 import jr.brian.home.esde.data.getSystemFolderMapping
 import jr.brian.home.esde.model.GameInfo
@@ -102,9 +106,12 @@ fun SystemCustomizationScreen(
     // clear rows on the storage tab. Reflect that in the row count so D-pad
     // navigation doesn't advance past what's rendered.
     val storageEditable = esdePrefs.getSystemFolderMapping(systemName) == null
+    val prefsStateFlow by esdePrefs.state.collectAsStateWithLifecycle()
+    val hasSystemEmulator = prefsStateFlow.systemEmulatorMap[systemName] != null
     val rowCount = rowCountFor(
         cursor.selectedCategory,
         storageRowState.hasTree && storageEditable,
+        hasSystemEmulator,
     )
     val rootFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
@@ -125,12 +132,19 @@ fun SystemCustomizationScreen(
                 .focusRequester(rootFocus)
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
-                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    cursor.handleKey(
-                        keyCode = event.nativeKeyEvent.keyCode,
-                        rowCount = rowCount,
-                        onClose = onDismiss
-                    )
+                    val code = event.nativeKeyEvent.keyCode
+                    val isNavKey = code in CUSTOMIZATION_NAV_KEYCODES
+                    if (event.type == KeyEventType.KeyDown) {
+                        return@onPreviewKeyEvent cursor.handleKey(
+                            keyCode = code,
+                            rowCount = rowCount,
+                            onClose = onDismiss
+                        )
+                    }
+                    // Swallow the paired ACTION_UP of navigation keys so it
+                    // doesn't leak out of this overlay and drive the systems
+                    // grid rendered beneath.
+                    isNavKey
                 }
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -161,13 +175,16 @@ fun SystemCustomizationScreen(
 private fun rowCountFor(
     category: SystemCustomizationCategory,
     storageHasTree: Boolean,
+    hasSystemEmulator: Boolean,
 ): Int = when (category) {
     SystemCustomizationCategory.BACKGROUND -> 3
     SystemCustomizationCategory.COLOR -> 6
-    // Refresh + Reorder + Reset.
-    SystemCustomizationCategory.ACTIONS -> 3
+    // Refresh + Scrape + Reorder + Reset.
+    SystemCustomizationCategory.ACTIONS -> 4
     // Pick row + optional Clear row.
     SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
+    // Pick row always; Clear row only when a system emulator is set.
+    SystemCustomizationCategory.EMULATOR -> if (hasSystemEmulator) 2 else 1
 }
 
 @Composable
@@ -269,6 +286,12 @@ private fun CustomizationRows(
             state = storageRowState,
             gamesForSystem = gamesForSystem,
             romsPaths = romsPaths,
+            esdePrefs = esdePrefs,
+            focusedRow = focusedRow,
+        )
+        SystemCustomizationCategory.EMULATOR -> EmulatorRows(
+            systemName = systemName,
+            gamesForSystem = gamesForSystem,
             esdePrefs = esdePrefs,
             focusedRow = focusedRow,
         )
@@ -531,10 +554,13 @@ private fun ActionRows(
     onEnterReorder: () -> Unit
 ) {
     val refreshFocused = focusedRow == 0
-    val reorderFocused = focusedRow == 1
-    val resetFocused = focusedRow == 2
+    val scrapeFocused = focusedRow == 1
+    val reorderFocused = focusedRow == 2
+    val resetFocused = focusedRow == 3
 
     RefreshSystemRow(systemName = systemName, focused = refreshFocused)
+
+    ScrapeSystemRow(systemName = systemName, focused = scrapeFocused)
 
     Box(modifier = Modifier.fillMaxWidth()) {
         ActivateOnConfirm(focused = reorderFocused, onActivate = onEnterReorder)
@@ -549,6 +575,58 @@ private fun ActionRows(
     }
 
     ResetRow(focused = resetFocused, onReset = onReset)
+}
+
+@Composable
+private fun ScrapeSystemRow(systemName: String, focused: Boolean) {
+    val scraperViewModel: jr.brian.home.esde.viewmodels.ScraperViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val imageLoader = LocalESDEImageLoader.current
+    val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
+    val isRunning = scrapeState is jr.brian.home.esde.scraper.model.ScrapeState.Running
+    val scope = rememberCoroutineScope()
+    var showScraperGuard by remember { mutableStateOf(false) }
+
+    if (showScraperGuard) {
+        jr.brian.home.esde.ui.components.ScraperGuardDialog(onDismiss = { showScraperGuard = false })
+    }
+
+    val trailing = (scrapeState as? jr.brian.home.esde.scraper.model.ScrapeState.Running)
+        ?.let { stringResource(R.string.system_customize_scrape_running, it.done, it.total) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(focused)
+    ) {
+        ActivateOnConfirm(focused = focused) {
+            if (!isRunning) {
+                if (!scraperViewModel.hasEnabledScraper()) {
+                    showScraperGuard = true
+                } else {
+                    scraperViewModel.scrapeSystem(systemName) {
+                        // Clear Coil caches so the just-written art replaces
+                        // any null/404 the loader already cached under the
+                        // games' path keys.
+                        scope.launch {
+                            imageLoader.memoryCache?.clear()
+                            withContext(Dispatchers.IO) {
+                                imageLoader.diskCache?.clear()
+                            }
+                            romSearchViewModel.refreshSystem(systemName)
+                        }
+                    }
+                }
+            }
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_scrape_title),
+            description = stringResource(R.string.system_customize_scrape_description),
+            trailingLabel = trailing,
+            showProgress = isRunning,
+            focused = focused
+        )
+    }
 }
 
 @Composable
@@ -955,6 +1033,97 @@ private fun validateSafTree(
         if (exists) found++
     }
     return StorageValidation.Result(found = found, total = sample.size)
+}
+
+private val CUSTOMIZATION_NAV_KEYCODES: Set<Int> = setOf(
+    AndroidKeyEvent.KEYCODE_DPAD_UP,
+    AndroidKeyEvent.KEYCODE_DPAD_DOWN,
+    AndroidKeyEvent.KEYCODE_DPAD_LEFT,
+    AndroidKeyEvent.KEYCODE_DPAD_RIGHT,
+    AndroidKeyEvent.KEYCODE_DPAD_CENTER,
+    AndroidKeyEvent.KEYCODE_ENTER,
+    AndroidKeyEvent.KEYCODE_BUTTON_A,
+    AndroidKeyEvent.KEYCODE_BUTTON_B,
+    AndroidKeyEvent.KEYCODE_BACK,
+)
+
+@Composable
+private fun EmulatorRows(
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    esdePrefs: ESDEPreferencesManager,
+    focusedRow: Int,
+) {
+    val context = LocalContext.current
+    val prefsState by esdePrefs.state.collectAsStateWithLifecycle()
+    val savedPkg = prefsState.systemEmulatorMap[systemName]
+    val savedLabel = remember(savedPkg) {
+        savedPkg?.let { pkg ->
+            runCatching {
+                val info = context.packageManager.getApplicationInfo(pkg, 0)
+                context.packageManager.getApplicationLabel(info).toString()
+            }.getOrNull() ?: pkg
+        }
+    }
+
+    var showPicker by remember { mutableStateOf(false) }
+    val representative = remember(gamesForSystem) { gamesForSystem.firstOrNull() }
+
+    val pickFocused = focusedRow == 0
+    val clearFocused = focusedRow == 1
+
+    if (showPicker && representative != null) {
+        EmulatorPickerDialog(
+            game = representative,
+            onDismiss = { showPicker = false },
+            onEmulatorSelected = { pkg, _ ->
+                esdePrefs.setSystemEmulator(systemName, pkg)
+                showPicker = false
+            },
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(pickFocused)
+    ) {
+        ActivateOnConfirm(focused = pickFocused) {
+            if (representative != null) showPicker = true
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_emulator_pick_title),
+            description = if (representative == null) {
+                stringResource(R.string.system_customize_emulator_pick_no_games)
+            } else if (savedLabel != null) {
+                stringResource(R.string.system_customize_emulator_pick_current, savedLabel)
+            } else {
+                stringResource(R.string.system_customize_emulator_pick_description)
+            },
+            trailingLabel = null,
+            showProgress = false,
+            focused = pickFocused,
+        )
+    }
+
+    if (savedPkg != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .revealWhenFocused(clearFocused)
+        ) {
+            ActivateOnConfirm(focused = clearFocused) {
+                esdePrefs.clearSystemEmulator(systemName)
+            }
+            ActionRowCard(
+                title = stringResource(R.string.system_customize_emulator_clear_title),
+                description = stringResource(R.string.system_customize_emulator_clear_description),
+                trailingLabel = null,
+                showProgress = false,
+                focused = clearFocused,
+            )
+        }
+    }
 }
 
 // endregion

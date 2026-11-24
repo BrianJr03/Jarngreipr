@@ -100,6 +100,7 @@ private fun OverlayMediaTypeChip(
         OverlayMediaType.Marquees -> stringResource(R.string.esde_settings_overlay_marquees)
         OverlayMediaType.ThreeDBoxes -> stringResource(R.string.esde_settings_overlay_3dboxes)
         OverlayMediaType.Covers -> stringResource(R.string.esde_settings_overlay_covers)
+        OverlayMediaType.PhysicalMedia -> stringResource(R.string.esde_settings_overlay_physicalmedia)
         OverlayMediaType.Screenshots -> stringResource(R.string.esde_settings_overlay_screenshots)
         OverlayMediaType.Fanart -> stringResource(R.string.esde_settings_overlay_fanart)
         OverlayMediaType.MixImages -> stringResource(R.string.esde_settings_overlay_miximages)

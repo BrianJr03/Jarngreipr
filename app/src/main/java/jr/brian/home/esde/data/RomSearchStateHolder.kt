@@ -1,6 +1,5 @@
 package jr.brian.home.esde.data
 
-import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,10 +13,29 @@ class RomSearchStateHolder @Inject constructor() {
     val query = MutableStateFlow("")
     val allGames = MutableStateFlow<List<GameInfo>>(emptyList())
     val isLoading = MutableStateFlow(false)
+
+    /**
+     * Progress of the in-flight system scan. `systemScanLoaded` increments as
+     * each candidate system finishes reconciling; `systemScanTotal` is set to
+     * the number of discovered candidates right before the per-system jobs
+     * fan out. Both reset to 0 at the start of a scan so the "Systems Loading
+     * (x/x)" badge in the frontend only renders during an active scan.
+     */
+    val systemScanLoaded = MutableStateFlow(0)
+    val systemScanTotal = MutableStateFlow(0)
     val dismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val screenDismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val gameLaunchSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showSearchKeyboardSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the empty-library CTA is tapped inside RomSearchResultsActivity
+     * (top display). RomSearchScreen (bottom display) collects it and asks the nav
+     * host to route to ES-DE Settings after tearing down the search flow — a
+     * cross-activity signal is the only way, since ESDESettingsScreen is a
+     * navController destination on MainActivity's bottom display.
+     */
+    val openEsdeSettingsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /**
      * Emitted when the on-screen keyboard (rendered in MainActivity on the bottom
@@ -28,6 +46,34 @@ class RomSearchStateHolder @Inject constructor() {
      * FrontEndActivity and blanked MainActivity during the Y → back cycle.
      */
     val showRomSearchResultsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the Companion button on a game's detail screen is tapped on
+     * the top display (FrontEndActivity). The modal bottom-sheet picker needs
+     * to render on the bottom display (MainActivity) — FrontEndActivity's
+     * edge-to-edge + hidden-system-bars window config traps the sheet. Payload
+     * is the game whose companion-app mapping should be set when a pick lands.
+     */
+    val showCompanionPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the Edit Info button on a game's detail screen is tapped on
+     * the top display. Same reason as [showCompanionPickerSignal] — the modal
+     * bottom-sheet form has to render on the bottom display (MainActivity) or
+     * FrontEndActivity's hidden-system-bars window traps it.
+     */
+    val showEditInfoPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted by [RomGameLauncher] on a game launch when the ROM has two
+     * companion apps mapped. The modal bottom-sheet picker that asks which
+     * companion to launch has to render on MainActivity for the same window-
+     * config reason as [showCompanionPickerSignal]. Payload is the list of
+     * package names (2 entries). The user's pick is launched by the sheet
+     * handler on the bottom display.
+     */
+    val showCompanionLaunchPickerSignal =
+        MutableSharedFlow<List<String>>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
 
@@ -35,8 +81,6 @@ class RomSearchStateHolder @Inject constructor() {
     val pendingSelectPageIndex = MutableStateFlow(-1)
     val pendingRomForPin = MutableStateFlow<Pair<Int, GameInfo>?>(null)
     val pendingRomToLaunch = MutableStateFlow<PinnedRomInfo?>(null)
-
-    val currentRoute = MutableStateFlow<FrontendRoute>(FrontendRoute.Systems)
 
     /**
      * Last system the user focused on the System screen, by name. Lives at @Singleton scope

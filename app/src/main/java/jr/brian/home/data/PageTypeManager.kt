@@ -31,14 +31,16 @@ class PageTypeManager(context: Context) {
     }
 
     /**
-     * First-launch bootstrap: seed a single APPS_TAB when no pages exist. Kept
-     * separate from [loadPageTypes] so the load path is a pure read — reorder
-     * and removePage callers that transiently leave the state empty don't
-     * accidentally resurrect a default page.
+     * First-launch bootstrap: seed a single Canvas page when no pages exist.
+     * Kept separate from [loadPageTypes] so the load path is a pure read —
+     * reorder and removePage callers that transiently leave the state empty
+     * don't accidentally resurrect a default page. Canvas is the entry point
+     * the UI is designed around; the in-app CanvasOnboardingOverlay guides
+     * fresh users through adding tiles.
      */
     fun ensureDefaultPage() {
         if (_pageTypes.value.isNotEmpty()) return
-        addPage(PageType.APPS_TAB)
+        addPage(PageType.UNIFIED_CANVAS)
     }
 
     fun addPage(type: PageType) {

@@ -8,7 +8,8 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import java.io.File
 
-private const val PREFS_NAME = "launcher_prefs"
+const val LAUNCHER_WALLPAPER_PREFS = "launcher_prefs"
+const val FRONTEND_WALLPAPER_PREFS = "frontend_wallpaper_prefs"
 private const val KEY_WALLPAPER = "selected_wallpaper"
 private const val KEY_WALLPAPER_TYPE = "wallpaper_type"
 private const val KEY_SAVED_IMAGE_URI = "saved_image_uri"
@@ -19,8 +20,9 @@ const val WALLPAPER_ESDE = "ESDE"
 
 class WallpaperManager(
     private val context: Context,
+    private val prefsName: String = LAUNCHER_WALLPAPER_PREFS,
 ) {
-    private val prefs get() = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs get() = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     var savedImageUri by mutableStateOf(prefs.getString(KEY_SAVED_IMAGE_URI, null))
         private set
@@ -84,6 +86,15 @@ class WallpaperManager(
 
     fun setESDE() {
         setWallpaper(WALLPAPER_ESDE, WallpaperType.ESDE)
+    }
+
+    /**
+     * Frontend-only: mark this manager as "mirror the main launcher's
+     * current wallpaper." No uri is stored — rendering code reads the
+     * launcher's own [WallpaperManager] when it sees this type.
+     */
+    fun setLauncher() {
+        setWallpaper(null, WallpaperType.LAUNCHER)
     }
 
     fun setDefault() {
@@ -153,5 +164,23 @@ class WallpaperManager(
 
     fun getWallpaperUri(): String? {
         return currentWallpaper.uri
+    }
+}
+
+/**
+ * Resolve what the frontend side should actually render. If the frontend
+ * manager's type is [WallpaperType.LAUNCHER] AND [launcherSyncSource] is
+ * provided, mirror the launcher's (uri, type). Otherwise return the
+ * frontend's own values.
+ */
+fun effectiveFrontendWallpaper(
+    primary: WallpaperManager,
+    launcherSyncSource: WallpaperManager?,
+): WallpaperInfo {
+    val own = primary.currentWallpaper
+    return if (own.type == WallpaperType.LAUNCHER && launcherSyncSource != null) {
+        launcherSyncSource.currentWallpaper
+    } else {
+        own
     }
 }

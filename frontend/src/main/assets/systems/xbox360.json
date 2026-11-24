@@ -1,0 +1,8 @@
+{
+  "id": "xbox360",
+  "displayName": "Microsoft Xbox 360",
+  "folderAliases": ["xbox-360", "microsoft-xbox360"],
+  "extensions": ["iso", "xex", "zar", "god", "7z"],
+  "screenScraperSystemId": 33,
+  "retroArchSystemId": null
+}

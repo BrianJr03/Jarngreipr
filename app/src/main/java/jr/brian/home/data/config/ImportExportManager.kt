@@ -3,30 +3,35 @@ package jr.brian.home.data.config
 import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.util.UnstableApi
-import jr.brian.home.canvas.data.CanvasTabType
+import androidx.annotation.VisibleForTesting
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
+import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.FabPosition
-import jr.brian.home.data.FolderManager
 import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
+import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.data.SnapMode
+import jr.brian.core.model.Experience
+import jr.brian.core.model.ScreenAssignment
+import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
+import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
+import jr.brian.home.esde.model.ESDEPrefsState
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.model.BackButtonShortcut
-import jr.brian.home.model.HomeTarget
-import jr.brian.home.model.MainScreen
+import jr.brian.core.model.MainScreen
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.model.ControlPadItem
 import jr.brian.home.model.app.AppPosition
-import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.theme.managers.WallpaperType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -40,7 +45,17 @@ import javax.inject.Singleton
 
 @OptIn(UnstableApi::class)
 @Singleton
-class ImportExportManager @Inject constructor(private val managers: ManagerContainer) {
+class ImportExportManager @Inject constructor(
+    private val managers: ManagerContainer,
+    private val screenAssignmentStore: ScreenAssignmentStore,
+    private val experienceStore: ExperienceStore,
+    private val artSourceStore: jr.brian.frontend.library.art.ArtSourceStore,
+    private val libraryFolderBackup: jr.brian.frontend.library.setup.LibraryFolderBackup,
+    private val jarnLookStore: jr.brian.frontend.look.JarnLookStore,
+    private val artChoiceStore: jr.brian.frontend.library.art.GameArtChoiceStore,
+    private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
+    private val playStatsBackup: jr.brian.frontend.library.play.PlayStatsBackup,
+) {
     private val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = true
@@ -53,7 +68,10 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             ui = buildUiConfig(),
             app = buildAppConfig(),
             page = buildPageConfig(),
-            feature = buildFeatureConfig(),
+            feature = buildFeatureConfig().copy(
+                libraryFolders = libraryFolderBackup.export()?.map { it.toConfig() },
+                jarnPlayStats = playStatsBackup.export()?.map { it.toConfig() },
+            ),
             system = buildSystemConfig()
         )
     }
@@ -86,6 +104,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 backButtonShortcutEnabled = ps.backButtonShortcutEnabled.value,
                 backButtonShortcut = ps.backButtonShortcut.value.name,
                 backButtonShortcutAppPackage = ps.backButtonShortcutAppPackage.value,
+                secondaryBackButtonShortcut = ps.secondaryBackButtonShortcut.value.name,
+                secondaryBackButtonShortcutAppPackage = ps.secondaryBackButtonShortcutAppPackage.value,
                 poweredOffBrightness = ps.poweredOffBrightness.value,
                 appDrawerFilterByPage = ps.appDrawerFilterByPage.value,
                 pagerSwipeSensitivity = ps.pagerSwipeSensitivity.value
@@ -97,6 +117,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 savedImageUri = ui.wallpaperManager.savedImageUri,
                 savedGifUri = ui.wallpaperManager.savedGifUri,
                 savedVideoUri = ui.wallpaperManager.savedVideoUri
+            ),
+            frontendWallpaper = WallpaperConfig(
+                type = ui.frontendWallpaperManager.currentWallpaper.type.name,
+                activeUri = ui.frontendWallpaperManager.currentWallpaper.uri,
+                savedImageUri = ui.frontendWallpaperManager.savedImageUri,
+                savedGifUri = ui.frontendWallpaperManager.savedGifUri,
+                savedVideoUri = ui.frontendWallpaperManager.savedVideoUri
             ),
             searchLayout = SearchLayoutConfig(
                 isHorizontalLayout = ui.searchLayoutManager.isHorizontalLayout
@@ -116,7 +143,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
 
         val positionsByPage = buildPositionsByPage(app, maxPages)
 
-        val foldersByKey = buildFoldersByKey(app, maxPages)
+        val foldersByKey = buildFoldersByKey(app)
 
         return AppConfig(
             visibility = AppVisibilityConfig(
@@ -162,37 +189,10 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         return result
     }
 
-    private suspend fun buildFoldersByKey(
-        app: AppManagers,
-        maxPages: Int
-    ): Map<String, List<FolderItemConfig>> {
-        val result = mutableMapOf<String, List<FolderItemConfig>>()
-        val tabTypes = listOf(
-            FolderManager.TAB_TYPE_APPS,
-            FolderManager.TAB_TYPE_WIDGETS,
-            CanvasTabType.VALUE
-        )
-        for (page in 0 until maxPages) {
-            for (tabType in tabTypes) {
-                val folders = app.folderManager.getFolders(page, tabType).first()
-                if (folders.isNotEmpty()) {
-                    result["${tabType}_$page"] = folders.map { folder ->
-                        FolderItemConfig(
-                            id = folder.id,
-                            name = folder.name,
-                            apps = folder.appPackageNames,
-                            x = folder.position.x,
-                            y = folder.position.y,
-                            iconSize = folder.position.iconSize,
-                            backgroundColorArgb = folder.backgroundColorArgb,
-                            backgroundImagePath = folder.backgroundImagePath
-                        )
-                    }
-                }
-            }
+    private suspend fun buildFoldersByKey(app: AppManagers): Map<String, List<FolderItemConfig>> =
+        buildFolderBackup { page, tabType ->
+            app.folderManager.readFolders(page, tabType)?.map { it.toFolderItemConfig() }
         }
-        return result
-    }
 
     private suspend fun buildPageConfig(): PageConfig {
         val page = managers.page
@@ -231,7 +231,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         return FeatureConfig(
             dock = DockConfig(
                 apps = f.dockManager.dockApps.value,
-                colorArgb = f.dockManager.dockColor.value.value.toInt(),
+                colorArgb = f.dockManager.dockColor.value.toArgb(),
                 size = f.dockManager.dockSize.value.name,
                 visible = f.dockManager.isDockVisible.value,
                 visiblePages = f.dockManager.dockVisiblePages.value.toList(),
@@ -248,7 +248,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 joystickMode = f.controlPadManager.joystickMode.value.name
             ),
             appDrawerFab = AppDrawerFabConfig(
-                colorArgb = f.appDrawerFabManager.fabColor.value.value.toInt(),
+                colorArgb = f.appDrawerFabManager.fabColor.value.toArgb(),
                 enabled = f.appDrawerFabManager.isFabEnabled.value,
                 visiblePages = f.appDrawerFabManager.fabVisiblePages.value.toList(),
                 explicitPages = f.appDrawerFabManager.fabExplicitPages.value,
@@ -275,18 +275,48 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 mode = f.bgMusicManager.mode.name,
                 folderUri = f.bgMusicManager.folderUri,
                 fileUri = f.bgMusicManager.singleFileUri,
-                volume = f.bgMusicManager.vol
+                volume = f.bgMusicManager.vol,
+                isMuted = f.bgMusicManager.muted
             ),
             homeButton = HomeButtonConfig(
                 interceptionEnabled = f.homeButtonManager.interceptionEnabled.value,
-                homeTarget = f.homeButtonManager.homeTarget.value?.name,
                 mainScreen = f.homeButtonManager.mainScreen.value.name,
+                // Legacy boolean kept populated for pre-v32 app versions:
+                // Off -> false, anything else -> true.
+                focusLockAutoManageEnabled = f.focusLockPrefsManager.mode.value !=
+                    jr.brian.home.data.FocusLockMode.Off,
+                focusLockMode = f.focusLockPrefsManager.mode.value.name,
             ),
+            recentlyPlayed = f.recentlyPlayedManager.entries.value,
+            screenAssignment = screenAssignmentStore.assignment.name,
+            experience = experienceStore.experience.name,
+            artSource = artSourceStore.savedSource?.name,
+            systemArtSource = artSourceStore.systemSource.name,
+            jarnLook = jarnLookStore.lookId,
+            jarnReducedMotion = jarnLookStore.reducedMotion,
+            jarnArtChoices = artChoiceStore.choices.toConfig(),
+            jarnPinnedApps = appPinStore.pinned,
+            jarnDisplay = jarnLookStore.display.toConfig(),
+            jarnLiveWallpaper = jarnLookStore.liveWallpaperBackup(),
+            jarnFirstRunDone = jarnLookStore.firstRunDone,
+            jarnMatchCommandPanel = jarnLookStore.matchCommandPanel,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
-                systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
-                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
+                jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
+                // Legacy field — kept populated with the primary-display value
+                // so an older app version restoring this config still gets a
+                // sensible single-layout setting.
+                systemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
+                primarySystemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
+                secondarySystemLayout = f.esdePreferencesManager.state.value.secondarySystemLayout.name,
+                // Legacy field — kept populated with the primary-display game
+                // layout so an older app version restoring this config still
+                // gets a sensible single-layout setting.
+                gameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
+                primaryGameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
+                secondaryGameLayout = f.esdePreferencesManager.state.value.secondaryGameLayout.name,
                 systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
                 systemOrder = f.esdePreferencesManager.state.value.systemOrder,
                 frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
@@ -294,6 +324,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
                 systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
+                // Legacy field intentionally retained in the export payload so a
+                // pre-v36 build still restores the first companion per ROM. Seeded
+                // from the new list by taking the first entry.
+                gameCompanionMap = f.esdePreferencesManager.state.value.gameCompanionsMap
+                    .mapNotNull { (k, v) -> v.firstOrNull()?.let { k to it } }
+                    .toMap(),
+                gameCompanionsMap = f.esdePreferencesManager.state.value.gameCompanionsMap,
                 frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
                 frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
                 frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
@@ -311,6 +348,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
                 frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
                 gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
+                scraper = buildScraperConfigForExport(f.esdePreferencesManager.state.value)
             )
         )
     }
@@ -319,7 +357,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         badgesVisible = managers.system.notificationManager.badgesVisible,
         shadeTabPage = managers.system.notificationManager.shadeTabPage,
         hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList(),
-        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings
+        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings,
+        rcNotificationsEnabled = managers.system.appUpdateManager.rcNotificationsEnabled
     )
 
     // ── Import ──────────────────────────────────────────────────────────────
@@ -330,6 +369,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         applyPageConfig(config.page)
         applyFeatureConfig(config.feature)
         applySystemConfig(config.system)
+        config.feature.libraryFolders?.let { folders ->
+            libraryFolderBackup.restore(folders.map { it.toBackedUpFolder() })
+        }
+        config.feature.jarnPlayStats?.let { stats ->
+            playStatsBackup.restore(stats.map { it.toBackedUpPlayStat() })
+        }
     }
 
     private suspend fun applyUiConfig(config: UiConfig) {
@@ -364,6 +409,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.powerSettingsManager.setBackButtonShortcutEnabled(ps.backButtonShortcutEnabled)
         runCatching { ui.powerSettingsManager.setBackButtonShortcut(BackButtonShortcut.valueOf(ps.backButtonShortcut)) }
         ui.powerSettingsManager.setBackButtonShortcutAppPackage(ps.backButtonShortcutAppPackage)
+        ui.powerSettingsManager.setSecondaryBackButtonShortcut(
+            runCatching { BackButtonShortcut.valueOf(ps.secondaryBackButtonShortcut) }
+                .getOrDefault(BackButtonShortcut.NONE)
+        )
+        ui.powerSettingsManager.setSecondaryBackButtonShortcutAppPackage(ps.secondaryBackButtonShortcutAppPackage)
         ui.powerSettingsManager.setPoweredOffBrightness(ps.poweredOffBrightness)
         ui.powerSettingsManager.setAppDrawerFilterByPage(ps.appDrawerFilterByPage)
         ui.powerSettingsManager.setPagerSwipeSensitivity(ps.pagerSwipeSensitivity)
@@ -376,6 +426,14 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.wallpaperManager.updateSavedVideoUri(wc.savedVideoUri)
         runCatching {
             ui.wallpaperManager.setWallpaper(wc.activeUri, WallpaperType.valueOf(wc.type))
+        }
+
+        val fwc = config.frontendWallpaper
+        ui.frontendWallpaperManager.updateSavedImageUri(fwc.savedImageUri)
+        ui.frontendWallpaperManager.updateSavedGifUri(fwc.savedGifUri)
+        ui.frontendWallpaperManager.updateSavedVideoUri(fwc.savedVideoUri)
+        runCatching {
+            ui.frontendWallpaperManager.setWallpaper(fwc.activeUri, WallpaperType.valueOf(fwc.type))
         }
 
         ui.searchLayoutManager.setHorizontalLayout(config.searchLayout.isHorizontalLayout)
@@ -429,32 +487,16 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             }
         }
 
-        val tabTypes = listOf(
-            FolderManager.TAB_TYPE_APPS,
-            FolderManager.TAB_TYPE_WIDGETS,
-            CanvasTabType.VALUE
-        )
-        for (page in 0 until PageCountRange.MAX) {
-            for (tabType in tabTypes) {
-                app.folderManager.setAllFolders(page, tabType, emptyList())
-            }
-        }
-        config.folders.forEach { (key, folderConfigs) ->
-            val lastUnderscore = key.lastIndexOf('_')
-            if (lastUnderscore == -1) return@forEach
-            val tabType = key.substring(0, lastUnderscore)
-            val page = key.substring(lastUnderscore + 1).toIntOrNull() ?: return@forEach
-            val folders = folderConfigs.map { fc ->
-                Folder(
-                    id = fc.id,
-                    name = fc.name,
-                    appPackageNames = fc.apps,
-                    position = AppPosition(fc.id, fc.x, fc.y, fc.iconSize),
-                    backgroundColorArgb = fc.backgroundColorArgb,
-                    backgroundImagePath = fc.backgroundImagePath
+        planFolderRestore(config.folders).forEach { step ->
+            when (step) {
+                is FolderRestoreStep.ClearIfReadable ->
+                    app.folderManager.clearFoldersIfReadable(step.page, step.tabType)
+                is FolderRestoreStep.Replace -> app.folderManager.setAllFolders(
+                    step.page,
+                    step.tabType,
+                    step.folders.map { it.toFolder() }
                 )
             }
-            app.folderManager.setAllFolders(page, tabType, folders)
         }
     }
 
@@ -463,7 +505,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
 
         val targetTypes = config.pageTypes
             .mapNotNull { runCatching { PageType.valueOf(it) }.getOrNull() }
-            .ifEmpty { listOf(PageType.APPS_TAB) }
+            .ifEmpty { listOf(PageType.UNIFIED_CANVAS) }
 
         page.pageTypeManager.reorderPages(targetTypes)
         page.pageCountManager.setPageCount(targetTypes.size)
@@ -546,18 +588,37 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             folderUri = bgMusic.folderUri,
             fileUri = bgMusic.fileUri,
             mode = runCatching { BgMusicManager.Mode.valueOf(bgMusic.mode) }.getOrElse { BgMusicManager.Mode.SINGLE_FILE },
-            volume = bgMusic.volume
+            volume = bgMusic.volume,
+            muted = bgMusic.isMuted
         )
 
         // config.romSearch.hintsKbVisible intentionally ignored — the feature it
         // gated was removed. The field stays on RomSearchConfig so older exports
         // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setCompanionLaunchWatchdogEnabled(config.romSearch.companionLaunchWatchdogEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
-        runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
-            ?.let { f.esdePreferencesManager.setSystemLayout(it) }
-        runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
-            ?.let { f.esdePreferencesManager.setGameLayout(it) }
+        f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
+        // New per-display fields fall back to the legacy single value when
+        // restoring a config written by an older app version.
+        val legacySystemLayout = runCatching {
+            FrontendLayout.valueOf(config.romSearch.systemLayout)
+        }.getOrNull()
+        (runCatching { FrontendLayout.valueOf(config.romSearch.primarySystemLayout) }.getOrNull()
+            ?: legacySystemLayout)
+            ?.let { f.esdePreferencesManager.setPrimarySystemLayout(it) }
+        (runCatching { FrontendLayout.valueOf(config.romSearch.secondarySystemLayout) }.getOrNull()
+            ?: legacySystemLayout)
+            ?.let { f.esdePreferencesManager.setSecondarySystemLayout(it) }
+        val legacyGameLayout = runCatching {
+            FrontendLayout.valueOf(config.romSearch.gameLayout)
+        }.getOrNull()
+        (runCatching { FrontendLayout.valueOf(config.romSearch.primaryGameLayout) }.getOrNull()
+            ?: legacyGameLayout)
+            ?.let { f.esdePreferencesManager.setPrimaryGameLayout(it) }
+        (runCatching { FrontendLayout.valueOf(config.romSearch.secondaryGameLayout) }.getOrNull()
+            ?: legacyGameLayout)
+            ?.let { f.esdePreferencesManager.setSecondaryGameLayout(it) }
         f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)
         f.esdePreferencesManager.setSystemOrder(config.romSearch.systemOrder)
         f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
@@ -565,6 +626,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
+        // Prefer the v36 list field; fall back to converting the legacy single-
+        // value map so pre-v36 configs still restore companions.
+        @Suppress("DEPRECATION")
+        val companions = config.romSearch.gameCompanionsMap.takeIf { it.isNotEmpty() }
+            ?: config.romSearch.gameCompanionMap.mapValues { listOf(it.value) }
+        f.esdePreferencesManager.setAllGameCompanionsMap(companions)
         f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)
@@ -597,10 +664,51 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
 
+        applyScraperConfigImport(config.romSearch.scraper, f.esdePreferencesManager)
+
+        f.recentlyPlayedManager.restore(config.recentlyPlayed)
+
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
-        HomeTarget.entries.firstOrNull { it.name == config.homeButton.homeTarget }
-            ?.let { f.homeButtonManager.setHomeTarget(it) }
         f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
+        val mode = config.homeButton.focusLockMode?.let {
+            jr.brian.home.data.FocusLockMode.fromNameOrDefault(it)
+        } ?: if (config.homeButton.focusLockAutoManageEnabled) {
+            jr.brian.home.data.FocusLockMode.Follow
+        } else {
+            jr.brian.home.data.FocusLockMode.Off
+        }
+        f.focusLockPrefsManager.setMode(mode)
+
+        // Null means the imported blob predates v34 — leave the device's
+        // current assignment alone so a Backup → Restore from an older
+        // app version never silently flips a user's layout.
+        config.screenAssignment?.let {
+            screenAssignmentStore.setAssignment(ScreenAssignment.fromNameOrDefault(it))
+        }
+
+        // Null means the imported blob predates v38, so keep the device's
+        // current experience (same rule as screenAssignment above).
+        config.experience?.let {
+            experienceStore.setExperience(Experience.fromNameOrDefault(it))
+        }
+
+        // Null means the blob predates v39, so keep the current art source.
+        config.artSource?.let {
+            artSourceStore.setSource(jr.brian.core.model.ArtSource.fromNameOrDefault(it))
+        }
+        config.systemArtSource?.let {
+            artSourceStore.setSystemSource(jr.brian.core.model.SystemArtSource.fromNameOrDefault(it))
+        }
+
+        // Null means the blob predates v41, so keep the current appearance.
+        config.jarnLook?.let(jarnLookStore::setLookId)
+        config.jarnReducedMotion?.let(jarnLookStore::setReducedMotion)
+        config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
+        config.jarnPinnedApps?.let(appPinStore::restore)
+        config.jarnDisplay?.let { jarnLookStore.updateDisplay(it::applyTo) }
+        jarnLookStore.restoreLiveWallpaper(config.jarnLiveWallpaper)
+        if (config.jarnFirstRunDone == true) jarnLookStore.markFirstRunDone()
+        config.jarnMatchCommandPanel?.let(jarnLookStore::setMatchCommandPanel)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =
@@ -615,6 +723,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
         managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
         managers.feature.esdePreferencesManager.setAllSystemFolderMappings(config.systemFolderMappings)
+        sys.appUpdateManager.setRcNotificationsEnabled(config.rcNotificationsEnabled)
     }
 
     fun encodeToJson(config: JarngreiprConfig): String =
@@ -623,12 +732,14 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     fun decodeFromJson(jsonString: String): JarngreiprConfig =
         json.decodeFromString(jsonString)
 
-    suspend fun exportToStream(outputStream: OutputStream) {
+    /** Returns how many folder pages were left out because they couldn't be read. */
+    suspend fun exportToStream(outputStream: OutputStream): Int {
         val config = buildConfig()
         val jsonString = encodeToJson(config)
         withContext(Dispatchers.IO) {
             outputStream.writer().use { it.write(jsonString) }
         }
+        return omittedFolderPageCount(config.app.folders)
     }
 
     suspend fun importFromStream(inputStream: InputStream): Result<Unit> = runCatching {
@@ -640,6 +751,66 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private object PageCountRange {
-        const val MAX = 6
+        const val MAX = FOLDER_BACKUP_PAGE_COUNT
     }
+}
+
+/**
+ * Builds the [ScraperConfig] slice of an export. Secrets (dev ID / password,
+ * user ID / password, SteamGridDB key) are intentionally emitted as empty
+ * strings so a user who shares their config.json never leaks credentials to
+ * the recipient. The empty strings keep the on-disk schema stable so a
+ * pre-v26 build can still decode the config.
+ */
+@VisibleForTesting
+internal fun buildScraperConfigForExport(prefs: ESDEPrefsState): ScraperConfig = ScraperConfig(
+    screenScraperEnabled = prefs.screenScraperEnabled,
+    screenScraperDevId = "",
+    screenScraperDevPassword = "",
+    screenScraperUserId = "",
+    screenScraperUserPassword = "",
+    screenScraperMediaTypes = prefs.screenScraperMediaTypes,
+    steamGridDbEnabled = prefs.steamGridDbEnabled,
+    steamGridDbApiKey = "",
+    steamGridDbMediaTypes = prefs.steamGridDbMediaTypes,
+    concurrencyOverride = prefs.scraperConcurrencyOverride,
+)
+
+/**
+ * Applies a [ScraperConfig] from an import to [prefs]. Credential fields are
+ * only written when non-empty: a config produced by [buildScraperConfigForExport]
+ * carries empty strings, meaning "the exporter chose not to share this";
+ * clobbering the user's stored secrets in that case would log them out of
+ * ScreenScraper on every import. Older configs that still carry credentials
+ * import normally.
+ */
+@VisibleForTesting
+internal fun applyScraperConfigImport(
+    scraper: ScraperConfig,
+    prefs: ESDEPreferencesManager,
+) {
+    prefs.setScreenScraperEnabled(scraper.screenScraperEnabled)
+    if (scraper.screenScraperDevId.isNotEmpty()) {
+        prefs.setScreenScraperDevId(scraper.screenScraperDevId)
+    }
+    if (scraper.screenScraperDevPassword.isNotEmpty()) {
+        prefs.setScreenScraperDevPassword(scraper.screenScraperDevPassword)
+    }
+    if (scraper.screenScraperUserId.isNotEmpty()) {
+        prefs.setScreenScraperUserId(scraper.screenScraperUserId)
+    }
+    if (scraper.screenScraperUserPassword.isNotEmpty()) {
+        prefs.setScreenScraperUserPassword(scraper.screenScraperUserPassword)
+    }
+    prefs.setScreenScraperMediaTypes(
+        scraper.screenScraperMediaTypes.ifEmpty { DEFAULT_SCREENSCRAPER_MEDIA_TYPES }
+    )
+    prefs.setSteamGridDbEnabled(scraper.steamGridDbEnabled)
+    if (scraper.steamGridDbApiKey.isNotEmpty()) {
+        prefs.setSteamGridDbApiKey(scraper.steamGridDbApiKey)
+    }
+    prefs.setSteamGridDbMediaTypes(
+        scraper.steamGridDbMediaTypes.ifEmpty { DEFAULT_STEAMGRIDDB_MEDIA_TYPES }
+    )
+    prefs.setScraperConcurrencyOverride(scraper.concurrencyOverride)
 }

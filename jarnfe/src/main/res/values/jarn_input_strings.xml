@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_hint_confirm">OK</string>
+    <string name="jarnfe_hint_play">Play</string>
+    <string name="jarnfe_hint_back">Back</string>
+    <string name="jarnfe_hint_context">Options</string>
+    <string name="jarnfe_hint_search">Search</string>
+    <string name="jarnfe_hint_menu">Menu</string>
+    <string name="jarnfe_hint_switch_screen">Switch screen</string>
+    <string name="jarnfe_hint_restore_bottom">Bring back bottom screen</string>
+    <string name="jarnfe_deck_recovery_press_select">Bottom screen closed. Press Select to bring it back.</string>
+    <string name="jarnfe_deck_recovery_confirm">Another app may be on the bottom screen. Press Select again to bring Jarn back.</string>
+    <string name="jarnfe_deck_recovery_restoring">Bringing the bottom screen back</string>
+    <string name="jarnfe_hint_previous_tab">Previous</string>
+    <string name="jarnfe_hint_next_tab">Next</string>
+    <string name="jarnfe_hint_tabs">Tabs</string>
+    <string name="jarnfe_hint_move">Move</string>
+    <string name="jarnfe_hint_swap">Swap screens</string>
+</resources>

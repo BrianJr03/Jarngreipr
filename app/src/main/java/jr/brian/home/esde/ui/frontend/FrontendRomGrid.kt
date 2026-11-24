@@ -21,10 +21,9 @@ import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.clearGameMediaType
 import jr.brian.home.esde.data.clearSystemMediaType
-import jr.brian.home.esde.data.disableFocusAnimation
-import jr.brian.home.esde.data.enableFocusAnimation
 import jr.brian.home.esde.data.getGameCore
 import jr.brian.home.esde.data.getGameEmulator
+import jr.brian.home.esde.data.getSystemEmulator
 import jr.brian.home.esde.data.getGameLaunchCommand
 import jr.brian.home.esde.data.hideGame
 import jr.brian.home.esde.data.setGameCore
@@ -92,16 +91,10 @@ internal fun FrontendRomGrid(
         focusResetKey = focusResetKey,
         initialRealIndex = initialRealIndex,
         isHiddenMode = isHiddenMode,
-        backgroundTransparent = backgroundTransparent,
         cardMediaType = cardMediaType,
         focusAnimationEnabled = focusAnimationEnabled,
         focusAnimationDelayMs = focusAnimationDelayMs,
         isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
-        onToggleGameDiscSpin = { game ->
-            val key = gameKey(game)
-            if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(key)
-            else esdePrefs.disableFocusAnimation(key)
-        },
         getGameMediaType = { game ->
             gameMediaMap[gameKey(game)]
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
@@ -143,7 +136,8 @@ internal fun FrontendRomGrid(
         },
         hasSavedEmulator = { game ->
             esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
-                    esdePrefs.getGameEmulator(gameKey(game)) != null
+                    esdePrefs.getGameEmulator(gameKey(game)) != null ||
+                    esdePrefs.getSystemEmulator(game.systemName) != null
         },
         onGameFocused = { game ->
             viewModel.updateFocusedGame(game)
@@ -186,7 +180,13 @@ internal fun FrontendRomGrid(
                 appDisplayPreferenceManager.getAppDisplayPreference(pkg)
             )
         },
-        onChangeFolder = onChangeFolder
+        onChangeFolder = onChangeFolder,
+        onPickCompanion = { game ->
+            romSearchStateHolder.showCompanionPickerSignal.tryEmit(game)
+        },
+        onEditInfo = { game ->
+            romSearchStateHolder.showEditInfoPickerSignal.tryEmit(game)
+        }
     )
 }
 

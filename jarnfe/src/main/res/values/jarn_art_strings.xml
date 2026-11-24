@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_art_title">Art</string>
+    <string name="jarnfe_art_source_esde" translatable="false">ES-DE</string>
+    <string name="jarnfe_art_source_retrohrai" translatable="false">RetroHrai</string>
+    <string name="jarnfe_art_source_scraped">Scraped</string>
+    <string name="jarnfe_art_in_use">In use</string>
+    <string name="jarnfe_art_use">Use</string>
+    <string name="jarnfe_art_checking">Checking for art</string>
+    <string name="jarnfe_art_none_found">No art found</string>
+    <plurals name="jarnfe_art_file_count">
+        <item quantity="one">%1$d art file found</item>
+        <item quantity="other">%1$d art files found</item>
+    </plurals>
+    <string name="jarnfe_art_scrape_missing">Scrape missing art</string>
+    <string name="jarnfe_art_scrape_hint">Downloads art only for games that have none. Your folders stay untouched.</string>
+    <string name="jarnfe_art_scrape_no_credentials">Press to add a scraper account.</string>
+    <string name="jarnfe_art_scrape_running">Scraping is in progress. Press to see progress.</string>
+    <string name="jarnfe_art_scrape_finished">Last scrape finished. Press to check again.</string>
+    <string name="jarnfe_art_scrape_cancelled">Last scrape stopped. Press to pick up where it left off.</string>
+    <string name="jarnfe_art_scrape_started">Scraping missing art.</string>
+    <string name="jarnfe_system_art_title">System art</string>
+    <string name="jarnfe_system_art_bundled">Jarngreipr logos</string>
+    <string name="jarnfe_system_art_retrohrai_hint">Backgrounds and logos from your RetroHrai folder.</string>
+    <string name="jarnfe_system_art_bundled_hint">Clean logos included with the app.</string>
+
+    <string name="jarnfe_setup_no_sources_title">Add your games</string>
+    <string name="jarnfe_setup_no_sources_message">Pick a folder of systems, like ROMs, or one system\'s folder.</string>
+    <string name="jarnfe_setup_add_folder">Add game folder</string>
+    <string name="jarnfe_setup_reconnect_title">Your game folders need reconnecting</string>
+    <string name="jarnfe_setup_reconnect_message">This app can\'t read %1$s. Pick that folder, or the one that holds it.</string>
+    <string name="jarnfe_setup_reconnect">Reconnect game folders</string>
+    <string name="jarnfe_setup_no_games_title">No games found</string>
+    <string name="jarnfe_setup_no_games_message">Your connected folders have no games yet. Choose another folder.</string>
+    <plurals name="jarnfe_setup_found_systems">
+        <item quantity="one">Found %1$d system. Looking for games.</item>
+        <item quantity="other">Found %1$d systems. Looking for games.</item>
+    </plurals>
+    <string name="jarnfe_setup_no_systems">No game systems found there. Choose another folder.</string>
+    <string name="jarnfe_setup_already_connected">That folder is already connected.</string>
+    <string name="jarnfe_folders_title">Game folders</string>
+    <string name="jarnfe_folders_add_hint">Pick a folder of systems, like ROMs, or one system\'s folder.</string>
+    <string name="jarnfe_folders_reconnect">Needs reconnecting. Press to pick this folder.</string>
+    <string name="jarnfe_folders_inside">Included in another connected folder</string>
+    <plurals name="jarnfe_folders_connected">
+        <item quantity="one">Connected, %1$d game</item>
+        <item quantity="other">Connected, %1$d games</item>
+    </plurals>
+    <string name="jarnfe_setup_folder_failed">Couldn\'t connect that folder.</string>
+
+    <string name="jarnfe_launch_needs_emulator">Choose an emulator, then press A to play.</string>
+    <string name="jarnfe_launch_needs_core">Choose a RetroArch core, then press A to play.</string>
+    <string name="jarnfe_launch_needs_folder">Pick this game\'s folder to allow access.</string>
+    <string name="jarnfe_launch_folder_saved">Folder access saved. Press A to play.</string>
+    <string name="jarnfe_launch_folder_failed">Couldn\'t save access to that folder.</string>
+    <string name="jarnfe_launch_folder_unavailable">Couldn\'t open the folder picker on this device.</string>
+    <string name="jarnfe_launch_missing_rom">This game\'s file can\'t be found.</string>
+    <string name="jarnfe_launch_emulator_missing">The emulator for this game isn\'t installed.</string>
+    <string name="jarnfe_launch_app_missing">This app isn\'t installed.</string>
+    <string name="jarnfe_launch_emulator_rejected">The emulator couldn\'t open this game.</string>
+    <string name="jarnfe_launch_rom_unreadable">This game\'s file can\'t be read.</string>
+    <string name="jarnfe_launch_failed">Couldn\'t start this game.</string>
+</resources>

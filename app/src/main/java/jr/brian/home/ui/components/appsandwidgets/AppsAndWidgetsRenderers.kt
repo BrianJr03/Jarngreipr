@@ -7,10 +7,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.model.widget.WidgetConfig
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.FolderGridItem
+import jr.brian.home.ui.components.widget.UnavailableWidgetItem
 import jr.brian.home.ui.components.widget.WidgetItem
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -76,6 +78,27 @@ fun LazyGridScope.renderWidgetItems(
                     onSwapModeEnabled(widget.widgetId)
                 },
                 editModeEnabled = editModeEnabled
+            )
+        }
+    }
+}
+
+fun LazyGridScope.renderUnavailableWidgetItems(
+    configs: List<WidgetConfig>,
+    columns: Int,
+    pageIndex: Int,
+    canRemove: Boolean,
+    onRemove: (Int) -> Unit
+) {
+    configs.forEach { config ->
+        item(
+            key = "unavailable_widget_${config.widgetId}_$pageIndex",
+            span = { GridItemSpan(config.width.coerceIn(1, columns)) }
+        ) {
+            UnavailableWidgetItem(
+                heightCells = config.height,
+                canRemove = canRemove,
+                onRemove = { onRemove(config.widgetId) }
             )
         }
     }

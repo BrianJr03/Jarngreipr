@@ -69,6 +69,7 @@ import jr.brian.home.canvas.model.CanvasUiState
 import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlin.math.max
@@ -131,7 +132,9 @@ fun CanvasGridLayout(
     appWidgetHost: AppWidgetHost? = null,
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
     onDoubleTap: (ResolvedCanvasItem) -> Unit = {},
-    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null
+    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null,
+    onLaunchRom: (PinnedRomInfo) -> Unit = {},
+    onLastPlayedRowLongPress: (CanvasItem.LastPlayedItem, jr.brian.home.data.RecentlyPlayedEntry) -> Unit = { _, _ -> }
 ) {
     val pushDirection = PushDirection.from(state.layout.activeOrientation)
     val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
@@ -322,7 +325,9 @@ fun CanvasGridLayout(
                             appWidgetHost = appWidgetHost,
                             suppressTileLongPress = editMode,
                             editMode = editMode,
-                            onResizeWidget = onResizeWidget
+                            onResizeWidget = onResizeWidget,
+                            onLaunchRom = onLaunchRom,
+                            onLastPlayedRowLongPress = onLastPlayedRowLongPress
                         )
                     }
                 }

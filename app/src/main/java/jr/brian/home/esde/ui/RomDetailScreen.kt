@@ -2,8 +2,16 @@ package jr.brian.home.esde.ui
 
 import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,9 +39,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.scraper.model.ScrapeState
+import jr.brian.home.esde.ui.components.ScraperGuardDialog
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.esde.viewmodels.ScraperViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,12 +69,12 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import java.io.File
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RomDetailScreen(
     game: GameInfo,
@@ -73,17 +90,31 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
-    discSpinEnabled: Boolean = false,
-    discSpinDisabled: Boolean = false,
-    onToggleDiscSpin: () -> Unit = {}
+    companionPackages: List<String> = emptyList(),
+    companionLabels: List<String> = emptyList(),
+    onPickCompanion: () -> Unit = {},
+    onClearCompanion: () -> Unit = {},
+    onEditInfo: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
+    showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
+    val scraperViewModel: ScraperViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
+    val scrapeRunning = scrapeState is ScrapeState.Running
+    val scrapeScope = rememberCoroutineScope()
     var showMediaTypePicker by remember { mutableStateOf(false) }
     var showResizeDialog by remember { mutableStateOf(false) }
+    var showScraperGuard by remember { mutableStateOf(false) }
+
+    if (showScraperGuard) {
+        ScraperGuardDialog(onDismiss = { showScraperGuard = false })
+    }
 
     if (showMediaTypePicker) {
         MediaTypePickerDialog(
@@ -268,16 +299,26 @@ internal fun RomDetailScreen(
                 }
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+            if (showActionRow) {
+                HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!isHidden) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isHidden) {
+                    TextButton(onClick = onToggleFavorite) {
+                        Text(
+                            text = stringResource(
+                                if (game.isFavorite) R.string.rom_detail_unfavorite
+                                else R.string.rom_detail_favorite
+                            ),
+                            color = ThemeAccentColor,
+                        )
+                    }
                     TextButton(
                         onClick = onChangeCore,
                         modifier = Modifier.focusRequester(focusRequester)
@@ -307,6 +348,36 @@ internal fun RomDetailScreen(
                             )
                         }
                     }
+                    TextButton(
+                        enabled = !scrapeRunning,
+                        onClick = {
+                            if (!scraperViewModel.hasEnabledScraper()) {
+                                showScraperGuard = true
+                            } else {
+                                scraperViewModel.scrapeGame(game) {
+                                    // Clear Coil caches so the just-written art
+                                    // replaces any null/404 the loader already
+                                    // cached under the game's path keys.
+                                    scrapeScope.launch {
+                                        imageLoader.memoryCache?.clear()
+                                        withContext(Dispatchers.IO) {
+                                            imageLoader.diskCache?.clear()
+                                        }
+                                        romSearchViewModel.refreshSystem(game.systemName)
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = if (scrapeRunning) {
+                                stringResource(R.string.rom_detail_scrape_running)
+                            } else {
+                                stringResource(R.string.rom_detail_scrape)
+                            },
+                            color = ThemeAccentColor
+                        )
+                    }
                     TextButton(onClick = { showMediaTypePicker = true }) {
                         Text(
                             text = stringResource(
@@ -322,9 +393,21 @@ internal fun RomDetailScreen(
                             color = ThemeAccentColor
                         )
                     }
+                    CompanionRowButton(
+                        companionPackages = companionPackages,
+                        companionLabels = companionLabels,
+                        onPickCompanion = onPickCompanion,
+                        onClearCompanion = onClearCompanion
+                    )
                     TextButton(onClick = { showResizeDialog = true }) {
                         Text(
                             stringResource(R.string.rom_detail_resize_image),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = onEditInfo) {
+                        Text(
+                            stringResource(R.string.rom_detail_edit_info),
                             color = ThemeAccentColor
                         )
                     }
@@ -348,6 +431,57 @@ internal fun RomDetailScreen(
                     }
                 }
             }
+            }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CompanionRowButton(
+    companionPackages: List<String>,
+    companionLabels: List<String>,
+    onPickCompanion: () -> Unit,
+    onClearCompanion: () -> Unit
+) {
+    val display = companionPackages.mapIndexed { i, pkg ->
+        companionLabels.getOrNull(i) ?: pkg
+    }
+    val label = when (display.size) {
+        0 -> stringResource(R.string.rom_detail_companion)
+        1 -> stringResource(R.string.rom_detail_companion_set, display[0])
+        else -> stringResource(
+            R.string.rom_detail_companions_set,
+            display.joinToString(", ")
+        )
+    }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val stateBg by animateColorAsState(
+        targetValue = when {
+            isFocused -> ThemeAccentColor.copy(alpha = 0.12f)
+            isHovered -> ThemeAccentColor.copy(alpha = 0.08f)
+            else -> Color.Transparent
+        },
+        label = "companionButtonStateLayer"
+    )
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(stateBg)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.material3.ripple(),
+                onClick = onPickCompanion,
+                onLongClick = onClearCompanion
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = label,
+            color = ThemeAccentColor,
+            style = MaterialTheme.typography.labelLarge
+        )
     }
 }

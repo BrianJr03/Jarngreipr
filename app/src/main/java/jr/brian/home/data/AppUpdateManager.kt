@@ -1,19 +1,44 @@
 package jr.brian.home.data
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.content.edit
 
 private const val PREFS_NAME = "update_prefs"
 private const val KEY_SKIPPED_VERSION = "skipped_version"
 private const val KEY_DOWNLOADED_VERSION = "downloaded_version"
+private const val KEY_RC_NOTIFICATIONS = "rc_notifications_enabled"
 
 /**
  * Manager for app update related preferences and state.
  */
 @Singleton
-class AppUpdateManager @Inject constructor() {
+class AppUpdateManager @Inject constructor(
+    @param:ApplicationContext private val appContext: Context,
+) {
+    private val appPrefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    /**
+     * Observable toggle for the "Get notified about RC builds" setting.
+     * When on, update checks include pre-release GitHub releases (RC tags).
+     * Default off so stable channel users don't see RC prompts.
+     */
+    private var _rcNotificationsEnabled: Boolean by mutableStateOf(
+        appPrefs.getBoolean(KEY_RC_NOTIFICATIONS, false)
+    )
+    val rcNotificationsEnabled: Boolean
+        get() = _rcNotificationsEnabled
+
+    fun setRcNotificationsEnabled(enabled: Boolean) {
+        if (_rcNotificationsEnabled == enabled) return
+        _rcNotificationsEnabled = enabled
+        appPrefs.edit { putBoolean(KEY_RC_NOTIFICATIONS, enabled) }
+    }
     
     /**
      * Check if a version has been skipped by the user.

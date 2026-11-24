@@ -33,6 +33,12 @@ class PowerSettingsManager(context: Context) {
     private val _backButtonShortcutAppPackage = MutableStateFlow(loadBackButtonShortcutAppPackage())
     val backButtonShortcutAppPackage: StateFlow<String?> = _backButtonShortcutAppPackage.asStateFlow()
 
+    private val _secondaryBackButtonShortcut = MutableStateFlow(loadSecondaryBackButtonShortcut())
+    val secondaryBackButtonShortcut: StateFlow<BackButtonShortcut> = _secondaryBackButtonShortcut.asStateFlow()
+
+    private val _secondaryBackButtonShortcutAppPackage = MutableStateFlow(loadSecondaryBackButtonShortcutAppPackage())
+    val secondaryBackButtonShortcutAppPackage: StateFlow<String?> = _secondaryBackButtonShortcutAppPackage.asStateFlow()
+
     private val _poweredOffBrightness = MutableStateFlow(loadPoweredOffBrightness())
     val poweredOffBrightness: StateFlow<Int> = _poweredOffBrightness.asStateFlow()
 
@@ -67,8 +73,14 @@ class PowerSettingsManager(context: Context) {
         return prefs.getBoolean(KEY_BACK_BUTTON_SHORTCUT_ENABLED, false)
     }
 
-    private fun loadBackButtonShortcut(): BackButtonShortcut {
-        val shortcutName = prefs.getString(KEY_BACK_BUTTON_SHORTCUT, BackButtonShortcut.NONE.name)
+    private fun loadBackButtonShortcut(): BackButtonShortcut =
+        loadShortcut(KEY_BACK_BUTTON_SHORTCUT)
+
+    private fun loadSecondaryBackButtonShortcut(): BackButtonShortcut =
+        loadShortcut(KEY_SECONDARY_BACK_BUTTON_SHORTCUT)
+
+    private fun loadShortcut(key: String): BackButtonShortcut {
+        val shortcutName = prefs.getString(key, BackButtonShortcut.NONE.name)
         return try {
             BackButtonShortcut.valueOf(shortcutName ?: BackButtonShortcut.NONE.name)
         } catch (_: IllegalArgumentException) {
@@ -78,6 +90,10 @@ class PowerSettingsManager(context: Context) {
 
     private fun loadBackButtonShortcutAppPackage(): String? {
         return prefs.getString(KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, null)
+    }
+
+    private fun loadSecondaryBackButtonShortcutAppPackage(): String? {
+        return prefs.getString(KEY_SECONDARY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, null)
     }
 
     private fun loadPoweredOffBrightness(): Int {
@@ -148,6 +164,22 @@ class PowerSettingsManager(context: Context) {
         }
     }
 
+    fun setSecondaryBackButtonShortcut(shortcut: BackButtonShortcut) {
+        _secondaryBackButtonShortcut.value = shortcut
+        prefs.edit().apply {
+            putString(KEY_SECONDARY_BACK_BUTTON_SHORTCUT, shortcut.name)
+            apply()
+        }
+    }
+
+    fun setSecondaryBackButtonShortcutAppPackage(packageName: String?) {
+        _secondaryBackButtonShortcutAppPackage.value = packageName
+        prefs.edit().apply {
+            putString(KEY_SECONDARY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, packageName)
+            apply()
+        }
+    }
+
     fun setPoweredOffBrightness(brightness: Int) {
         val coerced = brightness.coerceIn(MIN_POWERED_OFF_BRIGHTNESS, MAX_POWERED_OFF_BRIGHTNESS)
         _poweredOffBrightness.value = coerced
@@ -177,9 +209,13 @@ class PowerSettingsManager(context: Context) {
     fun resetBackButtonShortcut() {
         _backButtonShortcut.value = BackButtonShortcut.NONE
         _backButtonShortcutAppPackage.value = null
+        _secondaryBackButtonShortcut.value = BackButtonShortcut.NONE
+        _secondaryBackButtonShortcutAppPackage.value = null
         prefs.edit().apply {
             putString(KEY_BACK_BUTTON_SHORTCUT, BackButtonShortcut.NONE.name)
             putString(KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, null)
+            putString(KEY_SECONDARY_BACK_BUTTON_SHORTCUT, BackButtonShortcut.NONE.name)
+            putString(KEY_SECONDARY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, null)
             apply()
         }
     }
@@ -193,6 +229,8 @@ class PowerSettingsManager(context: Context) {
         private const val KEY_BACK_BUTTON_SHORTCUT_ENABLED = "back_button_shortcut_enabled"
         private const val KEY_BACK_BUTTON_SHORTCUT = "back_button_shortcut"
         private const val KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE = "back_button_shortcut_app_package"
+        private const val KEY_SECONDARY_BACK_BUTTON_SHORTCUT = "secondary_back_button_shortcut"
+        private const val KEY_SECONDARY_BACK_BUTTON_SHORTCUT_APP_PACKAGE = "secondary_back_button_shortcut_app_package"
         private const val KEY_POWERED_OFF_BRIGHTNESS = "powered_off_brightness"
         private const val KEY_APP_DRAWER_FILTER_BY_PAGE = "app_drawer_filter_by_page"
         private const val KEY_PAGER_SWIPE_SENSITIVITY = "pager_swipe_sensitivity"

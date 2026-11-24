@@ -1,0 +1,8 @@
+{
+  "id": "segacd",
+  "displayName": "Sega CD / Mega CD",
+  "folderAliases": ["megacd", "megacdjp", "sega-cd"],
+  "extensions": ["iso", "cue", "chd", "bin"],
+  "screenScraperSystemId": 20,
+  "retroArchSystemId": "segacd"
+}

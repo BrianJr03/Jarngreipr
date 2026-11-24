@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_canvas_tour_replay">Canvas tour</string>
+    <string name="jarnfe_canvas_tour_replay_hint">Practice Canvas on a sample board.</string>
+    <string name="jarnfe_canvas_tour_start">Show me</string>
+    <string name="jarnfe_canvas_tour_not_now">Not now</string>
+    <string name="jarnfe_canvas_tour_skip">Skip</string>
+    <string name="jarnfe_canvas_tour_finish">Go to Canvas</string>
+    <string name="jarnfe_canvas_tour_tile_game">Game</string>
+
+    <string name="jarnfe_canvas_tour_intro_title">Learn Canvas in a minute</string>
+    <string name="jarnfe_canvas_tour_intro_body">Practice on a sample board. Your real layout stays exactly as it is.</string>
+    <string name="jarnfe_canvas_tour_launch_title">A opens a tile</string>
+    <string name="jarnfe_canvas_tour_launch_body">Press A to launch whatever is highlighted.</string>
+    <string name="jarnfe_canvas_tour_options_title">X shows tile options</string>
+    <string name="jarnfe_canvas_tour_options_body">Press X on a tile to see what you can do with it.</string>
+    <string name="jarnfe_canvas_tour_move_title">Move one tile</string>
+    <string name="jarnfe_canvas_tour_move_body">Press A on Move, use the D-pad to nudge the tile, then press A to drop it.</string>
+    <string name="jarnfe_canvas_tour_arrange_title">Arrange many tiles</string>
+    <string name="jarnfe_canvas_tour_arrange_body">Press Start for Canvas options, then A on Arrange tiles. You stay in Arrange until you press B.</string>
+    <string name="jarnfe_canvas_tour_resize_title">L1 and R1 resize</string>
+    <string name="jarnfe_canvas_tour_resize_body">Press A to pick up the tile, then L1 to shrink it or R1 to grow it.</string>
+    <string name="jarnfe_canvas_tour_page_title">Carry it to another page</string>
+    <string name="jarnfe_canvas_tour_page_body">The tile is at the edge. Press right once more to carry it to the next page.</string>
+    <string name="jarnfe_canvas_tour_undo_title">Y undoes it</string>
+    <string name="jarnfe_canvas_tour_undo_body">Press A to drop the tile, then Y to put it back.</string>
+    <string name="jarnfe_canvas_tour_done_title">Canvas is yours</string>
+    <string name="jarnfe_canvas_tour_done_body">Replay this anytime from Canvas options or Settings, General.</string>
+
+    <string name="jarnfe_canvas_stage_holding">Holding</string>
+    <string name="jarnfe_canvas_stage_tile">Tile</string>
+    <string name="jarnfe_canvas_stage_music">Music</string>
+    <string name="jarnfe_canvas_stage_size">%1$d wide, %2$d tall</string>
+</resources>

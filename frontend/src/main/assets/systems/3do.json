@@ -1,0 +1,8 @@
+{
+  "id": "3do",
+  "displayName": "3DO Interactive Multiplayer",
+  "folderAliases": ["panasonic-3do"],
+  "extensions": ["iso", "chd", "bin", "cue"],
+  "screenScraperSystemId": 29,
+  "retroArchSystemId": null
+}

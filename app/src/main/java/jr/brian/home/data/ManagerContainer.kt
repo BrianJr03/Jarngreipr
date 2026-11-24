@@ -35,6 +35,8 @@ import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
+import jr.brian.home.ui.theme.managers.LocalRecentlyPlayedManager
+import jr.brian.home.ui.theme.managers.LocalFrontendWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -94,6 +96,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalCustomIconManager provides ui.customIconManager,
         LocalGlobalIconRefreshManager provides ui.globalIconRefreshManager,
         LocalWallpaperManager provides ui.wallpaperManager,
+        LocalFrontendWallpaperManager provides ui.frontendWallpaperManager,
         LocalSearchLayoutManager provides ui.searchLayoutManager,
         LocalCustomAppNameManager provides ui.customAppNameManager,
         
@@ -122,6 +125,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalJinglesManager provides feature.jinglesManager,
         LocalBgMusicManager provides feature.bgMusicManager,
         LocalPinnedRomManager provides feature.pinnedRomManager,
+        LocalRecentlyPlayedManager provides feature.recentlyPlayedManager,
         LocalHomeButtonManager provides feature.homeButtonManager,
         
         // System Integration

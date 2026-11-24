@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_hint_open">Open</string>
+
+    <string name="jarnfe_library_continue_playing">Continue playing</string>
+    <string name="jarnfe_library_game_position">Game %1$d of %2$d</string>
+    <string name="jarnfe_library_scan_progress">Loaded %1$d of %2$d</string>
+    <string name="jarnfe_library_loading">Loading your library</string>
+    <string name="jarnfe_library_try_again">Try again</string>
+    <string name="jarnfe_library_last_played">Last played %1$s</string>
+    <string name="jarnfe_library_playtime_hours">%1$d h played</string>
+    <string name="jarnfe_library_playtime_minutes">%1$d min played</string>
+    <string name="jarnfe_now_players_one">1 player</string>
+    <string name="jarnfe_now_players_count">%1$s players</string>
+    <string name="jarnfe_now_rating">%1$s rating</string>
+    <plurals name="jarnfe_library_game_count">
+        <item quantity="one">%1$d game</item>
+        <item quantity="other">%1$d games</item>
+    </plurals>
+
+    <string name="jarnfe_library_meta_developer">Developer</string>
+    <string name="jarnfe_library_meta_publisher">Publisher</string>
+    <string name="jarnfe_library_meta_genre">Genre</string>
+    <string name="jarnfe_library_meta_released">Released</string>
+    <string name="jarnfe_library_meta_players">Players</string>
+    <string name="jarnfe_library_meta_rating">Rating</string>
+    <string name="jarnfe_library_meta_playtime">Playtime</string>
+    <string name="jarnfe_library_meta_last_played">Last played</string>
+
+    <string name="jarnfe_library_no_systems_title">Let\'s find your games</string>
+    <string name="jarnfe_library_no_systems_message">Your game systems will appear here once a game folder is set up.</string>
+    <string name="jarnfe_library_hidden_systems_title">All your systems are hidden</string>
+    <string name="jarnfe_library_hidden_systems_message">Hidden systems stay safe and can be shown again.</string>
+    <string name="jarnfe_library_no_favorites_message">Favorite a game and it lands here.</string>
+    <string name="jarnfe_library_no_recent_message">Games you play will show up here.</string>
+    <string name="jarnfe_library_no_games_title">No games here yet</string>
+    <string name="jarnfe_library_no_games_message">Games in this system\'s folder will appear here.</string>
+    <string name="jarnfe_library_hidden_games_title">All games here are hidden</string>
+    <string name="jarnfe_library_hidden_games_message">Hidden games stay safe and can be shown again.</string>
+    <string name="jarnfe_library_unavailable_title">Can\'t reach your games folder</string>
+    <string name="jarnfe_library_unavailable_message">Check that its storage is available, then try again.</string>
+</resources>

@@ -1,0 +1,155 @@
+package jr.brian.jarnfe.canvas
+
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
+import jr.brian.core.ui.components.JarnNavigateRow
+import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.R
+import jr.brian.jarnfe.shell.JarnNotices
+
+/** The nine tile types, alphabetical by label as in Classic. */
+internal enum class CanvasAddChoice(@param:StringRes val label: Int) {
+    App(R.string.jarnfe_canvas_add_app),
+    Folder(R.string.jarnfe_canvas_add_folder),
+    Art(R.string.jarnfe_canvas_add_art),
+    LastPlayed(R.string.jarnfe_canvas_add_last_played),
+    Photo(R.string.jarnfe_canvas_add_photo),
+    Rom(R.string.jarnfe_canvas_add_rom),
+    RssLauncher(R.string.jarnfe_canvas_add_rss),
+    RssMusic(R.string.jarnfe_canvas_add_music),
+    Widget(R.string.jarnfe_canvas_add_widget),
+}
+
+@Composable
+internal fun CanvasAddSheet(addingHere: Boolean, onChoice: (CanvasAddChoice) -> Unit, onClose: () -> Unit) {
+    val first = remember { FocusRequester() }
+    val title = if (addingHere) R.string.jarnfe_canvas_add_here_title else R.string.jarnfe_canvas_add_title
+    CanvasModalSheet(stringResource(title), first, onClose) {
+        CanvasPickerColumn {
+            CanvasAddChoice.entries.forEachIndexed { index, choice ->
+                JarnNavigateRow(
+                    label = stringResource(choice.label),
+                    onClick = { onChoice(choice) },
+                    modifier = Modifier.fillMaxWidth().then(
+                        if (index == 0) Modifier.focusRequester(first) else Modifier,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CanvasPickerColumn(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = CanvasSheetListMaxHeight)
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = JarnTheme.space.focusEdge),
+        verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
+    ) { content() }
+}
+
+@Composable
+internal fun CanvasAppPickerSheet(
+    data: JarnCanvasData,
+    capacity: Int,
+    onPicked: (List<JarnCanvasApp>) -> Unit,
+    onClose: () -> Unit,
+) {
+    var apps by remember { mutableStateOf<List<JarnCanvasApp>?>(null) }
+    var selection by remember { mutableStateOf(CanvasPickSelection<JarnCanvasApp>(capacity = capacity)) }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(data) { apps = runCatching { data.installedApps() }.getOrDefault(emptyList()) }
+    val rows = remember(apps, query) { apps?.let { list -> canvasPickerMatches(list, query) { it.label } } }
+    CanvasMultiPicker(
+        title = stringResource(R.string.jarnfe_canvas_pick_app_title),
+        rows = rows,
+        rowKey = { it.packageName },
+        rowLabel = { it.label },
+        selection = selection,
+        onSelection = { selection = it },
+        query = query,
+        onQuery = { query = it },
+        confirmLabel = stringResource(R.string.jarnfe_canvas_pick_add, selection.count),
+        onConfirm = onPicked,
+        onClose = onClose,
+    )
+}
+
+/** With [rebindId], binds that same id. A cancelled prompt then leaves the id untouched. */
+@Composable
+internal fun CanvasWidgetPickerSheet(
+    data: JarnCanvasData,
+    rebindId: Int?,
+    onBound: (JarnWidgetBind.Bound) -> Unit,
+    onClose: () -> Unit,
+) {
+    var pending by remember { mutableStateOf<JarnWidgetBind.NeedsPermission?>(null) }
+    val permission = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val bind = pending ?: return@rememberLauncherForActivityResult
+        pending = null
+        if (result.resultCode == Activity.RESULT_OK) {
+            onBound(JarnWidgetBind.Bound(bind.widgetId, bind.columns, bind.rows))
+        } else {
+            data.cancelWidgetBind(bind)
+        }
+    }
+    var providers by remember { mutableStateOf<List<JarnWidgetProvider>?>(null) }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(data) { providers = runCatching { data.widgetProviders() }.getOrDefault(emptyList()) }
+    val rows = remember(providers, query) {
+        providers?.let { list -> canvasPickerMatches(list, query) { "${it.label} ${it.appName}" } }
+    }
+    CanvasSearchPicker(
+        title = stringResource(R.string.jarnfe_canvas_pick_widget_title),
+        rows = rows,
+        rowKey = { it.key },
+        query = query,
+        onQuery = { query = it },
+        onClose = onClose,
+    ) { provider, modifier ->
+        JarnNavigateRow(
+            label = provider.label,
+            supporting = provider.appName,
+            onClick = {
+                when (val bind = data.bindWidget(provider, rebindId)) {
+                    is JarnWidgetBind.Bound -> onBound(bind)
+                    is JarnWidgetBind.NeedsPermission -> {
+                        pending = bind
+                        val launched = runCatching { permission.launch(bind.intent) }.isSuccess
+                        if (!launched) {
+                            pending = null
+                            data.cancelWidgetBind(bind)
+                            JarnNotices.show(R.string.jarnfe_canvas_notice_widget_failed)
+                        }
+                    }
+                    JarnWidgetBind.Failed -> JarnNotices.show(R.string.jarnfe_canvas_notice_widget_failed)
+                }
+            },
+            modifier = modifier,
+        )
+    }
+}

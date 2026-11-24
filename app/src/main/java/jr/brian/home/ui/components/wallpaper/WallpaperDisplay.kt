@@ -63,8 +63,10 @@ fun WallpaperDisplay(
         }
 
         WallpaperType.TRANSPARENT,
-        WallpaperType.ESDE -> {
-            // Transparent - actual wallpaper is rendered by ESDEWallpaperContainer
+        WallpaperType.ESDE,
+        WallpaperType.LAUNCHER -> {
+            // Transparent - actual wallpaper is rendered by ESDEWallpaperContainer,
+            // or the caller resolved LAUNCHER to the mirrored manager's type/uri.
             Box(modifier = modifier.fillMaxSize())
         }
 

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_apps_section_pinned">Pinned</string>
+    <string name="jarnfe_apps_section_all">All</string>
+    <string name="jarnfe_apps_section_hidden">Hidden</string>
+    <string name="jarnfe_apps_collapsed">Collapsed</string>
+    <string name="jarnfe_apps_expanded">Expanded</string>
+    <string name="jarnfe_apps_hint_expand">Expand</string>
+    <string name="jarnfe_apps_hint_collapse">Collapse</string>
+    <string name="jarnfe_apps_action_pin">Pin</string>
+    <string name="jarnfe_apps_action_unpin">Unpin</string>
+    <string name="jarnfe_apps_action_hide">Hide</string>
+    <string name="jarnfe_apps_action_unhide">Unhide</string>
+    <string name="jarnfe_apps_empty_title">No apps found</string>
+    <string name="jarnfe_apps_empty_message">Installed apps will appear here.</string>
+    <string name="jarnfe_app_options">App options</string>
+    <string name="jarnfe_app_icon_title">App icon</string>
+    <string name="jarnfe_app_icon_from_pack">Choose from icon pack</string>
+    <string name="jarnfe_app_icon_pack_all">Icon pack for all apps</string>
+    <string name="jarnfe_app_icon_pack_none">None</string>
+    <string name="jarnfe_app_icon_packs_title">Icon packs</string>
+    <string name="jarnfe_app_icon_packs_empty">No icon packs installed.</string>
+    <string name="jarnfe_app_icon_loading">Loading icons</string>
+    <string name="jarnfe_app_icon_search">Search icons</string>
+    <string name="jarnfe_app_icon_no_results">No icons match.</string>
+    <string name="jarnfe_app_icon_failed">That icon could not be used.</string>
+</resources>

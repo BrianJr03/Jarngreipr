@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +49,8 @@ fun AppOptionsDialog(
     onEditCanvas: (() -> Unit)? = null,
     onOpenCanvasMenu: (() -> Unit)? = null,
     promptForDisplayOnLaunch: Boolean = false,
-    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -73,16 +77,35 @@ fun AppOptionsDialog(
                         color = Color.White.copy(alpha = 0.6f)
                     )
                 }
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.dialog_cancel),
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                Row(verticalAlignment = Alignment.Top) {
+                    if (onNavigateToSettings != null) {
+                        IconButton(
+                            onClick = {
+                                onDismiss()
+                                onNavigateToSettings()
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.common_settings),
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.dialog_cancel),
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         },

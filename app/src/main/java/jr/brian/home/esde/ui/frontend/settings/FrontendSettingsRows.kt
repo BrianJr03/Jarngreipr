@@ -16,6 +16,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -25,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.ui.components.settings.WallpaperSelectorItem
+import jr.brian.home.ui.theme.managers.LocalFrontendWallpaperManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.setFrontendFloatIntensity
 import jr.brian.home.esde.data.setFrontendFocusBackgroundDimGames
@@ -40,9 +46,12 @@ import jr.brian.home.esde.data.setFrontendSystemRowAlignment
 import jr.brian.home.esde.data.setFrontendSystemTileScale
 import jr.brian.home.esde.data.setFrontendTransition
 import jr.brian.home.esde.data.setFrontendTransitionMs
-import jr.brian.home.esde.data.setGameLayout
+import jr.brian.home.esde.data.setJarngreiprMediaEnabled
+import jr.brian.home.esde.data.setPrimaryGameLayout
+import jr.brian.home.esde.data.setPrimarySystemLayout
+import jr.brian.home.esde.data.setSecondaryGameLayout
 import jr.brian.home.esde.data.setSecondaryMediaEnabled
-import jr.brian.home.esde.data.setSystemLayout
+import jr.brian.home.esde.data.setSecondarySystemLayout
 import jr.brian.home.esde.model.ESDEPrefsState
 import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MAX
 import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MIN
@@ -66,6 +75,8 @@ internal fun FrontendSettingsRows(
     focusedRow: Int,
     onOpenSystemFilter: () -> Unit,
     onOpenAddSystems: () -> Unit,
+    onOpenScreenScraperSettings: () -> Unit,
+    onOpenSteamGridDbSettings: () -> Unit,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
@@ -97,7 +108,9 @@ internal fun FrontendSettingsRows(
             focusedRow = focusedRow,
             refreshRunning = refreshRunning,
             lastRefreshResult = lastRefreshResult,
-            onRefresh = onRefresh
+            onRefresh = onRefresh,
+            onOpenScreenScraperSettings = onOpenScreenScraperSettings,
+            onOpenSteamGridDbSettings = onOpenSteamGridDbSettings
         )
     }
 }
@@ -125,35 +138,57 @@ private fun LayoutRows(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int
 ) {
-    val systemLayoutFocused = focusedRow == 0
-    val systemAlignFocused = focusedRow == 1
-    val systemSizeFocused = focusedRow == 2
-    val gameLayoutFocused = focusedRow == 3
-    val gameAlignFocused = focusedRow == 4
-    val gameSizeFocused = focusedRow == 5
+    val primaryLayoutFocused = focusedRow == 0
+    val secondaryLayoutFocused = focusedRow == 1
+    val systemAlignFocused = focusedRow == 2
+    val systemSizeFocused = focusedRow == 3
+    val primaryGameLayoutFocused = focusedRow == 4
+    val secondaryGameLayoutFocused = focusedRow == 5
+    val gameAlignFocused = focusedRow == 6
+    val gameSizeFocused = focusedRow == 7
 
-    val systemIsRow = prefsState.systemLayout == FrontendLayout.Row
-    val gameIsRow = prefsState.gameLayout == FrontendLayout.Row
+    val primaryIsRow = prefsState.primarySystemLayout == FrontendLayout.Row
+    val secondaryIsRow = prefsState.secondarySystemLayout == FrontendLayout.Row
+    val primaryGameIsRow = prefsState.primaryGameLayout == FrontendLayout.Row
+    val secondaryGameIsRow = prefsState.secondaryGameLayout == FrontendLayout.Row
+    // Row-alignment / tile-size still apply when either display shows Row.
+    val anySystemIsRow = primaryIsRow || secondaryIsRow
+    val anyGameIsRow = primaryGameIsRow || secondaryGameIsRow
 
-    val toggleSystemLayout: () -> Unit = {
-        prefsManager.setSystemLayout(if (systemIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    val togglePrimaryLayout: () -> Unit = {
+        prefsManager.setPrimarySystemLayout(if (primaryIsRow) FrontendLayout.Grid else FrontendLayout.Row)
     }
-    val toggleGameLayout: () -> Unit = {
-        prefsManager.setGameLayout(if (gameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    val toggleSecondaryLayout: () -> Unit = {
+        prefsManager.setSecondarySystemLayout(if (secondaryIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    }
+    val togglePrimaryGameLayout: () -> Unit = {
+        prefsManager.setPrimaryGameLayout(if (primaryGameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    }
+    val toggleSecondaryGameLayout: () -> Unit = {
+        prefsManager.setSecondaryGameLayout(if (secondaryGameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
     }
 
-    SettingsRowSlot(focused = systemLayoutFocused, onActivate = toggleSystemLayout) {
+    SettingsRowSlot(focused = primaryLayoutFocused, onActivate = togglePrimaryLayout) {
         ToggleSetting(
-            title = stringResource(R.string.frontend_layout_systems_row_title),
-            description = stringResource(R.string.frontend_layout_systems_row_description),
-            checked = systemIsRow,
-            onCheckedChange = { toggleSystemLayout() },
-            focused = systemLayoutFocused
+            title = stringResource(R.string.frontend_layout_primary_systems_row_title),
+            description = stringResource(R.string.frontend_layout_primary_systems_row_description),
+            checked = primaryIsRow,
+            onCheckedChange = { togglePrimaryLayout() },
+            focused = primaryLayoutFocused
+        )
+    }
+    SettingsRowSlot(focused = secondaryLayoutFocused, onActivate = toggleSecondaryLayout) {
+        ToggleSetting(
+            title = stringResource(R.string.frontend_layout_secondary_systems_row_title),
+            description = stringResource(R.string.frontend_layout_secondary_systems_row_description),
+            checked = secondaryIsRow,
+            onCheckedChange = { toggleSecondaryLayout() },
+            focused = secondaryLayoutFocused
         )
     }
     RowAlignmentChoiceRow(
         focused = systemAlignFocused,
-        enabled = systemIsRow,
+        enabled = anySystemIsRow,
         title = stringResource(R.string.frontend_settings_system_row_alignment_title),
         description = stringResource(R.string.frontend_settings_system_row_alignment_description),
         current = prefsState.frontendSystemRowAlignment,
@@ -166,18 +201,27 @@ private fun LayoutRows(
         value = prefsState.frontendSystemTileScale,
         onChange = prefsManager::setFrontendSystemTileScale
     )
-    SettingsRowSlot(focused = gameLayoutFocused, onActivate = toggleGameLayout) {
+    SettingsRowSlot(focused = primaryGameLayoutFocused, onActivate = togglePrimaryGameLayout) {
         ToggleSetting(
-            title = stringResource(R.string.frontend_layout_games_row_title),
-            description = stringResource(R.string.frontend_layout_games_row_description),
-            checked = gameIsRow,
-            onCheckedChange = { toggleGameLayout() },
-            focused = gameLayoutFocused
+            title = stringResource(R.string.frontend_layout_primary_games_row_title),
+            description = stringResource(R.string.frontend_layout_primary_games_row_description),
+            checked = primaryGameIsRow,
+            onCheckedChange = { togglePrimaryGameLayout() },
+            focused = primaryGameLayoutFocused
+        )
+    }
+    SettingsRowSlot(focused = secondaryGameLayoutFocused, onActivate = toggleSecondaryGameLayout) {
+        ToggleSetting(
+            title = stringResource(R.string.frontend_layout_secondary_games_row_title),
+            description = stringResource(R.string.frontend_layout_secondary_games_row_description),
+            checked = secondaryGameIsRow,
+            onCheckedChange = { toggleSecondaryGameLayout() },
+            focused = secondaryGameLayoutFocused
         )
     }
     RowAlignmentChoiceRow(
         focused = gameAlignFocused,
-        enabled = gameIsRow,
+        enabled = anyGameIsRow,
         title = stringResource(R.string.frontend_settings_game_row_alignment_title),
         description = stringResource(R.string.frontend_settings_game_row_alignment_description),
         current = prefsState.frontendGameRowAlignment,
@@ -274,12 +318,35 @@ private fun MediaRows(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int
 ) {
-    val focusBgFocused = focusedRow == 0
-    val useSystemsFocused = focusedRow == 1
-    val systemsDimFocused = focusedRow == 2
-    val useGamesFocused = focusedRow == 3
-    val gamesDimFocused = focusedRow == 4
+    val wallpaperFocused = focusedRow == 0
+    val focusBgFocused = focusedRow == 1
+    val useSystemsFocused = focusedRow == 2
+    val systemsDimFocused = focusedRow == 3
+    val useGamesFocused = focusedRow == 4
+    val gamesDimFocused = focusedRow == 5
     val focusBgEnabled = prefsState.frontendFocusBackgroundEnabled
+
+    var wallpaperExpanded by remember { mutableStateOf(false) }
+    val frontendWallpaperManager = LocalFrontendWallpaperManager.current
+    SettingsRowSlot(
+        focused = wallpaperFocused,
+        onActivate = { wallpaperExpanded = !wallpaperExpanded }
+    ) {
+        WallpaperSelectorItem(
+            wallpaperManager = frontendWallpaperManager,
+            title = stringResource(R.string.frontend_wallpaper_title),
+            description = stringResource(R.string.frontend_wallpaper_description),
+            showEsdeOption = false,
+            // Hidden on the frontend selector for now — Launcher-mirror flow
+            // and System Wallpaper backdrop still have the systems-grid
+            // glitch when toggled. Flip both back on once the overlay →
+            // NavHost refactor lands.
+            // showLauncherOption = true,
+            showSystemWallpaperOption = false,
+            isExpanded = wallpaperExpanded,
+            onExpandChanged = { wallpaperExpanded = it }
+        )
+    }
 
     SettingsRowSlot(
         focused = focusBgFocused,
@@ -509,8 +576,11 @@ private fun labelResFor(transition: FrontendTransition): Int = when (transition)
     FrontendTransition.None -> R.string.frontend_transition_none
     FrontendTransition.Fade -> R.string.frontend_transition_fade
     FrontendTransition.Slide -> R.string.frontend_transition_slide
-    FrontendTransition.Zoom -> R.string.frontend_transition_zoom
     FrontendTransition.SlideUp -> R.string.frontend_transition_slide_up
+    FrontendTransition.SlideDown -> R.string.frontend_transition_slide_down
+    FrontendTransition.Zoom -> R.string.frontend_transition_zoom
+    FrontendTransition.Scale -> R.string.frontend_transition_scale
+    FrontendTransition.Pop -> R.string.frontend_transition_pop
 }
 
 @Composable
@@ -609,13 +679,17 @@ private fun ScrapingRows(
     focusedRow: Int,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onOpenScreenScraperSettings: () -> Unit,
+    onOpenSteamGridDbSettings: () -> Unit
 ) {
     val refreshFocused = focusedRow == 0
     val secondaryFocused = focusedRow == 1
-    val screenScraperFocused = focusedRow == 2
-    val steamGridDbFocused = focusedRow == 3
+    val jarngreiprFocused = focusedRow == 2
+    val screenScraperFocused = focusedRow == 3
+    val steamGridDbFocused = focusedRow == 4
     val secondaryEnabled = prefsState.secondaryMediaEnabled
+    val jarngreiprEnabled = prefsState.jarngreiprMediaEnabled
 
     val trailing = when {
         refreshRunning -> stringResource(R.string.frontend_settings_refresh_running)
@@ -649,18 +723,73 @@ private fun ScrapingRows(
         )
     }
 
-    SettingsRowSlot(focused = screenScraperFocused, enabled = false, onActivate = {}) {
-        ComingSoonRow(
+    SettingsRowSlot(
+        focused = jarngreiprFocused,
+        onActivate = { prefsManager.setJarngreiprMediaEnabled(!jarngreiprEnabled) }
+    ) {
+        ToggleSetting(
+            title = stringResource(R.string.jarngreipr_media_title),
+            description = stringResource(R.string.jarngreipr_media_description),
+            checked = jarngreiprEnabled,
+            onCheckedChange = prefsManager::setJarngreiprMediaEnabled,
+            focused = jarngreiprFocused
+        )
+    }
+
+    SettingsRowSlot(focused = screenScraperFocused, onActivate = onOpenScreenScraperSettings) {
+        ScraperEntryRow(
             title = stringResource(R.string.frontend_settings_screenscraper_title),
             description = stringResource(R.string.frontend_settings_screenscraper_description),
+            enabled = prefsState.screenScraperEnabled,
             focused = screenScraperFocused
         )
     }
-    SettingsRowSlot(focused = steamGridDbFocused, enabled = false, onActivate = {}) {
-        ComingSoonRow(
+    SettingsRowSlot(focused = steamGridDbFocused, onActivate = onOpenSteamGridDbSettings) {
+        ScraperEntryRow(
             title = stringResource(R.string.frontend_settings_steamgriddb_title),
             description = stringResource(R.string.frontend_settings_steamgriddb_description),
+            enabled = prefsState.steamGridDbEnabled,
             focused = steamGridDbFocused
+        )
+    }
+}
+
+@Composable
+private fun ScraperEntryRow(
+    title: String,
+    description: String,
+    enabled: Boolean,
+    focused: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusableSettingCard(focused)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = description,
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 12.sp
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = stringResource(
+                if (enabled) R.string.scraper_status_on else R.string.scraper_status_off
+            ),
+            color = if (enabled) ThemePrimaryColor else Color.White.copy(alpha = 0.4f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -723,39 +852,3 @@ internal fun ActionRowCard(
     }
 }
 
-@Composable
-private fun ComingSoonRow(
-    title: String,
-    description: String,
-    focused: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusableSettingCard(focused)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = description,
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 12.sp
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = stringResource(R.string.frontend_settings_coming_soon),
-            color = ThemePrimaryColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}

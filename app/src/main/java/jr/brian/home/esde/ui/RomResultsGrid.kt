@@ -1,7 +1,6 @@
 package jr.brian.home.esde.ui
 
 import android.net.Uri
-import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -11,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,11 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import jr.brian.home.esde.ui.frontend.FrontendTokens
@@ -38,7 +31,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,12 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -65,17 +53,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.clearGameCompanions
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.launch.RomLaunchGate
+import jr.brian.home.esde.launch.isAndroidSystem
+import jr.brian.home.esde.launch.romLaunchGate
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.model.gridColumnsForScale
+import jr.brian.home.esde.model.gameGridColumnsForScale
 import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
 import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -83,7 +74,6 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.util.animatedColor
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.items as lazyRowItems
 import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
@@ -94,15 +84,13 @@ private const val NUM_COLS = 4
 internal fun RomResultsGrid(
     games: List<GameInfo>,
     isLoading: Boolean,
-    layout: FrontendLayout = FrontendLayout.Grid,
     modifier: Modifier = Modifier,
+    layout: FrontendLayout = FrontendLayout.Grid,
     isHiddenMode: Boolean = false,
-    backgroundTransparent: Boolean = false,
     cardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     focusAnimationEnabled: Boolean = false,
     focusAnimationDelayMs: Int = 150,
     isFocusAnimationDisabled: (GameInfo) -> Boolean = { false },
-    onToggleGameDiscSpin: (GameInfo) -> Unit = {},
     getGameMediaType: (GameInfo) -> RomSearchCardMediaType? = { null },
     onSetGameMediaType: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
     onSetMediaTypeForSystem: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
@@ -118,6 +106,8 @@ internal fun RomResultsGrid(
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
+    onPickCompanion: (GameInfo) -> Unit = {},
+    onEditInfo: (GameInfo) -> Unit = {},
     focusResetKey: Any? = Unit,
     initialRealIndex: Int = 0,
     onDetailsVisibleChanged: (Boolean) -> Unit = {},
@@ -128,12 +118,25 @@ internal fun RomResultsGrid(
     focusIndicationEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
+    val romDetailCompanionClearedMessage = stringResource(R.string.rom_detail_companion_cleared)
     val prefsManager = LocalESDEPreferencesManager.current
     val prefs by prefsManager.state.collectAsStateWithLifecycle()
+    val romSearchViewModel: jr.brian.home.esde.viewmodels.RomSearchViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val allGames by romSearchViewModel.stateHolder.allGames.collectAsStateWithLifecycle()
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
+
+    // Re-point selectedGame at its fresh instance after any index refresh so
+    // the detail screen reflects a just-saved override (writeUserOverride →
+    // refreshSystem → allGames) without the user having to close and reopen.
+    LaunchedEffect(allGames) {
+        val current = selectedGame ?: return@LaunchedEffect
+        val currentKey = gameKey(current)
+        val fresh = allGames.firstOrNull { gameKey(it) == currentKey }
+        if (fresh != null && fresh !== current) selectedGame = fresh
+    }
 
     LaunchedEffect(selectedGame) {
         onDetailsVisibleChanged(selectedGame != null)
@@ -160,7 +163,11 @@ internal fun RomResultsGrid(
         )
     ) {
         when {
-            isLoading -> {
+            // Only block on the spinner when there is literally nothing to
+            // render. An in-progress scan over a non-empty (even if stale)
+            // list should keep the grid visible — the reconcile pass updates
+            // games in place as systems finish rebuilding.
+            isLoading && displayedGames.isEmpty() -> {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = ThemeAccentColor
@@ -183,10 +190,16 @@ internal fun RomResultsGrid(
                     }
                 } else null
                 val scale = prefs.frontendGameTileScale
+                // Force 2 columns on the external (bottom) display so
+                // the smaller screen gets bigger game tiles. Mirrors
+                // the systems grid.
+                val onBottom = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                    jr.brian.core.model.ScreenSlot.BOTTOM
+                val columnCount = if (onBottom) 2 else gameGridColumnsForScale(scale)
                 FocusableTileLayout(
                     items = displayedGames,
                     layout = layout,
-                    columns = gridColumnsForScale(scale),
+                    columns = columnCount,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = contentPadding,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
@@ -209,22 +222,22 @@ internal fun RomResultsGrid(
                             flipDisabledForGame = isFocusAnimationDisabled(game),
                             focusIndicationEnabled = focusIndicationEnabled,
                             onClick = {
-                                val isAndroid =
-                                    game.systemName.equals("androidgames", ignoreCase = true) ||
-                                            game.systemName.equals("androidapps", ignoreCase = true)
-                                val needsCore = isRetroArchGame(game) && !hasSavedCore(game)
-                                val hasEmulator = hasSavedEmulator(game) ||
-                                        game.launchCommand != null ||
-                                        game.emulatorPackage != null
-                                when {
-                                    isAndroid -> onLaunchGame(game)
-                                    needsCore -> {
+                                val gate = romLaunchGate(
+                                    isAndroid = isAndroidSystem(game.systemName),
+                                    isRetroArch = isRetroArchGame(game),
+                                    hasCore = hasSavedCore(game),
+                                    hasEmulator = hasSavedEmulator(game) ||
+                                            game.launchCommand != null ||
+                                            game.emulatorPackage != null,
+                                )
+                                when (gate) {
+                                    RomLaunchGate.Launch -> onLaunchGame(game)
+                                    RomLaunchGate.PickCore -> {
                                         selectedGame = game
                                         showCorePicker = true
                                     }
 
-                                    hasEmulator -> onLaunchGame(game)
-                                    else -> {
+                                    RomLaunchGate.PickEmulator -> {
                                         selectedGame = game
                                         showEmulatorPicker = true
                                     }
@@ -253,6 +266,13 @@ internal fun RomResultsGrid(
             exit = slideOutHorizontally(tween(200)) { it } + fadeOut(tween(200))
         ) {
             selectedGame?.let { game ->
+                val companionPkgs = prefs.gameCompanionsMap[gameKey(game)].orEmpty()
+                val companionLabels = companionPkgs.map { pkg ->
+                    runCatching {
+                        val info = context.packageManager.getApplicationInfo(pkg, 0)
+                        context.packageManager.getApplicationLabel(info).toString()
+                    }.getOrDefault(pkg)
+                }
                 RomDetailScreen(
                     game = game,
                     isHidden = isHiddenMode,
@@ -279,9 +299,19 @@ internal fun RomResultsGrid(
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
                     onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
-                    discSpinEnabled = focusAnimationEnabled,
-                    discSpinDisabled = isFocusAnimationDisabled(game),
-                    onToggleDiscSpin = { onToggleGameDiscSpin(game) }
+                    companionPackages = companionPkgs,
+                    companionLabels = companionLabels,
+                    onPickCompanion = { onPickCompanion(game) },
+                    onClearCompanion = {
+                        prefsManager.clearGameCompanions(gameKey(game))
+                        Toast.makeText(
+                            context,
+                            romDetailCompanionClearedMessage,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    onEditInfo = { onEditInfo(game) },
+                    onToggleFavorite = { romSearchViewModel.toggleFavorite(game) },
                 )
             }
         }
@@ -469,19 +499,20 @@ internal fun PlatformSuggestionsDropdown(
 
                         else -> {
                             val context = LocalContext.current
-                            val gifImageLoader = remember(context) {
-                                ImageLoader.Builder(context)
-                                    .components {
-                                        add(ImageDecoderDecoder.Factory())
-                                    }
-                                    .build()
-                            }
+                            // The app-wide loader already registers
+                            // ImageDecoderDecoder (JarngreiprApplication.
+                            // newImageLoader), so animated platform art
+                            // works without a per-tile ImageLoader. Each
+                            // ImageLoader.Builder().build() here used to
+                            // create its own memory cache, disk cache
+                            // handle and OkHttp client per tile, per
+                            // composition — and a swap now composes this
+                            // grid in the other window too.
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
                                     .data(imageUri)
                                     .crossfade(true)
                                     .build(),
-                                imageLoader = gifImageLoader,
                                 contentDescription = item,
                                 contentScale = ContentScale.FillBounds,
                                 modifier = sharedModifier.clickable { onPlatformSelected(item) }

@@ -1,0 +1,8 @@
+{
+  "id": "arcade",
+  "displayName": "Arcade",
+  "folderAliases": ["mame", "fbneo", "fba"],
+  "extensions": ["zip", "7z", "chd"],
+  "screenScraperSystemId": 75,
+  "retroArchSystemId": "mame"
+}

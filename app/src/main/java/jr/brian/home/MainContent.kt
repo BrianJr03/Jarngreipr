@@ -32,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.addGameCompanion
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.RomGameLauncher
@@ -39,11 +40,13 @@ import jr.brian.home.esde.ui.RomSearchSheet
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.model.PageType
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.components.dialog.NotificationAccessDialog
+import jr.brian.home.ui.components.widget.RefreshUnavailableWidgetsEffect
 import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
@@ -85,6 +88,7 @@ import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -122,6 +126,8 @@ fun MainContent(
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val pageTypeManager = managers.page.pageTypeManager
+    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
@@ -163,6 +169,18 @@ fun MainContent(
         bgMusicManager.resumeIfConfigured()
     }
 
+    LaunchedEffect(uiState.allAppsUnfiltered, pageTypes) {
+        if (uiState.isLoading) return@LaunchedEffect
+        val installed = uiState.allAppsUnfiltered.map { it.packageName }.toSet()
+        val homePageIndices = pageTypes.mapIndexedNotNull { index, type ->
+            when (type) {
+                PageType.APPS_TAB, PageType.APPS_AND_WIDGETS_TAB -> index
+                else -> null
+            }
+        }
+        appVisibilityManager.onInstalledAppsLoaded(installed, homePageIndices)
+    }
+
     LaunchedEffect(Unit) {
         mainViewModel.loadAllApps(context)
         widgetViewModel.initializeWidgetHost(context)
@@ -175,7 +193,10 @@ fun MainContent(
         currentVersionName = versionName
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
-        val update = UpdateChecker.checkForUpdate(versionName)
+        val update = UpdateChecker.checkForUpdate(
+            currentVersionName = versionName,
+            includePrereleases = appUpdateManager.rcNotificationsEnabled
+        )
         if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)
         ) {
             updateDialogState.show(update)
@@ -199,6 +220,103 @@ fun MainContent(
             navController.navigate(Routes.THEME_SHARE)
             onNavigateToThemeShareHandled()
         }
+    }
+
+    // FrontEndActivity on the top display can't host a ModalBottomSheet reliably
+    // (edge-to-edge + hidden system bars traps it). The Companion-app picker
+    // emits this signal across activities so the AppSelectionDialog opens on the
+    // bottom display where the sheet renders correctly.
+    var companionPickerFor by remember { mutableStateOf<GameInfo?>(null) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showCompanionPickerSignal.collect { game ->
+            companionPickerFor = game
+        }
+    }
+
+    companionPickerFor?.let { game ->
+        jr.brian.home.ui.components.dialog.AppSelectionDialog(
+            apps = uiState.allAppsUnfiltered,
+            onAppSelected = { app ->
+                esdePreferencesManager.addGameCompanion(
+                    jr.brian.home.esde.util.gameKey(game),
+                    app.packageName
+                )
+                companionPickerFor = null
+            },
+            onDismiss = { companionPickerFor = null },
+            multiSelect = false
+        )
+    }
+
+    // When a game launch resolves two installed companion apps, RomGameLauncher
+    // defers the companion launch to the user by emitting this signal. The
+    // picker reuses AppSelectionDialog, filtered down to the two mapped
+    // packages so the sheet shows exactly those two tiles.
+    var companionLaunchChoices by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showCompanionLaunchPickerSignal.collect { packages ->
+            companionLaunchChoices = packages
+        }
+    }
+
+    if (companionLaunchChoices.isNotEmpty()) {
+        val choices = companionLaunchChoices
+        val appsForChoices = remember(uiState.allAppsUnfiltered, choices) {
+            val byPkg = uiState.allAppsUnfiltered.associateBy { it.packageName }
+            choices.mapNotNull { byPkg[it] }
+        }
+        if (appsForChoices.isNotEmpty()) {
+            jr.brian.home.ui.components.dialog.AppSelectionDialog(
+                apps = appsForChoices,
+                onAppSelected = { app ->
+                    val pref = managers.ui.appDisplayPreferenceManager
+                        .getAppDisplayPreference(app.packageName)
+                    val dm = context.getSystemService(android.content.Context.DISPLAY_SERVICE)
+                        as? android.hardware.display.DisplayManager
+                    val hasExternalDisplay = (dm?.displays?.size ?: 1) > 1
+                    if (hasExternalDisplay) {
+                        launchAppOnOppositeDisplay(context, app.packageName, pref)
+                    } else {
+                        launchApp(context, app.packageName, pref)
+                    }
+                    companionLaunchChoices = emptyList()
+                },
+                onDismiss = { companionLaunchChoices = emptyList() },
+                multiSelect = false
+            )
+        } else {
+            companionLaunchChoices = emptyList()
+        }
+    }
+
+    // Edit Info sheet is hosted here for the same reason — FrontEndActivity's
+    // window config traps ModalBottomSheet. The top-display button only emits
+    // a signal; the sheet itself and its viewmodel calls run on this activity.
+    var editInfoFor by remember { mutableStateOf<GameInfo?>(null) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showEditInfoPickerSignal.collect { game ->
+            editInfoFor = game
+        }
+    }
+
+    editInfoFor?.let { game ->
+        val romSearchViewModel: jr.brian.home.esde.viewmodels.RomSearchViewModel = hiltViewModel()
+        jr.brian.home.esde.ui.EditGameInfoDialog(
+            game = game,
+            loadExisting = { romSearchViewModel.readUserOverride(game) },
+            copyImage = { slot, uri ->
+                romSearchViewModel.copyUserOverrideImage(game, slot, uri)
+            },
+            onSave = { override ->
+                romSearchViewModel.writeUserOverride(game, override)
+                editInfoFor = null
+            },
+            onClear = {
+                romSearchViewModel.clearUserOverride(game)
+                editInfoFor = null
+            },
+            onDismiss = { editInfoFor = null }
+        )
     }
 
     // Frontend Y-button emits this signal; the new sheet on this display
@@ -297,6 +415,8 @@ fun MainContent(
             context.unregisterReceiver(receiver)
         }
     }
+
+    RefreshUnavailableWidgetsEffect(widgetViewModel)
 
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(

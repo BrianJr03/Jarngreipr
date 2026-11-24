@@ -64,6 +64,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.delay
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
@@ -75,10 +76,15 @@ import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
 private val MARQUEE_VIDEO_EXTENSIONS = setOf("mp4", "mkv", "avi", "wmv", "mov", "webm")
+
+private const val MARQUEE_VIDEO_SETTLE_MS = 150L
+
+private const val MARQUEE_VIDEO_SLOT_KEY = "__marquee_video_slot__"
 
 private fun String.isMarqueeVideoPath(): Boolean {
     val lower = substringAfterLast('.', "").lowercase()
@@ -148,6 +154,14 @@ fun ESDEWallpaperContainer(
     val useAnimatedLogo = !prefsState.marqueePositionLocked
     val logoVisibilityAnimation = prefsState.logoVisibilityAnimation
     val logoChangeAnimation = prefsState.logoChangeAnimation
+
+    // Boolean-not-GameInfo so the RomDetail overlay stays live-bound to
+    // state.currentGame and updates as the user scrolls games without
+    // needing to close/reopen. Mirrors the canvas FrontendTile tap flow.
+    var showLogoRomDetail by remember { mutableStateOf(false) }
+    val onLogoSingleTap: () -> Unit = {
+        if (state.currentGame != null) showLogoRomDetail = true
+    }
 
     Box(
         modifier = modifier
@@ -219,6 +233,7 @@ fun ESDEWallpaperContainer(
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
                 openMarqueeShortcut = null,
+                onSingleTap = onLogoSingleTap,
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
@@ -242,6 +257,7 @@ fun ESDEWallpaperContainer(
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
                 openMarqueeShortcut = onOpenMarqueeShortcut,
+                onSingleTap = onLogoSingleTap,
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
@@ -293,6 +309,20 @@ fun ESDEWallpaperContainer(
 
         if (showEsdeBackground && (state.isGameRunning || state.isScreensaverActive)) {
             DimmingOverlay(alpha = effectiveDimmingLevel)
+        }
+
+        if (showLogoRomDetail) {
+            val focusedGame = state.currentGame
+            if (focusedGame != null) {
+                RomDetailScreen(
+                    game = focusedGame,
+                    onDismiss = { showLogoRomDetail = false },
+                    onLaunch = { showLogoRomDetail = false },
+                    showActionRow = false
+                )
+            } else {
+                LaunchedEffect(Unit) { showLogoRomDetail = false }
+            }
         }
     }
 }
@@ -428,7 +458,8 @@ private fun BoxScope.AnimatedLogo(
     onOffsetChange: ((Float, Float) -> Unit)? = null,
     minWidthPercent: Float = 0.5f,
     visibilityAnimationEnabled: Boolean = true,
-    changeAnimationEnabled: Boolean = true
+    changeAnimationEnabled: Boolean = true,
+    onSingleTap: (() -> Unit)? = null
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -537,6 +568,12 @@ private fun BoxScope.AnimatedLogo(
             val minWidth = (state.marqueeWidth * minWidthPercent).dp
             AnimatedContent(
                 targetState = logoPath,
+                // Collapse all video marquees to one key so the MarqueeVideo
+                // composable stays mounted across focus changes — otherwise
+                // each path swap would tear down and rebuild ExoPlayer here.
+                contentKey = { path ->
+                    if (path?.isMarqueeVideoPath() == true) MARQUEE_VIDEO_SLOT_KEY else path
+                },
                 transitionSpec = {
                     if (changeAnimationEnabled) {
                         scaleIn(
@@ -569,7 +606,8 @@ private fun BoxScope.AnimatedLogo(
                     animationDuration = state.animationDuration,
                     animationScale = state.animationScale,
                     onClick = if (isFreePosition) openMarqueeShortcut else null,
-                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null
+                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null,
+                    onSingleTap = onSingleTap
                 )
             }
         }
@@ -586,7 +624,8 @@ private fun MarqueeImage(
     animationDuration: Int = 300,
     animationScale: Float = 0.9f,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onSingleTap: (() -> Unit)? = null
 ) {
     if (marqueePath == null) return
 
@@ -595,7 +634,8 @@ private fun MarqueeImage(
             videoPath = marqueePath,
             modifier = modifier,
             onClick = onClick,
-            onLongClick = onLongClick
+            onLongClick = onLongClick,
+            onSingleTap = onSingleTap
         )
         return
     }
@@ -640,8 +680,12 @@ private fun MarqueeImage(
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = {},
-                onDoubleClick = { onClick?.invoke() },
+                onClick = { onSingleTap?.invoke() },
+                // Only wire double-click when the caller actually wants it —
+                // otherwise combinedClickable delays onClick by the double-tap
+                // timeout (~300ms) just to disambiguate a gesture that has no
+                // handler, and the RomDetail tap feels dead.
+                onDoubleClick = onClick?.let { { it() } },
                 onLongClick = { onLongClick?.invoke() }
             ),
         contentScale = ContentScale.Fit
@@ -750,28 +794,34 @@ private fun MarqueeVideo(
     videoPath: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onSingleTap: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
 
-    val videoUri = remember(videoPath) {
-        when {
-            videoPath.startsWith("content://") -> videoPath.toUri()
-            else -> Uri.fromFile(File(videoPath))
+    // One player for the lifetime of this composable — recreating per focused
+    // tile was tearing down MediaCodec on every scroll tick, stalling the UI
+    // and racing the outgoing render's VSync callback (Choreographer NPE on
+    // ExoPlayer:Playback, Android 13).
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = Player.REPEAT_MODE_ALL
+            volume = 0f
+            playWhenReady = true
         }
     }
 
-    val exoPlayer = remember(videoPath) {
-        ExoPlayer.Builder(context).build().apply {
-            try {
-                setMediaItem(MediaItem.fromUri(videoUri))
-                repeatMode = Player.REPEAT_MODE_ALL
-                volume = 0f
-                prepare()
-                playWhenReady = true
-            } catch (e: Exception) {
-                android.util.Log.e("MarqueeVideo", "Failed to load video: $videoPath", e)
-            }
+    LaunchedEffect(videoPath) {
+        delay(MARQUEE_VIDEO_SETTLE_MS.milliseconds)
+        val uri = when {
+            videoPath.startsWith("content://") -> videoPath.toUri()
+            else -> Uri.fromFile(File(videoPath))
+        }
+        try {
+            exoPlayer.setMediaItem(MediaItem.fromUri(uri))
+            exoPlayer.prepare()
+        } catch (e: Exception) {
+            android.util.Log.e("MarqueeVideo", "Failed to load video: $videoPath", e)
         }
     }
 
@@ -790,7 +840,7 @@ private fun MarqueeVideo(
         }
     }
 
-    DisposableEffect(videoPath) {
+    DisposableEffect(Unit) {
         onDispose {
             exoPlayer.release()
         }
@@ -826,8 +876,8 @@ private fun MarqueeVideo(
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = {},
-                onDoubleClick = { onClick?.invoke() },
+                onClick = { onSingleTap?.invoke() },
+                onDoubleClick = onClick?.let { { it() } },
                 onLongClick = { onLongClick?.invoke() }
             )
     )

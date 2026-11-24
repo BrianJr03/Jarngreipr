@@ -17,6 +17,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.model.JingleSource
 import jr.brian.home.util.GitHubUrls
+import jr.brian.home.util.closeAudioEffectSession
+import jr.brian.home.util.openAudioEffectSession
 import jr.brian.home.model.GitHubContentEntry
 import jr.brian.home.model.GitHubRepoResult
 import jr.brian.home.model.GitHubSearchResponse
@@ -131,6 +133,10 @@ class JinglesManager @Inject constructor(
     private var player: ExoPlayer? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var currentPlayJob: Job? = null
+
+    // Tracks the session ID we last broadcast open for, so we can pair it
+    // with a matching close when the session changes or the player releases.
+    private var openedAudioSessionId: Int = 0
 
     @Volatile
     private var currentGameFilename: String? = null
@@ -268,6 +274,7 @@ class JinglesManager @Inject constructor(
     @OptIn(UnstableApi::class)
     suspend fun downloadRepo(
         repoSlug: String,
+        acceptIndex: (JingleIndex) -> Boolean = { true },
         onProgress: (Float) -> Unit = {}
     ): JinglesResult<Unit> = withContext(Dispatchers.IO) {
         val tag = "DownloadRepo"
@@ -279,6 +286,9 @@ class JinglesManager @Inject constructor(
 
             val (index, branch) = fetchResult
             Log.d(tag, "Fetched index. Branch=$branch, Entries=${index.entries.size}")
+            if (!acceptIndex(index)) {
+                return@withContext JinglesResult.Failure("Rejected index.json for $repoSlug")
+            }
 
             // Use app-specific external dir — no MANAGE_EXTERNAL_STORAGE needed
             val repoDir = getDownloadedDir(repoSlug)
@@ -390,6 +400,10 @@ class JinglesManager @Inject constructor(
             loudnessEnhancer = null
             player?.release()
             player = null
+            if (openedAudioSessionId != 0) {
+                context.closeAudioEffectSession(openedAudioSessionId)
+                openedAudioSessionId = 0
+            }
             isMutePaused = false
             bgMusicManager.unDuck()
         }
@@ -798,6 +812,11 @@ class JinglesManager @Inject constructor(
             .build()
         player?.addListener(object : Player.Listener {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                if (openedAudioSessionId != 0 && openedAudioSessionId != audioSessionId) {
+                    context.closeAudioEffectSession(openedAudioSessionId)
+                }
+                context.openAudioEffectSession(audioSessionId)
+                openedAudioSessionId = audioSessionId
                 if (_isNormalizationEnabled.value) setupLoudnessEnhancer(audioSessionId)
             }
 

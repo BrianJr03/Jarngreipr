@@ -223,6 +223,44 @@ class AppVisibilityManager(context: Context) {
         saveHiddenAppsForPage(pageIndex, apps)
     }
 
+    /**
+     * Reconciles the persisted "known packages" snapshot with what the launcher
+     * just enumerated from the package manager. On first run the key is absent
+     * — we seed it with every installed package and hide nothing, so an upgrade
+     * from a build without this feature doesn't retroactively hide the user's
+     * existing apps. On subsequent runs, any package not in the known set is
+     * treated as newly installed; if [newAppsVisibleByDefault] is off, it's
+     * hidden on every provided home-page index. Packages missing from
+     * [installedPackages] are dropped from the known set so an uninstall +
+     * reinstall is treated as new again.
+     */
+    fun onInstalledAppsLoaded(installedPackages: Set<String>, pageIndices: List<Int>) {
+        val stored = prefs.getString(KEY_KNOWN_PACKAGES, null)
+        if (stored == null) {
+            saveKnownPackages(installedPackages)
+            return
+        }
+        val known = if (stored.isEmpty()) emptySet() else stored.split(SEPARATOR).toSet()
+        val newlyInstalled = installedPackages - known
+        if (!_newAppsVisibleByDefault.value && newlyInstalled.isNotEmpty() && pageIndices.isNotEmpty()) {
+            newlyInstalled.forEach { pkg ->
+                pageIndices.forEach { pageIndex ->
+                    hideApp(pageIndex, pkg)
+                }
+            }
+        }
+        if (known != installedPackages) {
+            saveKnownPackages(installedPackages)
+        }
+    }
+
+    private fun saveKnownPackages(packages: Set<String>) {
+        prefs.edit().apply {
+            putString(KEY_KNOWN_PACKAGES, packages.joinToString(SEPARATOR))
+            apply()
+        }
+    }
+
     fun updateShowAppNames(value: Boolean) {
         showAppNames = value
         prefs.edit().apply {
@@ -263,6 +301,7 @@ class AppVisibilityManager(context: Context) {
         private const val KEY_SHOW_FOLDER_NAMES = "show_folder_names"
         private const val KEY_SHOW_SETTINGS_BACK_BUTTON = "show_settings_back_button"
         private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"
+        private const val KEY_KNOWN_PACKAGES = "known_packages"
         private const val KEY_APP_LABEL_FONT_SIZE = "app_label_font_size"
         const val DEFAULT_APP_LABEL_FONT_SIZE = 12
         const val MIN_APP_LABEL_FONT_SIZE = 8

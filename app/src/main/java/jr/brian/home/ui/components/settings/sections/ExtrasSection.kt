@@ -28,8 +28,9 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
+import jr.brian.home.ui.components.settings.FocusLockSettingItem
+import jr.brian.home.ui.components.settings.HomeGesturesInfoCard
 import jr.brian.home.ui.components.settings.HomeInterceptionSettingItem
-import jr.brian.home.ui.components.settings.HomeTargetSelectorItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -42,6 +43,7 @@ fun ExtrasSection(
     onWhatsNewClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val floatyModeResetDoneMessage = stringResource(R.string.floaty_mode_reset_done)
     val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
     val floatyModeManager = LocalFloatyModeManager.current
     val pageTypeManager = LocalPageTypeManager.current
@@ -64,9 +66,18 @@ fun ExtrasSection(
                 onCheckedChange = { esdePreferencesManager.setFrontendEnabled(it) }
             )
 
+            ToggleSetting(
+                title = stringResource(R.string.companion_launch_watchdog_title),
+                description = stringResource(R.string.companion_launch_watchdog_description),
+                checked = esdePrefsState.companionLaunchWatchdogEnabled,
+                onCheckedChange = { esdePreferencesManager.setCompanionLaunchWatchdogEnabled(it) }
+            )
+
             HomeInterceptionSettingItem()
 
-            HomeTargetSelectorItem()
+            HomeGesturesInfoCard()
+
+            FocusLockSettingItem()
 
             SettingItem(
                 title = stringResource(R.string.settings_whats_new_title),
@@ -162,7 +173,7 @@ fun ExtrasSection(
                         floatyModeManager.reset()
                         Toast.makeText(
                             context,
-                            context.getString(R.string.floaty_mode_reset_done),
+                            floatyModeResetDoneMessage,
                             Toast.LENGTH_SHORT
                         ).show()
                     }

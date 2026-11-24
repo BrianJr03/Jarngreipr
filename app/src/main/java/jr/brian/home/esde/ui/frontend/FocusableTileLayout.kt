@@ -5,7 +5,10 @@ import android.view.KeyEvent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.BringIntoViewSpec
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +27,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -88,6 +92,15 @@ fun <T> FocusableTileLayout(
      */
     initialRealIndex: Int = 0,
     focusResetKey: Any? = Unit,
+    /**
+     * Extra breathing room (per edge) that the focus-driven scroll keeps around the
+     * focused tile. Compensates for visuals that overflow the cell bounds: tiles with
+     * `clip = false` plus a focus scale-up and lift translate their drawing outside
+     * their cell slot, so without this margin a bottom-row focused tile ends up
+     * flush against the viewport edge even though its cell technically respects
+     * `contentPadding`.
+     */
+    focusMargin: Dp = 0.dp,
     onItemFocused: (T?) -> Unit = {},
     header: (@Composable () -> Unit)? = null,
     itemKey: ((index: Int, item: T) -> Any)? = null,
@@ -106,6 +119,7 @@ fun <T> FocusableTileLayout(
             modifier = modifier,
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
+            focusMargin = focusMargin,
             initialIndex = initialRealIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0)),
             focusResetKey = focusResetKey,
             onItemFocused = onItemFocused,
@@ -132,6 +146,7 @@ fun <T> FocusableTileLayout(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun <T> GridLayout(
     items: List<T>,
@@ -139,6 +154,7 @@ private fun <T> GridLayout(
     modifier: Modifier,
     contentPadding: PaddingValues,
     itemSpacing: Dp,
+    focusMargin: Dp,
     initialIndex: Int,
     focusResetKey: Any?,
     onItemFocused: (T?) -> Unit,
@@ -158,6 +174,7 @@ private fun <T> GridLayout(
 
     val density = LocalDensity.current
     val verticalSpacingPx = with(density) { itemSpacing.roundToPx() }
+    val focusMarginPx = with(density) { focusMargin.roundToPx() }
 
     LaunchedEffect(focusedIndex) {
         val now = SystemClock.uptimeMillis()
@@ -168,8 +185,8 @@ private fun <T> GridLayout(
 
         val layoutIndex = focusedIndex + headerOffset
         val info = gridState.layoutInfo
-        val start = info.viewportStartOffset + info.beforeContentPadding
-        val end = info.viewportEndOffset - info.afterContentPadding
+        val start = info.viewportStartOffset + info.beforeContentPadding + focusMarginPx
+        val end = info.viewportEndOffset - info.afterContentPadding - focusMarginPx
         val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
 
         when {
@@ -235,34 +252,65 @@ private fun <T> GridLayout(
         focusedIndex = next
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = gridState,
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(containerFocus)
-            .focusable()
-            .gridDpadHandler(columns, ::moveFocus),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(itemSpacing),
-        horizontalArrangement = Arrangement.spacedBy(itemSpacing)
-    ) {
-        if (header != null) {
-            item(span = { GridItemSpan(maxLineSpan) }) { header() }
+    val bringIntoViewSpec = remember(focusMarginPx) {
+        PaddedBringIntoViewSpec(focusMarginPx.toFloat())
+    }
+    CompositionLocalProvider(LocalBringIntoViewSpec provides bringIntoViewSpec) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            state = gridState,
+            modifier = modifier
+                .fillMaxSize()
+                .focusRequester(containerFocus)
+                .focusable()
+                .gridDpadHandler(columns, ::moveFocus),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(itemSpacing),
+            horizontalArrangement = Arrangement.spacedBy(itemSpacing)
+        ) {
+            if (header != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) { header() }
+            }
+            itemsIndexed(
+                items,
+                key = itemKey?.let { keyFn -> { index, item -> keyFn(index, item) } }
+            ) { index, item ->
+                FocusableTileItem(
+                    index = index,
+                    item = item,
+                    focusRequesters = focusRequesters,
+                    focusedIndex = focusedIndex,
+                    onFocusedIndexChange = { focusedIndex = it },
+                    onItemFocused = onItemFocused,
+                    itemContent = itemContent
+                )
+            }
         }
-        itemsIndexed(
-            items,
-            key = itemKey?.let { keyFn -> { index, item -> keyFn(index, item) } }
-        ) { index, item ->
-            FocusableTileItem(
-                index = index,
-                item = item,
-                focusRequesters = focusRequesters,
-                focusedIndex = focusedIndex,
-                onFocusedIndexChange = { focusedIndex = it },
-                onItemFocused = onItemFocused,
-                itemContent = itemContent
-            )
+    }
+}
+
+/**
+ * Custom [BringIntoViewSpec] that reserves [insetPx] on both edges of the viewport so
+ * Compose's focus-driven auto-scroll keeps breathing room around the focused item.
+ * The default spec treats any item inside [0, containerSize] as "fully visible" and
+ * ignores content padding, so without this a focused bottom-row tile ends up flush
+ * against the scrollable edge.
+ */
+private class PaddedBringIntoViewSpec(private val insetPx: Float) : BringIntoViewSpec {
+    override fun calculateScrollDistance(
+        offset: Float,
+        size: Float,
+        containerSize: Float
+    ): Float {
+        val safeStart = insetPx
+        val safeEnd = containerSize - insetPx
+        val leadingEdge = offset - safeStart
+        val trailingEdge = (offset + size) - safeEnd
+        return when {
+            leadingEdge >= 0 && trailingEdge <= 0 -> 0f
+            leadingEdge < 0 && trailingEdge > 0 -> 0f
+            abs(leadingEdge) < abs(trailingEdge) -> leadingEdge
+            else -> trailingEdge
         }
     }
 }
@@ -302,6 +350,14 @@ private fun <T> RowLayout(
 
     var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
     var isRapidScroll by remember { mutableStateOf(false) }
+
+    // Secondary display → each tile fills the viewport (one card at a
+    // time). On primary we keep the carousel with peek. Driven by the
+    // swap coordinator's effective assignment rather than the view's
+    // attached display, so this spacing change happens under the fade-out
+    // instead of mid fade-in on the arriving activity.
+    val onPrimaryDisplay = jr.brian.home.ui.components.LocalScreenSlot.current ==
+        jr.brian.core.model.ScreenSlot.TOP
 
     // Centre the focused tile horizontally on every focus change. Also covers the seed:
     // initialVirtualIndex change triggers this once on first composition.
@@ -349,6 +405,16 @@ private fun <T> RowLayout(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val sidePadding = ((maxWidth - rowItemWidth) / 2).coerceAtLeast(0.dp)
+        // Secondary display: keep tiles their normal size (rowItemWidth
+        // stays what the caller passed) but inflate the spacing so the
+        // neighbours fall outside the viewport. With tile width T and
+        // viewport W, sidePadding is (W - T) / 2; a spacing of
+        // sidePadding puts the next tile's leading edge at
+        // sidePadding + T + sidePadding = W, which is one pixel past
+        // the viewport right. Result: only the focused tile is visible,
+        // one card at a time, same size as the primary carousel.
+        val effectiveItemSpacing =
+            if (onPrimaryDisplay) itemSpacing else sidePadding
         val verticalAlignment = when (rowAlignment) {
             FrontendRowAlignment.Top -> Alignment.Top
             FrontendRowAlignment.Center -> Alignment.CenterVertically
@@ -367,7 +433,7 @@ private fun <T> RowLayout(
                 top = contentPadding.calculateTopPadding(),
                 bottom = contentPadding.calculateBottomPadding()
             ),
-            horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+            horizontalArrangement = Arrangement.spacedBy(effectiveItemSpacing),
             verticalAlignment = verticalAlignment
         ) {
             if (header != null) {
@@ -418,7 +484,7 @@ private fun <T> RowLayout(
 private suspend fun centerOnFocused(
     rowState: androidx.compose.foundation.lazy.LazyListState,
     layoutIndex: Int,
-    snap: Boolean = false
+    snap: Boolean = false,
 ) {
     val info = rowState.layoutInfo
     val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2

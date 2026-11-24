@@ -58,6 +58,7 @@
         </intent>
         <package android:name="moe.shizuku.privileged.api" />
         <package android:name="eu.es_de.frontend" />
+        <provider android:authorities="jr.brian.commandpannel.theme" />
     </queries>
     <application
         android:name=".JarngreiprApplication"
@@ -69,20 +70,40 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Home">
+
+        <!-- Phase 4: on-demand WorkManager init. Configuration.Provider
+             is implemented on JarngreiprApplication, so suppress the
+             library's auto-initializer. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <activity
             android:name=".esde.ui.RomSearchResultsActivity"
             android:excludeFromRecents="true"
             android:exported="false"
+            android:taskAffinity=""
             android:theme="@style/Theme.Home"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
 
         <activity
             android:name=".esde.ui.FrontEndActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Home"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
+        <!-- SECONDARY_HOME lives on HomeRouterActivity, which routes to the
+             pinned slot (MainActivity on the external display). Under the
+             pinned-slot design FrontEndActivity never leaves the primary
+             display, so it has no reason to register for the external
+             display's home dispatch. -->
+
 
         <activity
             android:name=".HomeRouterActivity"

@@ -1,0 +1,136 @@
+package jr.brian.jarnfe.deck
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import jr.brian.core.ui.components.JarnTabs
+import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppsRoute
+import jr.brian.jarnfe.canvas.CanvasHeaderControls
+import jr.brian.jarnfe.canvas.CanvasHeaderEditBanner
+import jr.brian.jarnfe.canvas.CanvasRoute
+import jr.brian.jarnfe.dock.JarnDockRow
+import jr.brian.jarnfe.input.JarnInputLayer
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryNowPanel
+import jr.brian.jarnfe.search.JarnSearch
+import jr.brian.jarnfe.search.JarnSearchDeck
+import jr.brian.jarnfe.session.DeckTab
+import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.JarnSessionState
+import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.settings.JarnSettingsControls
+import jr.brian.jarnfe.settings.JarnSettingsScraperHost
+import jr.brian.jarnfe.shell.JarnScreenFrame
+import jr.brian.jarnfe.shell.deckBindings
+import jr.brian.jarnfe.splash.JarnDeckSplash
+import jr.brian.jarnfe.splash.jarnSplashFade
+import jr.brian.jarnfe.wallpaper.JarnWallpaperBackdrop
+import jr.brian.jarnfe.wallpaper.LocalJarnDisabledBacking
+
+@StringRes
+private fun DeckTab.labelRes(): Int = when (this) {
+    DeckTab.Now -> R.string.jarnfe_tab_now
+    DeckTab.Apps -> R.string.jarnfe_tab_apps
+    DeckTab.Canvas -> R.string.jarnfe_tab_canvas
+}
+
+@Composable
+internal fun DeckScreen(state: JarnSessionState) {
+    JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            Box(Modifier.jarnSplashFade()) {
+                JarnWallpaperBackdrop(showWallpaper = true)
+            }
+            CompositionLocalProvider(LocalJarnDisabledBacking provides JarnTheme.colors.bg) {
+                JarnScreenFrame(
+                    header = { if (deckShowsTabs(state)) DeckTabStrip(state.deckTab) },
+                    background = Color.Transparent,
+                ) { DeckBody(state) }
+            }
+            if (deckShowsSettings(state)) JarnSettingsScraperHost()
+            JarnDeckSplash()
+        }
+    }
+}
+
+private fun deckShowsSearch(state: JarnSessionState) =
+    state.stageRoute == StageRoute.Search && !JarnSearch.showingActions
+
+private fun deckShowsSettings(state: JarnSessionState) =
+    state.stageRoute == StageRoute.Settings && state.settingsOnDeck
+
+private fun deckShowsTabs(state: JarnSessionState) =
+    !deckShowsSearch(state) && !deckShowsSettings(state)
+
+@Composable
+private fun DeckBody(state: JarnSessionState) {
+    when {
+        deckShowsSearch(state) -> JarnSearchDeck()
+        deckShowsSettings(state) -> JarnSettingsControls(state.settingsSection, JarnTheme.space.deckMargin)
+        else -> Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                DeckTabContent(state)
+            }
+            JarnDockRow()
+        }
+    }
+}
+
+@Composable
+internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        if (deckShowsSearch(state)) {
+            JarnSearchDeck()
+        } else {
+            DeckTabStrip(state.deckTab)
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                DeckTabContent(state)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeckTabStrip(selected: DeckTab) {
+    val tabs = DeckTab.entries
+    Box(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            JarnTabs(
+                labels = tabs.map { stringResource(it.labelRes()) },
+                selectedIndex = tabs.indexOf(selected),
+                onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
+                modifier = Modifier.weight(1f),
+            )
+            if (selected == DeckTab.Canvas) CanvasHeaderControls()
+        }
+        if (selected == DeckTab.Canvas) CanvasHeaderEditBanner(Modifier.matchParentSize())
+    }
+}
+
+@Composable
+private fun DeckTabContent(state: JarnSessionState) {
+    when (state.deckTab) {
+        DeckTab.Now -> LibraryNowPanel(
+            selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
+        )
+        DeckTab.Apps -> JarnAppsRoute()
+        DeckTab.Canvas -> CanvasRoute(state)
+    }
+}

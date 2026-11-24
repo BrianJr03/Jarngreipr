@@ -97,7 +97,9 @@ fun CanvasItemTile(
     editMode: Boolean = false,
     isDropTarget: Boolean = false,
     onResizeWidget: (CanvasItem.WidgetItem) -> Unit = {},
-    onDoubleTap: () -> Unit = {}
+    onDoubleTap: () -> Unit = {},
+    onLaunchRom: (PinnedRomInfo) -> Unit = {},
+    onLastPlayedRowLongPress: (CanvasItem.LastPlayedItem, jr.brian.home.data.RecentlyPlayedEntry) -> Unit = { _, _ -> }
 ) {
     val effectiveLongPress: () -> Unit = if (suppressTileLongPress) ({}) else onLongPress
     val baseModifier = modifier.then(if (isDropTarget) dropTargetHighlight() else Modifier)
@@ -161,6 +163,14 @@ fun CanvasItemTile(
             onLongPress = effectiveLongPress,
             modifier = baseModifier,
             editMode = editMode
+        )
+        is ResolvedCanvasItem.LastPlayed -> LastPlayedTile(
+            resolved = resolved,
+            onLaunch = onLaunchRom,
+            onLongPress = effectiveLongPress,
+            modifier = baseModifier,
+            editMode = editMode,
+            onRowLongPress = { entry -> onLastPlayedRowLongPress(resolved.raw, entry) }
         )
     }
 }

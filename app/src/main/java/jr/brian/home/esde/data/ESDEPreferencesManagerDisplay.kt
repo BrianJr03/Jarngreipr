@@ -1,7 +1,7 @@
 package jr.brian.home.esde.data
 
 import androidx.core.content.edit
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemImageType

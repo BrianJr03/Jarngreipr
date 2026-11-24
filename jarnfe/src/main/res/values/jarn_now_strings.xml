@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="jarnfe_now_browse_games">
+        <item quantity="one">Browse %1$d game</item>
+        <item quantity="other">Browse %1$d games</item>
+    </plurals>
+    <plurals name="jarnfe_now_stat_games">
+        <item quantity="one">game</item>
+        <item quantity="other">games</item>
+    </plurals>
+    <plurals name="jarnfe_now_stat_favorites">
+        <item quantity="one">favorite</item>
+        <item quantity="other">favorites</item>
+    </plurals>
+    <string name="jarnfe_now_stat_played">played</string>
+    <string name="jarnfe_now_hours">%1$d h</string>
+    <string name="jarnfe_now_minutes">%1$d min</string>
+
+    <string name="jarnfe_now_group_recent">Recently played</string>
+    <string name="jarnfe_now_group_most_played">Most played</string>
+    <string name="jarnfe_now_group_in_system">In this system</string>
+    <string name="jarnfe_now_group_only">The only game here</string>
+    <string name="jarnfe_now_shelf_count">%1$d of %2$d</string>
+    <string name="jarnfe_now_cover_caption">%1$s, %2$s</string>
+    <string name="jarnfe_now_not_played">Not played yet</string>
+    <string name="jarnfe_now_empty_message">Add a game folder or show hidden games in Manage system.</string>
+
+    <string name="jarnfe_now_hint_browse">Browse</string>
+    <string name="jarnfe_now_hint_manage">Manage</string>
+    <string name="jarnfe_now_hint_details">Details</string>
+    <string name="jarnfe_now_hint_back_to_system">Back to system</string>
+</resources>

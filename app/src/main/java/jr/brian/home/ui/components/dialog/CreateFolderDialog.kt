@@ -198,13 +198,13 @@ fun CreateFolderDialog(
                                             position = firstAppPosition
                                         )
 
-                                        folderManager.createFolder(pageIndex, folder, tabType)
-
-                                        Toast.makeText(
-                                            context,
-                                            "Folder created with ${selectedApps.size} apps",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        if (folderManager.createFolder(pageIndex, folder, tabType)) {
+                                            Toast.makeText(
+                                                context,
+                                                "Folder created with ${selectedApps.size} apps",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
                                     onDismiss()
                                 }

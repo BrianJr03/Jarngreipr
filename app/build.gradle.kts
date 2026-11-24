@@ -16,8 +16,8 @@ android {
         applicationId = "jr.brian.home"
         minSdk = 33
         targetSdk = 37
-        versionCode = 1
-        versionName = "2.7.2"
+        versionCode = 3
+        versionName = "3.1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,7 +28,18 @@ android {
         }
         create("hidden") {
             dimension = "mode"
-            versionNameSuffix = "h"
+            // "h" goes before a release-candidate suffix: 3.1.2-rc -> 3.1.2h-rc, not 3.1.2-rch.
+            val base = defaultConfig.versionName!!
+            versionName = if (base.endsWith("-rc")) "${base.removeSuffix("-rc")}h-rc" else "${base}h"
+        }
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
@@ -93,6 +104,10 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core-model"))
+    implementation(project(":frontend"))
+    implementation(project(":jarnfe"))
+
     val composeBom = platform(libs.androidx.compose.bom)
 
     implementation(libs.androidx.core.ktx)
@@ -136,6 +151,13 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // WorkManager + Hilt — Phase 4 ScrapeWorker is defined in
+    // :frontend but WorkManager's Configuration.Provider must be on
+    // the Application, which lives in :app.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     // Color Picker
     implementation(libs.colorpicker.compose)
 
@@ -149,6 +171,9 @@ dependencies {
     // Ping
     implementation(libs.ping)
     implementation(libs.ping.nearby)
+
+    // OkHttp (artwork scraping)
+    implementation(libs.okhttp)
 
     // AndroidX TV
     implementation(libs.androidx.tv.foundation) {

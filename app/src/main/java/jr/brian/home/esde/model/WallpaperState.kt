@@ -13,7 +13,7 @@ data class WallpaperState(
      * [jr.brian.home.esde.viewmodels.ESDEViewModel.updateForGame]). Null at
      * system-level and during screensaver/no-game contexts. The wallpaper
      * itself ignores this field — it's exposed so the canvas's ES-DE Display
-     * tiles can resolve any [jr.brian.home.esde.model.GameImageType] for the
+     * tiles can resolve any [jr.brian.core.model.GameImageType] for the
      * current game independent of the global image-type pref.
      */
     val currentGame: GameInfo? = null,

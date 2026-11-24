@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_wordmark" translatable="false">JARN</string>
+    <string name="jarnfe_wordmark_suffix" translatable="false">GREIPR</string>
+    <string name="jarnfe_battery_percent">%1$d%%</string>
+
+    <string name="jarnfe_section_systems">Systems</string>
+    <string name="jarnfe_section_favorites">Favorites</string>
+    <string name="jarnfe_section_recent">Recent</string>
+    <string name="jarnfe_route_game_list">Game list</string>
+    <string name="jarnfe_route_settings">Settings</string>
+    <string name="jarnfe_back_to_library">Back to Library</string>
+    <string name="jarnfe_open_deck">Open Deck</string>
+
+    <string name="jarnfe_empty_favorites_title">No favorites yet</string>
+    <string name="jarnfe_empty_recent_title">Nothing played yet</string>
+    <string name="jarnfe_empty_settings_title">Settings are on the way</string>
+    <string name="jarnfe_empty_settings_message">Frontend settings will appear here.</string>
+
+    <string name="jarnfe_tab_now">Now</string>
+    <string name="jarnfe_tab_apps">Apps</string>
+    <string name="jarnfe_tab_canvas">Canvas</string>
+    <string name="jarnfe_deck_title">Deck</string>
+    <string name="jarnfe_empty_now_title">Nothing selected</string>
+    <string name="jarnfe_empty_now_message">Details and actions for your selection will appear here.</string>
+    <string name="jarnfe_empty_canvas_title">Canvas is on the way</string>
+    <string name="jarnfe_empty_canvas_message">Your saved pages will appear here.</string>
+</resources>

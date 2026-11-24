@@ -1,0 +1,8 @@
+{
+  "id": "scummvm",
+  "displayName": "ScummVM",
+  "folderAliases": [],
+  "extensions": ["svm", "scummvm"],
+  "screenScraperSystemId": 123,
+  "retroArchSystemId": "scummvm"
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_keyboard_clear">Clear</string>
+    <string name="jarnfe_tools_title">Input tools</string>
+    <string name="jarnfe_tools_settings_hint">Trackpad and back button shortcuts</string>
+    <string name="jarnfe_tools_unavailable">Input tools aren\'t available on this device.</string>
+    <string name="jarnfe_tools_trackpad">Trackpad</string>
+    <string name="jarnfe_tools_trackpad_supporting">Move a cursor with touch or the D-pad</string>
+    <string name="jarnfe_tools_back_shortcuts">Back button shortcuts</string>
+    <string name="jarnfe_tools_back_supporting">Choose what the two shortcut slots open</string>
+    <string name="jarnfe_tools_pointer_missing">Shizuku isn\'t running. Start it to use the trackpad.</string>
+    <string name="jarnfe_tools_pointer_permission">Jarngreipr needs Shizuku access to move the cursor.</string>
+    <string name="jarnfe_tools_pointer_connecting">Connecting to Shizuku…</string>
+    <string name="jarnfe_tools_pointer_ready">Ready</string>
+    <string name="jarnfe_tools_grant">Grant access</string>
+    <string name="jarnfe_tools_surface_hint">Slide to move. Tap to click. Two fingers to right-click or scroll.</string>
+    <string name="jarnfe_tools_hint_click">Click</string>
+    <string name="jarnfe_tools_hint_right_click">Right-click</string>
+    <string name="jarnfe_tools_hint_scroll_up">Scroll up</string>
+    <string name="jarnfe_tools_hint_scroll_down">Scroll down</string>
+    <string name="jarnfe_tools_back_enabled">Use back button shortcuts</string>
+    <string name="jarnfe_tools_slot_primary">First shortcut</string>
+    <string name="jarnfe_tools_slot_secondary">Second shortcut</string>
+    <string name="jarnfe_tools_selected">Selected</string>
+    <string name="jarnfe_tools_selected_app">App: %1$s</string>
+    <string name="jarnfe_tools_no_app">No app chosen</string>
+    <string name="jarnfe_tools_pick_app">Choose an app</string>
+    <string name="jarnfe_tools_shortcut_none">None</string>
+    <string name="jarnfe_tools_shortcut_app">App</string>
+    <string name="jarnfe_tools_shortcut_app_search">App search</string>
+    <string name="jarnfe_tools_shortcut_rom_search">Game search</string>
+    <string name="jarnfe_tools_shortcut_control_pad">Control pad</string>
+    <string name="jarnfe_tools_shortcut_custom_theme">Custom theme</string>
+    <string name="jarnfe_tools_shortcut_quick_delete">Quick delete</string>
+    <string name="jarnfe_tools_shortcut_settings">Settings</string>
+    <string name="jarnfe_tools_shortcut_monitor">Monitor</string>
+    <string name="jarnfe_tools_shortcut_volume">Volume controls</string>
+    <string name="jarnfe_tools_shortcut_recents">Recent apps</string>
+    <string name="jarnfe_tools_shortcut_powered_off">Powered off</string>
+</resources>

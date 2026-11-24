@@ -1,0 +1,8 @@
+{
+  "id": "saturn",
+  "displayName": "Sega Saturn",
+  "folderAliases": ["saturnjp", "sega-saturn"],
+  "extensions": ["cue", "bin", "iso", "chd", "mds", "ccd", "img", "m3u"],
+  "screenScraperSystemId": 22,
+  "retroArchSystemId": "saturn"
+}

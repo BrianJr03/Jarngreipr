@@ -40,4 +40,7 @@
     <!-- Common ES-DE image type strings -->
     <string name="common_fanart">Fanart</string>
     <string name="common_screenshots">Screenshots</string>
+
+    <!-- Home button -->
+    <string name="jarn_home_press_again">Your game is using every screen. Press Home again to open Jarn.</string>
 </resources>

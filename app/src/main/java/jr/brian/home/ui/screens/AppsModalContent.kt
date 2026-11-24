@@ -682,19 +682,17 @@ private fun ModalAppSelectionContent(
     gridState: LazyGridState,
     nestedScrollConnection: NestedScrollConnection
 ) {
-    val gridSettingsManager = LocalGridSettingsManager.current
-    val rows = gridSettingsManager.rowCount
-    val unlimitedMode = gridSettingsManager.unlimitedMode
-    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
-
-    val filteredApps = remember(apps, maxAppsPerPage) {
+    // The drawer is a scrollable LazyVerticalGrid and must show every visible
+    // app, so it ignores the grid row cap that constrains the fixed home Apps
+    // tab. Only the column count is used, and only for layout.
+    val filteredApps = remember(apps) {
         apps.sortedBy { it.label.uppercase() }
     }
 
     AppGridLayout(
         apps = filteredApps,
         columns = columns,
-        maxAppsPerPage = maxAppsPerPage,
+        maxAppsPerPage = Int.MAX_VALUE,
         gridState = gridState,
         modifier = modifier
             .fillMaxSize()

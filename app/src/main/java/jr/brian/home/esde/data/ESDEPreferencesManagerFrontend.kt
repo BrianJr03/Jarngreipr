@@ -11,6 +11,7 @@ import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS
@@ -25,10 +26,14 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_TILE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_SYSTEM_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import kotlinx.serialization.encodeToString
 import org.json.JSONArray
@@ -38,19 +43,39 @@ fun ESDEPreferencesManager.setFrontendEnabled(enabled: Boolean) {
     prefs.edit { putBoolean(KEY_FRONTEND_ENABLED, enabled) }
 }
 
+fun ESDEPreferencesManager.setCompanionLaunchWatchdogEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(companionLaunchWatchdogEnabled = enabled)
+    prefs.edit { putBoolean(KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED, enabled) }
+}
+
 fun ESDEPreferencesManager.setSecondaryMediaEnabled(enabled: Boolean) {
     _state.value = _state.value.copy(secondaryMediaEnabled = enabled)
     prefs.edit { putBoolean(KEY_SECONDARY_MEDIA_ENABLED, enabled) }
 }
 
-fun ESDEPreferencesManager.setSystemLayout(layout: FrontendLayout) {
-    _state.value = _state.value.copy(systemLayout = layout)
-    prefs.edit { putString(KEY_SYSTEM_LAYOUT, layout.name) }
+fun ESDEPreferencesManager.setJarngreiprMediaEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(jarngreiprMediaEnabled = enabled)
+    prefs.edit { putBoolean(KEY_JARNGREIPR_MEDIA_ENABLED, enabled) }
 }
 
-fun ESDEPreferencesManager.setGameLayout(layout: FrontendLayout) {
-    _state.value = _state.value.copy(gameLayout = layout)
-    prefs.edit { putString(KEY_GAME_LAYOUT, layout.name) }
+fun ESDEPreferencesManager.setPrimarySystemLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(primarySystemLayout = layout)
+    prefs.edit { putString(KEY_PRIMARY_SYSTEM_LAYOUT, layout.name) }
+}
+
+fun ESDEPreferencesManager.setSecondarySystemLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(secondarySystemLayout = layout)
+    prefs.edit { putString(KEY_SECONDARY_SYSTEM_LAYOUT, layout.name) }
+}
+
+fun ESDEPreferencesManager.setPrimaryGameLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(primaryGameLayout = layout)
+    prefs.edit { putString(KEY_PRIMARY_GAME_LAYOUT, layout.name) }
+}
+
+fun ESDEPreferencesManager.setSecondaryGameLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(secondaryGameLayout = layout)
+    prefs.edit { putString(KEY_SECONDARY_GAME_LAYOUT, layout.name) }
 }
 
 fun ESDEPreferencesManager.setSystemCustomization(systemName: String, customization: SystemCustomization) {

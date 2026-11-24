@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_search_hint_type">Type</string>
+    <string name="jarnfe_search_hint_delete">Delete</string>
+    <string name="jarnfe_search_hint_results">Results</string>
+    <string name="jarnfe_search_placeholder">Search games and systems</string>
+    <string name="jarnfe_search_scope">In %1$s, remove</string>
+    <string name="jarnfe_search_tab_games">Games (%1$d)</string>
+    <string name="jarnfe_search_tab_systems">Systems (%1$d)</string>
+    <string name="jarnfe_search_prompt_title">Search your library</string>
+    <string name="jarnfe_search_prompt_message">Type on the keyboard to find games and systems.</string>
+    <string name="jarnfe_search_typing_message">Press B to see your results.</string>
+    <string name="jarnfe_search_empty_title">Nothing for \"%1$s\"</string>
+    <string name="jarnfe_search_empty_message">Try fewer letters or a different name.</string>
+    <string-array name="jarnfe_search_keyboard_rows" translatable="false">
+        <item>1234567890</item>
+        <item>qwertyuiop</item>
+        <item>asdfghjkl\'</item>
+        <item>zxcvbnm-:@</item>
+    </string-array>
+</resources>

@@ -203,6 +203,8 @@ fun ThorSettingsItem(
                         onExpandChanged(false)
                     }
                 )
+
+                NewAppsVisibleToggleItem(isExpanded = isExpanded)
             }
         }
     }

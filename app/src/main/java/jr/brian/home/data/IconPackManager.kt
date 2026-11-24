@@ -399,6 +399,22 @@ class IconPackManager(private val context: Context) {
         return bitmap.toDrawable(context.resources)
     }
 
+    /** The drawable names a pack maps to apps, without loading the images themselves. */
+    suspend fun getIconNames(packageName: String): List<String> = withContext(Dispatchers.IO) {
+        try {
+            val resources = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY).resources
+            loadAppFilter(packageName).values.distinct()
+                .filter { resources.getIdentifier(it, "drawable", packageName) != 0 }
+                .sorted()
+        } catch (e: Exception) {
+            Log.e("IconPackManager", "Error listing icons in $packageName", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getIconDrawable(packageName: String, drawableName: String): Drawable? =
+        withContext(Dispatchers.IO) { loadDrawableFromIconPack(packageName, drawableName) }
+
     /**
      * Get all drawables from an icon pack
      * @param packageName The icon pack's package name

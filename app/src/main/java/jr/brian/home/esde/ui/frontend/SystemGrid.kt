@@ -1,21 +1,30 @@
 package jr.brian.home.esde.ui.frontend
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +40,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -78,6 +90,7 @@ internal fun SystemGrid(
     backgroundTransparent: Boolean = false,
     customizations: Map<String, SystemCustomization> = emptyMap(),
     reorderingSystem: String? = null,
+    scanTotal: Int = 0,
     onSystemFocused: (SystemTile) -> Unit = {},
     onSystemSelected: (SystemTile) -> Unit = {},
     onSystemLongPressed: (SystemTile) -> Unit = {}
@@ -85,25 +98,28 @@ internal fun SystemGrid(
     val prefsManager = LocalESDEPreferencesManager.current
     val prefs by prefsManager.state.collectAsStateWithLifecycle()
 
+    // Always apply .background() with a varying color rather than
+    // conditionally including the modifier in the chain. A chain-shape
+    // change invalidates layout for the whole Box and cascades into the
+    // FocusableTileLayout below, which briefly loses focus and jitters
+    // the system cards while the user is picking a new frontend
+    // wallpaper (backgroundTransparent flips mid-pick).
     Box(
-        modifier = modifier.then(
-            if (backgroundTransparent) Modifier else Modifier.background(OledBackgroundColor)
+        modifier = modifier.background(
+            if (backgroundTransparent) Color.Transparent else OledBackgroundColor
         )
     ) {
         when {
-            isLoading -> Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator(
-                    color = ThemeAccentColor
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.frontend_loading_msg),
-                    color = ThemeAccentColor
-                )
-            }
+            // While the scan is in flight and no systems have been published
+            // yet, paint a skeleton grid in the same layout as the real tiles
+            // so the UI shows structure rather than an empty screen. Once any
+            // system streams in we fall through to the real grid branch.
+            isLoading && systems.isEmpty() -> SystemSkeletonGrid(
+                layout = layout,
+                placeholderCount = skeletonPlaceholderCount(scanTotal),
+                tileScale = prefs.frontendSystemTileScale,
+                modifier = Modifier.fillMaxSize()
+            )
 
             systems.isEmpty() -> Text(
                 text = stringResource(R.string.frontend_no_systems),
@@ -122,14 +138,25 @@ internal fun SystemGrid(
                     }
                 }
                 val scale = prefs.frontendSystemTileScale
+                // Force 2 columns on the external (bottom) display so the
+                // smaller screen gets bigger system tiles. Keyed on the
+                // physical assignment so a swap re-counts correctly.
+                val onBottom = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                    jr.brian.core.model.ScreenSlot.BOTTOM
+                val columnCount = if (onBottom) 2 else gridColumnsForScale(scale)
                 FocusableTileLayout(
                     items = systems,
                     layout = layout,
-                    columns = gridColumnsForScale(scale),
+                    columns = columnCount,
                     contentPadding = PaddingValues(
                         horizontal = FrontendTokens.Spacing.L,
                         vertical = FrontendTokens.Spacing.XL
                     ),
+                    // Tiles draw past their cell with clip=false while focused
+                    // (scale-up + lift), so the auto-scroll has to reserve
+                    // extra space per edge; otherwise a focused bottom-row
+                    // tile sits flush against the viewport.
+                    focusMargin = FOCUS_LIFT + FrontendTokens.Spacing.M,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
                     rowAlignment = prefs.frontendSystemRowAlignment,
                     initialRealIndex = initialRealIndex,
@@ -137,16 +164,23 @@ internal fun SystemGrid(
                     onItemFocused = { tile -> tile?.let(onSystemFocused) },
                     itemKey = { _, tile -> tile.systemName }
                 ) { _, tile, focusRequester, isFocused, onFocused ->
-                    SystemTileCard(
-                        tile = tile,
-                        isFocused = isFocused,
-                        focusRequester = focusRequester,
-                        customization = customizations[tile.systemName],
-                        isReordering = reorderingSystem == tile.systemName,
-                        onFocused = onFocused,
-                        onSelected = { onSystemSelected(tile) },
-                        onLongPress = { onSystemLongPressed(tile) }
-                    )
+                    // Shrink each card a touch on the external (bottom)
+                    // display. Keeps the 2-column grid but gives the
+                    // smaller screen some breathing room instead of
+                    // oversized tiles.
+                    val tileInset = if (onBottom) 16.dp else 0.dp
+                    Box(modifier = Modifier.padding(tileInset)) {
+                        SystemTileCard(
+                            tile = tile,
+                            isFocused = isFocused,
+                            focusRequester = focusRequester,
+                            customization = customizations[tile.systemName],
+                            isReordering = reorderingSystem == tile.systemName,
+                            onFocused = onFocused,
+                            onSelected = { onSystemSelected(tile) },
+                            onLongPress = { onSystemLongPressed(tile) }
+                        )
+                    }
                 }
             }
         }
@@ -204,6 +238,18 @@ private fun SystemTileCard(
                     if (hapticEnabled) view.emitFocusHapticIfReady()
                     onFocused()
                 }
+            }
+            .onKeyEvent { event ->
+                // Gamepad SELECT (back-of-the-pad "share" / "view" on many
+                // controllers) opens system customization — same action as
+                // long-press, surfaced on a dedicated button so users don't
+                // have to find and hold the tile.
+                if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
+                val code = event.nativeKeyEvent.keyCode
+                if (code == android.view.KeyEvent.KEYCODE_BUTTON_SELECT) {
+                    onLongPress()
+                    true
+                } else false
             }
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -335,4 +381,78 @@ private fun ReorderingHighlight() {
             .fillMaxSize()
             .background(ThemeAccentColor.copy(alpha = 0.18f))
     )
+}
+
+private const val DEFAULT_SKELETON_TILE_COUNT = 8
+
+private fun skeletonPlaceholderCount(scanTotal: Int): Int =
+    if (scanTotal > 0) scanTotal else DEFAULT_SKELETON_TILE_COUNT
+
+@Composable
+private fun SystemSkeletonGrid(
+    layout: FrontendLayout,
+    placeholderCount: Int,
+    tileScale: Float,
+    modifier: Modifier = Modifier
+) {
+    val count = placeholderCount.coerceAtLeast(1)
+    val shimmerAlpha = rememberSkeletonShimmerAlpha()
+    when (layout) {
+        FrontendLayout.Grid -> LazyVerticalGrid(
+            columns = GridCells.Fixed(gridColumnsForScale(tileScale)),
+            modifier = modifier,
+            contentPadding = PaddingValues(
+                horizontal = FrontendTokens.Spacing.L,
+                vertical = FrontendTokens.Spacing.XL
+            ),
+            userScrollEnabled = false
+        ) {
+            items(count = count) {
+                SystemSkeletonTile(shimmerAlpha = shimmerAlpha)
+            }
+        }
+
+        FrontendLayout.Row -> LazyRow(
+            modifier = modifier,
+            contentPadding = PaddingValues(
+                horizontal = FrontendTokens.Spacing.L,
+                vertical = FrontendTokens.Spacing.XL
+            ),
+            horizontalArrangement = Arrangement.spacedBy(FrontendTokens.Spacing.S),
+            userScrollEnabled = false
+        ) {
+            items(count = count) {
+                Box(modifier = Modifier.width(DEFAULT_ROW_TILE_WIDTH * tileScale)) {
+                    SystemSkeletonTile(shimmerAlpha = shimmerAlpha)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemSkeletonTile(shimmerAlpha: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .padding(TILE_INSET)
+            .clip(FrontendTokens.Radius.TileSmall)
+            .background(OledCardColor.copy(alpha = shimmerAlpha))
+    )
+}
+
+@Composable
+private fun rememberSkeletonShimmerAlpha(): Float {
+    val infinite = rememberInfiniteTransition(label = "systemSkeletonShimmer")
+    val alpha by infinite.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "systemSkeletonAlpha"
+    )
+    return alpha
 }

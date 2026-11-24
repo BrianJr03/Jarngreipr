@@ -1,0 +1,8 @@
+{
+  "id": "nes",
+  "displayName": "Nintendo Entertainment System",
+  "folderAliases": ["famicom", "nintendo-nes"],
+  "extensions": ["nes", "fds", "unf", "unif", "zip", "7z"],
+  "screenScraperSystemId": 3,
+  "retroArchSystemId": "nes"
+}

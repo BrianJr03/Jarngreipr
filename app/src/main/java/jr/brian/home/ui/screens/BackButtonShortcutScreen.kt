@@ -2,6 +2,9 @@ package jr.brian.home.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
@@ -9,6 +12,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.model.Shortcut
 import jr.brian.home.model.ShortcutOption
+import jr.brian.home.ui.components.settings.BackButtonShortcutSlotSelector
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 
 @Composable
@@ -17,39 +21,64 @@ fun BackButtonShortcutScreen(
     onDismiss: () -> Unit = {}
 ) {
     val powerSettingsManager = LocalPowerSettingsManager.current
-    val currentShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
-    val currentAppPackage by powerSettingsManager.backButtonShortcutAppPackage.collectAsStateWithLifecycle()
+    val primaryShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
+    val primaryAppPackage by powerSettingsManager.backButtonShortcutAppPackage.collectAsStateWithLifecycle()
+    val secondaryShortcut by powerSettingsManager.secondaryBackButtonShortcut.collectAsStateWithLifecycle()
+    val secondaryAppPackage by powerSettingsManager.secondaryBackButtonShortcutAppPackage.collectAsStateWithLifecycle()
+    var isEditingSecondary by rememberSaveable { mutableStateOf(false) }
 
-    val shortcuts = listOf(
-        ShortcutOption(Shortcut.APP, stringResource(R.string.back_button_shortcut_app)),
-        ShortcutOption(Shortcut.APP_SEARCH, stringResource(R.string.back_button_shortcut_app_search)),
-        ShortcutOption(Shortcut.ROM_SEARCH, stringResource(R.string.rom_search_icon_description)),
-        ShortcutOption(Shortcut.CONTROL_PAD, stringResource(R.string.back_button_shortcut_control_pad)),
-        ShortcutOption(Shortcut.CUSTOM_THEME, stringResource(R.string.back_button_shortcut_custom_theme)),
-        ShortcutOption(Shortcut.QUICK_DELETE, stringResource(R.string.back_button_shortcut_quick_delete)),
-        ShortcutOption(Shortcut.SETTINGS, stringResource(R.string.back_button_shortcut_settings)),
-        ShortcutOption(Shortcut.MONITOR, stringResource(R.string.back_button_shortcut_monitor)),
-        ShortcutOption(Shortcut.VOLUME_CONTROLS, stringResource(R.string.back_button_shortcut_volume_controls)),
-        ShortcutOption(Shortcut.RECENT_APPS, stringResource(R.string.back_button_shortcut_recent_apps)),
-        ShortcutOption(Shortcut.POWERED_OFF, stringResource(R.string.back_button_shortcut_powered_off))
-    )
+    val options = backButtonShortcutOptions()
+    val shortcuts = if (isEditingSecondary) {
+        listOf(ShortcutOption(Shortcut.NONE, stringResource(R.string.common_none))) + options
+    } else {
+        options
+    }
 
     ShortcutSelectionScreen(
         title = stringResource(R.string.back_button_shortcut_screen_title),
         description = stringResource(R.string.back_button_shortcut_screen_description),
-        currentShortcut = currentShortcut.toShortcut(),
-        currentAppPackage = currentAppPackage,
+        currentShortcut = (if (isEditingSecondary) secondaryShortcut else primaryShortcut).toShortcut(),
+        currentAppPackage = if (isEditingSecondary) secondaryAppPackage else primaryAppPackage,
         allApps = allApps,
         shortcuts = shortcuts,
         onShortcutSelected = { shortcut ->
-            powerSettingsManager.setBackButtonShortcut(shortcut.toBackButtonShortcut())
+            if (isEditingSecondary) {
+                powerSettingsManager.setSecondaryBackButtonShortcut(shortcut.toBackButtonShortcut())
+            } else {
+                powerSettingsManager.setBackButtonShortcut(shortcut.toBackButtonShortcut())
+            }
         },
         onAppSelected = { packageName ->
-            powerSettingsManager.setBackButtonShortcutAppPackage(packageName)
+            if (isEditingSecondary) {
+                powerSettingsManager.setSecondaryBackButtonShortcutAppPackage(packageName)
+            } else {
+                powerSettingsManager.setBackButtonShortcutAppPackage(packageName)
+            }
         },
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
+        headerContent = {
+            BackButtonShortcutSlotSelector(
+                isSecondarySelected = isEditingSecondary,
+                onSlotSelected = { isEditingSecondary = it }
+            )
+        }
     )
 }
+
+@Composable
+fun backButtonShortcutOptions(): List<ShortcutOption> = listOf(
+    ShortcutOption(Shortcut.APP, stringResource(R.string.back_button_shortcut_app)),
+    ShortcutOption(Shortcut.APP_SEARCH, stringResource(R.string.back_button_shortcut_app_search)),
+    ShortcutOption(Shortcut.ROM_SEARCH, stringResource(R.string.rom_search_icon_description)),
+    ShortcutOption(Shortcut.CONTROL_PAD, stringResource(R.string.back_button_shortcut_control_pad)),
+    ShortcutOption(Shortcut.CUSTOM_THEME, stringResource(R.string.back_button_shortcut_custom_theme)),
+    ShortcutOption(Shortcut.QUICK_DELETE, stringResource(R.string.back_button_shortcut_quick_delete)),
+    ShortcutOption(Shortcut.SETTINGS, stringResource(R.string.back_button_shortcut_settings)),
+    ShortcutOption(Shortcut.MONITOR, stringResource(R.string.back_button_shortcut_monitor)),
+    ShortcutOption(Shortcut.VOLUME_CONTROLS, stringResource(R.string.back_button_shortcut_volume_controls)),
+    ShortcutOption(Shortcut.RECENT_APPS, stringResource(R.string.back_button_shortcut_recent_apps)),
+    ShortcutOption(Shortcut.POWERED_OFF, stringResource(R.string.back_button_shortcut_powered_off))
+)
 
 /**
  * Extension function to convert BackButtonShortcut to generic Shortcut

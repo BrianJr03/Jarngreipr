@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.model.ESDEPrefsState
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
 import jr.brian.home.esde.ui.components.EffectsExcludedPageOption

@@ -229,9 +229,11 @@ class EmulatorRegistryTest {
             val spec = EmulatorRegistry.resolve(pkg)
             assertNotNull(spec)
             assertEquals("org.ppsspp.ppsspp.PpssppActivity", spec!!.activityName)
+            val contract = spec.launchContract
             assertTrue(
                 "$pkg must use the default ContentUriView contract",
-                spec.launchContract === RomLaunchContract.ContentUriView,
+                contract is RomLaunchContract.ContentUriView &&
+                    contract.action == android.content.Intent.ACTION_VIEW,
             )
         }
     }
@@ -437,6 +439,7 @@ class EmulatorRegistryTest {
             "aenu.ax360e",
             "aenu.ax360e.free",
             "xendroid.compose",
+            "emu.x360mobile.com",
             "emu.x360.mobile",
         )
     }
@@ -506,6 +509,154 @@ class EmulatorRegistryTest {
         assertEquals(1, options.size)
         assertEquals("aX360e", options[0].displayName)
         assertEquals("aenu.ax360e.free", options[0].packageName)
+    }
+
+    @Test
+    fun `xbox360 resolves X360 Mobile under its current emu x360mobile com id`() {
+        val context = mockContextWithInstalled("emu.x360mobile.com")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        assertEquals(1, options.size)
+        assertEquals("X360 Mobile", options[0].displayName)
+        assertEquals("emu.x360mobile.com", options[0].packageName)
+        assertEquals(
+            "emu.x360mobile.com.MainActivity",
+            EmulatorRegistry.resolve("emu.x360mobile.com")!!.activityName,
+        )
+    }
+
+    @Test
+    fun `Banana Native rows use the Launch alias and game path extra`() {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.bananative.android", "dev.nxnative.android")) {
+            val spec = EmulatorRegistry.resolve(pkg)!!
+            assertEquals(pkg, spec.packageName)
+            assertEquals("$pkg.Launch", spec.activityName)
+            assertEquals(RomLaunchContract.PathExtra("game"), spec.launchContract)
+            assertEquals(listOf("nup", "titleid"), spec.extensions)
+        }
+    }
+
+    @Test
+    fun `systemExtensionsFallback for switch2 returns nup and titleid`() {
+        assertEquals(
+            setOf("nup", "titleid"),
+            EsdeCommandLauncher.systemExtensionsFallback("switch2"),
+        )
+    }
+
+    @Test
+    fun `switch2 system offers Banana Native path and URI commands in built-in order`() {
+        val context = mockContextWithInstalled("dev.bananative.android.plus")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf("Banana Native", "Banana Native (URI)", "Banana Native (Title ID)"),
+            options.map { it.displayName },
+        )
+        assertTrue(options.all { it.packageName == "dev.bananative.android.plus" })
+        assertTrue(options[0].command!!.contains("%EXTRA_game%=%ROM%"))
+    }
+
+    @Test
+    fun `switch2 resolves Banana Native under its plain application id`() {
+        val context = mockContextWithInstalled("dev.bananative.android")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(3, options.size)
+        assertTrue(options.all { it.packageName == "dev.bananative.android" })
+    }
+
+    @Test
+    fun `switch2 falls back to the Banana Native test build`() {
+        val context = mockContextWithInstalled("dev.nxnative.android")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(3, options.size)
+        assertTrue(options.all { it.packageName == "dev.nxnative.android" })
+    }
+
+    @Test
+    fun `switch2 title ID command is marked for titleid files only`() {
+        val context = mockContextWithInstalled("dev.bananative.android.plus")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf(null, null, "titleid"),
+            options.map { it.requiredExtension },
+        )
+    }
+
+    @Test
+    fun `builtinSystemEmulator picks Banana Native for switch2 folder games`() {
+        assertEquals(
+            "dev.bananative.android.plus",
+            EsdeCommandLauncher.builtinSystemEmulator(
+                mockContextWithInstalled("dev.bananative.android.plus", "dev.nxnative.android"),
+                "switch2",
+            ),
+        )
+        assertEquals(
+            "dev.nxnative.android",
+            EsdeCommandLauncher.builtinSystemEmulator(
+                mockContextWithInstalled("dev.nxnative.android"),
+                "switch2",
+            ),
+        )
+        assertNull(EsdeCommandLauncher.builtinSystemEmulator(mockContextWithInstalled(), "switch2"))
+    }
+
+    @Test
+    fun `builtinIdCommand routes titleid files to the title_id command`() {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.bananative.android", "dev.nxnative.android")) {
+            assertEquals(
+                "%EMULATOR_BANANA-NATIVE% %EXTRA_title_id%=%INJECT%=%ROM%",
+                EsdeCommandLauncher.builtinIdCommand("switch2", pkg, "titleid"),
+            )
+        }
+    }
+
+    @Test
+    fun `builtinIdCommand leaves ordinary ROM extensions to the generic contract`() {
+        assertNull(EsdeCommandLauncher.builtinIdCommand("switch2", "dev.bananative.android.plus", "nup"))
+        assertNull(EsdeCommandLauncher.builtinIdCommand("ps2", "xyz.aethersx2.android", "iso"))
+    }
+
+    @Test
+    fun `builtinIdCommand still routes steam files for GameHub Lite`() {
+        assertEquals(
+            "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_steamAppId%=%INJECT%=%ROM%",
+            EsdeCommandLauncher.builtinIdCommand("steam", "gamehub.lite", "steam"),
+        )
+    }
+
+    @Test
+    fun `xendroid uses its custom intent action instead of ACTION_VIEW`() {
+        // EmulatorHostActivity declares a VIEW filter but only boots a ROM on
+        // its own action — a plain VIEW opens the activity to a black screen.
+        val contract = EmulatorRegistry.resolve("xendroid.compose")!!.launchContract
+        assertTrue(
+            "XenDroid must use ContentUriView with its custom action",
+            contract is RomLaunchContract.ContentUriView &&
+                contract.action == "xendroid.intent.action.xendroid",
+        )
+    }
+
+    @Test
+    fun `xbox360 XenDroid built-in command carries its custom intent action`() {
+        val context = mockContextWithInstalled("xendroid.compose")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        val xendroid = options.single { it.displayName == "XenDroid" }
+        assertTrue(
+            "XenDroid command must set %ACTION%=xendroid.intent.action.xendroid",
+            xendroid.command!!.contains("%ACTION%=xendroid.intent.action.xendroid"),
+        )
     }
 
     @Test

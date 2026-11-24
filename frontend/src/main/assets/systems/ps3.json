@@ -1,0 +1,8 @@
+{
+  "id": "ps3",
+  "displayName": "Sony PlayStation 3",
+  "folderAliases": ["sony-ps3"],
+  "extensions": ["pkg", "iso", "bin", "ps3"],
+  "screenScraperSystemId": 59,
+  "retroArchSystemId": null
+}

@@ -78,6 +78,7 @@ fun CanvasWidgetPickerDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val widgetHostUnavailableMessage = stringResource(R.string.canvas_widget_host_unavailable)
     val repository = remember { WidgetProviderRepository(context) }
     val appWidgetManager = remember { AppWidgetManager.getInstance(context) }
 
@@ -170,7 +171,7 @@ fun CanvasWidgetPickerDialog(
                                         if (host == null) {
                                             Toast.makeText(
                                                 context,
-                                                context.getString(R.string.canvas_widget_host_unavailable),
+                                                widgetHostUnavailableMessage,
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                             return@WidgetPickerRow

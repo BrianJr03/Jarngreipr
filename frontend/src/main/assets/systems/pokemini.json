@@ -1,0 +1,8 @@
+{
+  "id": "pokemini",
+  "displayName": "Nintendo Pokemon Mini",
+  "folderAliases": ["pokemon-mini"],
+  "extensions": ["min", "zip", "7z"],
+  "screenScraperSystemId": 211,
+  "retroArchSystemId": null
+}

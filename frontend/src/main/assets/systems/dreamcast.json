@@ -1,0 +1,8 @@
+{
+  "id": "dreamcast",
+  "displayName": "Sega Dreamcast",
+  "folderAliases": ["sega-dreamcast"],
+  "extensions": ["iso", "cdi", "chd", "gdi"],
+  "screenScraperSystemId": 23,
+  "retroArchSystemId": "dc"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "n3ds",
+  "displayName": "Nintendo 3DS",
+  "folderAliases": ["3ds", "nintendo-3ds"],
+  "extensions": ["3ds", "cia", "cxi", "app", "cci"],
+  "screenScraperSystemId": 17,
+  "retroArchSystemId": null
+}

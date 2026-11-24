@@ -6,8 +6,16 @@ import android.content.Context
 /** The exact public intent shape an emulator accepts for a ROM launch. */
 sealed interface RomLaunchContract {
 
-    /** ACTION_VIEW carrying the content URI as intent data. The common case. */
-    data object ContentUriView : RomLaunchContract
+    /**
+     * The content URI as intent data under [action] (default: ACTION_VIEW).
+     *
+     * Most emulators register a VIEW filter; a few (XenDroid) register their
+     * own action and only start the ROM on that action, treating VIEW as a
+     * cold launch of the host activity. [action] lets those cases override.
+     */
+    data class ContentUriView(
+        val action: String = android.content.Intent.ACTION_VIEW,
+    ) : RomLaunchContract
 
     /**
      * The content URI, as a string, under a documented extra key.
@@ -57,7 +65,7 @@ data class EmulatorSpec(
     val packageName: String,
     val displayName: String,
     val activityName: String? = null,
-    val launchContract: RomLaunchContract = RomLaunchContract.ContentUriView,
+    val launchContract: RomLaunchContract = RomLaunchContract.ContentUriView(),
     val extensions: List<String> = emptyList(),
     val isFrontEnd: Boolean = false,
     /**
@@ -177,8 +185,17 @@ object EmulatorRegistry {
             "aenu.ax360e.EmulatorActivity",
             RomLaunchContract.UriExtra("game_uri", "aenu.intent.action.AX360E"),
             listOf("iso", "xex", "zar")),
+        // XenDroid's EmulatorHostActivity declares a VIEW filter but only boots
+        // a ROM on its custom action — a VIEW with the content URI opens the
+        // activity to a black screen. Use the action its own build fires on.
         EmulatorSpec("xendroid.compose", "XenDroid",
             "xendroid.compose.EmulatorHostActivity",
+            RomLaunchContract.ContentUriView(action = "xendroid.intent.action.xendroid"),
+            extensions = listOf("iso", "xex", "zar")),
+        // Current X360 Mobile builds ship as emu.x360mobile.com, with the VIEW
+        // filter on MainActivity. The older id is kept for existing installs.
+        EmulatorSpec("emu.x360mobile.com", "X360 Mobile",
+            "emu.x360mobile.com.MainActivity",
             extensions = listOf("iso", "xex", "zar")),
         EmulatorSpec("emu.x360.mobile", "X360 Mobile",
             "emu.x360.mobile.X360MobileGameLaunchActivity",
@@ -247,6 +264,27 @@ object EmulatorRegistry {
             extensions = listOf("nsp", "xci", "nca", "nso")),
         EmulatorSpec("skyline.emu", "Skyline",
             extensions = listOf("nsp", "xci", "nca", "nso")),
+
+        // ---- Switch 2 ----------------------------------------------------------
+        // Banana Native's frontend entry point is the `Launch` alias, which has no
+        // intent filters on purpose (Android 15 drops explicit intents that miss a
+        // declared filter). It opens games by path, so the `game` path extra is
+        // the most reliable form. A `.titleid` file holds the title ID of a game
+        // already on Banana Native's Home and goes through the built-in
+        // `title_id` command instead. The alias follows the application id, and
+        // builds ship under three: `.plus`, the plain id, and the test build's.
+        EmulatorSpec("dev.bananative.android.plus", "Banana Native",
+            "dev.bananative.android.plus.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
+        EmulatorSpec("dev.bananative.android", "Banana Native",
+            "dev.bananative.android.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
+        EmulatorSpec("dev.nxnative.android", "Banana Native (Test)",
+            "dev.nxnative.android.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
 
         // ---- Handhelds ---------------------------------------------------------
         EmulatorSpec("com.fastemulator.gba", "My Boy!",

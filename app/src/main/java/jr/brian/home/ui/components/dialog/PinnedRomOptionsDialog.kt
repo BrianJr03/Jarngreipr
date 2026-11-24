@@ -28,8 +28,10 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideogameAsset
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Button
@@ -83,7 +85,8 @@ fun PinnedRomOptionsDialog(
     onEditCanvas: (() -> Unit)? = null,
     continuousSpinEligible: Boolean = false,
     continuousSpinEnabled: Boolean = false,
-    onContinuousSpinChange: ((Boolean) -> Unit)? = null
+    onContinuousSpinChange: ((Boolean) -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) {
@@ -98,7 +101,11 @@ fun PinnedRomOptionsDialog(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 24.dp)
         ) {
-            RomOptionsHeader(rom = rom, onDismiss = onDismiss)
+            RomOptionsHeader(
+                rom = rom,
+                onDismiss = onDismiss,
+                onNavigateToSettings = onNavigateToSettings
+            )
                 Spacer(Modifier.height(16.dp))
 
                 AnimatedVisibility(visible = !showResizeMode, enter = fadeIn(), exit = fadeOut()) {
@@ -186,7 +193,11 @@ fun PinnedRomOptionsDialog(
 }
 
 @Composable
-private fun RomOptionsHeader(rom: PinnedRomInfo, onDismiss: () -> Unit) {
+private fun RomOptionsHeader(
+    rom: PinnedRomInfo,
+    onDismiss: () -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,13 +218,32 @@ private fun RomOptionsHeader(rom: PinnedRomInfo, onDismiss: () -> Unit) {
                 fontSize = 13.sp
             )
         }
-        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = stringResource(R.string.dialog_cancel),
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
+        Row(verticalAlignment = Alignment.Top) {
+            if (onNavigateToSettings != null) {
+                IconButton(
+                    onClick = {
+                        onDismiss()
+                        onNavigateToSettings()
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.common_settings),
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+            }
+            IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.dialog_cancel),
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }

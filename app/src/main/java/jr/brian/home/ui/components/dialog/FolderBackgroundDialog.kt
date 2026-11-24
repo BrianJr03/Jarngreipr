@@ -85,6 +85,7 @@ fun FolderBackgroundDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val folderBackgroundImageErrorMessage = stringResource(R.string.folder_background_image_error)
     val folderManager = LocalFolderManager.current
     val scope = rememberCoroutineScope()
 
@@ -98,19 +99,23 @@ fun FolderBackgroundDialog(
                 val result = folderManager.saveFolderBackgroundImage(folderId, it)
                 if (result.isSuccess) {
                     val savedPath = result.getOrNull()
-                    folderManager.updateFolderBackground(
+                    val saved = folderManager.updateFolderBackground(
                         pageIndex = pageIndex,
                         folderId = folderId,
                         backgroundColorArgb = null,
                         backgroundImagePath = savedPath,
                         tabType = tabType
                     )
-                    onBackgroundChanged(null, savedPath)
-                    onDismiss()
+                    if (saved) {
+                        onBackgroundChanged(null, savedPath)
+                        onDismiss()
+                    } else {
+                        savedPath?.let(folderManager::discardFolderBackgroundImage)
+                    }
                 } else {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.folder_background_image_error),
+                        folderBackgroundImageErrorMessage,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -147,15 +152,17 @@ fun FolderBackgroundDialog(
                     onColorSelected = { color ->
                         scope.launch {
                             val argb = color.toArgb()
-                            folderManager.updateFolderBackground(
+                            val saved = folderManager.updateFolderBackground(
                                 pageIndex = pageIndex,
                                 folderId = folderId,
                                 backgroundColorArgb = argb,
                                 backgroundImagePath = null,
                                 tabType = tabType
                             )
-                            onBackgroundChanged(argb, null)
-                            onDismiss()
+                            if (saved) {
+                                onBackgroundChanged(argb, null)
+                                onDismiss()
+                            }
                         }
                     }
                 )
@@ -184,15 +191,17 @@ fun FolderBackgroundDialog(
                         icon = Icons.Default.Delete,
                         onClick = {
                             scope.launch {
-                                folderManager.updateFolderBackground(
+                                val saved = folderManager.updateFolderBackground(
                                     pageIndex = pageIndex,
                                     folderId = folderId,
                                     backgroundColorArgb = null,
                                     backgroundImagePath = null,
                                     tabType = tabType
                                 )
-                                onBackgroundChanged(null, null)
-                                onDismiss()
+                                if (saved) {
+                                    onBackgroundChanged(null, null)
+                                    onDismiss()
+                                }
                             }
                         }
                     )

@@ -1,0 +1,8 @@
+{
+  "id": "steam",
+  "displayName": "Steam",
+  "folderAliases": ["windows"],
+  "extensions": ["steam", "localgameid"],
+  "screenScraperSystemId": null,
+  "retroArchSystemId": null
+}

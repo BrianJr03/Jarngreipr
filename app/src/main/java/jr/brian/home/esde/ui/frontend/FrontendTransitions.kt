@@ -78,5 +78,27 @@ fun FrontendTransition.transform(forward: Boolean, durationMs: Int): ContentTran
                     fadeOut(floatSpec),
             sizeTransform = noClip
         )
+
+        FrontendTransition.SlideDown -> ContentTransform(
+            targetContentEnter = slideInVertically(offsetSpec) { h -> if (forward) -h else h } +
+                    fadeIn(floatSpec),
+            initialContentExit = slideOutVertically(offsetSpec) { h -> if (forward) h else -h } +
+                    fadeOut(floatSpec),
+            sizeTransform = noClip
+        )
+
+        FrontendTransition.Scale -> ContentTransform(
+            targetContentEnter = scaleIn(floatSpec, initialScale = if (forward) 0.85f else 1.15f),
+            initialContentExit = scaleOut(floatSpec, targetScale = if (forward) 1.15f else 0.85f),
+            sizeTransform = noClip
+        )
+
+        FrontendTransition.Pop -> ContentTransform(
+            targetContentEnter = scaleIn(floatSpec, initialScale = if (forward) 0.6f else 1.3f) +
+                    fadeIn(floatSpec),
+            initialContentExit = scaleOut(floatSpec, targetScale = if (forward) 1.3f else 0.6f) +
+                    fadeOut(floatSpec),
+            sizeTransform = noClip
+        )
     }
 }

@@ -35,12 +35,24 @@ import jr.brian.home.data.RssRepository
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
 import jr.brian.home.data.database.RssFeedDao
+import jr.brian.home.ui.theme.managers.FRONTEND_WALLPAPER_PREFS
 import jr.brian.home.ui.theme.managers.WallpaperManager
+import kotlinx.coroutines.CoroutineScope
+import jr.brian.core.model.ApplicationScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
 
     @Provides
     @Singleton
@@ -251,6 +263,15 @@ object AppModule {
 
     @Provides
     @Singleton
+    @FrontendWallpaper
+    fun provideFrontendWallpaperManager(
+        @ApplicationContext context: Context
+    ): WallpaperManager {
+        return WallpaperManager(context, prefsName = FRONTEND_WALLPAPER_PREFS)
+    }
+
+    @Provides
+    @Singleton
     fun provideSearchLayoutManager(
         @ApplicationContext context: Context
     ): SearchLayoutManager {
@@ -279,5 +300,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): HomeButtonManager {
         return HomeButtonManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFocusLockPrefsManager(
+        @ApplicationContext context: Context
+    ): jr.brian.home.data.FocusLockPrefsManager {
+        return jr.brian.home.data.FocusLockPrefsManager(context)
     }
 }

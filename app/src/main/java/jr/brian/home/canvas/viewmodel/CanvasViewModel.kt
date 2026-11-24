@@ -19,7 +19,7 @@ import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.PinnedRomManager
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -106,6 +106,59 @@ class CanvasViewModel @Inject constructor(
             pageIndex = pageIndex,
             item = CanvasItem.PhotoContainer(
                 id = "photo-${UUID.randomUUID()}"
+            )
+        )
+    }
+
+    /**
+     * Add a Last Played ROM list tile to the current page. Content binds live
+     * to [jr.brian.home.data.RecentlyPlayedManager]; this writes only the
+     * tile's configuration (count, random on/off, scale, background).
+     */
+    fun addLastPlayedItem(
+        count: Int,
+        showRandomButton: Boolean,
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
+    ) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.LastPlayedItem(
+                id = "last-played-${UUID.randomUUID()}",
+                count = count,
+                showRandomButton = showRandomButton,
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
+            )
+        )
+    }
+
+    /**
+     * Replace an existing Last Played tile's configuration in place, routed
+     * through [canvasLayoutManager.addItem] with the same id so per-orientation
+     * placements survive.
+     */
+    fun updateLastPlayedItem(
+        id: String,
+        count: Int,
+        showRandomButton: Boolean,
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
+    ) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.LastPlayedItem(
+                id = id,
+                count = count,
+                showRandomButton = showRandomButton,
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
             )
         )
     }
@@ -329,6 +382,7 @@ class CanvasViewModel @Inject constructor(
     }
 
     init {
+        canvasLayoutManager.reconcileReservedCells()
         // Reactive folder sync: any canvas-owned folder that appears in FolderManager
         // (created by CreateFolderDialog) auto-gets a CanvasItem.FolderItem on the
         // current canvas page. Removing the FolderItem also deletes the folder
@@ -376,8 +430,13 @@ class CanvasViewModel @Inject constructor(
     fun removeItemAndCleanup(item: CanvasItem) {
         val pageIndex = boundPage() ?: return
         when (item) {
-            is CanvasItem.FolderItem -> viewModelScope.launch {
-                folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+            is CanvasItem.FolderItem -> {
+                viewModelScope.launch {
+                    if (folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)) {
+                        canvasLayoutManager.removeItem(pageIndex, item.id)
+                    }
+                }
+                return
             }
             is CanvasItem.RomItem ->
                 pinnedRomManager.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)
@@ -386,10 +445,13 @@ class CanvasViewModel @Inject constructor(
             is CanvasItem.WidgetItem,
             is CanvasItem.EsdeArtItem,
             is CanvasItem.RssLauncherItem,
-            is CanvasItem.RssMusicItem -> Unit
+            is CanvasItem.RssMusicItem,
+            is CanvasItem.LastPlayedItem -> Unit
         }
         canvasLayoutManager.removeItem(pageIndex, item.id)
     }
+
+    fun savedLayouts(): Collection<CanvasLayout> = canvasLayoutManager.layoutsByPage.value.values
 
     /**
      * Deletes a `file://` URI backed by our own `filesDir/canvas_photos/`
@@ -434,6 +496,8 @@ class CanvasViewModel @Inject constructor(
                     ResolvedCanvasItem.EsdeArt(item)
                 is CanvasItem.PhotoContainer ->
                     ResolvedCanvasItem.PhotoContainer(item)
+                is CanvasItem.LastPlayedItem ->
+                    ResolvedCanvasItem.LastPlayed(item)
             }
         }
     }

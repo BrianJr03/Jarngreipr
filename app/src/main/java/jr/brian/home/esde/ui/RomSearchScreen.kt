@@ -3,7 +3,7 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -86,6 +86,7 @@ import java.io.File
 fun RomSearchScreen(
     onDismiss: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToEsdeSettings: () -> Unit = {},
     viewModel: RomSearchViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -112,6 +113,12 @@ fun RomSearchScreen(
         viewModel.screenDismissSignal.collect {
             viewModel.dismiss()
             onDismiss()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.openEsdeSettingsSignal.collect {
+            onNavigateToEsdeSettings()
         }
     }
 
@@ -383,4 +390,5 @@ private fun openResults(
     val options = ActivityOptions.makeBasic()
     options.launchDisplayId = PRIMARY_DISPLAY_ID
     context.startActivity(intent, options.toBundle())
+    jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(context, PRIMARY_DISPLAY_ID)
 }

@@ -17,8 +17,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.AutoLockingSlider
@@ -81,7 +84,9 @@ fun CanvasFrontendArtChooserSheet(
     initialBackgroundCornerRadiusDp: Int?,
     titleRes: Int,
     onConfirm: (GameImageType, EsdeContentScale, Long?, Int?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRemove: (() -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     var selected by remember(initialType) { mutableStateOf(initialType) }
     var selectedScale by remember(initialContentScale) { mutableStateOf(initialContentScale) }
@@ -106,7 +111,8 @@ fun CanvasFrontendArtChooserSheet(
         ) {
             ChooserSheetHeader(
                 title = stringResource(titleRes),
-                onDismiss = onDismiss
+                onDismiss = onDismiss,
+                onNavigateToSettings = onNavigateToSettings
             )
 
             GameImageTypeSelector(
@@ -134,6 +140,17 @@ fun CanvasFrontendArtChooserSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
             ) {
+                if (onRemove != null) {
+                    HeaderActionButton(
+                        label = stringResource(R.string.canvas_remove_item_title),
+                        isPrimary = false,
+                        enabled = true,
+                        onClick = {
+                            onRemove()
+                            onDismiss()
+                        }
+                    )
+                }
                 HeaderActionButton(
                     label = stringResource(R.string.canvas_picker_cancel),
                     isPrimary = false,
@@ -160,9 +177,10 @@ fun CanvasFrontendArtChooserSheet(
 }
 
 @Composable
-private fun ChooserSheetHeader(
+internal fun ChooserSheetHeader(
     title: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -175,12 +193,33 @@ private fun ChooserSheetHeader(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f)
         )
-        HeaderCloseButton(onDismiss = onDismiss)
+        if (onNavigateToSettings != null) {
+            HeaderIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.common_settings),
+                iconSize = 22.dp,
+                onClick = {
+                    onDismiss()
+                    onNavigateToSettings()
+                }
+            )
+            Spacer(Modifier.width(4.dp))
+        }
+        HeaderIconButton(
+            icon = Icons.Default.Close,
+            contentDescription = stringResource(R.string.dialog_cancel),
+            onClick = onDismiss
+        )
     }
 }
 
 @Composable
-private fun HeaderCloseButton(onDismiss: () -> Unit) {
+private fun HeaderIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    iconSize: androidx.compose.ui.unit.Dp = 24.dp
+) {
     var isFocused by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -188,14 +227,15 @@ private fun HeaderCloseButton(onDismiss: () -> Unit) {
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .clip(CircleShape)
-            .clickable { onDismiss() }
+            .clickable { onClick() }
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
         androidx.compose.material3.Icon(
-            imageVector = Icons.Default.Close,
-            contentDescription = stringResource(R.string.dialog_cancel),
-            tint = Color.White
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(iconSize)
         )
     }
 }
@@ -205,7 +245,7 @@ private fun HeaderCloseButton(onDismiss: () -> Unit) {
  * dialog reads as one coherent row of options.
  */
 @Composable
-private fun EsdeContentScaleSelector(
+internal fun EsdeContentScaleSelector(
     selected: EsdeContentScale,
     onSelected: (EsdeContentScale) -> Unit
 ) {
@@ -275,7 +315,7 @@ private fun EsdeContentScaleChip(
 }
 
 @Composable
-private fun BackgroundColorSelector(
+internal fun BackgroundColorSelector(
     selectedArgb: Long?,
     onColorSelected: (Long?) -> Unit
 ) {
@@ -378,7 +418,7 @@ private fun NoBackgroundSwatch(
 }
 
 @Composable
-private fun CornerRadiusSelector(
+internal fun CornerRadiusSelector(
     enabled: Boolean,
     valueDp: Int,
     onValueChange: (Int) -> Unit
@@ -420,7 +460,7 @@ private fun CornerRadiusSelector(
 }
 
 @Composable
-private fun HeaderActionButton(
+internal fun HeaderActionButton(
     label: String,
     isPrimary: Boolean,
     enabled: Boolean,

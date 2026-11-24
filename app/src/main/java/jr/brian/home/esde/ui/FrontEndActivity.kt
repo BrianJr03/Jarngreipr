@@ -14,9 +14,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
+import androidx.media3.common.util.UnstableApi
+import jr.brian.core.model.SwapCoordinator
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -30,7 +35,6 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.WallpaperStateHolder
-import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.ui.frontend.FrontendScreen
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
@@ -39,8 +43,12 @@ import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.theme.managers.effectiveFrontendWallpaper
+import jr.brian.home.ui.util.applyWallpaperWindowBackground
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -49,7 +57,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FrontEndActivity : ComponentActivity() {
+class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -65,9 +73,21 @@ class FrontEndActivity : ComponentActivity() {
     @Inject
     lateinit var wallpaperStateHolder: WallpaperStateHolder
 
+    @Inject
+    lateinit var swapCoordinator: SwapCoordinator
+
+    @Inject
+    lateinit var screenAssignmentStore: jr.brian.home.data.ScreenAssignmentStore
+
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val romSearchViewModel: RomSearchViewModel by viewModels()
+
+    override val slot: jr.brian.core.model.ScreenSlot = jr.brian.core.model.ScreenSlot.TOP
+
+    override fun finishIfOn(displayId: Int) {
+        if (display?.displayId == displayId) finish()
+    }
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
@@ -101,6 +121,15 @@ class FrontEndActivity : ComponentActivity() {
         pendingFolderChangeSystem = null
     }
 
+    @android.annotation.SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (jr.brian.home.data.GamepadSwapShortcut.handle(event) {
+                jr.brian.home.data.GamepadSwapShortcut.fireSwap(this)
+            }) return true
+        if (jr.brian.home.data.HomeKeyFallback.handle(this, event)) return true
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun finish() {
         super.finish()
         @Suppress("DEPRECATION")
@@ -110,11 +139,96 @@ class FrontEndActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         isRunning = true
+        registerCompanionDisplayListener()
+        if (esdePrefs.state.value.companionLaunchWatchdogEnabled) {
+            ensureLauncherCompanion()
+        }
+        maybeResyncFocusLock()
+    }
+
+    /**
+     * Mirror of the launcher-side resync. When the frontend returns
+     * after an external app had focus, pin Focus Lock back to the
+     * frontend's assigned display (or whatever the current
+     * [jr.brian.home.data.FocusLockMode] dictates). No phase guard
+     * needed — pinned-slot swap does not trigger onStop/onStart.
+     */
+    private fun maybeResyncFocusLock() {
+        jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
+            this,
+            screenAssignmentStore.assignment,
+        )
+    }
+
+    /**
+     * Companion-activity watchdog, mirror of [MainActivity.ensureFrontendCompanion].
+     * If the launcher side isn't running when we come up, launch it on
+     * its assigned display so the user doesn't end up with just the
+     * frontend. No-op on single-display devices (nothing to pair with).
+     * Safe to call every onStart — MainActivity is singleTask so a
+     * redundant launch is a no-op that just reorders to front.
+     */
+    private fun ensureLauncherCompanion() {
+        if (jr.brian.home.MainActivity.isRunning) return
+        if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
+        jr.brian.home.ui.util.launchBottomHost(this)
+    }
+
+    private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null
+
+    /**
+     * Catches the "external display becomes ready after cold boot"
+     * case so the launcher comes along even when HomeRouterActivity's
+     * plan dispatched before DisplayManager had registered the second
+     * screen. Mirror of the listener in [jr.brian.home.MainActivity].
+     */
+    private fun registerCompanionDisplayListener() {
+        if (companionDisplayListener != null) return
+        val displayManager =
+            getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        val listener = object : android.hardware.display.DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {
+                if (displayId != jr.brian.core.model.PRIMARY_DISPLAY_ID) {
+                    ensureLauncherCompanion()
+                }
+            }
+            override fun onDisplayRemoved(displayId: Int) = Unit
+            override fun onDisplayChanged(displayId: Int) = Unit
+        }
+        displayManager.registerDisplayListener(
+            listener,
+            android.os.Handler(android.os.Looper.getMainLooper()),
+        )
+        companionDisplayListener = listener
+    }
+
+    private fun unregisterCompanionDisplayListener() {
+        val listener = companionDisplayListener ?: return
+        val displayManager =
+            getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        displayManager.unregisterDisplayListener(listener)
+        companionDisplayListener = null
     }
 
     override fun onStop() {
         super.onStop()
         isRunning = false
+        unregisterCompanionDisplayListener()
+        maybeSyncFocusLockForExternalApp()
+    }
+
+    /**
+     * Mirror of the launcher-side guard. When the frontend goes
+     * offscreen with the launcher side also gone, an external app
+     * took focus. Launched apps land on [PRIMARY_DISPLAY_ID] so pin
+     * Focus Lock there.
+     */
+    private fun maybeSyncFocusLockForExternalApp() {
+        if (jr.brian.home.MainActivity.isRunning) return
+        jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(
+            this,
+            jr.brian.core.model.PRIMARY_DISPLAY_ID,
+        )
     }
 
     override fun onDestroy() {
@@ -133,22 +247,29 @@ class FrontEndActivity : ComponentActivity() {
             private set
     }
 
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyWallpaperWindowBackground(
+            activity = this,
+            wallpaperManager = managers.ui.frontendWallpaperManager,
+            launcherSyncSource = managers.ui.wallpaperManager,
+        )
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
+            appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+            recentlyPlayedManager = managers.feature.recentlyPlayedManager,
+            romSearchStateHolder = romSearchStateHolder,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
         registerMediaMountReceiver()
         observeFrontendEnabledFlag()
         observeShowRomSearchResultsSignal()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
-        window.setBackgroundDrawableResource(android.R.color.transparent)
         enableEdgeToEdge()
         WindowCompat.getInsetsController(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -158,28 +279,52 @@ class FrontEndActivity : ComponentActivity() {
             LauncherTheme {
                 BackHandler {}
                 managers.ManagerCompositionLocalProvider {
-                    // Mirror MainActivity: read the shared holder inside the
-                    // composable so the read is tracked, then re-provide the
-                    // current value. Any consumer under FrontEndActivity (e.g.
-                    // FrontendTile inside a canvas widget) now sees the same
-                    // live state MainActivity's ES-DE event listener writes to.
                     val wallpaperState by wallpaperStateHolder.state
                     CompositionLocalProvider(
                         LocalEsdeWallpaperState provides wallpaperState
                     ) {
                         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                        FrontendScreen(
-                            esdePrefs = esdePrefs,
-                            viewModel = viewModel,
-                            mainViewModel = mainViewModel,
-                            romSearchStateHolder = romSearchStateHolder,
-                            frontendSelectionStateHolder = frontendSelectionStateHolder,
-                            managers = managers,
-                            romLauncher = romLauncher,
-                            appDisplayPreferenceManager = appDisplayPreferenceManager,
-                            onFinishImmediately = { finish() },
-                            onSignalGameLaunch = ::signalGameLaunch,
-                            onChangeFolder = ::launchSafPickerForGame
+                        jr.brian.home.ui.components.ScreenSlotHost(
+                            slot = slot,
+                            coordinator = swapCoordinator,
+                            store = screenAssignmentStore,
+                            launcherContent = {
+                                // Full launcher wiring via the shared
+                                // LauncherContent composable. State flows
+                                // through LauncherUiStateHolder (@Singleton),
+                                // so page index / dock Y / overlay flags
+                                // survive the swap from MainActivity. The
+                                // ES-DE event listeners that drive the hide-
+                                // UI flags still live on MainActivity's
+                                // setContent — this side just reads what
+                                // MainActivity has already pushed into the
+                                // holder.
+                                jr.brian.home.LauncherContent(
+                                    managers = managers,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    romLauncher = romLauncher,
+                                    onChangeFolder = ::launchSafPickerForGame,
+                                    navigateToThemeShare = false,
+                                    onNavigateToThemeShareHandled = {},
+                                )
+                            },
+                            frontendContent = {
+                                FrontendScreen(
+                                    esdePrefs = esdePrefs,
+                                    viewModel = viewModel,
+                                    mainViewModel = mainViewModel,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    frontendSelectionStateHolder = frontendSelectionStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    appDisplayPreferenceManager = appDisplayPreferenceManager,
+                                    onFinishImmediately = {
+                                        finishIfOn(jr.brian.core.model.PRIMARY_DISPLAY_ID)
+                                    },
+                                    onSignalGameLaunch = ::signalGameLaunch,
+                                    onChangeFolder = ::launchSafPickerForGame
+                                )
+                            },
                         )
                     }
                 }
@@ -266,3 +411,4 @@ class FrontEndActivity : ComponentActivity() {
         managers.feature.jinglesManager.onGameLaunched()
     }
 }
+

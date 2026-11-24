@@ -6,3 +6,8 @@ val LocalWallpaperManager =
     compositionLocalOf<WallpaperManager> {
         error("WallpaperManager not provided")
     }
+
+val LocalFrontendWallpaperManager =
+    compositionLocalOf<WallpaperManager> {
+        error("FrontendWallpaperManager not provided")
+    }

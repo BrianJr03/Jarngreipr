@@ -56,6 +56,7 @@ import jr.brian.home.ui.animations.allAnimationPresets
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetInfo
+import jr.brian.home.ui.components.dialog.FolderEditFailureNotice
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -101,6 +102,7 @@ fun LauncherPagerScreen(
     hideLauncherUI: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
+    FolderEditFailureNotice()
 
     val homeTabManager = LocalHomeTabManager.current
     val gridSettingsManager = LocalGridSettingsManager.current

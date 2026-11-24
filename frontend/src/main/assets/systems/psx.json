@@ -1,0 +1,8 @@
+{
+  "id": "psx",
+  "displayName": "Sony PlayStation",
+  "folderAliases": ["ps1", "sony-psx"],
+  "extensions": ["bin", "cue", "img", "iso", "chd", "pbp", "exe", "psexe", "m3u"],
+  "screenScraperSystemId": 57,
+  "retroArchSystemId": "psx"
+}

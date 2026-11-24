@@ -1,0 +1,8 @@
+{
+  "id": "psp",
+  "displayName": "Sony PSP",
+  "folderAliases": ["sony-psp"],
+  "extensions": ["iso", "cso", "pbp", "elf"],
+  "screenScraperSystemId": 61,
+  "retroArchSystemId": "PSP"
+}

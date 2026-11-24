@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_canvas_pick_search">Search</string>
+    <string name="jarnfe_canvas_pick_no_matches">No matches.</string>
+    <string name="jarnfe_canvas_pick_select_shown">Select all shown</string>
+    <string name="jarnfe_canvas_pick_clear">Clear selection</string>
+    <string name="jarnfe_canvas_pick_on_page">Already on this page</string>
+    <string name="jarnfe_canvas_pick_browse">Browse ROMs</string>
+    <string name="jarnfe_canvas_pick_browse_detail">Add any game in your library</string>
+    <string name="jarnfe_canvas_pick_browse_title">Browse ROMs</string>
+    <string name="jarnfe_canvas_pick_browse_capped">Showing the first %1$d. Search to narrow it down.</string>
+    <string name="jarnfe_canvas_pick_add">Add (%1$d)</string>
+    <string name="jarnfe_canvas_hint_select">Select</string>
+    <string name="jarnfe_canvas_hint_add">Add</string>
+    <string name="jarnfe_canvas_page_full_title">This page is full</string>
+    <string name="jarnfe_canvas_page_full_message">Remove a tile or add to another page.</string>
+    <string name="jarnfe_canvas_notice_page_full">This page is full. Nothing was added.</string>
+    <string name="jarnfe_canvas_notice_already_here">Already on this page.</string>
+    <plurals name="jarnfe_canvas_notice_added">
+        <item quantity="one">Added %1$d tile.</item>
+        <item quantity="other">Added %1$d tiles.</item>
+    </plurals>
+    <plurals name="jarnfe_canvas_notice_no_fit">
+        <item quantity="one">Page full. %1$d item did not fit.</item>
+        <item quantity="other">Page full. %1$d items did not fit.</item>
+    </plurals>
+    <plurals name="jarnfe_canvas_notice_room_left">
+        <item quantity="one">Only room for %1$d more on this page.</item>
+        <item quantity="other">Only room for %1$d more on this page.</item>
+    </plurals>
+</resources>

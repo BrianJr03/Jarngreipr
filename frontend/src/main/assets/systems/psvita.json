@@ -1,0 +1,8 @@
+{
+  "id": "psvita",
+  "displayName": "Sony PlayStation Vita",
+  "folderAliases": ["vita", "sony-psvita"],
+  "extensions": ["vpk", "psvita"],
+  "screenScraperSystemId": 62,
+  "retroArchSystemId": null
+}

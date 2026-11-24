@@ -13,16 +13,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.os.Handler
 import android.os.Looper
+import jr.brian.core.model.HomeLaunch
+import jr.brian.core.model.HomeLaunchActivity
+import jr.brian.core.model.HomeTarget
+import jr.brian.core.model.JarnHomeLaunch
+import jr.brian.core.model.JarnHomeWindow
+import jr.brian.core.model.MainScreen
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.ScreenAssignment
+import jr.brian.core.model.planClassicReturnLaunches
+import jr.brian.core.model.planHomeLaunches
+import jr.brian.core.model.planJarnHomeLaunches
+import jr.brian.core.model.planLauncherHomeLaunches
 import jr.brian.home.MainActivity
 import jr.brian.home.esde.ui.FrontEndActivity
-import jr.brian.home.model.HomeTarget
-import jr.brian.home.model.MainScreen
-
-/**
- * Display the Thor treats as primary — the top screen — and the target of every
- * gameplay/emulator launch. Pass to [android.app.ActivityOptions.setLaunchDisplayId].
- */
-const val PRIMARY_DISPLAY_ID = 0
+import jr.brian.jarnfe.shell.JarnHomeEntry
 
 /**
  * Returns the display id the bottom screen lives on (anything other than
@@ -50,62 +55,46 @@ fun launchFrontend(context: Context, displayId: Int = PRIMARY_DISPLAY_ID) {
 }
 
 /**
- * A single `startActivity` planned by [planHomeLaunches]. Kept as a pure data
- * class so the plan can be exercised in unit tests without touching Android
- * intent/options plumbing.
- *
- * The plan preserves ordering — index 0 launches first, index 1 (if present)
- * second — because focus goes to the last-started activity. See [routeHome]
- * for the focus-ordering contract.
+ * Fires [FrontEndActivity] on its pinned display ([PRIMARY_DISPLAY_ID]).
+ * The swap is a content flip inside the activity, not a window
+ * placement change — the activity never moves. Used by the companion
+ * watchdog in [MainActivity]'s `onStart` when the frontend side
+ * isn't up (crash, partial restart, cold boot before the external
+ * display finished attaching).
  */
-data class HomeLaunch(
-    val activity: HomeLaunchActivity,
-    /** `null` for the single-display fallback (no explicit display id). */
-    val displayId: Int?,
-)
-
-enum class HomeLaunchActivity { MAIN, FRONTEND }
+fun launchTopHost(context: Context) {
+    launchFrontend(context, PRIMARY_DISPLAY_ID)
+}
 
 /**
- * Pure planner: given the display state and the user's preferences, returns
- * the ordered list of activity launches that [routeHome] will fire.
- *
- * Encapsulates the three coercion rules so they can be unit-tested without
- * involving `Context` / `ActivityOptions`:
- *
- *  - No external display → single MainActivity launch with `displayId == null`
- *    (the manifest's default display resolution wins). All three targets
- *    collapse to this.
- *  - [HomeTarget.BOTH] with `frontendEnabled == false` → collapse to
- *    [HomeTarget.BOTTOM].
- *  - [HomeTarget.BOTH] → two launches, ordered so that the display named by
- *    [mainScreen] starts *last* and therefore takes input focus.
+ * Fires [MainActivity] on its pinned display (the external bottom
+ * display when connected, otherwise `null` so Android resolves to
+ * the caller's display). Used by the companion watchdog in
+ * [FrontEndActivity]'s `onStart` when the launcher side isn't up.
  */
-fun planHomeLaunches(
-    bottomDisplayId: Int?,
-    target: HomeTarget,
-    mainScreen: MainScreen,
-    frontendEnabled: Boolean,
-): List<HomeLaunch> {
-    if (bottomDisplayId == null) {
-        return listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
-    }
-    val effectiveTarget =
-        if (target == HomeTarget.BOTH && !frontendEnabled) HomeTarget.BOTTOM else target
-    return when (effectiveTarget) {
-        HomeTarget.TOP -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID))
-        HomeTarget.BOTTOM -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId))
-        HomeTarget.BOTH -> when (mainScreen) {
-            MainScreen.TOP -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomDisplayId),
-                HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
-            )
-            MainScreen.BOTTOM -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
-                HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
-            )
-        }
-    }
+fun launchBottomHost(context: Context) {
+    dispatchMain(context, resolveBottomDisplayId(context))
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+internal interface LaunchFrontendEntryPoint {
+    fun screenAssignmentStore(): jr.brian.home.data.ScreenAssignmentStore
+}
+
+/**
+ * Current persisted [ScreenAssignment], consulted by every launch
+ * path. Collapses to [ScreenAssignment.DEFAULT] if Hilt isn't
+ * reachable (unit test, early boot) so pre-Phase-5 behaviour is
+ * preserved as the fallback.
+ */
+private fun currentAssignment(context: Context): ScreenAssignment = try {
+    dagger.hilt.android.EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        LaunchFrontendEntryPoint::class.java,
+    ).screenAssignmentStore().assignment
+} catch (_: Throwable) {
+    ScreenAssignment.DEFAULT
 }
 
 /**
@@ -114,10 +103,11 @@ fun planHomeLaunches(
  * Callable from any [Context] — Activity, Service, or Application — because it
  * only uses [Intent.FLAG_ACTIVITY_NEW_TASK] and never touches Activity-only APIs.
  *
- *  - [HomeTarget.TOP] — MainActivity on the primary display; no frontend.
- *  - [HomeTarget.BOTTOM] — MainActivity on the external/bottom display; no
- *    frontend. Falls back to the primary display when no external display is
- *    connected.
+ *  - [HomeTarget.TOP] — restore whichever activity owns the top slot under
+ *    the current [ScreenAssignment]. On the default assignment that's the
+ *    frontend; after a screen swap it's MainActivity.
+ *  - [HomeTarget.BOTTOM] — mirror of TOP for the bottom slot. Falls back to
+ *    the primary display when no external display is connected.
  *  - [HomeTarget.BOTH] — MainActivity on the display named by [mainScreen] and
  *    FrontEndActivity on the other display. Coerced to [HomeTarget.BOTTOM]
  *    when [frontendEnabled] is false (BOTH's second activity is the frontend
@@ -139,7 +129,8 @@ fun planHomeLaunches(
  * Do not "tidy" this ordering. Without the deliberate reversal a future
  * refactor will swap the two calls and silently move focus to the wrong
  * screen — and dual-screen focus bugs are hard to spot from a single-display
- * test setup. See [planHomeLaunches] for the same rule as pure data.
+ * test setup. See `planHomeLaunches` in :core-model for the same rule as
+ * pure data.
  */
 fun routeHome(
     context: Context,
@@ -147,12 +138,81 @@ fun routeHome(
     mainScreen: MainScreen,
     frontendEnabled: Boolean,
 ) {
-    val plan = planHomeLaunches(
-        bottomDisplayId = resolveBottomDisplayId(context),
-        target = target,
-        mainScreen = mainScreen,
-        frontendEnabled = frontendEnabled,
+    dispatchPlan(
+        context,
+        planHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            target = target,
+            mainScreen = mainScreen,
+            frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
+        ),
     )
+}
+
+/**
+ * Routes a launcher-entry Home press. See `planLauncherHomeLaunches` in
+ * :core-model for the rule; this is the [Context]-aware wrapper that actually
+ * fires the intents.
+ */
+fun routeHomeFromLauncher(context: Context, frontendEnabled: Boolean) {
+    dispatchPlan(
+        context,
+        planLauncherHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
+        ),
+    )
+}
+
+/** Opens Classic after Jarn FE, on the screens Classic normally uses. */
+fun routeToClassic(context: Context, frontendEnabled: Boolean) {
+    dispatchPlan(
+        context,
+        planClassicReturnLaunches(resolveBottomDisplayId(context), frontendEnabled),
+    )
+}
+
+/**
+ * Brings Jarn FE forward, reclaiming the bottom screen when its Deck is covered or lost. False
+ * when Stage did not open, which is always the case in builds without Jarn FE's debug activities.
+ */
+fun launchJarnFe(context: Context): Boolean {
+    val plan = planJarnHomeLaunches(
+        bottomDisplayId = resolveBottomDisplayId(context),
+        shouldRaiseDeck = JarnHomeEntry.shouldRaiseDeck,
+        focus = JarnHomeEntry.focusWindow,
+    )
+    val results = plan.associate { it.window to startJarnWindow(context, it) }
+    return results.getValue(JarnHomeWindow.Stage)
+}
+
+/** Opens one Jarn window on the screen a game left free. Nothing else is started. */
+fun showJarnBesideGame(context: Context, window: JarnHomeWindow, displayId: Int) {
+    JarnHomeEntry.onShowingBesideGame(window)
+    if (!startJarnWindow(context, JarnHomeLaunch(window, displayId))) JarnHomeEntry.onShowFailed()
+}
+
+private fun startJarnWindow(context: Context, launch: JarnHomeLaunch): Boolean {
+    val (activity, flags) = when (launch.window) {
+        JarnHomeWindow.Stage -> JARN_STAGE_ACTIVITY to Intent.FLAG_ACTIVITY_NEW_TASK
+        JarnHomeWindow.Deck -> JARN_DECK_ACTIVITY to
+            (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+    }
+    val intent = Intent().setClassName(context, activity).addFlags(flags)
+    val options = ActivityOptions.makeBasic().setLaunchDisplayId(launch.displayId)
+    return runCatching { context.startActivity(intent, options.toBundle()) }.isSuccess
+}
+
+fun hasJarnFeActivity(context: Context): Boolean =
+    Intent().setClassName(context, JARN_STAGE_ACTIVITY)
+        .resolveActivityInfo(context.packageManager, 0) != null
+
+private const val JARN_STAGE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
+private const val JARN_DECK_ACTIVITY = "jr.brian.jarnfe.shell.JarnDeckActivity"
+
+private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
     plan.forEach { launch ->
         when (launch.activity) {
             HomeLaunchActivity.MAIN -> dispatchMain(context, launch.displayId)

@@ -15,19 +15,31 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RestorePage
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ScheduleSend
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import jr.brian.home.R
+import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.SettingItem
+import jr.brian.home.ui.components.settings.SwitchToJarnSettingItem
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.util.SettingsTag
@@ -47,9 +59,22 @@ fun SystemSection(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Fall back to a Hilt lookup when the CompositionLocal isn't in
+    // scope — observed when a SubcomposeLayout measure fires before
+    // the root composition's locals have re-committed. See
+    // LocalImportExportManager's KDoc.
     val importExportManager = LocalImportExportManager.current
+        ?: remember(context) {
+            EntryPointAccessors
+                .fromApplication(
+                    context.applicationContext,
+                    ImportExportManagerEntryPoint::class.java,
+                )
+                .importExportManager()
+        }
 
     val backupSuccessMsg = stringResource(R.string.settings_backup_success)
+    val backupPartialMsg = stringResource(R.string.settings_backup_partial)
     val backupErrorMsg = stringResource(R.string.settings_backup_error)
     val restoreSuccessMsg = stringResource(R.string.settings_restore_success)
     val restoreErrorMsg = stringResource(R.string.settings_restore_error)
@@ -64,7 +89,13 @@ fun SystemSection(
                         importExportManager.exportToStream(stream)
                     }
                 }.fold(
-                    onSuccess = { Toast.makeText(context, backupSuccessMsg, Toast.LENGTH_SHORT).show() },
+                    onSuccess = { omittedPages ->
+                        if ((omittedPages ?: 0) > 0) {
+                            Toast.makeText(context, backupPartialMsg, Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, backupSuccessMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onFailure = { Toast.makeText(context, backupErrorMsg, Toast.LENGTH_SHORT).show() }
                 )
             }
@@ -111,6 +142,30 @@ fun SystemSection(
                 }
             } else null
         )
+
+        val appUpdateManager = LocalAppUpdateManager.current
+        SettingItem(
+            title = stringResource(id = R.string.settings_rc_notifications_title),
+            description = stringResource(id = R.string.settings_rc_notifications_description),
+            icon = Icons.Default.ScheduleSend,
+            onClick = {
+                appUpdateManager.setRcNotificationsEnabled(!appUpdateManager.rcNotificationsEnabled)
+            },
+            trailing = {
+                Switch(
+                    checked = appUpdateManager.rcNotificationsEnabled,
+                    onCheckedChange = { appUpdateManager.setRcNotificationsEnabled(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = ThemePrimaryColor,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+                    )
+                )
+            }
+        )
+
+        SwitchToJarnSettingItem()
 
         SettingItem(
             title = stringResource(id = R.string.settings_crash_logs_title),
@@ -171,4 +226,10 @@ fun SystemSection(
             onClick = { restoreLauncher.launch(arrayOf("application/json", "text/plain")) }
         )
     }
+}
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+internal interface ImportExportManagerEntryPoint {
+    fun importExportManager(): ImportExportManager
 }

@@ -2,6 +2,7 @@ package jr.brian.home.esde.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import jr.brian.core.model.GameImageType
 import jr.brian.home.model.Shortcut
 
 enum class PlatformImageFolderType { Smart, Default }
@@ -15,25 +16,6 @@ enum class SystemImageType(val folderName: String?) {
 
     companion object {
         fun randomizableTypes(): List<SystemImageType> =
-            entries.filter { it.folderName != null }
-    }
-}
-
-@kotlinx.serialization.Serializable
-enum class GameImageType(val folderName: String?) {
-    None(null),
-    All(null),
-    Screenshots("screenshots"),
-    Fanart("fanart"),
-    TitleScreens("titlescreens"),
-    Covers("covers"),
-    PhysicalMedia("physicalmedia"),
-    Marquee("marquees"),
-    MixImages("miximages"),
-    Description(null);
-
-    companion object {
-        fun randomizableTypes(): List<GameImageType> =
             entries.filter { it.folderName != null }
     }
 }
@@ -109,6 +91,7 @@ enum class OverlayMediaType(val folderName: String, val displayName: String) {
     Marquees("marquees", "Marquees"),
     ThreeDBoxes("3dboxes", "3D Boxes"),
     Covers("covers", "Covers"),
+    PhysicalMedia("physicalmedia", "Physical Media"),
     Screenshots("screenshots", "Screenshots"),
     Fanart("fanart", "Fanart"),
     MixImages("miximages", "Miximages");
@@ -119,6 +102,35 @@ enum class OverlayMediaType(val folderName: String, val displayName: String) {
         }
     }
 }
+
+enum class ScraperMediaKind(
+    val folderName: String,
+    val displayName: String,
+    val supportedByScreenScraper: Boolean,
+    val supportedBySteamGridDb: Boolean
+) {
+    Covers("covers", "Covers", true, true),
+    Screenshots("screenshots", "Screenshots", true, false),
+    Marquees("marquees", "Marquees", true, true),
+    Fanart("fanart", "Fanart", true, true),
+    TitleScreens("titlescreens", "Title Screens", true, false);
+
+    companion object {
+        val screenScraperSupported: Set<ScraperMediaKind>
+            get() = entries.filter { it.supportedByScreenScraper }.toSet()
+        val steamGridDbSupported: Set<ScraperMediaKind>
+            get() = entries.filter { it.supportedBySteamGridDb }.toSet()
+
+        fun fromName(name: String): ScraperMediaKind? =
+            entries.firstOrNull { it.name == name }
+    }
+}
+
+val DEFAULT_SCREENSCRAPER_MEDIA_TYPES: Set<String> =
+    ScraperMediaKind.screenScraperSupported.map { it.name }.toSet()
+
+val DEFAULT_STEAMGRIDDB_MEDIA_TYPES: Set<String> =
+    ScraperMediaKind.steamGridDbSupported.map { it.name }.toSet()
 
 enum class RomSearchCardMediaType(val displayName: String) {
     PhysicalMedia("Physical Media"),
@@ -228,16 +240,16 @@ data class ESDEPrefsState(
     val systemBgVideoMuted: Boolean = true,
     val systemBgVideoLooping: Boolean = true,
     val gameEmulatorMap: Map<String, String> = emptyMap(),
+    val systemEmulatorMap: Map<String, String> = emptyMap(),
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
+    val gameCompanionsMap: Map<String, List<String>> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
     val hiddenSystems: Set<String> = emptySet(),
     val romSearchUseWallpaper: Boolean = false,
     val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     val romSearchGameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
-    val romSearchHideNoMetadata: Boolean = false,
-    val romSearchHideNoImage: Boolean = false,
     val romSearchDiscSpin: Boolean = false,
     val romSearchBlackBackground: Boolean = true,
     val romSearchFocusAnimationDisabledGames: Set<String> = emptySet(),
@@ -251,9 +263,13 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
     val romSearchDetailImageHeightDp: Int = 240,
     val frontendEnabled: Boolean = false,
+    val companionLaunchWatchdogEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
-    val systemLayout: FrontendLayout = FrontendLayout.Grid,
-    val gameLayout: FrontendLayout = FrontendLayout.Grid,
+    val jarngreiprMediaEnabled: Boolean = true,
+    val primarySystemLayout: FrontendLayout = FrontendLayout.Row,
+    val secondarySystemLayout: FrontendLayout = FrontendLayout.Grid,
+    val primaryGameLayout: FrontendLayout = FrontendLayout.Grid,
+    val secondaryGameLayout: FrontendLayout = FrontendLayout.Grid,
     val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
     val systemOrder: List<String> = emptyList(),
     val frontendHintsVisible: Boolean = true,
@@ -278,6 +294,16 @@ data class ESDEPrefsState(
      * XML reads. Users adopting a scraper other than ES-DE will turn this off.
      */
     val gamelistDecorationEnabled: Boolean = true,
+    val screenScraperEnabled: Boolean = false,
+    val screenScraperDevId: String = "",
+    val screenScraperDevPassword: String = "",
+    val screenScraperUserId: String = "",
+    val screenScraperUserPassword: String = "",
+    val screenScraperMediaTypes: Set<String> = DEFAULT_SCREENSCRAPER_MEDIA_TYPES,
+    val steamGridDbEnabled: Boolean = false,
+    val steamGridDbApiKey: String = "",
+    val steamGridDbMediaTypes: Set<String> = DEFAULT_STEAMGRIDDB_MEDIA_TYPES,
+    val scraperConcurrencyOverride: Int = 0,
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

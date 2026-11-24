@@ -1,0 +1,8 @@
+{
+  "id": "c64",
+  "displayName": "Commodore 64",
+  "folderAliases": ["commodore64", "commodore-c64"],
+  "extensions": ["crt", "d64", "g64", "t64", "tap", "prg", "vsf", "zip", "7z"],
+  "screenScraperSystemId": 66,
+  "retroArchSystemId": null
+}
