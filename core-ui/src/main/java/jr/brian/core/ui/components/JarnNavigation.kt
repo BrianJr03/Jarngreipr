@@ -285,16 +285,32 @@ fun JarnKeyCap(key: JarnKey, modifier: Modifier = Modifier, active: Boolean = tr
 @Immutable
 data class JarnHint(val key: JarnKey, val label: String)
 
+/** [trailing] hints sit at the right end, with the same padding as the start. */
 @Composable
-fun JarnHintBar(hints: List<JarnHint>, modifier: Modifier = Modifier, active: Boolean = true) {
-    val colors = JarnTheme.colors
+fun JarnHintBar(
+    hints: List<JarnHint>,
+    modifier: Modifier = Modifier,
+    active: Boolean = true,
+    trailing: List<JarnHint> = emptyList(),
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(JarnTheme.space.hintBarHeight)
-            .background(colors.surface)
-            .horizontalScroll(rememberScrollState())
+            .background(JarnTheme.colors.surface)
             .padding(horizontal = JarnTheme.space.lg),
+        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        JarnHintGroup(hints, active, Modifier.weight(1f).horizontalScroll(rememberScrollState()))
+        if (trailing.isNotEmpty()) JarnHintGroup(trailing, active)
+    }
+}
+
+@Composable
+private fun JarnHintGroup(hints: List<JarnHint>, active: Boolean, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
