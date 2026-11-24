@@ -57,6 +57,7 @@ class JarnArtChoicesConfigImportTest {
             artChoiceStore = store,
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
         )
     }
 

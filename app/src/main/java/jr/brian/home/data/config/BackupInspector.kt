@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
+import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.jarnfe.backup.JarnBackupArea
 import jr.brian.jarnfe.backup.JarnBackupChange
 import jr.brian.jarnfe.backup.JarnBackupItem
@@ -206,7 +207,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
 }
 
 private fun JarngreiprConfig.homeLayout(): List<Any> =
-    listOf(page, app.positions, app.visibility)
+    listOf(page.copy(widgetProviders = null), app.positions, app.visibility)
 
 private fun JarnArtChoicesConfig.count(): Int =
     topBySystem.size + bottomBySystem.size + topByGame.size + bottomByGame.size
@@ -223,7 +224,11 @@ private fun ScraperConfig.withoutSecrets(): ScraperConfig = copy(
 private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): JarngreiprConfig = copy(
     version = 0,
     exportedAt = "",
-    ui = ui.copy(wallpaper = WallpaperConfig(), frontendWallpaper = WallpaperConfig()),
+    ui = ui.copy(
+        wallpaper = WallpaperConfig(),
+        frontendWallpaper = WallpaperConfig(),
+        appearance = current.ui.appearance?.let { now -> ui.appearance?.mergedInto(now) ?: now },
+    ),
     app = AppConfig(),
     page = PageConfig(),
     feature = feature.copy(
@@ -243,6 +248,11 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         artSource = feature.artSource ?: current.feature.artSource,
         systemArtSource = feature.systemArtSource ?: current.feature.systemArtSource,
         romSearch = feature.romSearch.copy(scraper = ScraperConfig(), hintsKbVisible = true),
+        rssFeeds = mergeRssFeeds(current.feature.rssFeeds.orEmpty(), feature.rssFeeds),
+        jingles = feature.jingles.copy(
+            enabled = feature.jingles.enabled ?: current.feature.jingles.enabled,
+            repos = mergeJingleRepos(current.feature.jingles.repos.orEmpty(), feature.jingles.repos).sorted(),
+        ),
     ),
     system = system.copy(hiddenSystems = emptyList()),
 )
@@ -259,4 +269,7 @@ private fun JarngreiprConfig.imageReferences(): Set<String> = buildSet {
     app.folders.values.flatten().mapNotNullTo(this) { folder ->
         folder.backgroundImagePath?.takeIf { it.isNotBlank() }
     }
+    page.canvasLayouts.values.flatMap { it.items }
+        .filterIsInstance<CanvasItem.PhotoContainer>()
+        .mapNotNullTo(this) { photo -> photo.imageUri?.takeIf { it.isNotBlank() } }
 }

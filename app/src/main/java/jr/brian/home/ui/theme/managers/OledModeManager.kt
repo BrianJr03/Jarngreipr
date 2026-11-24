@@ -29,6 +29,12 @@ class OledModeManager(
         return prefs.getBoolean(KEY_KEYBOARD_OLED_EXEMPT, false)
     }
 
+    /** Picks up values a restore wrote while this manager was alive. */
+    fun reloadFromStorage() {
+        isOledModeEnabled = loadOledMode()
+        isKeyboardOledExempt = loadKeyboardOledExempt()
+    }
+
     fun setOledMode(enabled: Boolean) {
         isOledModeEnabled = enabled
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

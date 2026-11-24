@@ -55,6 +55,7 @@ class ImportExportManager @Inject constructor(
     private val artChoiceStore: jr.brian.frontend.library.art.GameArtChoiceStore,
     private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
     private val playStatsBackup: jr.brian.frontend.library.play.PlayStatsBackup,
+    private val backupExtras: SettingsBackupExtras,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -73,7 +74,7 @@ class ImportExportManager @Inject constructor(
                 jarnPlayStats = playStatsBackup.export()?.map { it.toConfig() },
             ),
             system = buildSystemConfig()
-        )
+        ).let { backupExtras.addTo(it) }
     }
 
     private suspend fun buildUiConfig(): UiConfig {
@@ -363,7 +364,8 @@ class ImportExportManager @Inject constructor(
 
     // ── Import ──────────────────────────────────────────────────────────────
 
-    suspend fun applyConfig(config: JarngreiprConfig) = withContext(Dispatchers.Main) {
+    suspend fun applyConfig(backup: JarngreiprConfig) = withContext(Dispatchers.Main) {
+        val config = backupExtras.prepareForRestore(backup)
         applyUiConfig(config.ui)
         applyAppConfig(config.app)
         applyPageConfig(config.page)
@@ -375,6 +377,7 @@ class ImportExportManager @Inject constructor(
         config.feature.jarnPlayStats?.let { stats ->
             playStatsBackup.restore(stats.map { it.toBackedUpPlayStat() })
         }
+        backupExtras.restore(config)
     }
 
     private suspend fun applyUiConfig(config: UiConfig) {

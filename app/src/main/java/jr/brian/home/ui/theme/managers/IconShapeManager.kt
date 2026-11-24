@@ -48,6 +48,11 @@ class IconShapeManager(
         }
     }
 
+    /** Picks up a shape a restore wrote while this manager was alive. */
+    fun reloadFromStorage() {
+        iconShape = loadIconShape()
+    }
+
     fun updateIconShape(shape: IconShape) {
         iconShape = shape
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
