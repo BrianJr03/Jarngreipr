@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
@@ -36,17 +37,26 @@ internal fun FirstRunGuide(
     modifier: Modifier = Modifier,
 ) {
     val primaryFocus = remember { FocusRequester() }
-    LaunchedEffect(run.step, run.confirmingSkip) {
-        withFrameNanos { }
-        runCatching { primaryFocus.requestFocus() }
+    val leadFocus = remember { FirstRunLeadFocus() }
+    val startFocus = if (run.confirmingSkip) {
+        FirstRunStartFocus.Primary
+    } else {
+        firstRunStartFocus(run.step, leadFocus.hasLead)
     }
-    Column(
-        modifier = modifier.padding(JarnTheme.space.deckMargin),
-        verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
-    ) {
-        FirstRunProgress(run, twoScreens)
-        FirstRunGuideContent(run, twoScreens, actions, Modifier.weight(1f).fillMaxWidth())
-        FirstRunButtons(run, actions, primaryFocus)
+    LaunchedEffect(run.step, run.confirmingSkip, startFocus) {
+        withFrameNanos { }
+        val target = if (startFocus == FirstRunStartFocus.LeadRow) leadFocus.requester else primaryFocus
+        runCatching { target.requestFocus() }
+    }
+    CompositionLocalProvider(LocalFirstRunLeadFocus provides leadFocus) {
+        Column(
+            modifier = modifier.padding(JarnTheme.space.deckMargin),
+            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+        ) {
+            FirstRunProgress(run, twoScreens)
+            FirstRunGuideContent(run, twoScreens, actions, Modifier.weight(1f).fillMaxWidth())
+            FirstRunButtons(run, actions, primaryFocus)
+        }
     }
 }
 
@@ -133,6 +143,9 @@ private fun FirstRunButtons(
         }
         if (run.step != JarnFirstRunStep.Done) {
             FirstRunSecondaryButton(R.string.jarnfe_first_run_skip, actions::skip)
+        }
+        if (run.offersLessons) {
+            FirstRunSecondaryButton(R.string.jarnfe_ready_show_buttons, actions::showLessons)
         }
         JarnButton(
             label = stringResource(primaryLabelRes(run)),
