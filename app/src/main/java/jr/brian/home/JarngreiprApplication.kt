@@ -22,6 +22,7 @@ import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
 import jr.brian.home.jarn.AppJarnInputTools
 import jr.brian.home.jarn.AppJarnExperienceSwitch
+import jr.brian.home.jarn.AppJarnHomeApp
 import jr.brian.home.jarn.AppJarnLauncherSettings
 import jr.brian.home.jarn.AppJarnScreenSwap
 import jr.brian.home.jarn.AppJarnUpdates
@@ -47,6 +48,8 @@ import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.launch.JarnPlaySessionsProvider
+import jr.brian.jarnfe.home.JarnHomeApp
+import jr.brian.jarnfe.home.JarnHomeAppProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
 import jr.brian.jarnfe.library.JarnEsdeRomsProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
@@ -99,7 +102,8 @@ class JarngreiprApplication :
     JarnLauncherSettingsProvider,
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
     JarnArtDetectorProvider,
-    JarnEsdeRomsProvider {
+    JarnEsdeRomsProvider,
+    JarnHomeAppProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -232,6 +236,12 @@ class JarngreiprApplication :
         get() = jarnUtilitiesProvider.get()
 
     /** A [Provider] so Classic never builds Jarn FE's launcher settings. */
+    @Inject
+    lateinit var jarnHomeAppProvider: Provider<AppJarnHomeApp>
+
+    override val jarnHomeApp: JarnHomeApp
+        get() = jarnHomeAppProvider.get()
+
     @Inject
     lateinit var jarnLauncherSettingsProvider: Provider<AppJarnLauncherSettings>
 
