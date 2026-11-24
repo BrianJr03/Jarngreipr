@@ -189,10 +189,18 @@ internal fun NowSystemContent(
     }
 }
 
-private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, actions: NowSystemActions) {
+/** The hint for a focused header shortcut. */
+internal fun JarnBindingsBuilder.nowShortcutHints(focused: NowFocusTarget?) {
     when (focused) {
         NowFocusTarget.Random -> hint(JarnAction.Confirm, R.string.jarnfe_now_random)
         NowFocusTarget.LastPlayed -> hint(JarnAction.Confirm, R.string.jarnfe_now_last_played)
+        else -> Unit
+    }
+}
+
+private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, actions: NowSystemActions) {
+    when (focused) {
+        NowFocusTarget.Random, NowFocusTarget.LastPlayed -> nowShortcutHints(focused)
         is NowFocusTarget.Cover -> {
             if (actions.onPlay != null) hint(JarnAction.Confirm, R.string.jarnfe_hint_play)
             actions.onDetails?.let { open ->
