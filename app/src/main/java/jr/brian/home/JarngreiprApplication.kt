@@ -48,6 +48,7 @@ import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.launch.JarnPlaySessionsProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
+import jr.brian.jarnfe.library.JarnEsdeRomsProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
 import jr.brian.jarnfe.settings.JarnLauncherSettings
@@ -66,6 +67,8 @@ import jr.brian.jarnfe.utilities.JarnUtilitiesProvider
 import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.play.PlaySessionRecorder
+import jr.brian.frontend.library.setup.EsdeRomsFolderFinder
+import jr.brian.frontend.library.setup.EsdeRomsFolderSource
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.look.JarnLookStore
 import javax.inject.Inject
@@ -95,7 +98,8 @@ class JarngreiprApplication :
     JarnRssDataProvider,
     JarnLauncherSettingsProvider,
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
-    JarnArtDetectorProvider {
+    JarnArtDetectorProvider,
+    JarnEsdeRomsProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -109,6 +113,12 @@ class JarngreiprApplication :
 
     override val jarnLibrarySetup: LibrarySetup
         get() = jarnLibrarySetupProvider.get()
+
+    @Inject
+    lateinit var jarnEsdeRomsFolderProvider: Provider<EsdeRomsFolderFinder>
+
+    override val jarnEsdeRomsFolder: EsdeRomsFolderSource
+        get() = jarnEsdeRomsFolderProvider.get()
 
     /** A [Provider] so Classic never runs Jarn FE's art detection. */
     @Inject
