@@ -3,8 +3,10 @@ package jr.brian.home.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.ui.theme.managers.AppearanceRestoreSignal
 import jr.brian.home.ui.theme.managers.IconShapeManager
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalOledModeManager
@@ -13,6 +15,7 @@ import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.managers.OledModeManager
 import jr.brian.home.ui.theme.managers.TabAnimationManager
 import jr.brian.home.ui.theme.managers.ThemeManager
+import kotlinx.coroutines.flow.drop
 
 @Composable
 fun LauncherTheme(
@@ -23,6 +26,15 @@ fun LauncherTheme(
     val oledModeManager = remember { OledModeManager(context) }
     val iconShapeManager = remember { IconShapeManager(context) }
     val tabAnimationManager = remember { TabAnimationManager(context) }
+
+    LaunchedEffect(Unit) {
+        AppearanceRestoreSignal.restores.drop(1).collect {
+            themeManager.reloadFromStorage()
+            oledModeManager.reloadFromStorage()
+            iconShapeManager.reloadFromStorage()
+            tabAnimationManager.reloadFromStorage()
+        }
+    }
 
     CompositionLocalProvider(
         LocalThemeManager provides themeManager,

@@ -62,6 +62,7 @@ class ExperienceSwitchSurvivalTest {
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = pins,
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
         )
     }
 

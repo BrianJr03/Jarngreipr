@@ -56,7 +56,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) JarnSplash.finish()
+        if (savedInstanceState != null) JarnSplash.finish() else JarnSplash.armDeadline()
         JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION), rememberedDeckTab())
         JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
         connectJarnLibrary(this)
@@ -93,16 +93,16 @@ abstract class JarnScreenActivity : ComponentActivity() {
     }
 
     private fun installGlobalBindings(deckMissing: Boolean) {
-        JarnInput.oppositeTabsAvailable = {
-            oppositeTabStripNow(JarnSession, JarnLibrary, JarnSearch, JarnInput) != null
+        JarnInput.shellTabTarget = { pair ->
+            shellTabTarget(pair, JarnSession, JarnLibrary, JarnSearch, JarnInput)
         }
         JarnInput.setGlobalBindings(
             jarnGlobalBindings(
                 session = JarnSession,
                 onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
                 onSwap = swap?.let { it::requestSwap },
-                onOppositeTab = { delta ->
-                    stepOppositeTabs(delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
+                onScreenTab = { pair, delta ->
+                    stepScreenTabs(pair, delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
                 },
                 deckMissing = deckMissing,
                 onBackAtRoot = JarnHomeEntry::yieldToGame,

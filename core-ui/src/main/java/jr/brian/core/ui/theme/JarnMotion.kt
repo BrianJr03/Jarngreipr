@@ -31,8 +31,13 @@ data class JarnMotionToken(val durationMillis: Int, val easing: Easing) {
 private val Instant = JarnMotionToken(0, LinearEasing)
 private val ReducedFade = JarnMotionToken(REDUCED_FADE_MILLIS, LinearEasing)
 
+/**
+ * [reduced] follows the in-app toggle or Android animations being off, for UI movement.
+ * [ambientReduced] follows only the in-app toggle, for ambient motion such as live wallpapers
+ * and GIFs, which many handheld players keep while turning Android animations off.
+ */
 @Immutable
-data class JarnMotion(val reduced: Boolean = false) {
+data class JarnMotion(val reduced: Boolean = false, val ambientReduced: Boolean = reduced) {
     val focusIn = if (reduced) Instant else JarnMotionToken(90, JarnEasingStandard)
     val focusOut = if (reduced) Instant else JarnMotionToken(70, JarnEasingExit)
     val press = if (reduced) Instant else JarnMotionToken(80, JarnEasingStandard)

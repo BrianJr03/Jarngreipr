@@ -20,6 +20,11 @@ class TabAnimationManager(
         return prefs.getBoolean(KEY_TAB_ANIMATION, false)
     }
 
+    /** Picks up a value a restore wrote while this manager was alive. */
+    fun reloadFromStorage() {
+        isTabAnimationEnabled = loadTabAnimation()
+    }
+
     fun setTabAnimation(enabled: Boolean) {
         isTabAnimationEnabled = enabled
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

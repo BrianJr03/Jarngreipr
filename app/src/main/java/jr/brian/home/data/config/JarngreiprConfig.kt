@@ -211,7 +211,12 @@ data class JarngreiprConfig(
         // v51: added JarnDisplayConfig.switchCue, how Jarn FE shows a screen switch (pulse, dim
         //      or tab_mark). Null on older blobs, and import keeps the current value. An
         //      unknown id falls back to pulse.
-        const val CONFIG_VERSION = 51
+        // v52: added UiConfig.appearance (theme, custom themes, OLED, icon shape, tab animation),
+        //      FeatureConfig.rssFeeds, JinglesConfig.enabled and repos, and
+        //      PageConfig.widgetProviders. All null on older blobs, and import keeps current values.
+        //      Feeds, repos and custom themes are only ever added. Restore also clears photo tiles
+        //      whose file is missing and widget tiles whose widget isn't the one backed up.
+        const val CONFIG_VERSION = 52
     }
 }
 
@@ -225,7 +230,9 @@ data class UiConfig(
     val wallpaper: WallpaperConfig = WallpaperConfig(),
     val frontendWallpaper: WallpaperConfig = WallpaperConfig(),
     val searchLayout: SearchLayoutConfig = SearchLayoutConfig(),
-    val customAppNames: Map<String, String> = emptyMap()
+    val customAppNames: Map<String, String> = emptyMap(),
+    /** v52: theme and icon look. Null on pre-v52 exports, and import keeps the current look. */
+    val appearance: AppearanceConfig? = null
 )
 
 @Serializable
@@ -328,7 +335,9 @@ data class PageConfig(
     val homeTabIndex: Int = 0,
     val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap(),
     /** Per-page Unified Canvas layouts, keyed by pageIndex.toString(). */
-    val canvasLayouts: Map<String, CanvasLayout> = emptyMap()
+    val canvasLayouts: Map<String, CanvasLayout> = emptyMap(),
+    /** v52: widget id to provider, so restore can tell a live widget from a reused id. */
+    val widgetProviders: Map<String, String>? = null
 )
 
 @Serializable
@@ -396,7 +405,9 @@ data class FeatureConfig(
     /** v49: Jarn FE tour finished. Null on pre-v49 exports. Import never turns it back off. */
     val jarnFirstRunDone: Boolean? = null,
     /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
-    val jarnMatchCommandPanel: Boolean? = null
+    val jarnMatchCommandPanel: Boolean? = null,
+    /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
+    val rssFeeds: List<RssFeedConfig>? = null
 )
 
 @Serializable
@@ -562,7 +573,11 @@ data class JinglesConfig(
     val isMuted: Boolean = false,
     val volume: Float = 1.0f,
     val regexPriority: Boolean = false,
-    val isNormalizationEnabled: Boolean = false
+    val isNormalizationEnabled: Boolean = false,
+    /** v52: jingles on or off. Null on pre-v52 exports, and import keeps the current value. */
+    val enabled: Boolean? = null,
+    /** v52: GitHub jingle repos. Null on pre-v52 exports. Import only adds missing repos. */
+    val repos: List<String>? = null
 )
 
 @Serializable

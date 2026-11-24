@@ -64,6 +64,7 @@ class LibraryFolderConfigImportTest {
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(ApplicationProvider.getApplicationContext()),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
         )
     }
 
@@ -75,7 +76,7 @@ class LibraryFolderConfigImportTest {
 
     @Test
     fun `schema version includes library folders`() {
-        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(52, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

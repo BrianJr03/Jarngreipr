@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 private val WallpaperMimeTypes = arrayOf("image/*")
 
 @Composable
-internal fun JarnWallpaperSection(showTitle: Boolean = true, initialFocus: FocusRequester? = null) {
+internal fun JarnWallpaperSection(initialFocus: FocusRequester? = null) {
     val context = LocalContext.current
     val source = remember(context) { context.jarnWallpaperSourceOrNull() } ?: return
     val store = remember(context) { context.jarnLookStoreOrNull() }
@@ -36,12 +36,13 @@ internal fun JarnWallpaperSection(showTitle: Boolean = true, initialFocus: Focus
     val hasWallpaper = source.currentUri != null
     val showsLive = JarnLiveWallpapers.fromId(liveId) != null
     val openPicker = rememberWallpaperPicker(source, onApplied = { store?.setLiveWallpaperId(null) })
-    if (showTitle) SettingsSectionTitle(R.string.jarnfe_wallpaper_title)
+    JarnWallpaperPausedNote(hasMovingWallpaper = hasWallpaper || showsLive)
     JarnValueRow(
         label = stringResource(R.string.jarnfe_wallpaper_choose),
         value = stringResource(if (hasWallpaper) R.string.jarnfe_wallpaper_custom else R.string.jarnfe_wallpaper_theme),
         onClick = openPicker,
         modifier = Modifier.fillMaxWidth().then(initialFocus?.let { Modifier.focusRequester(it) } ?: Modifier),
+        supporting = stringResource(R.string.jarnfe_wallpaper_choose_hint),
     )
     store?.let { JarnLiveWallpaperPicker(savedId = liveId, onChoose = it::setLiveWallpaperId) }
     JarnNavigateRow(

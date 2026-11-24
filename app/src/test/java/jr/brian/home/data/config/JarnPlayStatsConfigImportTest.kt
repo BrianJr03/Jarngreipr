@@ -66,6 +66,7 @@ class JarnPlayStatsConfigImportTest {
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = JarnAppPinStore(context),
             playStatsBackup = stats,
+            backupExtras = testBackupExtras(),
         )
     }
 
@@ -77,7 +78,7 @@ class JarnPlayStatsConfigImportTest {
 
     @Test
     fun `schema version includes play stats`() {
-        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(52, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

@@ -2,8 +2,22 @@ package jr.brian.jarnfe.firstrun
 
 import jr.brian.core.model.ArtSource
 import jr.brian.frontend.library.art.ArtSourceStatus
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.input.JarnShoulderPair
+import jr.brian.jarnfe.session.JarnSessionState
+import jr.brian.jarnfe.shell.roleAt
 
 internal enum class JarnFirstRunGesture { Back, Context, SwitchScreen, Tabs, OtherTabs }
+
+/**
+ * The tab lesson whose practice tabs belong on [role]'s screen: L1/R1 on the top screen and L2/R2
+ * on the bottom one. With a single screen the guide stands in for the Deck.
+ */
+internal fun JarnSessionState.practiceTabsStepOn(role: JarnScreen): JarnFirstRunStep? = when {
+    !settingsOnDeck -> JarnFirstRunStep.PressTabs.takeIf { role == JarnScreen.Deck }
+    roleAt(JarnShoulderPair.Top) == role -> JarnFirstRunStep.PressTabs
+    else -> JarnFirstRunStep.PressOtherTabs
+}
 
 /** [needsTwoScreens] steps teach a button that has nothing to act on with a single display. */
 internal enum class JarnFirstRunStep(

@@ -372,6 +372,7 @@ internal fun JarnRssSettingsPanel(
     data: JarnRssData,
     onClearPositions: () -> Unit,
     firstFocus: FocusRequester? = null,
+    clearFocus: FocusRequester? = null,
 ) {
     val flow = remember(data) { data.dateStyle }
     val style by flow.collectAsState(initial = JarnRssDateStyle())
@@ -382,14 +383,20 @@ internal fun JarnRssSettingsPanel(
         modifier = Modifier
             .fillMaxWidth()
             .then(firstFocus?.let { Modifier.focusRequester(it) } ?: Modifier),
+        supporting = stringResource(R.string.jarnfe_rss_settings_day_first_hint),
     )
     JarnToggleRow(
         label = stringResource(R.string.jarnfe_rss_settings_24_hour),
         checked = style.use24Hour,
         onCheckedChange = { data.setDateStyle(style.copy(use24Hour = it)) },
         modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_rss_settings_24_hour_hint),
     )
-    RssSheetRow(R.string.jarnfe_rss_settings_clear, onClearPositions)
+    RssSheetRow(
+        labelRes = R.string.jarnfe_rss_settings_clear,
+        onClick = onClearPositions,
+        modifier = clearFocus?.let { Modifier.focusRequester(it) } ?: Modifier,
+    )
 }
 
 @Composable

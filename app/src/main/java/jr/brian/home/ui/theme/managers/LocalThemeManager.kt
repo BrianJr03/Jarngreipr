@@ -118,28 +118,21 @@ class ThemeManager(private val context: Context) {
         return ColorTheme.fromId(themeId)
     }
 
-    private fun loadCustomThemes(): List<ColorTheme> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val customThemesString = prefs.getString(KEY_CUSTOM_THEMES, "") ?: ""
-
-        if (customThemesString.isEmpty()) return emptyList()
-
-        return customThemesString.split(CUSTOM_THEME_SEPARATOR).mapNotNull { themeData ->
-            try {
-                val parts = themeData.split(CUSTOM_THEME_FIELD_SEPARATOR)
-                if (parts.size >= 5) {
-                    ColorTheme.fromCustomData(
-                        id = parts[0],
-                        name = parts[1],
-                        primaryColorHex = parts[2],
-                        secondaryColorHex = parts[3],
-                        isSolid = parts[4].toBoolean()
-                    )
-                } else null
-            } catch (_: Exception) {
-                null
-            }
+    private fun loadCustomThemes(): List<ColorTheme> =
+        context.readStoredThemes().custom.map { stored ->
+            ColorTheme.fromCustomData(
+                id = stored.id,
+                name = stored.name,
+                primaryColorHex = stored.primaryHex,
+                secondaryColorHex = stored.secondaryHex,
+                isSolid = stored.isSolid
+            )
         }
+
+    /** Picks up themes a restore wrote while this manager was alive. */
+    fun reloadFromStorage() {
+        customThemes.value = loadCustomThemes()
+        currentTheme = loadTheme()
     }
 
     private fun loadPingAutoStart(): Boolean {
@@ -412,13 +405,17 @@ class ThemeManager(private val context: Context) {
     }
 
     private fun saveCustomThemes() {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val customThemesString = customThemes.value.joinToString(CUSTOM_THEME_SEPARATOR) { theme ->
-            val primaryHex = String.format("#%08X", theme.primaryColor.toArgb())
-            val secondaryHex = String.format("#%08X", theme.secondaryColor.toArgb())
-            "${theme.id}$CUSTOM_THEME_FIELD_SEPARATOR${theme.customName}$CUSTOM_THEME_FIELD_SEPARATOR$primaryHex$CUSTOM_THEME_FIELD_SEPARATOR$secondaryHex$CUSTOM_THEME_FIELD_SEPARATOR${theme.isSolid}"
+        val stored = customThemes.value.map { theme ->
+            StoredCustomTheme(
+                id = theme.id,
+                name = theme.customName.orEmpty(),
+                primaryHex = String.format("#%08X", theme.primaryColor.toArgb()),
+                secondaryHex = String.format("#%08X", theme.secondaryColor.toArgb()),
+                isSolid = theme.isSolid
+            )
         }
-        prefs.edit { putString(KEY_CUSTOM_THEMES, customThemesString) }
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit { putString(KEY_CUSTOM_THEMES, encodeStoredCustomThemes(stored)) }
     }
 
     fun setTheme(theme: ColorTheme) {
@@ -476,3 +473,52 @@ val LocalThemeManager =
     compositionLocalOf<ThemeManager> {
         error("ThemeManager not provided")
     }
+
+/** A custom theme exactly as it sits in storage. */
+internal data class StoredCustomTheme(
+    val id: String,
+    val name: String,
+    val primaryHex: String,
+    val secondaryHex: String,
+    val isSolid: Boolean,
+)
+
+/** The saved theme choice and custom themes, read without starting any sharing. */
+internal data class StoredThemes(
+    val selectedId: String?,
+    val custom: List<StoredCustomTheme>,
+)
+
+internal fun parseStoredCustomThemes(raw: String): List<StoredCustomTheme> {
+    if (raw.isEmpty()) return emptyList()
+    return raw.split(CUSTOM_THEME_SEPARATOR).mapNotNull { themeData ->
+        val parts = themeData.split(CUSTOM_THEME_FIELD_SEPARATOR)
+        if (parts.size < 5) return@mapNotNull null
+        StoredCustomTheme(parts[0], parts[1], parts[2], parts[3], parts[4].toBoolean())
+    }
+}
+
+internal fun encodeStoredCustomThemes(themes: List<StoredCustomTheme>): String =
+    themes.joinToString(CUSTOM_THEME_SEPARATOR) { theme ->
+        listOf(theme.id, theme.name, theme.primaryHex, theme.secondaryHex, theme.isSolid.toString())
+            .joinToString(CUSTOM_THEME_FIELD_SEPARATOR)
+    }
+
+/** True when [value] can sit in a stored custom theme without breaking the format. */
+internal fun isStorableThemeText(value: String): Boolean =
+    CUSTOM_THEME_SEPARATOR !in value && CUSTOM_THEME_FIELD_SEPARATOR !in value
+
+internal fun Context.readStoredThemes(): StoredThemes {
+    val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return StoredThemes(
+        selectedId = prefs.getString(KEY_THEME, null),
+        custom = parseStoredCustomThemes(prefs.getString(KEY_CUSTOM_THEMES, "") ?: ""),
+    )
+}
+
+internal fun Context.writeStoredThemes(themes: StoredThemes) {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+        putString(KEY_CUSTOM_THEMES, encodeStoredCustomThemes(themes.custom))
+        themes.selectedId?.let { putString(KEY_THEME, it) }
+    }
+}

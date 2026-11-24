@@ -28,31 +28,63 @@ internal fun JarnDisplaySection() {
     val context = LocalContext.current
     val store = remember(context) { context.jarnLookStoreOrNull() } ?: return
     val display by store.displayState.collectAsState()
-    SettingsSectionTitle(R.string.jarnfe_settings_tiles_title)
-    TileScaleRow(R.string.jarnfe_settings_system_tile_size, display.systemTileScale) { scale ->
-        store.updateDisplay { it.copy(systemTileScale = scale) }
+    TilesGroup(store, display)
+    FeedbackGroup(store, display)
+    if (JarnSession.state.deckDisplayAvailable) TwoScreensGroup(store, display)
+}
+
+@Composable
+private fun TilesGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    SettingsGroup(R.string.jarnfe_settings_tiles_title) {
+        TileScaleRow(R.string.jarnfe_settings_system_tile_size, display.systemTileScale) { scale ->
+            store.updateDisplay { it.copy(systemTileScale = scale) }
+        }
+        TileScaleRow(R.string.jarnfe_settings_game_tile_size, display.gameTileScale) { scale ->
+            store.updateDisplay { it.copy(gameTileScale = scale) }
+        }
     }
-    TileScaleRow(R.string.jarnfe_settings_game_tile_size, display.gameTileScale) { scale ->
-        store.updateDisplay { it.copy(gameTileScale = scale) }
+}
+
+@Composable
+private fun FeedbackGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    SettingsGroup(R.string.jarnfe_settings_feedback_title) {
+        JarnToggleRow(
+            label = stringResource(R.string.jarnfe_settings_show_hints),
+            checked = display.hintsVisible,
+            onCheckedChange = { visible -> store.updateDisplay { it.copy(hintsVisible = visible) } },
+            modifier = Modifier.fillMaxWidth(),
+            supporting = stringResource(R.string.jarnfe_settings_show_hints_hint),
+        )
+        UndoCountdownRow(store, display.undoCountdownVisible)
+        JarnToggleRow(
+            label = stringResource(R.string.jarnfe_settings_haptics),
+            checked = display.buttonHaptics,
+            onCheckedChange = { enabled -> store.updateDisplay { it.copy(buttonHaptics = enabled) } },
+            modifier = Modifier.fillMaxWidth(),
+            supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
+        )
+        ReducedMotionRow(store)
     }
-    SettingsSectionTitle(R.string.jarnfe_settings_controls_title)
+}
+
+@Composable
+private fun TwoScreensGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    SettingsGroup(R.string.jarnfe_settings_two_screens_title) {
+        SwitchCueRow(store, display.switchCue)
+        TapControlRow(store, display.tapControl)
+    }
+}
+
+@Composable
+private fun ReducedMotionRow(store: JarnLookStore) {
+    val reducedMotion by store.reducedMotionState.collectAsState()
     JarnToggleRow(
-        label = stringResource(R.string.jarnfe_settings_show_hints),
-        checked = display.hintsVisible,
-        onCheckedChange = { visible -> store.updateDisplay { it.copy(hintsVisible = visible) } },
+        label = stringResource(R.string.jarnfe_look_reduced_motion),
+        checked = reducedMotion,
+        onCheckedChange = store::setReducedMotion,
         modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_settings_show_hints_hint),
+        supporting = stringResource(R.string.jarnfe_look_reduced_motion_hint),
     )
-    JarnToggleRow(
-        label = stringResource(R.string.jarnfe_settings_haptics),
-        checked = display.buttonHaptics,
-        onCheckedChange = { enabled -> store.updateDisplay { it.copy(buttonHaptics = enabled) } },
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
-    )
-    UndoCountdownRow(store, display.undoCountdownVisible)
-    if (JarnSession.state.deckDisplayAvailable) SwitchCueRow(store, display.switchCue)
-    if (JarnSession.state.deckDisplayAvailable) TapControlRow(store, display.tapControl)
 }
 
 @Composable

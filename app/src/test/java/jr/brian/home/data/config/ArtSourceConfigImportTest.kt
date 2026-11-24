@@ -55,6 +55,7 @@ class ArtSourceConfigImportTest {
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(ApplicationProvider.getApplicationContext()),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
         )
     }
 
@@ -65,7 +66,7 @@ class ArtSourceConfigImportTest {
 
     @Test
     fun `schema version includes the art source field`() {
-        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(52, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

@@ -16,6 +16,7 @@ import jr.brian.home.service.HomeInterceptionKeepAliveService
 import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
+import jr.brian.home.canvas.jarn.JarnTileRemovalRecovery
 import jr.brian.home.jarn.AppJarnAppsData
 import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
@@ -265,6 +266,9 @@ class JarngreiprApplication :
     @Inject
     lateinit var sourcesSyncService: jr.brian.home.data.SourcesSyncService
 
+    @Inject
+    lateinit var tileRemovalRecovery: JarnTileRemovalRecovery
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(hiltWorkerFactory)
@@ -280,6 +284,7 @@ class JarngreiprApplication :
         // the Application.
         screenSwapListener.start()
         sourcesSyncService.start()
+        tileRemovalRecovery.start()
         // Reconcile AYN's Focus Lock to the current screen assignment
         // on boot. No-op without Shizuku or when the toggle is off.
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(

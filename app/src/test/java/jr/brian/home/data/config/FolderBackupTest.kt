@@ -63,6 +63,7 @@ class FolderBackupTest {
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(context),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(context),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
         )
     }
 

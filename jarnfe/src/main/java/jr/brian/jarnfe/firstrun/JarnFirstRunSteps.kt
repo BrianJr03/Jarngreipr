@@ -42,6 +42,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnFolderPicker
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryStatus
@@ -50,6 +51,7 @@ import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
+import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.settings.JarnLookPicker
 import jr.brian.jarnfe.settings.labelRes
 import jr.brian.core.ui.theme.JarnLooks
@@ -259,7 +261,7 @@ private fun FirstRunLesson(step: JarnFirstRunStep, run: JarnFirstRunState, twoSc
     val lesson = lessonFor(step, twoScreens)
     FirstRunHeading(lesson.titleRes, lesson.bodyRes)
     FirstRunKeys(lesson.keys)
-    if (step == JarnFirstRunStep.PressTabs) FirstRunPracticeTabs(run.practiceTab)
+    if (step == JarnSession.state.practiceTabsStepOn(JarnScreen.Deck)) FirstRunPracticeTabs(run.practiceTab)
     if (run.practiced) {
         JarnText(
             text = stringResource(R.string.jarnfe_first_run_nice),
@@ -294,7 +296,7 @@ private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLess
     )
     JarnFirstRunStep.PressTabs -> FirstRunLessonCopy(
         R.string.jarnfe_first_run_tabs_title,
-        R.string.jarnfe_first_run_tabs_body,
+        if (twoScreens) R.string.jarnfe_first_run_tabs_body else R.string.jarnfe_first_run_tabs_body_single,
         listOf(JarnKey.L1, JarnKey.R1),
     )
     JarnFirstRunStep.PressOtherTabs -> FirstRunLessonCopy(
@@ -321,7 +323,10 @@ private fun FirstRunDoneStep(twoScreens: Boolean) {
         listOf(JarnKey.Select),
         if (twoScreens) R.string.jarnfe_first_run_cheat_select else R.string.jarnfe_first_run_cheat_select_single,
     )
-    FirstRunCheatRow(listOf(JarnKey.L1, JarnKey.R1), R.string.jarnfe_first_run_cheat_tabs)
+    FirstRunCheatRow(
+        listOf(JarnKey.L1, JarnKey.R1),
+        if (twoScreens) R.string.jarnfe_first_run_cheat_tabs else R.string.jarnfe_first_run_cheat_tabs_single,
+    )
     if (twoScreens) FirstRunCheatRow(listOf(JarnKey.L2, JarnKey.R2), R.string.jarnfe_first_run_cheat_other_tabs)
 }
 

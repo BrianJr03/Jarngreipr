@@ -80,15 +80,15 @@ class AppJarnCanvasFolders @Inject constructor(
         removeFolderAndTiles(pageIndex, folderId)
     }
 
-    /** The folder goes first, so Classic's folder sync can never put a tile back. */
+    /** The tiles go first, so a process death can't leave one on a missing folder. */
     private suspend fun removeFolderAndTiles(pageIndex: Int, folderId: String) {
-        if (!folders.deleteFolder(pageIndex, folderId, CanvasTabType.VALUE)) {
-            showJarnFolderEditFailed()
-            return
-        }
-        layouts.getLayout(pageIndex).items
+        val folderTiles = layouts.getLayout(pageIndex).items
             .filter { it is CanvasItem.FolderItem && it.folderId == folderId }
-            .forEach { layouts.removeItem(pageIndex, it.id) }
+        if (folderTiles.isNotEmpty()) {
+            tiles.removeAndRelease(pageIndex, folderTiles)
+        } else if (!folders.deleteFolder(pageIndex, folderId, CanvasTabType.VALUE)) {
+            showJarnFolderEditFailed()
+        }
     }
 
     override suspend fun setFolderBackgroundColor(pageIndex: Int, folderId: String, argb: Int?) =

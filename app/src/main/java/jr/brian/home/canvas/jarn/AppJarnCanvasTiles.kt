@@ -95,6 +95,7 @@ class AppJarnCanvasTiles @Inject constructor(
     private val widgetPreferences: WidgetPreferences,
     private val nowPlaying: Provider<NowPlayingManager>,
     private val rss: Provider<RssRepository>,
+    private val removals: JarnTileRemovalJournal,
 ) : JarnCanvasTiles {
 
     /** Shared with page edits, so a tile change can never land on a page that just shifted. */
@@ -193,14 +194,31 @@ class AppJarnCanvasTiles @Inject constructor(
     override suspend fun removeTile(pageIndex: Int, itemId: String) = edit {
         if (!isCanvasPage(pageIndex)) return@edit
         val item = layouts.getLayout(pageIndex).items.firstOrNull { it.id == itemId } ?: return@edit
-        if (item is CanvasItem.FolderItem &&
-            !folders.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+        removeAndRelease(pageIndex, listOf(item))
+    }
+
+    /**
+     * The tiles leave the layout before anything they use is released, and the journal outlives a
+     * process death in between, so no tile is ever left on a missing folder, widget or photo.
+     * Callers hold [edits].
+     */
+    internal suspend fun removeAndRelease(pageIndex: Int, items: List<CanvasItem>) {
+        if (items.isEmpty()) return
+        if (items.any { it is CanvasItem.FolderItem } &&
+            folders.readFolders(pageIndex, CanvasTabType.VALUE) == null
         ) {
             showJarnFolderEditFailed()
-            return@edit
+            return
         }
-        layouts.removeItem(pageIndex, itemId)
-        releaseAfterRemoval(pageIndex, item)
+        val pending = items.map { PendingTileRemoval(pageIndex, it) }
+        removals.record(pending)
+        items.forEach { layouts.removeItem(pageIndex, it.id) }
+        pending.forEach { release(it) }
+    }
+
+    /** Finishes removals a process death cut short. */
+    suspend fun finishPendingRemovals() = edit {
+        removals.pending().forEach { release(it) }
     }
 
     /** Never releases anything: the tile keeps its id, widget and photo on the new page. */
@@ -266,29 +284,40 @@ class AppJarnCanvasTiles @Inject constructor(
     private suspend fun pinOn(pageIndex: Int, key: String) =
         pinnedRoms.getPinnedRoms(pageIndex, CanvasTabType.VALUE).first().firstOrNull { it.key == key }
 
-    /** Runs after the tile is gone, so a failure can never leave a tile on a released resource. */
-    private suspend fun releaseAfterRemoval(pageIndex: Int, item: CanvasItem) {
+    /**
+     * Safe to repeat: releases only what no saved tile or widget page still uses, on any page.
+     * The journal entry stays when the folder store refuses, so the next start tries again.
+     */
+    private suspend fun release(removal: PendingTileRemoval) {
         val saved = layouts.layoutsByPage.value
-        when (item) {
+        val pageIndex = removal.pageIndex
+        val released = when (val item = removal.item) {
+            is CanvasItem.FolderItem ->
+                isFolderReferenced(saved.values, item.folderId) ||
+                    folders.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
             is CanvasItem.RomItem -> {
                 val stillPlaced = saved[pageIndex]?.items.orEmpty()
                     .any { it is CanvasItem.RomItem && it.romKey == item.romKey }
                 if (!stillPlaced) pinnedRoms.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)
+                true
             }
             is CanvasItem.PhotoContainer -> {
                 val uri = item.imageUri
                 if (uri != null && !isPhotoReferenced(saved.values, uri)) {
                     runCatching { ownedPhotoFile(File(context.filesDir, PHOTO_DIR), uri)?.delete() }
                 }
+                true
             }
             is CanvasItem.WidgetItem -> {
                 val widgetPages = widgetPreferences.widgetConfigs.first().map { it.widgetId }
                 if (!isWidgetIdReferenced(saved.values, widgetPages, item.widgetId)) {
                     runCatching { newHost().deleteAppWidgetId(item.widgetId) }
                 }
+                true
             }
-            else -> Unit
+            else -> true
         }
+        if (released) removals.clear(removal)
     }
 
     override suspend fun installedApps(): List<JarnCanvasApp> = withContext(Dispatchers.IO) {

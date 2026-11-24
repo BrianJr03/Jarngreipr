@@ -2,7 +2,7 @@
 <resources>
     <string name="jarnfe_systems_title">Systems</string>
     <string name="jarnfe_systems_manage">Manage systems</string>
-    <string name="jarnfe_systems_manage_hint">Show, hide, add, and customize systems</string>
+    <string name="jarnfe_systems_manage_hint">Show, hide, add and customize systems.</string>
     <string name="jarnfe_systems_manage_one">Manage system</string>
     <string name="jarnfe_systems_loading">Loading systems</string>
     <string name="jarnfe_systems_empty_title">No systems yet</string>

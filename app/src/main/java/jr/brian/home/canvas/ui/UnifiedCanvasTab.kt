@@ -658,6 +658,7 @@ fun UnifiedCanvasTab(
             tabType = CanvasTabType.VALUE,
             backgroundColorArgb = folder.backgroundColorArgb,
             backgroundImagePath = folder.backgroundImagePath,
+            deleteFolder = { viewModel.deleteFolderWithTiles(folder.id) },
             onDismiss = { folderToOpen = null }
         )
     }

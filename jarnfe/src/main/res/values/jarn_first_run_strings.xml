@@ -71,9 +71,10 @@
     <string name="jarnfe_first_run_select_title">Select switches screens</string>
     <string name="jarnfe_first_run_select_body">Press Select to move your controller to the other screen. Try it now.</string>
     <string name="jarnfe_first_run_tabs_title">L1 and R1 change tabs</string>
-    <string name="jarnfe_first_run_tabs_body">Press L1 or R1 to move between tabs on this screen.</string>
-    <string name="jarnfe_first_run_other_tabs_title">L2 and R2 reach across</string>
-    <string name="jarnfe_first_run_other_tabs_body">Press L2 or R2 to change tabs on the other screen without leaving this one.</string>
+    <string name="jarnfe_first_run_tabs_body">Press L1 or R1 to change tabs on the top screen, wherever your controller is.</string>
+    <string name="jarnfe_first_run_tabs_body_single">Press L1 or R1 to move between tabs on this screen.</string>
+    <string name="jarnfe_first_run_other_tabs_title">L2 and R2 change bottom tabs</string>
+    <string name="jarnfe_first_run_other_tabs_body">Press L2 or R2 to change tabs on the bottom screen, wherever your controller is.</string>
 
     <string name="jarnfe_first_run_done_title">You\'re all set</string>
     <string name="jarnfe_first_run_done_body">Here are your buttons. Replay this tour anytime from Settings, General.</string>
@@ -81,6 +82,7 @@
     <string name="jarnfe_first_run_cheat_b">Go back</string>
     <string name="jarnfe_first_run_cheat_select">Switch screens</string>
     <string name="jarnfe_first_run_cheat_select_single">Open the Deck panel</string>
-    <string name="jarnfe_first_run_cheat_tabs">Change tabs</string>
-    <string name="jarnfe_first_run_cheat_other_tabs">Change tabs on the other screen</string>
+    <string name="jarnfe_first_run_cheat_tabs">Change tabs on the top screen</string>
+    <string name="jarnfe_first_run_cheat_tabs_single">Change tabs</string>
+    <string name="jarnfe_first_run_cheat_other_tabs">Change tabs on the bottom screen</string>
 </resources>

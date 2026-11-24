@@ -13,7 +13,8 @@
 #                           screen_focus_lock. The suite still never writes it. See the note below.
 #
 # Safety: never uninstalls, clears data, changes settings, restores, launches a game, or presses A.
-# Keys are limited to D-pad, B, L1, R1, Start and Select, and stop as soon as Jarn FE loses focus.
+# Keys are limited to D-pad, B, L1, R1, L2, R2, Start and Select, and stop as soon as Jarn FE loses
+# focus. L1/R1 step the top screen's tabs and L2/R2 the bottom screen's.
 #
 # Focus Lock note: on a Thor, moving control between screens calls the app's own focus lock sync.
 # In Follow mode (the default) with Shizuku granted, that writes screen_focus_lock. So unless the
@@ -177,12 +178,12 @@ restore_start() {
     key "$KEY_B" && IN_SETTINGS=0
   fi
   if [ -n "$START_DECK_TAB" ] && [ "$HANDOFF_OK" = 1 ] && activate_display "$DECK_DISPLAY"; then
-    step_to_tab "$(index_of "$START_DECK_TAB" "${DECK_TABS[@]}")" "${#DECK_TABS[@]}"
+    step_to_tab "$(index_of "$START_DECK_TAB" "${DECK_TABS[@]}")" "${#DECK_TABS[@]}" "$DECK_DISPLAY"
   elif [ "$DECK_TAB_MOVED" = 1 ]; then
     echo "  info  starting Deck tab could not be read, so it was not restored"
   fi
   if [ -n "$START_LIBRARY_TAB" ] && activate_display "$STAGE_DISPLAY"; then
-    step_to_tab "$(index_of "$START_LIBRARY_TAB" "${LIBRARY_TABS[@]}")" "${#LIBRARY_TABS[@]}"
+    step_to_tab "$(index_of "$START_LIBRARY_TAB" "${LIBRARY_TABS[@]}")" "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY"
   fi
   if [ -n "$START_DISPLAY" ] && [ "$(top_display)" != "$START_DISPLAY" ]; then
     key "$KEY_SELECT" && wait_top_display "$START_DISPLAY"
@@ -230,4 +231,5 @@ main() {
   summary
 }
 
-main "$@"
+# Other scripts source this file for its helpers, so main only runs when it is executed.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main "$@"; fi

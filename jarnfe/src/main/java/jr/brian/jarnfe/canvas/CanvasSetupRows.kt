@@ -103,7 +103,7 @@ internal fun CanvasWallpaperSheet(onBack: () -> Unit) {
                 .padding(vertical = JarnTheme.space.focusEdge),
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         ) {
-            JarnWallpaperSection(showTitle = false, initialFocus = first)
+            JarnWallpaperSection(initialFocus = first)
         }
     }
 }

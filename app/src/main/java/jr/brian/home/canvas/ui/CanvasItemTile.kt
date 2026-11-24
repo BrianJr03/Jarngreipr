@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.VideogameAsset
-import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -461,26 +460,7 @@ private fun CanvasWidgetTile(
                     )
                 }
             } else {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Widgets,
-                        contentDescription = stringResource(R.string.canvas_widget_placeholder_description),
-                        tint = ThemePrimaryColor,
-                        modifier = Modifier.size(36.dp)
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.canvas_widget_id_label, widgetId),
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 10.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                CanvasWidgetPlaceholder(widgetId = widgetId, unavailable = providerInfo == null)
             }
         }
     }

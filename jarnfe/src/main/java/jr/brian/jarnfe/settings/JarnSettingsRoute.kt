@@ -178,7 +178,7 @@ private fun SettingsSectionPage(
                 .focusGroup()
                 .verticalScroll(scroll)
                 .padding(horizontal = horizontalMargin, vertical = JarnTheme.space.focusEdge),
-            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
+            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         ) { content() }
     }
 }
@@ -195,7 +195,7 @@ private fun SettingsSectionContent(
         SettingsSection.Art -> JarnArtSection(data)
         SettingsSection.Look -> {
             JarnLookSection()
-            JarnWallpaperSection()
+            SettingsGroup(R.string.jarnfe_wallpaper_title) { JarnWallpaperSection() }
         }
         SettingsSection.Display -> JarnDisplaySection()
         SettingsSection.Apps -> JarnAppsSettingsSection(actions)
@@ -208,12 +208,6 @@ private fun SettingsSectionContent(
 private fun LibrarySettings(setup: LibrarySetup) {
     GameFoldersSection(setup)
     JarnSystemsSection(onOpen = ::openSystemManager)
-    JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_settings_refresh),
-        onClick = ::refreshLibrary,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_settings_refresh_hint),
-    )
 }
 
 private fun refreshLibrary() {
@@ -239,14 +233,26 @@ internal fun SettingsSectionTitle(@StringRes titleRes: Int) {
 @Composable
 private fun GameFoldersSection(setup: LibrarySetup) {
     val folders by setup.folders.collectAsState()
-    SettingsSectionTitle(R.string.jarnfe_folders_title)
+    SettingsGroup(R.string.jarnfe_folders_title) {
+        JarnNavigateRow(
+            label = stringResource(R.string.jarnfe_setup_add_folder),
+            onClick = { JarnFolderPicker.open?.invoke(null) },
+            modifier = Modifier.fillMaxWidth(),
+            supporting = stringResource(R.string.jarnfe_folders_add_hint),
+        )
+        RefreshLibraryRow()
+        folders.forEach { folder -> GameFolderRow(folder) }
+    }
+}
+
+@Composable
+private fun RefreshLibraryRow() {
     JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_setup_add_folder),
-        onClick = { JarnFolderPicker.open?.invoke(null) },
+        label = stringResource(R.string.jarnfe_settings_refresh),
+        onClick = ::refreshLibrary,
         modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_folders_add_hint),
+        supporting = stringResource(R.string.jarnfe_settings_refresh_hint),
     )
-    folders.forEach { folder -> GameFolderRow(folder) }
 }
 
 /** Only a folder that lost access has an action. The rest stay focusable to read. */
