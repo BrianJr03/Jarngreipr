@@ -22,9 +22,9 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     systemNamesVisible = systemNamesVisible,
     randomVisible = randomVisible,
     lastPlayedVisible = lastPlayedVisible,
-    systemArtVisible = systemArtVisible,
+    systemLogoVisible = systemLogoVisible,
     gameCountVisible = gameCountVisible,
-    recentShelfVisible = recentShelfVisible,
+    lastPlayedTextVisible = lastPlayedTextVisible,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -42,7 +42,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     systemNamesVisible = systemNamesVisible ?: current.systemNamesVisible,
     randomVisible = randomVisible ?: current.randomVisible,
     lastPlayedVisible = lastPlayedVisible ?: current.lastPlayedVisible,
-    systemArtVisible = systemArtVisible ?: current.systemArtVisible,
+    systemLogoVisible = systemLogoVisible ?: current.systemLogoVisible,
     gameCountVisible = gameCountVisible ?: current.gameCountVisible,
-    recentShelfVisible = recentShelfVisible ?: current.recentShelfVisible,
+    lastPlayedTextVisible = lastPlayedTextVisible ?: current.lastPlayedTextVisible,
 )

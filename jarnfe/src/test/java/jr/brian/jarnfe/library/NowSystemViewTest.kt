@@ -65,6 +65,7 @@ class NowSystemViewTest {
     private fun showWithHeader(
         actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {}),
         parts: NowSystemParts = NowSystemParts(),
+        shown: JarnLibrarySystem = system,
     ): () -> FocusManager {
         lateinit var focusManager: FocusManager
         rule.setContent {
@@ -78,7 +79,7 @@ class NowSystemViewTest {
                         }
                         if (showSystem) {
                             NowSystemContent(
-                                system = system,
+                                system = shown,
                                 shelf = shelf,
                                 isLoaded = true,
                                 actions = actions,
@@ -95,39 +96,69 @@ class NowSystemViewTest {
         return { focusManager }
     }
 
+    private val played = system.copy(lastPlayedAtMs = 1_764_000_000_000L)
+
+    private fun showPlate(parts: NowSystemParts): () -> FocusManager =
+        showWithHeader(parts = parts, shown = played)
+
+    private fun assertShelfStays(focusManager: () -> FocusManager) {
+        rule.onNodeWithText("Recently played").assertExists()
+        rule.onNodeWithContentDescription("one").assertIsFocused()
+        move(focusManager(), FocusDirection.Up)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+    }
+
     @Test
-    fun `hiding the game count drops the stats line and nothing else`() {
-        showWithHeader(parts = NowSystemParts(showsStats = false))
+    fun `everything shows by default`() {
+        showPlate(NowSystemParts())
+        rule.onNodeWithText("SNES").assertExists()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+    }
+
+    @Test
+    fun `hiding the logo keeps the count and last played`() {
+        val focusManager = showPlate(NowSystemParts(showsLogo = false))
+        rule.onNodeWithText("SNES").assertDoesNotExist()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+        assertShelfStays(focusManager)
+    }
+
+    @Test
+    fun `hiding the game count leaves last played on the line alone`() {
+        val focusManager = showPlate(NowSystemParts(showsCount = false))
         rule.onNodeWithText("games").assertDoesNotExist()
         rule.onNodeWithText("SNES").assertExists()
-        rule.onNodeWithContentDescription("one").assertIsFocused()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+        assertShelfStays(focusManager)
     }
 
     @Test
-    fun `hiding the shelf leaves no covers, and focus starts on the header shortcut`() {
-        val focusManager = showWithHeader(parts = NowSystemParts(showsShelf = false))
-        rule.onNodeWithContentDescription("one").assertDoesNotExist()
-        rule.onNodeWithText("Recently played", substring = true).assertDoesNotExist()
-        rule.onNodeWithContentDescription("Random").assertIsFocused()
-        move(focusManager(), FocusDirection.Down)
-        rule.onNodeWithContentDescription("Random").assertIsFocused()
+    fun `hiding last played leaves the count on the line alone`() {
+        val focusManager = showPlate(NowSystemParts(showsLastPlayed = false))
+        rule.onNodeWithText("Last played", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("SNES").assertExists()
+        assertShelfStays(focusManager)
     }
 
     @Test
-    fun `hiding the shelf and both shortcuts leaves nothing to focus`() {
-        showWithHeader(NowSystemActions(null, null, {}, {}), NowSystemParts(showsShelf = false))
-        rule.onNodeWithContentDescription("one").assertDoesNotExist()
-        rule.onNodeWithTag(NOW_SHORTCUTS_TAG).assertDoesNotExist()
-        rule.onAllNodes(isFocused()).assertCountEquals(0)
+    fun `with all three hidden the plate is gone and the shelf still leads`() {
+        val focusManager = showPlate(NowSystemParts(showsLogo = false, showsCount = false, showsLastPlayed = false))
+        rule.onNodeWithText("SNES").assertDoesNotExist()
+        rule.onNodeWithText("games").assertDoesNotExist()
+        rule.onNodeWithText("Last played", substring = true).assertDoesNotExist()
+        assertShelfStays(focusManager)
     }
 
     @Test
-    fun `hiding system art hides the art and the cover wall only on a system`() {
-        val snes = LibrarySelection.System(system)
-        assertTrue(nowShowsWall(snes, showsSystemArt = true))
-        assertFalse(nowShowsWall(snes, showsSystemArt = false))
-        assertTrue(nowShowsWall(LibrarySelection.Game(games[0]), showsSystemArt = false))
-        assertFalse(nowShowsWall(LibrarySelection.None, showsSystemArt = true))
+    fun `the plate is skipped only when nothing in it is left`() {
+        val none = NowSystemParts(showsLogo = false, showsCount = false, showsLastPlayed = false)
+        assertFalse(nowPlateHasContent(played, none))
+        assertTrue(nowPlateHasContent(played.copy(favoriteCount = 2), none))
+        assertTrue(nowPlateHasContent(played, none.copy(showsLastPlayed = true)))
+        assertFalse(nowPlateHasContent(system, none.copy(showsLastPlayed = true)))
     }
 
     @Test

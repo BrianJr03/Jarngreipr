@@ -56,13 +56,6 @@ internal class NowSystemFocus {
     val coverEntry: FocusRequester
         get() = coverEntryFor(shelfIds) ?: FocusRequester.Default
 
-    /** The header shortcut to enter on when the view has no shelf, or null when none is shown. */
-    fun shortcutEntryFor(buttons: List<NowFocusTarget>): FocusRequester? = when (buttons.firstOrNull()) {
-        NowFocusTarget.Random -> random
-        NowFocusTarget.LastPlayed -> lastPlayed
-        else -> null
-    }
-
     /** The cover to enter on for [ids], usable before [shelfIds] catches up on the first frame. */
     fun coverEntryFor(ids: List<String>): FocusRequester? = nowShelfEntryId(ids, lastCoverId)?.let(::cover)
 

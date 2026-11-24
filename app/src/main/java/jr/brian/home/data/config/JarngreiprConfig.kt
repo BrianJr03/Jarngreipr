@@ -226,7 +226,7 @@ data class JarngreiprConfig(
         //      blobs; import only raises the count and only turns tried on.
         // v58: added JarnDisplayConfig.randomVisible and lastPlayedVisible, Jarn FE "Show Random" and
         //      "Show Last Played" on Now. Null on older blobs, and import keeps the current value.
-        // v59: added JarnDisplayConfig.systemArtVisible, gameCountVisible and recentShelfVisible,
+        // v59: added JarnDisplayConfig.systemLogoVisible, gameCountVisible and lastPlayedTextVisible,
         //      the optional parts of Jarn FE Now's system view. Null on older blobs keeps them.
         const val CONFIG_VERSION = 59
     }
@@ -457,9 +457,9 @@ data class JarnDisplayConfig(
     val systemNamesVisible: Boolean? = null,
     val randomVisible: Boolean? = null,
     val lastPlayedVisible: Boolean? = null,
-    val systemArtVisible: Boolean? = null,
+    val systemLogoVisible: Boolean? = null,
     val gameCountVisible: Boolean? = null,
-    val recentShelfVisible: Boolean? = null,
+    val lastPlayedTextVisible: Boolean? = null,
 )
 
 @Serializable

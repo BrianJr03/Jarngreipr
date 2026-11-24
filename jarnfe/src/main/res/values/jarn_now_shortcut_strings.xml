@@ -7,10 +7,10 @@
     <string name="jarnfe_settings_show_last_played">Show Last Played</string>
     <string name="jarnfe_settings_show_last_played_hint">A button on a system\'s Now page that goes to the game you played there last.</string>
     <string name="jarnfe_settings_now_page_title">Now page</string>
-    <string name="jarnfe_settings_show_system_art">Show system art</string>
-    <string name="jarnfe_settings_show_system_art_hint">The platform art behind a system\'s Now page. Off leaves the theme background.</string>
+    <string name="jarnfe_settings_show_system_logo">Show system logo</string>
+    <string name="jarnfe_settings_show_system_logo_hint">The system\'s logo at the top of its Now page.</string>
     <string name="jarnfe_settings_show_game_count">Show game count</string>
-    <string name="jarnfe_settings_show_game_count_hint">The game count and play stats under the system\'s name.</string>
-    <string name="jarnfe_settings_show_recent_shelf">Show last played</string>
-    <string name="jarnfe_settings_show_recent_shelf_hint">The row of recently played games on a system\'s Now page. The Last Played button has its own switch above.</string>
+    <string name="jarnfe_settings_show_game_count_hint">How many games the system has, under its logo.</string>
+    <string name="jarnfe_settings_show_last_played_text">Show last played</string>
+    <string name="jarnfe_settings_show_last_played_text_hint">The date you last played the system, under its logo. The Last Played button has its own switch above.</string>
 </resources>

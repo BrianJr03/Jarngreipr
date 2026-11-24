@@ -61,17 +61,17 @@ private fun NowPageGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             R.string.jarnfe_settings_show_last_played_hint,
             display.lastPlayedVisible,
         ) { show -> store.updateDisplay { it.copy(lastPlayedVisible = show) } }
-        NowPartRow(R.string.jarnfe_settings_show_system_art, R.string.jarnfe_settings_show_system_art_hint, display.systemArtVisible) { show ->
-            store.updateDisplay { it.copy(systemArtVisible = show) }
+        NowPartRow(R.string.jarnfe_settings_show_system_logo, R.string.jarnfe_settings_show_system_logo_hint, display.systemLogoVisible) { show ->
+            store.updateDisplay { it.copy(systemLogoVisible = show) }
         }
         NowPartRow(R.string.jarnfe_settings_show_game_count, R.string.jarnfe_settings_show_game_count_hint, display.gameCountVisible) { show ->
             store.updateDisplay { it.copy(gameCountVisible = show) }
         }
         NowPartRow(
-            R.string.jarnfe_settings_show_recent_shelf,
-            R.string.jarnfe_settings_show_recent_shelf_hint,
-            display.recentShelfVisible,
-        ) { show -> store.updateDisplay { it.copy(recentShelfVisible = show) } }
+            R.string.jarnfe_settings_show_last_played_text,
+            R.string.jarnfe_settings_show_last_played_text_hint,
+            display.lastPlayedTextVisible,
+        ) { show -> store.updateDisplay { it.copy(lastPlayedTextVisible = show) } }
     }
 }
 
