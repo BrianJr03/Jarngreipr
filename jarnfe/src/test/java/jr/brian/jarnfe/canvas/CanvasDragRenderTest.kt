@@ -123,7 +123,6 @@ class CanvasDragRenderTest {
                     onCellSize = {},
                     onVisibleCells = {},
                     onTileClick = { _, _ -> },
-                    onMenuClick = {},
                 ) { item ->
                     SideEffect { counts[item.id] = (counts[item.id] ?: 0) + 1 }
                     Box(Modifier.size(1.dp))
@@ -158,7 +157,6 @@ class CanvasDragRenderTest {
                     onCellSize = {},
                     onVisibleCells = {},
                     onTileClick = { _, _ -> },
-                    onMenuClick = {},
                 ) { Box(Modifier.size(1.dp)) }
             }
         }
@@ -231,6 +229,5 @@ class CanvasDragRenderTest {
         assertTrue(!glide.isGliding)
     }
 
-    private val requesters = rects.keys.associateWith { FocusRequester() } +
-        (CANVAS_MENU_FOCUS_ID to FocusRequester())
+    private val requesters = rects.keys.associateWith { FocusRequester() }
 }

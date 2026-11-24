@@ -75,7 +75,7 @@ internal fun canvasPagePush(
 ): CanvasPagePush {
     val placements = page?.takeIf { it.kind == JarnCanvasPageKind.Canvas }?.layout?.activeArrangement.orEmpty()
     val reserved = page?.takeIf { it.kind == JarnCanvasPageKind.Canvas }?.let { reservedRectsForActive(it.layout) }.orEmpty()
-    val focused = placements[focusedId] ?: reserved.firstOrNull()?.takeIf { focusedId == CANVAS_MENU_FOCUS_ID }
+    val focused = placements[focusedId]
     val pushTo: (Int) -> (() -> Unit)? = push@{ direction ->
         val current = page ?: return@push null
         val rect = focused ?: return@push null

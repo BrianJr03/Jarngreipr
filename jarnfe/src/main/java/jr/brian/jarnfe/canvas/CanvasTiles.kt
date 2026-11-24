@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -284,14 +283,4 @@ private fun LastPlayedRow(game: JarnCanvasRom, scale: ContentScale) {
         ) { CanvasImage(game.artPath, game.title, scale) }
         JarnText(game.title, JarnTheme.type.caption, JarnTheme.colors.textHigh, maxLines = 1)
     }
-}
-
-@Composable
-internal fun BoxScope.CanvasMenuTileContent() {
-    Box(Modifier.fillMaxSize()) { LabelTile(stringResource(R.string.jarnfe_canvas_menu_tile)) }
-}
-
-@Composable
-internal fun BoxScope.CanvasLockedCellContent() {
-    LabelTile(stringResource(R.string.jarnfe_canvas_cell_locked))
 }

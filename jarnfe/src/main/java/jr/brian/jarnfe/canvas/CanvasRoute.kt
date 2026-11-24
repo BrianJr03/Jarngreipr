@@ -26,7 +26,6 @@ import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
-import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
@@ -357,7 +356,7 @@ private fun CanvasPageSurface(
     }
 
     val focusTarget = page?.takeIf { it.kind != JarnCanvasPageKind.Rss }
-        ?.let { canvasFocusTarget(it, lastFocused, editor.editing) }
+        ?.let { canvasFocusTarget(it, lastFocused) }
     val tabsFocus = LocalJarnTabsFocus.current
     LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing) {
         if (focusTarget == null || sheetOpen || !isActive) return@LaunchedEffect
@@ -471,7 +470,6 @@ private fun CanvasPageSurface(
                         onCellSize = { cellPx = it },
                         onVisibleCells = editor::reportVisibleCells,
                         onTileClick = tapTile,
-                        onMenuClick = onOptions,
                     ) { item ->
                         if (item is CanvasItem.WidgetItem) {
                             CanvasWidgetTile(
@@ -572,15 +570,12 @@ private fun JarnCanvasPage?.visiblePlacements(editor: CanvasEditor): Map<String,
 private fun minSpansFor(data: JarnCanvasData, item: CanvasItem, cellPx: Float): Pair<Int, Int> =
     if (item is CanvasItem.WidgetItem) data.widgetMinSpans(item.widgetId, cellPx) else 1 to 1
 
-private fun canvasFocusTarget(page: JarnCanvasPage, last: String?, editing: Boolean): String? {
+private fun canvasFocusTarget(page: JarnCanvasPage, last: String?): String? {
     val placements = page.layout.activeArrangement
     val ids = page.layout.items.map { it.id }.filter { it in placements }
-    val hasMenu = !editing && reservedRectsForActive(page.layout).isNotEmpty()
     return when {
         last != null && last in ids -> last
-        last == CANVAS_MENU_FOCUS_ID && hasMenu -> last
         ids.isNotEmpty() -> ids.minWith(compareBy({ placements.getValue(it).row }, { placements.getValue(it).col }))
-        hasMenu -> CANVAS_MENU_FOCUS_ID
         else -> null
     }
 }

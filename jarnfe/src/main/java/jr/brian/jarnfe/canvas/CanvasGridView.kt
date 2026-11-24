@@ -61,7 +61,6 @@ private const val GRABBED_Z_INDEX = 1f
 private const val GHOST_Z_INDEX = 0.5f
 private const val RAISED_Z_INDEX = GHOST_Z_INDEX / 2f
 
-internal const val CANVAS_MENU_FOCUS_ID = "jarnfe-canvas-menu"
 
 /** Classic's cell layout, with outer padding that keeps a focused tile clear of the edges. */
 private data class CanvasMetrics(val cell: Dp, val width: Dp, val height: Dp) {
@@ -118,7 +117,6 @@ internal fun CanvasGrid(
     onCellSize: (Float) -> Unit,
     onVisibleCells: (Int) -> Unit,
     onTileClick: (CanvasItem, cellSizePx: Float) -> Unit,
-    onMenuClick: () -> Unit,
     tileContent: @Composable BoxScope.(CanvasItem) -> Unit,
 ) {
     val layout = page.layout
@@ -189,20 +187,6 @@ internal fun CanvasGrid(
                 held.home.rect.takeIf { !held.isAwayFromHome && it != held.rect }?.let { homeRect ->
                     CanvasSlot(homeRect, metrics, grabbed = false) { CanvasHomeGhost() }
                 }
-            }
-            if (menuRect != null && !editing) {
-                CanvasSlot(menuRect, metrics, grabbed = false) {
-                    CanvasTileFrame(
-                        requester = focusRequesterFor(CANVAS_MENU_FOCUS_ID),
-                        editing = false,
-                        grabbed = false,
-                        onFocused = { onFocused(CANVAS_MENU_FOCUS_ID) },
-                        onClick = onMenuClick,
-                    ) { CanvasMenuTileContent() }
-                }
-            }
-            if (menuRect != null && editing) {
-                CanvasSlot(menuRect, metrics, grabbed = false) { CanvasLockedCell() }
             }
             if (ghostRect != null) {
                 CanvasSlot(ghostRect, metrics, grabbed = false, restingZ = GHOST_Z_INDEX) { CanvasDragGhost() }
@@ -299,18 +283,6 @@ private fun CanvasSlot(
             .bringIntoViewRequester(bringIntoView),
         content = content,
     )
-}
-
-/** Not focusable or clickable, so neither the cursor nor a press can stop on it. */
-@Composable
-private fun CanvasLockedCell() {
-    val shape = JarnTheme.tileShape
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clip(shape)
-            .border(EditOutlineWidth, JarnTheme.colors.line, shape),
-    ) { CanvasLockedCellContent() }
 }
 
 @Composable
