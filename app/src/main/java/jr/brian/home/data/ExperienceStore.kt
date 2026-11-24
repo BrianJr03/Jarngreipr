@@ -29,9 +29,22 @@ class ExperienceStore @Inject constructor(
     val storedExperience: Experience?
         get() = prefs.getString(KEY_EXPERIENCE, null)?.let(Experience::fromNameOrDefault)
 
+    private val _everJarnFe = MutableStateFlow(
+        prefs.getBoolean(KEY_EVER_JARN_FE, false) || storedExperience == Experience.JarnFE,
+    )
+
+    /** True once JarnFE was ever saved here, even when Classic was picked again later. */
+    val everJarnFeState: StateFlow<Boolean> = _everJarnFe.asStateFlow()
+    val everJarnFe: Boolean get() = _everJarnFe.value
+
     fun setExperience(experience: Experience) {
         _state.value = experience
-        prefs.edit { putString(KEY_EXPERIENCE, experience.name) }
+        val isJarnFe = experience == Experience.JarnFE
+        if (isJarnFe) _everJarnFe.value = true
+        prefs.edit {
+            putString(KEY_EXPERIENCE, experience.name)
+            if (isJarnFe) putBoolean(KEY_EVER_JARN_FE, true)
+        }
     }
 
     /** Records a default that was actually opened, so backups report the real experience. */
@@ -45,5 +58,6 @@ class ExperienceStore @Inject constructor(
     private companion object {
         const val PREFS_NAME = "experience_prefs"
         const val KEY_EXPERIENCE = "experience"
+        const val KEY_EVER_JARN_FE = "ever_jarn_fe"
     }
 }

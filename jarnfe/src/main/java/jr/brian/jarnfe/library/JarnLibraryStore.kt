@@ -61,6 +61,18 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         stageRefocus += 1
     }
 
+    /** Set when the Continue playing card should take focus once it is on screen. */
+    var heroFocusPending by mutableStateOf(false)
+        private set
+
+    fun requestHeroFocus() {
+        heroFocusPending = true
+    }
+
+    fun consumeHeroFocus() {
+        heroFocusPending = false
+    }
+
     private val openSystemId = MutableStateFlow<String?>(null)
     private val retries = MutableStateFlow(0)
     private var restoreConsumed = false

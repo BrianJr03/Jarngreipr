@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_esde_roms_row">No games yet</string>
+    <string name="jarnfe_esde_roms_use">Use your ES-DE ROMs folder</string>
+    <string name="jarnfe_esde_roms_skip">Skip, I just use apps</string>
+    <string name="jarnfe_esde_roms_notice_title">Find your ROMs folder</string>
+    <string name="jarnfe_esde_roms_notice_message">Jarn will read ES-DE\'s settings to find your ROMs folder. This needs file access.</string>
+    <string name="jarnfe_esde_roms_notice_continue">Continue</string>
+    <string name="jarnfe_esde_roms_notice_cancel">Cancel</string>
+</resources>

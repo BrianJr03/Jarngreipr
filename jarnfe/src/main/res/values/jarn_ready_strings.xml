@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_ready_title">Welcome to Jarn. Your setup came with you.</string>
+    <string name="jarnfe_ready_screens">Games on top, what you can do with them below.</string>
+    <string name="jarnfe_ready_screens_single">Your games fill this screen. The Deck opens as a panel.</string>
+    <string name="jarnfe_ready_art_from">Art from %1$s</string>
+    <string name="jarnfe_ready_art_none">No art yet. Your games still work.</string>
+    <plurals name="jarnfe_ready_favorites">
+        <item quantity="one">%1$d favorite</item>
+        <item quantity="other">%1$d favorites</item>
+    </plurals>
+    <string name="jarnfe_ready_canvas">Your canvas pages and widgets</string>
+    <string name="jarnfe_ready_no_games">Jarn hasn\'t found your games yet.</string>
+    <string name="jarnfe_ready_skip_apps">Skip, I just use apps</string>
+    <string name="jarnfe_ready_switch_back">Switch back to Classic anytime in Settings, General.</string>
+    <string name="jarnfe_ready_show_buttons">Show me the buttons</string>
+    <string name="jarnfe_ready_done">Done</string>
+</resources>

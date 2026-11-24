@@ -190,6 +190,8 @@ dependencies {
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+    testImplementation(composeBom)
+    testImplementation(libs.androidx.ui.test.junit4)
 
     // Android testing dependencies
     androidTestImplementation(libs.kotlinx.coroutines.test)

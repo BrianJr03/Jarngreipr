@@ -54,6 +54,7 @@ class JarnFirstRunConfigImportTest {
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(context),
             playStatsBackup = mockk(relaxed = true),
             backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 

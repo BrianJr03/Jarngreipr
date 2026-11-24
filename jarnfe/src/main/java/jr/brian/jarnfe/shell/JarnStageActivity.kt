@@ -8,6 +8,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
+import jr.brian.jarnfe.firstrun.JarnEsdeRomsReadyRow
+import jr.brian.jarnfe.firstrun.JarnReadyRows
+import jr.brian.jarnfe.firstrun.READY_ROW_GAMES_FOLDER
+import jr.brian.jarnfe.home.JarnHomeReadyRowSource
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.launch.JarnGameActionsController
@@ -53,6 +57,8 @@ class JarnStageActivity : JarnScreenActivity() {
         JarnDeckWatch.attach(deckRecovery)
         connectPlay()
         connectFolderPicker()
+        JarnHomeReadyRowSource.register()
+        JarnReadyRows.register(READY_ROW_GAMES_FOLDER, JarnEsdeRomsReadyRow)
         getSystemService(DisplayManager::class.java)
             .registerDisplayListener(displayListener, mainHandler)
     }

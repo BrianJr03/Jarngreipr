@@ -236,6 +236,7 @@ private fun FirstRunStageCaption(step: JarnFirstRunStep, run: JarnFirstRunState,
 private fun stageTitleRes(step: JarnFirstRunStep, practiceStep: JarnFirstRunStep?): Int = when (step) {
     practiceStep -> R.string.jarnfe_first_run_stage_other_tabs
     JarnFirstRunStep.Welcome -> R.string.jarnfe_first_run_stage_welcome
+    JarnFirstRunStep.Ready -> R.string.jarnfe_ready_title
     JarnFirstRunStep.Library -> R.string.jarnfe_first_run_library_title
     JarnFirstRunStep.Media -> R.string.jarnfe_first_run_media_title
     JarnFirstRunStep.Look -> R.string.jarnfe_first_run_look_title

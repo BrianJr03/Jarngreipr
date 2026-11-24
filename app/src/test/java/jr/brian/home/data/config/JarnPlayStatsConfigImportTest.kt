@@ -67,6 +67,7 @@ class JarnPlayStatsConfigImportTest {
             appPinStore = JarnAppPinStore(context),
             playStatsBackup = stats,
             backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 

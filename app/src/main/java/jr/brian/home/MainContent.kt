@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,6 +52,9 @@ import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
 import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
+import jr.brian.home.ui.meetjarn.MeetJarnDialog
+import jr.brian.home.ui.meetjarn.openIfDue
+import jr.brian.home.ui.meetjarn.rememberMeetJarnState
 import jr.brian.home.ui.navigation.appDockSettingsScreen
 import jr.brian.home.ui.navigation.appSearchScreen
 import jr.brian.home.ui.navigation.backButtonShortcutScreen
@@ -92,6 +96,7 @@ import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,9 +156,10 @@ fun MainContent(
     val updateDialogState = rememberDialogState<UpdateInfo>()
     val whatsNewDialogState = rememberDialogState<Unit>()
     val notificationAccessDialogState = rememberDialogState<Unit>()
+    val meetJarn = rememberMeetJarnState()
     var currentVersionName by remember { mutableStateOf("") }
 
-    val isAnyDialogVisible = whatsNewDialogState.isVisible ||
+    val isAnyDialogVisible = meetJarn.isOpen || whatsNewDialogState.isVisible ||
             updateDialogState.isVisible ||
             notificationAccessDialogState.isVisible
     val isAnyOverlayVisible = isNotOnLauncher || isAnyDialogVisible || isAnyLauncherSheetVisible
@@ -191,12 +197,14 @@ fun MainContent(
         ).versionName ?: "Unknown"
 
         currentVersionName = versionName
+        meetJarn.openIfDue(context, versionName)
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
         val update = UpdateChecker.checkForUpdate(
             currentVersionName = versionName,
             includePrereleases = appUpdateManager.rcNotificationsEnabled
         )
+        snapshotFlow { meetJarn.isOpen }.first { !it }
         if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)
         ) {
             updateDialogState.show(update)
@@ -209,8 +217,8 @@ fun MainContent(
         }
     }
 
-    LaunchedEffect(shouldShowWhatsNew) {
-        if (shouldShowWhatsNew) {
+    LaunchedEffect(shouldShowWhatsNew, meetJarn.isOpen) {
+        if (shouldShowWhatsNew && !meetJarn.isOpen) {
             whatsNewDialogState.show()
         }
     }
@@ -529,6 +537,8 @@ fun MainContent(
             }
         }
 
+        MeetJarnDialog(meetJarn, onTried = { whatsNewManager.markWhatsNewAsSeen(currentVersionName) })
+
         if (whatsNewDialogState.isVisible) {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val versionName = packageInfo.versionName ?: "Unknown"
@@ -546,6 +556,7 @@ fun MainContent(
                 WhatsNewDialog(
                     versionName = versionName,
                     patchNotes = notes,
+                    showJarnCard = !meetJarn.declinedAtLaunch,
                     onDismiss = {
                         whatsNewManager.markWhatsNewAsSeen(versionName)
                         whatsNewDialogState.dismiss()

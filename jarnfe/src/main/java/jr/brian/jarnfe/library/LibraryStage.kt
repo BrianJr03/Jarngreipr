@@ -12,9 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -250,11 +254,19 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
     val status = rememberGameFileStatus(game)
     val screen = LocalJarnScreen.current
     val missing = status == JarnGameFileStatus.Missing
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(JarnLibrary.heroFocusPending) {
+        if (!JarnLibrary.heroFocusPending) return@LaunchedEffect
+        withFrameNanos { }
+        runCatching { focus.requestFocus() }
+        JarnLibrary.consumeHeroFocus()
+    }
     JarnHeroPanel(
         eyebrow = stringResource(R.string.jarnfe_library_continue_playing),
         title = heroTitle(game.title),
         body = if (missing) stringResource(R.string.jarnfe_resume_file_missing) else playSummary(game.metadata),
         modifier = Modifier
+            .focusRequester(focus)
             .onFocusChanged { onFocusChange(it.isFocused) }
             .fillMaxWidth()
             .height(HeroHeight),
