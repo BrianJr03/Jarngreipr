@@ -2,7 +2,9 @@ package jr.brian.jarnfe.library
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnKey
 import jr.brian.core.ui.components.JarnKeyCap
@@ -83,7 +86,9 @@ private fun LibrarySystems(
     emptyActions: @Composable () -> Unit,
 ) {
     val state = library.state
-    val cellMinSize = SystemCellMinSize * rememberJarnDisplay().systemTileScale
+    val display = rememberJarnDisplay()
+    val cellMinSize = SystemCellMinSize * display.systemTileScale
+    val onFocused: (String) -> Unit = { id -> library.update { focusSystem(id) } }
     LibraryFeedContent(
         feed = state.systems,
         cellMinSize = cellMinSize,
@@ -91,31 +96,101 @@ private fun LibrarySystems(
         onRetry = library::retry,
         empty = { LibraryEmptyMessage(systemsEmptyCopy(state.systems.hiddenCount), emptyActions) },
     ) {
-        LibraryFocusGrid(
-            items = state.systems.items,
-            itemKey = JarnLibrarySystem::id,
-            focusedKey = state.focusedSystem?.id,
-            onFocused = { id -> library.update { focusSystem(id) } },
-            cellMinSize = cellMinSize,
-            header = state.hero?.let { hero ->
-                {
-                    LibraryHeroBanner(
-                        hero = hero,
-                        onPlay = library::play.takeIf { library.canPlay },
-                        onFocusChange = { library.heroFocused = it },
-                    )
-                }
-            },
-        ) { system, modifier ->
-            JarnSystemTile(
-                title = system.title,
-                subtitle = gameCountText(system.gameCount),
-                onClick = { onOpenSystem(system.id) },
-                modifier = modifier.fillMaxWidth(),
-            ) { LibrarySystemArt(system) }
-        }
+        LibraryBrowseSwitch(
+            view = display.systemView,
+            grid = { LibrarySystemGrid(library, cellMinSize, onFocused, onOpenSystem) },
+            shelf = { LibrarySystemShelf(library, onFocused, onOpenSystem) },
+        )
     }
 }
+
+/**
+ * The Continue playing card stays above the shelf, as it does above the grid. Up from the shelf
+ * reaches it and Down returns to the centered system. There is no card until something is played.
+ */
+@Composable
+internal fun LibrarySystemShelf(
+    library: JarnLibraryStore,
+    onFocused: (String) -> Unit,
+    onOpenSystem: (String) -> Unit,
+) {
+    val state = library.state
+    Column(Modifier.fillMaxSize()) {
+        (state.hero as? LibraryHero.ContinuePlaying)?.let { hero ->
+            Box(
+                Modifier.padding(
+                    start = JarnTheme.space.stageMargin,
+                    end = JarnTheme.space.stageMargin,
+                    top = JarnTheme.space.focusEdge,
+                ),
+            ) {
+                LibraryHeroBanner(
+                    hero = hero,
+                    onPlay = library::play.takeIf { library.canPlay },
+                    onFocusChange = { library.heroFocused = it },
+                )
+            }
+        }
+        LibraryShelf(
+            items = state.systems.items,
+            kind = LibraryShelfKind.Systems,
+            content = systemShelfContent(onOpenSystem),
+            focusedKey = state.focusedSystem?.id,
+            onFocused = onFocused,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun LibrarySystemGrid(
+    library: JarnLibraryStore,
+    cellMinSize: Dp,
+    onFocused: (String) -> Unit,
+    onOpenSystem: (String) -> Unit,
+) {
+    val state = library.state
+    LibraryFocusGrid(
+        items = state.systems.items,
+        itemKey = JarnLibrarySystem::id,
+        focusedKey = state.focusedSystem?.id,
+        onFocused = onFocused,
+        cellMinSize = cellMinSize,
+        header = state.hero?.let { hero ->
+            {
+                LibraryHeroBanner(
+                    hero = hero,
+                    onPlay = library::play.takeIf { library.canPlay },
+                    onFocusChange = { library.heroFocused = it },
+                )
+            }
+        },
+    ) { system, modifier ->
+        JarnSystemTile(
+            title = system.title,
+            subtitle = gameCountText(system.gameCount),
+            onClick = { onOpenSystem(system.id) },
+            modifier = modifier.librarySystemAnchor(system.id).fillMaxWidth(),
+        ) { LibrarySystemArt(system) }
+    }
+}
+
+private fun systemShelfContent(onOpenSystem: (String) -> Unit) = LibraryShelfContent<JarnLibrarySystem>(
+    itemKey = JarnLibrarySystem::id,
+    itemTitle = JarnLibrarySystem::title,
+    onOpen = { onOpenSystem(it.id) },
+    itemModifier = { Modifier.librarySystemAnchor(it.id) },
+    caption = { gameCountText(it.gameCount) },
+    art = { LibrarySystemArt(it) },
+)
+
+private fun gameShelfContent(library: JarnLibraryStore) = LibraryShelfContent<JarnLibraryGame>(
+    itemKey = JarnLibraryGame::id,
+    itemTitle = JarnLibraryGame::title,
+    onOpen = library::play,
+    caption = { playSummary(it.metadata) },
+    art = { LibraryCoverArt(it) },
+)
 
 private fun systemsEmptyCopy(hiddenCount: Int) = if (hiddenCount > 0) {
     LibraryEmptyCopy(R.string.jarnfe_library_hidden_systems_title, R.string.jarnfe_library_hidden_systems_message)
@@ -183,7 +258,8 @@ private fun LibraryGames(
     library: JarnLibraryStore,
     empty: @Composable () -> Unit,
 ) {
-    val cellMinSize = GameCellMinSize * rememberJarnDisplay().gameTileScale
+    val display = rememberJarnDisplay()
+    val cellMinSize = GameCellMinSize * display.gameTileScale
     LibraryFeedContent(
         feed = feed,
         cellMinSize = cellMinSize,
@@ -191,35 +267,58 @@ private fun LibraryGames(
         onRetry = library::retry,
         empty = empty,
     ) {
-        LibraryFocusGrid(
-            items = feed.items,
-            itemKey = JarnLibraryGame::id,
-            focusedKey = focusedKey,
-            onFocused = onFocused,
-            cellMinSize = cellMinSize,
-            refocusSignal = library.stageRefocus,
-        ) { game, modifier ->
-            JarnGameTile(
-                title = game.title,
-                onClick = { library.play(game) },
-                modifier = modifier.fillMaxWidth(),
-            ) { LibraryCoverArt(game) }
-        }
+        LibraryBrowseSwitch(
+            view = display.gameView,
+            grid = {
+                LibraryFocusGrid(
+                    items = feed.items,
+                    itemKey = JarnLibraryGame::id,
+                    focusedKey = focusedKey,
+                    onFocused = onFocused,
+                    cellMinSize = cellMinSize,
+                    refocusSignal = library.stageRefocus,
+                ) { game, modifier ->
+                    JarnGameTile(
+                        title = game.title,
+                        onClick = { library.play(game) },
+                        modifier = modifier.fillMaxWidth(),
+                    ) { LibraryCoverArt(game) }
+                }
+            },
+            shelf = {
+                LibraryShelf(
+                    items = feed.items,
+                    kind = LibraryShelfKind.Games,
+                    content = gameShelfContent(library),
+                    focusedKey = focusedKey,
+                    onFocused = onFocused,
+                    refocusSignal = library.stageRefocus,
+                )
+            },
+        )
     }
 }
 
 @Composable
 internal fun LibraryGameList(library: JarnLibraryStore) {
-    val state = library.state
-    JarnSystemSlide(state.openSystemId) {
-        LibraryGames(
-            feed = state.openGames,
-            focusedKey = state.focusedOpenGame?.id,
-            onFocused = { id -> library.update { focusOpenGame(id) } },
-            library = library,
-            empty = { LibraryEmptyMessage(gamesEmptyCopy(state.openGames.hiddenCount)) },
-        )
+    JarnSystemSlide(library.state.openSystemId) { systemId ->
+        LibrarySystemGames(library, systemId)
     }
+}
+
+/** Reads [systemId]'s own games, so a list sliding out during a system step keeps its contents. */
+@Composable
+private fun LibrarySystemGames(library: JarnLibraryStore, systemId: String?) {
+    val state = library.state
+    val feed = systemId?.let(state.gamesBySystem::get) ?: JarnLibraryFeed()
+    val focusedId = systemId?.let(state.focusedGameBySystem::get)
+    LibraryGames(
+        feed = feed,
+        focusedKey = feed.items.firstOrNull { it.id == focusedId }?.id ?: feed.items.firstOrNull()?.id,
+        onFocused = { id -> if (library.state.openSystemId == systemId) library.update { focusOpenGame(id) } },
+        library = library,
+        empty = { LibraryEmptyMessage(gamesEmptyCopy(feed.hiddenCount)) },
+    )
 }
 
 @Composable
