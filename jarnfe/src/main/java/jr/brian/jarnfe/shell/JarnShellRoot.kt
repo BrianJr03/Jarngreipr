@@ -1,6 +1,9 @@
 package jr.brian.jarnfe.shell
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.deck.DeckScreen
 import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
@@ -23,10 +26,13 @@ internal fun JarnShellRoot(screen: JarnScreen) {
     ) {
         ProvideJarnInput(JarnInput, screen) {
             val firstRun = rememberJarnFirstRun(state.stageRoute)
-            when {
-                firstRun?.coversShell(state.stageRoute) == true -> JarnFirstRunScreen(screen, state, firstRun)
-                screen == JarnScreen.Stage -> StageScreen(state)
-                else -> DeckScreen(state)
+            Box(Modifier.fillMaxSize()) {
+                when {
+                    firstRun?.coversShell(state.stageRoute) == true -> JarnFirstRunScreen(screen, state, firstRun)
+                    screen == JarnScreen.Stage -> StageScreen(state)
+                    else -> DeckScreen(state)
+                }
+                JarnScreenSwitchSweep(screen, state)
             }
         }
     }
