@@ -62,10 +62,15 @@ private const val MEET_JARN_HERO_SHARE = 0.55f
 private const val MEET_JARN_EYEBROW_TINT = 0.45f
 internal const val MEET_JARN_TRY_TAG = "meet_jarn_try"
 internal const val MEET_JARN_NOT_NOW_TAG = "meet_jarn_not_now"
+internal const val MEET_JARN_CLOSE_TAG = "meet_jarn_close"
+
+/** [Offer] asks a Classic player to try Jarn. [Replay] shows the same screen to someone already in Jarn. */
+enum class MeetJarnMode { Offer, Replay }
 
 /**
  * Meet Jarn in Classic's own design: the hero on the left, the pitch and the two buttons on the
- * right (stacked on narrow screens). Try Jarn takes focus first, and B means Not now.
+ * right (stacked on narrow screens). Try Jarn takes focus first, and B means Not now. In
+ * [MeetJarnMode.Replay] the buttons become a single Close, which B also presses.
  */
 @Composable
 fun MeetJarnScreen(
@@ -74,6 +79,7 @@ fun MeetJarnScreen(
     onTry: () -> Unit,
     onNotNow: () -> Unit,
     modifier: Modifier = Modifier,
+    mode: MeetJarnMode = MeetJarnMode.Offer,
 ) {
     BackHandler(onBack = onNotNow)
     BoxWithConstraints(
@@ -93,7 +99,7 @@ fun MeetJarnScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 MeetJarnHero(content, Modifier.weight(MEET_JARN_HERO_SHARE))
-                MeetJarnCopy(content, colors, onTry, onNotNow, Modifier.weight(1f - MEET_JARN_HERO_SHARE))
+                MeetJarnCopy(content, colors, mode, onTry, onNotNow, Modifier.weight(1f - MEET_JARN_HERO_SHARE))
             }
         } else {
             Column(
@@ -101,7 +107,7 @@ fun MeetJarnScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 MeetJarnHero(content)
-                MeetJarnCopy(content, colors, onTry, onNotNow)
+                MeetJarnCopy(content, colors, mode, onTry, onNotNow)
             }
         }
     }
@@ -111,6 +117,7 @@ fun MeetJarnScreen(
 private fun MeetJarnCopy(
     content: MeetJarnContent,
     colors: MeetJarnColors,
+    mode: MeetJarnMode,
     onTry: () -> Unit,
     onNotNow: () -> Unit,
     modifier: Modifier = Modifier,
@@ -134,11 +141,31 @@ private fun MeetJarnCopy(
             color = Color.White.copy(alpha = 0.8f),
         )
         MeetJarnPoints(content, colors.primary)
-        MeetJarnButtons(colors, onTry, onNotNow)
-        Text(
-            text = stringResource(R.string.meet_jarn_footnote),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.6f),
+        when (mode) {
+            MeetJarnMode.Offer -> {
+                MeetJarnButtons(colors, onTry, onNotNow)
+                Text(
+                    text = stringResource(R.string.meet_jarn_footnote),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.6f),
+                )
+            }
+            MeetJarnMode.Replay -> MeetJarnCloseButton(colors, onNotNow)
+        }
+    }
+}
+
+@Composable
+private fun MeetJarnCloseButton(colors: MeetJarnColors, onClose: () -> Unit) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    Row(Modifier.fillMaxWidth()) {
+        MeetJarnButton(
+            label = stringResource(R.string.common_close),
+            container = colors.primary,
+            onClick = onClose,
+            modifier = Modifier.focusRequester(focus).testTag(MEET_JARN_CLOSE_TAG),
+            weight = 1f,
         )
     }
 }
