@@ -17,6 +17,7 @@
 - Button hints along the bottom show what each button does on that screen
 - Choose which screen keeps the controller after you tap one
 - A subtle cue shows which screen you just moved to, with a choice of Pulse, Screen dim or Tab mark
+- A light vibration on every move and button press, which follows the Button vibration setting
 
 **Library and Browsing**
 - Browse Systems, Favorites and Recent on the top screen
@@ -35,7 +36,9 @@
 - The bottom screen shows big art, stats and recently played games for whatever you highlight
 - Resume poster gets you back into the game you were playing
 - Random and Last Played buttons, each can be turned off in Settings
-- Optional system logo, game count and last played date
+- Optional system logo, game count and last played text
+- Option to hide the row of games on a system's Now page
+- Game cards line up along the bottom, and are bigger when Now is on the top screen
 - A cover wall fills in for systems with little art
 - Play count and play time are tracked for games launched from Jarn
 
