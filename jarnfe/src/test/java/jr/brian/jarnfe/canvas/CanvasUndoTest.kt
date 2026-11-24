@@ -223,4 +223,9 @@ class CanvasUndoTest {
         val grown = before + ("a" to GridRect(0, 0, 2, 1))
         assertEquals(CanvasUndoKind.Resized, canvasUndoKind("a", before, grown))
     }
+
+    @Test
+    fun `only a plain move stays quiet`() {
+        assertEquals(listOf(CanvasUndoKind.Moved), CanvasUndoKind.entries.filterNot { it.showsToast })
+    }
 }

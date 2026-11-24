@@ -53,9 +53,13 @@ internal fun CanvasUndoExits(undo: CanvasUndoController) {
     }
 }
 
+/** Moving is routine, so it stays quiet. Y still undoes it during the window. */
+internal val CanvasUndoKind.showsToast: Boolean get() = this != CanvasUndoKind.Moved
+
 /** The button is never a focus stop. A controller undoes with Y, shown in the hint bar. */
 @Composable
 internal fun CanvasUndoToast(entry: CanvasUndoEntry, onUndo: () -> Unit, modifier: Modifier = Modifier) {
+    if (!entry.kind.showsToast) return
     JarnSurface(modifier = modifier.widthIn(max = UndoToastMaxWidth)) {
         Column {
             Row(
