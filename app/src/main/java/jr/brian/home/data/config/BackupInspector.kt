@@ -214,6 +214,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             gameView = it.gameView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.gameView,
             pageTransition = it.pageTransition?.let { id -> JarnPageTransition.fromId(id).id } ?: shown?.pageTransition,
             systemNamesVisible = it.systemNamesVisible ?: shown?.systemNamesVisible,
+            randomVisible = it.randomVisible ?: shown?.randomVisible,
+            lastPlayedVisible = it.lastPlayedVisible ?: shown?.lastPlayedVisible,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

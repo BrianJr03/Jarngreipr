@@ -94,19 +94,33 @@ internal fun <T : Any> LibraryShelf(
     onFocused: (String) -> Unit,
     modifier: Modifier = Modifier,
     refocusSignal: Int = 0,
+    jump: LibraryJump? = null,
+    onLanded: (String) -> Unit = {},
 ) {
     if (items.isEmpty()) return
     var chosenKey by remember { mutableStateOf(focusedKey) }
     var fast by remember { mutableStateOf(false) }
+    var spinning by remember { mutableStateOf(false) }
+    val landing = remember { LibraryJumpLanding() }
     var badgeTick by remember { mutableIntStateOf(0) }
     val center = shelfCenterIndex(items, content.itemKey, chosenKey, focusedKey)
     val centerKey = content.itemKey(items[center])
     val requesters = remember { HashMap<String, FocusRequester>() }
     fun requesterFor(key: String) = requesters.getOrPut(key) { FocusRequester() }
 
-    ShelfFollowsLibrary(focusedKey, items, content.itemKey, fast) { chosenKey = it }
-    ShelfReportsFocus(centerKey, fast, onFocused)
-    ShelfTakesFocus(centerKey, refocusSignal) { requesterFor(centerKey) }
+    ShelfFollowsLibrary(focusedKey, items, content.itemKey, fast || spinning) { chosenKey = it }
+    ShelfReportsFocus(centerKey, fast, spinning, onFocused)
+    ShelfTakesFocus(centerKey, refocusSignal, spinning) { requesterFor(centerKey) }
+    LibraryShelfJump(
+        jump = jump,
+        center = center,
+        targetIndex = items.indexOfFirst { content.itemKey(it) == jump?.gameId },
+        size = items.size,
+        landing = landing,
+        stepTo = { index -> chosenKey = content.itemKey(items[index]) },
+        setSpinning = { spinning = it },
+        onLanded = onLanded,
+    )
 
     var swipeStepPx by remember { mutableFloatStateOf(0f) }
 
@@ -125,6 +139,7 @@ internal fun <T : Any> LibraryShelf(
     BoxWithConstraints(
         modifier
             .fillMaxSize()
+            .libraryJumpStopper(landing)
             .onPreviewKeyEvent(onKey)
             .shelfSwipe({ swipeStepPx }) { delta -> latestStep(delta) }
             .focusProperties { onEnter = { requesterFor(centerKey).requestFocus() } }
@@ -228,9 +243,10 @@ private fun <T> ShelfFollowsLibrary(
 }
 
 @Composable
-private fun ShelfReportsFocus(centerKey: String, fast: Boolean, onFocused: (String) -> Unit) {
+private fun ShelfReportsFocus(centerKey: String, fast: Boolean, spinning: Boolean, onFocused: (String) -> Unit) {
     val report by rememberUpdatedState(onFocused)
-    LaunchedEffect(centerKey, fast) {
+    LaunchedEffect(centerKey, fast, spinning) {
+        if (spinning) return@LaunchedEffect
         if (fast) delay(SHELF_SETTLE_MS)
         report(centerKey)
     }
@@ -238,10 +254,11 @@ private fun ShelfReportsFocus(centerKey: String, fast: Boolean, onFocused: (Stri
 
 /** Leaves a user on the tab row where they are, as the grid does, except right after a tab switch. */
 @Composable
-private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, requester: () -> FocusRequester) {
+private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, spinning: Boolean, requester: () -> FocusRequester) {
     val tabsFocus = LocalJarnTabsFocus.current
     val gate = LocalLibraryRevealGate.current
-    LaunchedEffect(centerKey, refocusSignal) {
+    LaunchedEffect(centerKey, refocusSignal, spinning) {
+        if (spinning) return@LaunchedEffect
         withFrameNanos { }
         gate.whenOpen { (gate.forcing || !tabsFocus.hasFocus) && requester().requestFocus() }
     }

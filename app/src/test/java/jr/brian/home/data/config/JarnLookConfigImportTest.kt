@@ -505,8 +505,43 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `Now shortcut choices survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(randomVisible = false, lastPlayedVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(randomVisible = true, lastPlayedVisible = true) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertFalse(reloaded.randomVisible)
+        assertFalse(reloaded.lastPlayedVisible)
+    }
+
+    @Test
+    fun `an older backup leaves the Now shortcut choices alone`() = runTest {
+        store.updateDisplay { it.copy(randomVisible = false, lastPlayedVisible = true) }
+        val v56 = """{ "version": 56, "feature": { "jarnDisplay": { "systemNamesVisible": false } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v56.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.randomVisible)
+        assertTrue(store.display.lastPlayedVisible)
+        assertFalse(store.display.systemNamesVisible)
+    }
+
+    @Test
+    fun `Now shortcuts default to shown`() {
+        assertTrue(store.display.randomVisible)
+        assertTrue(store.display.lastPlayedVisible)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(56, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(58, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

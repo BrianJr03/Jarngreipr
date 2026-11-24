@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="jarnfe_now_browse_games">
-        <item quantity="one">Browse %1$d game</item>
-        <item quantity="other">Browse %1$d games</item>
-    </plurals>
     <plurals name="jarnfe_now_stat_games">
         <item quantity="one">game</item>
         <item quantity="other">games</item>
@@ -25,8 +21,6 @@
     <string name="jarnfe_now_not_played">Not played yet</string>
     <string name="jarnfe_now_empty_message">Add a game folder or show hidden games in Manage system.</string>
 
-    <string name="jarnfe_now_hint_browse">Browse</string>
-    <string name="jarnfe_now_hint_manage">Manage</string>
     <string name="jarnfe_now_hint_details">Details</string>
     <string name="jarnfe_now_hint_back_to_system">Back to system</string>
 </resources>

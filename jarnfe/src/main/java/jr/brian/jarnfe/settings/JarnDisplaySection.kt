@@ -45,7 +45,32 @@ private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             store.updateDisplay { it.copy(gameView = it.gameView.next()) }
         }
         SystemNamesRow(store, display.systemNamesVisible)
+        NowShortcutRow(R.string.jarnfe_settings_show_random, R.string.jarnfe_settings_show_random_hint, display.randomVisible) { show ->
+            store.updateDisplay { it.copy(randomVisible = show) }
+        }
+        NowShortcutRow(
+            R.string.jarnfe_settings_show_last_played,
+            R.string.jarnfe_settings_show_last_played_hint,
+            display.lastPlayedVisible,
+        ) { show -> store.updateDisplay { it.copy(lastPlayedVisible = show) } }
     }
+}
+
+/** A button shown on Now's system view, on by default. */
+@Composable
+private fun NowShortcutRow(
+    @StringRes labelRes: Int,
+    @StringRes hintRes: Int,
+    visible: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    JarnToggleRow(
+        label = stringResource(labelRes),
+        checked = visible,
+        onCheckedChange = onChange,
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(hintRes),
+    )
 }
 
 @Composable
