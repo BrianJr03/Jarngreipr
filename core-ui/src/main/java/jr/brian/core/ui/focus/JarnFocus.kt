@@ -40,6 +40,7 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -322,7 +323,9 @@ private class JarnFocusNode(
     }
 
     private fun animateFocus(focused: Boolean) {
+        val arrived = focused && !isFocused
         isFocused = focused
+        if (arrived) JarnHaptics.onFocusArrived(currentValueOf(LocalView))
         if (focused) notePulseOnFocus()
         updateFloat(focused)
         val motion = currentValueOf(LocalJarnMotion)

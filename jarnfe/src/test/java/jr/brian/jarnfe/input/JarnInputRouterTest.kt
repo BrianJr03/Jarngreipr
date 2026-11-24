@@ -39,9 +39,9 @@ class JarnInputRouterTest {
         on(action, R.string.jarnfe_hint_confirm) { log += name }
 
     @Test
-    fun `hinted button reports one press and ignores its repeat`() {
+    fun `a button that acts reports one press and ignores its repeat`() {
         var presses = 0
-        router.onHintPressed = { presses++ }
+        router.onButtonPressed = { presses++ }
         layer { logs(JarnAction.Context, "context") }
 
         down(KeyEvent.KEYCODE_BUTTON_SELECT)
@@ -52,13 +52,60 @@ class JarnInputRouterTest {
     }
 
     @Test
-    fun `button without a hint reports nothing`() {
+    fun `an unhinted binding such as l1 tabs still reports its press`() {
         var presses = 0
-        router.onHintPressed = { presses++ }
+        router.onButtonPressed = { presses++ }
+        layer { on(JarnAction.TabNext) { log += "tab" } }
+
+        tap(KeyEvent.KEYCODE_BUTTON_R1)
+
+        assertEquals(1, presses)
+        assertEquals(listOf("tab"), log)
+    }
+
+    @Test
+    fun `a button that does nothing reports nothing`() {
+        var presses = 0
+        router.onButtonPressed = { presses++ }
 
         tap(KeyEvent.KEYCODE_BUTTON_SELECT)
 
         assertEquals(0, presses)
+    }
+
+    @Test
+    fun `every d-pad press and repeat arms navigation and never counts as a button`() {
+        var directions = 0
+        var buttons = 0
+        router.onDirectionPressed = { directions++ }
+        router.onButtonPressed = { buttons++ }
+
+        down(KeyEvent.KEYCODE_DPAD_RIGHT)
+        down(KeyEvent.KEYCODE_DPAD_RIGHT, time = 50, repeat = 1)
+        down(KeyEvent.KEYCODE_DPAD_RIGHT, time = 100, repeat = 2)
+        up(KeyEvent.KEYCODE_DPAD_RIGHT, time = 120)
+
+        assertEquals(3, directions)
+        assertEquals(0, buttons)
+    }
+
+    @Test
+    fun `holding x to swap reports one press`() {
+        var presses = 0
+        router.setGlobalBindings(
+            jarnBindings {
+                on(JarnAction.SwitchScreen) { log += "switch" }
+                on(JarnAction.Swap) { log += "swap" }
+            },
+        )
+        router.onButtonPressed = { presses++ }
+
+        down(KeyEvent.KEYCODE_BUTTON_X)
+        down(KeyEvent.KEYCODE_BUTTON_X, time = JARN_LONG_PRESS_MS + 10, repeat = 1)
+        up(KeyEvent.KEYCODE_BUTTON_X, time = JARN_LONG_PRESS_MS + 50)
+
+        assertEquals(listOf("swap"), log)
+        assertEquals(2, presses)
     }
 
     @Test

@@ -5,7 +5,6 @@ import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.view.Display
-import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -21,6 +20,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.Lifecycle
+import jr.brian.core.ui.focus.JarnHaptics
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.audio.JarnAudio
 import jr.brian.jarnfe.input.JarnScreen
@@ -46,16 +46,14 @@ abstract class JarnScreenActivity : ComponentActivity() {
     protected var closingDeliberately = false
 
     private var swap: JarnScreenSwap? = null
-    private val buttonHaptic: () -> Unit = {
-        if (jarnLookStoreOrNull()?.display?.buttonHaptics != false) {
-            window.decorView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-        }
-    }
+    private val buttonHaptic: () -> Unit = { JarnHaptics.tick(window.decorView) }
 
     protected open fun canHostOnCurrentDisplay(): Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val app = applicationContext
+        JarnHaptics.isEnabled = { app.jarnLookStoreOrNull()?.display?.buttonHaptics != false }
         if (savedInstanceState != null) JarnSplash.finish() else JarnSplash.armDeadline()
         JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION), rememberedDeckTab())
         JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
@@ -157,7 +155,8 @@ abstract class JarnScreenActivity : ComponentActivity() {
             return true
         }
         if (JarnDeckWatch.consumeSwitchScreen(event)) return true
-        JarnInput.onHintPressed = buttonHaptic
+        JarnInput.onButtonPressed = buttonHaptic
+        JarnInput.onDirectionPressed = JarnHaptics::armNavigation
         if (JarnInput.dispatch(event)) return true
         val target = activeWindowFor(event)
         return if (target == null || target === this) {

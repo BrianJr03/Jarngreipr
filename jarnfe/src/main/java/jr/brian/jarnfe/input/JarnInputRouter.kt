@@ -61,8 +61,15 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private val presses = HashMap<Int, Press>()
     private var nextSequence = 0L
 
-    /** Runs once per physical press of a button the active screen's hint bar shows. */
-    var onHintPressed: (() -> Unit)? = null
+    /**
+     * Runs once per physical press of a button that does something (a binding, a focused item's A,
+     * or the hold X swap). Its repeats and duplicates never run it. D-pad presses use
+     * [onDirectionPressed] instead, since only a move that lands should be felt.
+     */
+    var onButtonPressed: (() -> Unit)? = null
+
+    /** Runs for every D-pad press and repeat, whatever handles it. */
+    var onDirectionPressed: (() -> Unit)? = null
 
     fun activate(screen: JarnScreen) {
         activeScreen = screen
@@ -188,10 +195,11 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         val isDuplicate = presses.any { (code, press) ->
             code != input.keyCode && press.action == action && press.route != Route.PassThrough
         }
-        if (!isDuplicate && action.hintKey != null && hintLabel(activeScreen, action) != null) {
-            onHintPressed?.invoke()
-        }
         val route = if (isDuplicate) Route.Swallow else resolve(action)
+        when {
+            action.isDirection -> onDirectionPressed?.invoke()
+            route != Route.Swallow -> onButtonPressed?.invoke()
+        }
         val press = Press(action, route, input.eventTimeMs)
         presses[input.keyCode] = press
         if (route == Route.PassThrough) return false
@@ -205,6 +213,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
 
     private fun onKeyRepeat(input: JarnKeyInput): Boolean {
         val press = presses[input.keyCode] ?: return true
+        if (press.action.isDirection) onDirectionPressed?.invoke()
         if (press.route == Route.PassThrough) return false
         if (press.firesHeldAction(input)) return true
         val binding = press.binding() ?: return true
@@ -285,7 +294,10 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
             if (fired || !isLong(input) || binding()?.onLongPress != null) return false
             fired = true
             val route = resolve(held) as? Route.Bound
-            route?.layer?.entries?.get(held)?.onPress?.invoke()
+            route?.layer?.entries?.get(held)?.onPress?.let { swap ->
+                onButtonPressed?.invoke()
+                swap()
+            }
             return true
         }
     }
