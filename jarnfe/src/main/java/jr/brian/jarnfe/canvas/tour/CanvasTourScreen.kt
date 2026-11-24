@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,8 +28,6 @@ import jr.brian.core.ui.components.JarnStepper
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.canvas.CanvasStageBoard
-import jr.brian.jarnfe.canvas.CanvasStageStatus
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -38,11 +35,11 @@ import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.session.JarnSession
 import kotlinx.coroutines.delay
 
-private const val PRACTICE_PAUSE_MS = 650L
+private const val PRACTICE_PAUSE_MS = 900L
 private val SideBySideMinWidth = 560.dp
 
 @Composable
-internal fun CanvasTourScreen(tour: CanvasTourController, isActive: Boolean) {
+internal fun CanvasTourScreen(tour: CanvasTourController) {
     val run = tour.state ?: return
     LaunchedEffect(run.step, run.practiced) {
         if (run.practiced) {
@@ -50,11 +47,7 @@ internal fun CanvasTourScreen(tour: CanvasTourController, isActive: Boolean) {
             tour.advanceFrom(run.step)
         }
     }
-    val stageStatus = run.stageStatus().takeIf { isActive }
-    LaunchedEffect(stageStatus) { CanvasStageBoard.status = stageStatus }
-    DisposableEffect(Unit) {
-        onDispose { CanvasStageBoard.status = null }
-    }
+    val twoScreens = JarnSession.state.deckDisplayAvailable
     JarnInputLayer(mode = JarnLayerMode.Capture, bindings = { canvasTourBindings(run, tour) }) {
         Column(
             modifier = Modifier
@@ -63,25 +56,28 @@ internal fun CanvasTourScreen(tour: CanvasTourController, isActive: Boolean) {
                 .padding(JarnTheme.space.deckMargin),
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
         ) {
-            CanvasTourProgress(run)
-            CanvasTourBody(run, Modifier.weight(1f).fillMaxWidth())
+            if (twoScreens) {
+                CanvasTourDeckBoard(run, Modifier.weight(1f).fillMaxWidth())
+            } else {
+                CanvasTourProgress(run)
+                CanvasTourBody(run, Modifier.weight(1f).fillMaxWidth())
+            }
             CanvasTourButtons(run, tour)
         }
     }
 }
 
-private fun CanvasTourState.stageStatus(): CanvasStageStatus? {
-    val holding = mode == CanvasTourMode.Holding
-    if (!holding && mode != CanvasTourMode.Arranging) return null
-    return CanvasStageStatus(
-        tileName = null,
-        tileNameRes = R.string.jarnfe_canvas_tour_tile_game,
-        colSpan = game.rect.colSpan,
-        rowSpan = game.rect.rowSpan,
-        pageNumber = game.page + 1,
-        pageCount = CANVAS_TOUR_PAGES,
-        holding = holding,
-    )
+@Composable
+private fun CanvasTourDeckBoard(run: CanvasTourState, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+        JarnText(
+            text = stringResource(lessonFor(run.step).titleRes),
+            style = JarnTheme.type.heading,
+            color = JarnTheme.colors.textHigh,
+            maxLines = 1,
+        )
+        CanvasTourBoard(run, Modifier.weight(1f).fillMaxWidth())
+    }
 }
 
 private fun JarnBindingsBuilder.canvasTourBindings(run: CanvasTourState, tour: CanvasTourController) {
@@ -117,7 +113,7 @@ private fun primaryLabelRes(run: CanvasTourState): Int? = when {
 }
 
 @Composable
-private fun CanvasTourProgress(run: CanvasTourState) {
+internal fun CanvasTourProgress(run: CanvasTourState) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,19 +167,11 @@ private fun CanvasTourLesson(run: CanvasTourState, modifier: Modifier) {
         )
         JarnText(stringResource(lesson.bodyRes), JarnTheme.type.body, JarnTheme.colors.textMid)
         if (lesson.keys.isNotEmpty()) CanvasTourKeys(lesson.keys)
-        if (run.practiced) {
-            JarnText(
-                text = stringResource(R.string.jarnfe_first_run_nice),
-                style = JarnTheme.type.labelStrong,
-                color = JarnTheme.colors.success,
-                maxLines = 1,
-            )
-        }
     }
 }
 
 @Composable
-private fun CanvasTourKeys(keys: List<JarnKey>) {
+internal fun CanvasTourKeys(keys: List<JarnKey>) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         verticalAlignment = Alignment.CenterVertically,
@@ -243,13 +231,13 @@ private fun CanvasTourButton(
     }
 }
 
-private class CanvasTourLessonCopy(
+internal class CanvasTourLessonCopy(
     @param:StringRes val titleRes: Int,
     @param:StringRes val bodyRes: Int,
     val keys: List<JarnKey> = emptyList(),
 )
 
-private fun lessonFor(step: CanvasTourStep): CanvasTourLessonCopy = when (step) {
+internal fun lessonFor(step: CanvasTourStep): CanvasTourLessonCopy = when (step) {
     CanvasTourStep.Intro -> CanvasTourLessonCopy(
         R.string.jarnfe_canvas_tour_intro_title,
         R.string.jarnfe_canvas_tour_intro_body,

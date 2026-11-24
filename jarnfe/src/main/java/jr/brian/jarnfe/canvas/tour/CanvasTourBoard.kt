@@ -1,7 +1,10 @@
 package jr.brian.jarnfe.canvas.tour
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +46,32 @@ internal fun CanvasTourBoard(run: CanvasTourState, modifier: Modifier) {
         ) {
             CanvasTourTiles(run)
             CanvasTourMenu(run.mode, Modifier.align(Alignment.Center))
+            CanvasTourPraise(
+                visible = run.practiced,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(JarnTheme.space.md),
+            )
         }
+    }
+}
+
+@Composable
+private fun CanvasTourPraise(visible: Boolean, modifier: Modifier) {
+    val motion = JarnTheme.motion
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn(motion.small.spec()),
+        exit = fadeOut(motion.small.spec()),
+    ) {
+        JarnText(
+            text = stringResource(R.string.jarnfe_first_run_nice),
+            style = JarnTheme.type.labelStrong,
+            color = JarnTheme.colors.success,
+            maxLines = 1,
+            modifier = Modifier
+                .background(JarnTheme.colors.bg, JarnTheme.radius.smShape)
+                .padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.sm),
+        )
     }
 }
 

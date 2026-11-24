@@ -35,6 +35,7 @@ import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.canvas.CanvasStagePreview
+import jr.brian.jarnfe.canvas.tour.CanvasTourStagePreview
 import jr.brian.jarnfe.deck.DeckContent
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
@@ -97,6 +98,7 @@ internal fun StageScreen(state: JarnSessionState) {
                 JarnRssStageHost(state)
             }
             CanvasStagePreview(state)
+            CanvasTourStagePreview(state)
             SingleScreenDeckPanel(state)
             JarnNoticeHost()
             JarnStageSplash()

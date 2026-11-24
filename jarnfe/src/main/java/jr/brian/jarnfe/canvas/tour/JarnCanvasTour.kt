@@ -111,5 +111,5 @@ internal fun CanvasTourGate(canvas: @Composable () -> Unit) {
     val tour = remember(context) { JarnCanvasTour.connect(context) }
     val isActive = LocalJarnInputRouter.current.activeScreen == LocalJarnScreen.current
     LaunchedEffect(isActive) { if (isActive) tour.offerOnce() }
-    if (tour.state != null) CanvasTourScreen(tour, isActive) else canvas()
+    if (tour.state != null) CanvasTourScreen(tour) else canvas()
 }
