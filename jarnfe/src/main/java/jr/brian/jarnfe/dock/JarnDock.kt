@@ -30,12 +30,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import jr.brian.core.ui.motion.JarnTilePress
 import jr.brian.core.ui.motion.rememberJarnTileEnter
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnDrawableIcon
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import kotlinx.coroutines.flow.Flow
@@ -109,7 +109,7 @@ private fun JarnDockTile(app: JarnDockApp, onClick: () -> Unit) {
                 .background(JarnTheme.colors.raised, shape),
             contentAlignment = Alignment.Center,
         ) {
-            AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(DockIconSize))
+            JarnDrawableIcon(app.icon, Modifier.size(DockIconSize))
         }
     }
 }
