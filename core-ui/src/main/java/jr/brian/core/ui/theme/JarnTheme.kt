@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -36,6 +37,9 @@ val LocalJarnScreenActive = staticCompositionLocalOf { true }
 
 /** 0 on an inactive screen, rising to 1 as this screen takes control. */
 val LocalJarnScreenActivation = staticCompositionLocalOf<State<Float>> { mutableFloatStateOf(1f) }
+
+/** True while a focused game or system may keep floating. Off behind a game and on battery saver. */
+val LocalJarnFocusFloatAllowed = staticCompositionLocalOf<State<Boolean>> { mutableStateOf(false) }
 
 private const val JARN_SCREEN_SWITCH_MILLIS = 300
 

@@ -89,7 +89,7 @@ private fun JarnLibraryTileFrame(
         modifier = modifier
             .aspectRatio(aspectRatio)
             .semantics { description?.let { contentDescription = it } }
-            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
+            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Float, onClick = onClick)
             .clip(shape)
             .then(if (showCard) Modifier.background(JarnTheme.colors.raised) else Modifier),
     ) {

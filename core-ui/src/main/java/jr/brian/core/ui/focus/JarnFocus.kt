@@ -1,6 +1,10 @@
 package jr.brian.core.ui.focus
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.InteractionSource
@@ -9,6 +13,7 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
@@ -36,9 +41,12 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.LocalJarnColors
+import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.core.ui.theme.LocalJarnMotion
 import jr.brian.core.ui.theme.LocalJarnScreenActivation
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 internal val JarnFocusRingWidth = 3.dp
@@ -49,12 +57,19 @@ private const val JarnFocusLandingSpread = 1.4f
 internal fun jarnPressScale(pressScale: Float, pressProgress: Float): Float =
     (1f + (pressScale - 1f) * pressProgress).coerceAtMost(1f)
 
-enum class JarnFocusStyle { Ring, Scale }
+enum class JarnFocusStyle { Ring, Scale, Float }
 
 private const val JarnFocusScale = 1.08f
 
 /** Under the 20dp focus edge, so a scaled item always clears the edges bring-into-view leaves. */
 internal val JarnFocusMaxGrowth = 10.dp
+
+/** Classic's float, with a smaller lift so a tile stays within 15dp of its slot while scrolling. */
+internal val JarnFocusLift = 6.dp
+internal val JarnFocusFloatAmplitude = 3.dp
+internal val JarnFocusFloatMaxGrowth = 6.dp
+private const val JarnFocusFloatPeriodMs = 1800
+private const val JarnFocusFloatSettleMs = 180
 
 /** Large items grow by less, so no side ever moves past [maxGrowthPx]. */
 internal fun jarnFocusScale(
@@ -67,6 +82,18 @@ internal fun jarnFocusScale(
     if (style == JarnFocusStyle.Ring || maxSidePx <= 0) return 1f
     val target = minOf(JarnFocusScale, 1f + 2f * maxGrowthPx / maxSidePx)
     return 1f + (target - 1f) * focusProgress * activation
+}
+
+internal fun jarnFocusFloatOffset(
+    style: JarnFocusStyle,
+    floatPhase: Float,
+    focusProgress: Float,
+    activation: Float,
+    liftPx: Float,
+    amplitudePx: Float,
+): Float {
+    if (style != JarnFocusStyle.Float) return 0f
+    return (-liftPx + amplitudePx * floatPhase) * focusProgress * activation
 }
 
 fun Modifier.jarnFocus(
@@ -102,6 +129,8 @@ private class JarnFocusNode(
 
     private val focusProgress = Animatable(0f)
     private val pressProgress = Animatable(0f)
+    private val floatPhase = Animatable(0f)
+    private var floatJob: Job? = null
     private var isFocused by mutableStateOf(false)
     private var style by mutableStateOf(style)
     private var activePresses = 0
@@ -115,10 +144,19 @@ private class JarnFocusNode(
 
     private val layerBlock: GraphicsLayerScope.() -> Unit = {
         val activation = currentValueOf(LocalJarnScreenActivation).value
-        val growth = jarnFocusScale(style, focusProgress.value, activation, maxSidePx, JarnFocusMaxGrowth.toPx())
+        val maxGrowth = if (style == JarnFocusStyle.Float) JarnFocusFloatMaxGrowth else JarnFocusMaxGrowth
+        val growth = jarnFocusScale(style, focusProgress.value, activation, maxSidePx, maxGrowth.toPx())
         val scale = currentScale() * growth
         scaleX = scale
         scaleY = scale
+        translationY = jarnFocusFloatOffset(
+            style = style,
+            floatPhase = floatPhase.value,
+            focusProgress = focusProgress.value,
+            activation = activation,
+            liftPx = JarnFocusLift.toPx(),
+            amplitudePx = JarnFocusFloatAmplitude.toPx(),
+        )
     }
 
     override val shouldAutoInvalidate: Boolean = false
@@ -145,6 +183,7 @@ private class JarnFocusNode(
 
     override fun onDetach() {
         interactionJob = null
+        floatJob = null
         isFocused = false
         activePresses = 0
     }
@@ -153,6 +192,7 @@ private class JarnFocusNode(
         coroutineScope.launch {
             focusProgress.snapTo(0f)
             pressProgress.snapTo(0f)
+            floatPhase.snapTo(0f)
         }
     }
 
@@ -180,10 +220,36 @@ private class JarnFocusNode(
 
     private fun animateFocus(focused: Boolean) {
         isFocused = focused
+        updateFloat(focused)
         val motion = currentValueOf(LocalJarnMotion)
         val token = if (focused) motion.focusIn else motion.focusOut
         coroutineScope.launch {
             focusProgress.animateTo(if (focused) 1f else 0f, token.spec())
+        }
+    }
+
+    private fun updateFloat(focused: Boolean) {
+        floatJob?.cancel()
+        floatJob = null
+        if (!focused || style != JarnFocusStyle.Float) return
+        floatJob = coroutineScope.launch {
+            snapshotFlow {
+                currentValueOf(LocalJarnFocusFloatAllowed).value &&
+                    currentValueOf(LocalJarnScreenActivation).value > 0f
+            }.distinctUntilChanged().collectLatest { allowed ->
+                if (allowed) {
+                    floatPhase.animateTo(-1f, tween(JarnFocusFloatPeriodMs / 2, easing = FastOutSlowInEasing))
+                    floatPhase.animateTo(
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(JarnFocusFloatPeriodMs, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse,
+                        ),
+                    )
+                } else {
+                    floatPhase.animateTo(0f, tween(JarnFocusFloatSettleMs))
+                }
+            }
         }
     }
 
