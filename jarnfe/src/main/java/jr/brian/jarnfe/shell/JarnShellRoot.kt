@@ -34,7 +34,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                     screen == JarnScreen.Stage -> StageScreen(state)
                     else -> DeckScreen(state)
                 }
-                JarnScreenSwitchSweep(screen, state)
+                JarnScreenSwitchBorder(screen, state)
             }
         }
     }
