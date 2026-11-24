@@ -1,6 +1,5 @@
 package jr.brian.jarnfe.apps
 
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -50,8 +49,6 @@ import jr.brian.core.ui.focus.jarnClickable
 import jr.brian.core.ui.focus.jarnFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.canvas.CanvasDisplayChoiceSheet
-import jr.brian.jarnfe.canvas.findActivity
 import jr.brian.jarnfe.dock.JarnDockApp
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -104,13 +101,7 @@ internal fun JarnAppsRoute() {
         return
     }
     LaunchedEffect(data) { JarnApps.observe(data) }
-    val host = LocalActivity.current
-    val commands = remember(data, host) {
-        JarnAppsCommands(
-            open = { packageName -> host?.let { data.launchApp(it, packageName) } },
-            options = data,
-        )
-    }
+    val commands = rememberJarnAppsCommands(data)
     JarnApps.snapshot?.let { JarnAppsDrawer(it, commands) }
 }
 
@@ -198,13 +189,7 @@ private fun JarnAppsContent(
         columns = columns,
         listState = listState,
         focus = focus,
-        onOpen = { packageName ->
-            if (commands.options.appOptions(packageName).shouldAskDisplay()) {
-                askKey = packageName
-            } else {
-                commands.open(packageName)
-            }
-        },
+        onOpen = { packageName -> commands.launchOrAsk(packageName) { askKey = it } },
         onToggleHidden = { expandedState = !expanded },
         onOptions = { menuKey = it },
     )
@@ -227,18 +212,10 @@ private fun JarnAppsContent(
         )
     }
     askKey?.let { packageName ->
-        val activity = LocalContext.current.findActivity()
-        val closeAsk = {
+        JarnAppDisplayAsk(packageName, commands) {
             focus.pending = packageName
             askKey = null
         }
-        CanvasDisplayChoiceSheet(
-            onPick = { display ->
-                closeAsk()
-                activity?.let { commands.options.launchAppOn(it, packageName, display) }
-            },
-            onClose = closeAsk,
-        )
     }
 }
 
@@ -368,7 +345,7 @@ private fun JarnAppsSectionTitle(section: JarnAppsSection) {
  * Applied outside, the floating tile would look like it sits above its row neighbors.
  */
 @Composable
-private fun JarnAppTile(
+internal fun JarnAppTile(
     app: JarnDockApp,
     labelSize: Int,
     nameVisible: Boolean,

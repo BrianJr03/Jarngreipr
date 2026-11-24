@@ -102,3 +102,15 @@ internal fun <T> searchGames(
     val candidates = if (allowed == null) games else games.filter { systemId(it) in allowed }
     return rankByTitle(candidates, query.terms, title).take(limit)
 }
+
+/** Apps have no system, so a scoped or `@system` search finds games and systems only. */
+internal fun <T> searchApps(
+    apps: List<T>,
+    query: JarnSearchQuery,
+    allowed: Set<String>?,
+    limit: Int,
+    label: (T) -> String,
+): List<T> {
+    if (query.terms.isEmpty() || allowed != null) return emptyList()
+    return rankByTitle(apps, query.terms, label).take(limit)
+}

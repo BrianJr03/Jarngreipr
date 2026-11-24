@@ -114,6 +114,21 @@ class JarnLibraryDataTest {
     }
 
     @Test
+    fun `search titles skip hidden games and rules, and full games load by id in order`() = runBlocking {
+        val a = insert("gba", "A.gba")
+        val b = insert("nds", "B.nds")
+        insert("gba", "Flagged.gba", hidden = true)
+        val ruled = insert("gba", "Ruled.gba")
+        visibility.value = LibraryVisibility(hiddenGames = setOf("gba/${ruled.relativePath}"))
+
+        assertEquals(
+            listOf(LibraryGameTitle(a.id, "gba", "A"), LibraryGameTitle(b.id, "nds", "B")),
+            library.searchTitles.first(),
+        )
+        assertEquals(listOf("B", "A"), library.gamesById(listOf(b.id, 999L, a.id)).map { it.title })
+    }
+
+    @Test
     fun `games and favorites exclude hidden`() = runBlocking {
         insert("gba", "A.gba", favorite = true)
         insert("gba", "H.gba", favorite = true, hidden = true)

@@ -87,6 +87,20 @@ class JarnLibraryData @Inject constructor(
     /** Every visible game, for searching across the whole library. */
     val allGames: Flow<VisibleList<LibraryGame>> = visible(gameDao.observeAllVisible())
 
+    /** Every visible game's title, without the detail text, so searching stays light. */
+    val searchTitles: Flow<List<LibraryGameTitle>> =
+        combine(gameDao.observeSearchRows(), visibilitySource.visibility()) { rows, visibility ->
+            rows.filterNot { visibility.hides(it.systemId, it.absolutePath, it.relativePath) }
+                .map { LibraryGameTitle(it.id, it.systemId, it.displayName) }
+        }.distinctUntilChanged()
+
+    /** The full games for [ids], in the same order. Ids that left the library are skipped. */
+    suspend fun gamesById(ids: List<Long>): List<LibraryGame> {
+        if (ids.isEmpty()) return emptyList()
+        val found = ids.chunked(SEARCH_ID_CHUNK).flatMap { gameDao.getByIds(it) }.associateBy { it.id }
+        return ids.mapNotNull { found[it]?.toLibraryGame() }
+    }
+
     fun games(systemId: String): Flow<VisibleList<LibraryGame>> =
         visible(gameDao.observeBySystem(systemId))
 
@@ -286,6 +300,7 @@ class JarnLibraryData @Inject constructor(
 
     private companion object {
         const val DEFAULT_RECENT_LIMIT = 20
+        const val SEARCH_ID_CHUNK = 500
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +25,7 @@ import jr.brian.frontend.arrival.JarnArrival
 import jr.brian.home.data.JarnFeOffer
 import jr.brian.home.data.preview.JarnPreviewGate
 import jr.brian.home.ui.components.settings.rememberTryJarnFe
+import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.jarnfe.look.JarnLookStoreProvider
@@ -95,7 +97,6 @@ suspend fun MeetJarnState.openFromSettings(context: Context) {
 fun MeetJarnDialog(state: MeetJarnState, onTried: () -> Unit = {}) {
     val content = state.content ?: return
     val context = LocalContext.current
-    val fade = if (context.jarnReducedMotion()) MEET_JARN_REDUCED_FADE_MS else MEET_JARN_FADE_MS
     val visible = remember(content) { MutableTransitionState(false).apply { targetState = true } }
     var tried by remember(content) { mutableStateOf(false) }
     val tryJarn = rememberTryJarnFe {
@@ -108,17 +109,53 @@ fun MeetJarnDialog(state: MeetJarnState, onTried: () -> Unit = {}) {
     LaunchedEffect(visible.isIdle, visible.currentState) {
         if (visible.isIdle && !visible.currentState) state.close(declined = !tried)
     }
+    MeetJarnFadingDialog(visible) {
+        MeetJarnScreen(
+            content = content,
+            colors = MeetJarnColors(primary = ThemePrimaryColor, background = OledBackgroundColor),
+            onTry = tryJarn,
+            onNotNow = { visible.targetState = false },
+        )
+    }
+}
+
+/**
+ * Meet Jarn shown from inside Jarn: view only, in Classic's design. It never counts a showing,
+ * marks Jarn tried, sets the arrival flag or switches the experience. Close (or B) calls [onClose].
+ */
+@Composable
+fun MeetJarnReplayDialog(onClose: () -> Unit) {
+    val context = LocalContext.current
+    val content by produceState<MeetJarnContent?>(null) { value = loadMeetJarnContent(context) }
+    val shown = content ?: return
+    val visible = remember { MutableTransitionState(false).apply { targetState = true } }
+    LaunchedEffect(visible.isIdle, visible.currentState) {
+        if (visible.isIdle && !visible.currentState) onClose()
+    }
+    MeetJarnFadingDialog(visible) {
+        LauncherTheme {
+            MeetJarnScreen(
+                content = shown,
+                colors = MeetJarnColors(primary = ThemePrimaryColor, background = OledBackgroundColor),
+                onTry = {},
+                onNotNow = { visible.targetState = false },
+                mode = MeetJarnMode.Replay,
+            )
+        }
+    }
+}
+
+/** A full-screen dialog on the current window that fades with [visible]. */
+@Composable
+private fun MeetJarnFadingDialog(visible: MutableTransitionState<Boolean>, content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val fade = if (context.jarnReducedMotion()) MEET_JARN_REDUCED_FADE_MS else MEET_JARN_FADE_MS
     Dialog(
         onDismissRequest = { visible.targetState = false },
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         AnimatedVisibility(visibleState = visible, enter = fadeIn(tween(fade)), exit = fadeOut(tween(fade))) {
-            MeetJarnScreen(
-                content = content,
-                colors = MeetJarnColors(primary = ThemePrimaryColor, background = OledBackgroundColor),
-                onTry = tryJarn,
-                onNotNow = { visible.targetState = false },
-            )
+            content()
         }
     }
 }

@@ -12,6 +12,8 @@
     <string name="jarnfe_first_run_nice">Nice, that\'s it.</string>
     <string name="jarnfe_first_run_replay">Replay the tour</string>
     <string name="jarnfe_first_run_replay_hint">Walk through the screens and buttons again.</string>
+    <string name="jarnfe_meet_jarn">Meet Jarn</string>
+    <string name="jarnfe_meet_jarn_hint">See the screen Classic players get when Jarn is new.</string>
 
     <string name="jarnfe_first_run_stage_cue">Follow along on the Deck.</string>
     <string name="jarnfe_first_run_stage_welcome">Stage shows it. Deck does it.</string>
