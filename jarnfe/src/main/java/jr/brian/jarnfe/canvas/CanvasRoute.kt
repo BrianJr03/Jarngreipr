@@ -431,7 +431,7 @@ private fun CanvasPageSurface(
     )
 
     Column(Modifier.fillMaxSize()) {
-        CanvasPageHeader(
+        PublishCanvasHeader(
             page = page,
             pageCount = pageCount,
             homePage = snapshot.homePage,

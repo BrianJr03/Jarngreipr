@@ -31,6 +31,7 @@ import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.rememberedDeckTab
 import jr.brian.jarnfe.session.onScreenTapped
 import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
@@ -56,7 +57,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState != null) JarnSplash.finish()
-        JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION))
+        JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION), rememberedDeckTab())
         JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
         connectJarnLibrary(this)
         swap = jarnScreenSwapOrNull()

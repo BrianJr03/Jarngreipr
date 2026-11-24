@@ -13,12 +13,14 @@ import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.jarnfe.look.rememberJarnAppearance
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.stage.StageScreen
 
 @Composable
 internal fun JarnShellRoot(screen: JarnScreen) {
     val state = JarnSession.state
     val appearance = rememberJarnAppearance()
+    RememberDeckTab(state.deckTab)
     JarnTheme(
         look = appearance.look,
         reducedMotion = appearance.reducedMotion,

@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,8 @@ import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.JarnAppsRoute
+import jr.brian.jarnfe.canvas.CanvasHeaderControls
+import jr.brian.jarnfe.canvas.CanvasHeaderEditBanner
 import jr.brian.jarnfe.canvas.CanvasRoute
 import jr.brian.jarnfe.dock.JarnDockRow
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -104,12 +107,21 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
 @Composable
 private fun DeckTabStrip(selected: DeckTab) {
     val tabs = DeckTab.entries
-    JarnTabs(
-        labels = tabs.map { stringResource(it.labelRes()) },
-        selectedIndex = tabs.indexOf(selected),
-        onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
-        modifier = Modifier.padding(horizontal = JarnTheme.space.deckMargin),
-    )
+    Box(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            JarnTabs(
+                labels = tabs.map { stringResource(it.labelRes()) },
+                selectedIndex = tabs.indexOf(selected),
+                onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
+                modifier = Modifier.weight(1f),
+            )
+            if (selected == DeckTab.Canvas) CanvasHeaderControls()
+        }
+        if (selected == DeckTab.Canvas) CanvasHeaderEditBanner(Modifier.matchParentSize())
+    }
 }
 
 @Composable

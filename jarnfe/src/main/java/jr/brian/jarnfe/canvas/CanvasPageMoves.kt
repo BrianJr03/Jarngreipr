@@ -1,25 +1,13 @@
 package jr.brian.jarnfe.canvas
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.res.stringResource
-import jr.brian.core.ui.components.JarnButton
-import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnEmptyState
-import jr.brian.core.ui.components.JarnText
-import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.wallpaper.readableOverWallpaper
 
 /** Shows the tile on its new page at once, then saves. A failed save returns to the source page. */
 internal fun moveCanvasTile(
@@ -96,57 +84,6 @@ internal fun canvasPagePush(
         ({ onPage(target.index, canvasEntryTile(target.layout.activeArrangement, direction, rect.row)) })
     }
     return CanvasPagePush(onPageLeft = pushTo(-1), onPageRight = pushTo(1), onCarry = onCarry)
-}
-
-@Composable
-internal fun CanvasPageHeader(
-    page: JarnCanvasPage?,
-    pageCount: Int,
-    homePage: Int,
-    arrangeStep: CanvasArrangeStep?,
-    moving: Boolean,
-    onOptions: (() -> Unit)? = null,
-) {
-    if (page == null) return
-    val colors = JarnTheme.colors
-    val title = stringResource(R.string.jarnfe_canvas_page_of, page.index + 1, pageCount)
-    val detail = when {
-        moving -> stringResource(R.string.jarnfe_canvas_moving)
-        page.index == homePage -> stringResource(R.string.jarnfe_canvas_home)
-        else -> null
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .canvasArrangeBackdrop(arrangeStep != null)
-            .padding(horizontal = JarnTheme.space.deckMargin, vertical = JarnTheme.space.xs),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        JarnText(title, JarnTheme.type.labelStrong, colors.textHigh, maxLines = 1)
-        if (arrangeStep != null) {
-            CanvasArrangeBanner(arrangeStep)
-        } else {
-            detail?.let {
-                JarnText(it, JarnTheme.type.caption, colors.readableOverWallpaper(colors.accent), maxLines = 1)
-            }
-        }
-        if (onOptions != null && page.kind == JarnCanvasPageKind.Canvas && !page.layout.menuButtonVisible) {
-            Spacer(Modifier.weight(1f))
-            CanvasHeaderOptionsButton(onOptions)
-        }
-    }
-}
-
-/** Touch's way back to options once the menu tile is hidden. A controller uses Start. */
-@Composable
-private fun CanvasHeaderOptionsButton(onClick: () -> Unit) {
-    JarnButton(
-        label = stringResource(R.string.jarnfe_canvas_options_title),
-        onClick = onClick,
-        modifier = Modifier.focusProperties { canFocus = false },
-        variant = JarnButtonVariant.Secondary,
-    )
 }
 
 @Composable
