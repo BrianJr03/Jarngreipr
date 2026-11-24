@@ -1,12 +1,12 @@
 package jr.brian.jarnfe.canvas
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import jr.brian.core.ui.focus.JarnHapticEffect
 import jr.brian.core.ui.focus.JarnHaptics
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
@@ -65,9 +65,9 @@ internal fun rememberCanvasTouch(
             openMenu = openMenu,
             commit = commit,
             onGrabbed = onGrabbed,
-            haptic = { JarnHaptics.perform(view, HapticFeedbackConstants.LONG_PRESS) },
+            haptic = { JarnHaptics.perform(view, JarnHapticEffect.Grab) },
             showBlocked = { JarnNotices.show(R.string.jarnfe_canvas_notice_touch_moving_tile) },
-            tick = { JarnHaptics.perform(view, HapticFeedbackConstants.CLOCK_TICK) },
+            tick = { JarnHaptics.perform(view, JarnHapticEffect.Tick) },
             onDropped = onDropped,
             removeTile = removeTile,
             hasCarryTarget = hasCarryTarget,
