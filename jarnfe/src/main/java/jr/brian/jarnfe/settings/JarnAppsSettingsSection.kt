@@ -20,6 +20,7 @@ import jr.brian.jarnfe.apps.JarnAppOptionsData
 import jr.brian.jarnfe.apps.jarnAppsDataOrNull
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.look.rememberJarnDisplay
+import jr.brian.jarnfe.session.JarnSession
 import kotlin.math.roundToInt
 
 @Composable
@@ -30,18 +31,31 @@ internal fun JarnAppsSettingsSection(actions: JarnSettingsActions) {
     val lookStore = remember(context) { context.jarnLookStoreOrNull() }
     val namesVisible = rememberJarnDisplay().appNamesVisible
     val prefs = rememberJarnLauncherPrefs()
-    SettingsSectionTitle(R.string.jarnfe_launcher_apps_title)
-    apps?.let { IconPackRow(it, actions) }
-    lookStore?.let { ShowAppNamesRow(it, namesVisible) }
-    if (namesVisible) AppLabelSizeRow(prefs.appLabelSize, settings::setAppLabelSize)
-    SettingsSectionTitle(R.string.jarnfe_launcher_dock_title)
-    JarnToggleRow(
-        label = stringResource(R.string.jarnfe_launcher_dock_show),
-        checked = prefs.dockVisible,
-        onCheckedChange = settings::setDockVisible,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_launcher_dock_show_hint),
-    )
+    SettingsGroup(R.string.jarnfe_launcher_apps_title) {
+        apps?.let { IconPackRow(it, actions) }
+        lookStore?.let { ShowAppNamesRow(it, namesVisible) }
+        if (namesVisible) AppLabelSizeRow(prefs.appLabelSize, settings::setAppLabelSize)
+    }
+    if (JarnSession.state.deckDisplayAvailable) DockGroup(settings, prefs, actions)
+}
+
+/** The dock only sits under the Deck tabs, so it has nothing to set on a single screen. */
+@Composable
+private fun DockGroup(settings: JarnLauncherSettings, prefs: JarnLauncherPrefs, actions: JarnSettingsActions) {
+    SettingsGroup(R.string.jarnfe_launcher_dock_title) {
+        JarnToggleRow(
+            label = stringResource(R.string.jarnfe_launcher_dock_show),
+            checked = prefs.dockVisible,
+            onCheckedChange = settings::setDockVisible,
+            modifier = Modifier.fillMaxWidth(),
+            supporting = stringResource(R.string.jarnfe_launcher_dock_show_hint),
+        )
+        if (prefs.dockVisible) DockAppsRow(prefs, actions)
+    }
+}
+
+@Composable
+private fun DockAppsRow(prefs: JarnLauncherPrefs, actions: JarnSettingsActions) {
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_launcher_dock_apps),
         onClick = { actions.openPanel(JarnSettingsPanel.DockApps) },

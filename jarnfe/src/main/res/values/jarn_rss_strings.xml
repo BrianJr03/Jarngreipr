@@ -58,7 +58,9 @@
     <string name="jarnfe_rss_item_browser">Open in browser</string>
 
     <string name="jarnfe_rss_settings_day_first">Day before month</string>
+    <string name="jarnfe_rss_settings_day_first_hint">Shows dates like 24/11 instead of 11/24.</string>
     <string name="jarnfe_rss_settings_24_hour">24-hour time</string>
+    <string name="jarnfe_rss_settings_24_hour_hint">Shows times like 17:00 instead of 5:00 PM.</string>
     <string name="jarnfe_rss_settings_clear">Clear saved play positions</string>
     <string name="jarnfe_rss_settings_clear_title">Clear play positions?</string>
     <string name="jarnfe_rss_settings_clear_message">Episodes will start from the beginning next time.</string>

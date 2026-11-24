@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_look_title">Look</string>
+    <string name="jarnfe_look_theme_title">Theme</string>
     <string name="jarnfe_look_reduced_motion">Reduce motion</string>
-    <string name="jarnfe_look_reduced_motion_hint">Swaps movement for quick fades. Always on when Android animations are off.</string>
+    <string name="jarnfe_look_reduced_motion_hint">Swaps movement for quick fades. Also on when Android animations are off, except for wallpapers.</string>
     <string name="jarnfe_look_match_cp">Match Command Panel colors</string>
     <string name="jarnfe_look_match_cp_available">Colors only. Your saved look returns when this is off.</string>
     <string name="jarnfe_look_match_cp_full">Matching Command Panel\'s colors.</string>

@@ -17,24 +17,34 @@ import jr.brian.jarnfe.firstrun.JarnFirstRun
 import jr.brian.jarnfe.rss.JarnRssSettingsPanel
 import jr.brian.jarnfe.rss.jarnRssDataOrNull
 import jr.brian.jarnfe.shell.JarnNotices
+import jr.brian.jarnfe.shell.jarnExperienceSwitchOrNull
 
 @Composable
 internal fun JarnGeneralSection(actions: JarnSettingsActions) {
-    JarnSwitchToClassicRow()
-    JarnAudioSettingsRow(onOpen = { actions.openPanel(JarnSettingsPanel.Audio) })
-    ToolsGroup(actions)
+    ExperienceGroup()
+    SoundAndToolsGroup(actions)
     FeedsGroup(actions)
+    ToursGroup()
     AboutGroup(actions)
 }
 
 @Composable
-private fun ToolsGroup(actions: JarnSettingsActions) {
-    SettingsSectionTitle(R.string.jarnfe_launcher_tools_title)
-    PanelRow(R.string.jarnfe_tools_title, R.string.jarnfe_tools_settings_hint) {
-        actions.openPanel(JarnSettingsPanel.Tools)
-    }
-    PanelRow(R.string.jarnfe_utilities_title, R.string.jarnfe_utilities_settings_hint) {
-        actions.openPanel(JarnSettingsPanel.Utilities)
+private fun ExperienceGroup() {
+    val context = LocalContext.current
+    if (remember(context) { context.jarnExperienceSwitchOrNull() } == null) return
+    SettingsGroup(R.string.jarnfe_launcher_experience_title) { JarnSwitchToClassicRow() }
+}
+
+@Composable
+private fun SoundAndToolsGroup(actions: JarnSettingsActions) {
+    SettingsGroup(R.string.jarnfe_launcher_sound_tools_title) {
+        JarnAudioSettingsRow(onOpen = { actions.openPanel(JarnSettingsPanel.Audio) })
+        PanelRow(R.string.jarnfe_tools_title, R.string.jarnfe_tools_settings_hint) {
+            actions.openPanel(JarnSettingsPanel.Tools)
+        }
+        PanelRow(R.string.jarnfe_utilities_title, R.string.jarnfe_utilities_settings_hint) {
+            actions.openPanel(JarnSettingsPanel.Utilities)
+        }
     }
 }
 
@@ -42,25 +52,33 @@ private fun ToolsGroup(actions: JarnSettingsActions) {
 private fun FeedsGroup(actions: JarnSettingsActions) {
     val context = LocalContext.current
     val rss = remember(context) { context.jarnRssDataOrNull() } ?: return
-    SettingsSectionTitle(R.string.jarnfe_launcher_feeds_title)
-    JarnRssSettingsPanel(
-        data = rss,
-        onClearPositions = { actions.openOverlay(JarnSettingsOverlay.ClearRssPositions) },
-        firstFocus = actions.overlayReturn,
-    )
+    SettingsGroup(R.string.jarnfe_launcher_feeds_title) {
+        JarnRssSettingsPanel(
+            data = rss,
+            onClearPositions = { actions.openOverlay(JarnSettingsOverlay.ClearRssPositions) },
+            clearFocus = actions.overlayReturn,
+        )
+    }
+}
+
+@Composable
+private fun ToursGroup() {
+    SettingsGroup(R.string.jarnfe_launcher_tours_title) {
+        PanelRow(R.string.jarnfe_first_run_replay, R.string.jarnfe_first_run_replay_hint) { JarnFirstRun.replay() }
+        CanvasTourReplayRow()
+    }
 }
 
 @Composable
 private fun AboutGroup(actions: JarnSettingsActions) {
-    SettingsSectionTitle(R.string.jarnfe_launcher_about_title)
-    PanelRow(R.string.jarnfe_launcher_whats_new, R.string.jarnfe_launcher_whats_new_hint) {
-        actions.openPanel(JarnSettingsPanel.WhatsNew)
+    SettingsGroup(R.string.jarnfe_launcher_about_title) {
+        PanelRow(R.string.jarnfe_launcher_whats_new, R.string.jarnfe_launcher_whats_new_hint) {
+            actions.openPanel(JarnSettingsPanel.WhatsNew)
+        }
+        SupportRow(JarnSupportLink.Discord, R.string.jarnfe_launcher_support_discord)
+        SupportRow(JarnSupportLink.Coffee, R.string.jarnfe_launcher_support_coffee)
+        SupportRow(JarnSupportLink.Kofi, R.string.jarnfe_launcher_support_kofi)
     }
-    PanelRow(R.string.jarnfe_first_run_replay, R.string.jarnfe_first_run_replay_hint) { JarnFirstRun.replay() }
-    CanvasTourReplayRow()
-    SupportRow(JarnSupportLink.Discord, R.string.jarnfe_launcher_support_discord)
-    SupportRow(JarnSupportLink.Coffee, R.string.jarnfe_launcher_support_coffee)
-    SupportRow(JarnSupportLink.Kofi, R.string.jarnfe_launcher_support_kofi)
 }
 
 @Composable

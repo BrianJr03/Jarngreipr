@@ -35,6 +35,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnInputLayer
+import jr.brian.jarnfe.settings.SettingsGroup
 import jr.brian.jarnfe.settings.SettingsSectionTitle
 import jr.brian.jarnfe.shell.JarnNotices
 
@@ -307,11 +308,12 @@ internal fun SystemsMessage(messageRes: Int) {
 @Composable
 internal fun JarnSystemsSection(onOpen: () -> Unit) {
     if (JarnSystems.manager == null) return
-    SettingsSectionTitle(R.string.jarnfe_systems_title)
-    JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_systems_manage),
-        supporting = stringResource(R.string.jarnfe_systems_manage_hint),
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-    )
+    SettingsGroup(R.string.jarnfe_systems_title) {
+        JarnNavigateRow(
+            label = stringResource(R.string.jarnfe_systems_manage),
+            supporting = stringResource(R.string.jarnfe_systems_manage_hint),
+            onClick = onOpen,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

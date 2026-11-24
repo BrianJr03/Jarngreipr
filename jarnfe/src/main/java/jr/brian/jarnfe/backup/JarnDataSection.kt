@@ -16,7 +16,7 @@ import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.settings.SettingsSectionTitle
+import jr.brian.jarnfe.settings.SettingsGroup
 import jr.brian.jarnfe.shell.JarnNotices
 
 private const val BACKUP_FILE_NAME = "jarngreipr-config.json"
@@ -27,12 +27,14 @@ private val RestoreMimeTypes = arrayOf(BACKUP_MIME_TYPE, "text/plain", "applicat
 internal fun JarnDataSection() {
     val context = LocalContext.current
     val services = remember(context) { context.jarnDataServicesOrNull() } ?: return
-    SettingsSectionTitle(R.string.jarnfe_data_backup_title)
-    BackupRow(services.backup)
-    RestoreRow(services.backup)
-    SettingsSectionTitle(R.string.jarnfe_data_updates_title)
-    CheckForUpdatesRow(services.updates)
-    ReleaseCandidateRow(services.updates)
+    SettingsGroup(R.string.jarnfe_data_backup_title) {
+        BackupRow(services.backup)
+        RestoreRow(services.backup)
+    }
+    SettingsGroup(R.string.jarnfe_data_updates_title) {
+        CheckForUpdatesRow(services.updates)
+        ReleaseCandidateRow(services.updates)
+    }
 }
 
 @Composable

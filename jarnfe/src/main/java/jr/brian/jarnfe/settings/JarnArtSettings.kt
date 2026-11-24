@@ -20,7 +20,6 @@ import jr.brian.core.model.SystemArtSource
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSurface
 import jr.brian.core.ui.components.JarnText
-import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.frontend.library.art.JarnLibraryData
@@ -55,17 +54,20 @@ internal fun JarnArtSection(data: JarnLibraryData) {
         value = data.artSourceStatus()
     }
     if (JarnFirstRun.isArtDetour) JarnFirstRunArtCue()
-    SettingsSectionTitle(R.string.jarnfe_art_title)
-    ArtSource.entries.forEach { source ->
-        ArtSourceRow(
-            source = source,
-            isSelected = source == selected,
-            status = statuses?.firstOrNull { it.source == source },
-            onSelect = { data.setArtSource(source) },
-        )
+    SettingsGroup(R.string.jarnfe_art_game_art_title) {
+        ArtSource.entries.forEach { source ->
+            ArtSourceRow(
+                source = source,
+                isSelected = source == selected,
+                status = statuses?.firstOrNull { it.source == source },
+                onSelect = { data.setArtSource(source) },
+            )
+        }
     }
-    ScraperSetupRow()
-    ScrapeMissingArtRow(data, scrape)
+    SettingsGroup(R.string.jarnfe_art_scraping_title) {
+        ScraperSetupRow()
+        ScrapeMissingArtRow(data, scrape)
+    }
     SystemArtSection(data)
 }
 
@@ -88,15 +90,15 @@ private fun JarnFirstRunArtCue() {
 @Composable
 private fun SystemArtSection(data: JarnLibraryData) {
     val selected by data.systemArtSource.collectAsState()
-    SettingsSectionTitle(R.string.jarnfe_system_art_title)
-    SystemArtSource.entries.forEach { source ->
-        JarnValueRow(
-            label = stringResource(source.labelRes()),
-            value = stringResource(if (source == selected) R.string.jarnfe_art_in_use else R.string.jarnfe_art_use),
-            onClick = { data.setSystemArtSource(source) },
-            modifier = Modifier.fillMaxWidth(),
-            supporting = stringResource(source.hintRes()),
-        )
+    SettingsGroup(R.string.jarnfe_system_art_title) {
+        SystemArtSource.entries.forEach { source ->
+            SettingsChoiceRow(
+                label = stringResource(source.labelRes()),
+                selected = source == selected,
+                onClick = { data.setSystemArtSource(source) },
+                supporting = stringResource(source.hintRes()),
+            )
+        }
     }
 }
 
@@ -120,11 +122,11 @@ private fun ArtSourceRow(
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    JarnValueRow(
+    SettingsChoiceRow(
         label = stringResource(source.labelRes()),
-        value = stringResource(if (isSelected) R.string.jarnfe_art_in_use else R.string.jarnfe_art_use),
+        selected = isSelected,
         onClick = onSelect,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         supporting = artAvailabilityText(status),
     )
 }

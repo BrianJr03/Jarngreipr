@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_utilities_title">Utilities</string>
-    <string name="jarnfe_utilities_settings_hint">System Monitor, crash logs, recent apps, FAQ and more</string>
+    <string name="jarnfe_utilities_settings_hint">System Monitor, crash logs, recent apps, FAQ and more.</string>
     <string name="jarnfe_utilities_unavailable">Utilities aren\'t available on this device.</string>
     <string name="jarnfe_utilities_cancel">Cancel</string>
     <string name="jarnfe_utilities_delete">Delete</string>

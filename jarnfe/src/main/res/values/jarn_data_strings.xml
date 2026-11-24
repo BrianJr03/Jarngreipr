@@ -8,8 +8,8 @@
     <string name="jarnfe_data_restore">Restore from backup</string>
     <string name="jarnfe_data_restore_hint">Shows what will change before anything is applied.</string>
     <string name="jarnfe_data_check_updates">Check for updates</string>
-    <string name="jarnfe_data_rc">Release candidates</string>
-    <string name="jarnfe_data_rc_hint">Also offers test builds before their final release.</string>
+    <string name="jarnfe_data_rc">Test builds</string>
+    <string name="jarnfe_data_rc_hint">Also offers early versions before their final release.</string>
     <string name="jarnfe_data_close">Close</string>
     <string name="jarnfe_data_working_hint">This will only take a moment.</string>
 
@@ -42,7 +42,7 @@
     <string name="jarnfe_restore_status_adds">Adds %1$d</string>
     <string name="jarnfe_restore_status_missing">Not in backup, stays as is</string>
     <string name="jarnfe_restore_notice_experience">This backup was made in Classic, so restoring it switches the app back to Classic.</string>
-    <string name="jarnfe_restore_notice_images">Wallpapers and folder images are saved as file locations, so they may need to be picked again.</string>
+    <string name="jarnfe_restore_notice_images">Wallpapers, folder images and photo tiles are saved as file locations, so they may need to be picked again.</string>
     <string name="jarnfe_restore_notice_icons">Custom app icons aren\'t part of backups.</string>
     <string name="jarnfe_restore_cancel">Cancel</string>
     <string name="jarnfe_restore_confirm">Restore</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_audio_title">Music and jingles</string>
-    <string name="jarnfe_audio_settings_hint">Background music and game jingles</string>
+    <string name="jarnfe_audio_settings_hint">Background music and game jingles.</string>
     <string name="jarnfe_audio_unavailable">Music and jingles aren\'t available on this device.</string>
     <string name="jarnfe_audio_picker_unavailable">This device has no file picker.</string>
     <string name="jarnfe_audio_percent">%1$d%%</string>
