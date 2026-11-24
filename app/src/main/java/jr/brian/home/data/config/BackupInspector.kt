@@ -194,6 +194,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
             appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
             undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
+            screenSwitchMillis = it.screenSwitchMillis ?: shown?.screenSwitchMillis,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

@@ -50,6 +50,7 @@ internal fun JarnDisplaySection() {
         supporting = stringResource(R.string.jarnfe_settings_haptics_hint),
     )
     UndoCountdownRow(store, display.undoCountdownVisible)
+    if (JarnSession.state.deckDisplayAvailable) ScreenSwitchLengthRow(store, display.screenSwitchMillis)
     if (JarnSession.state.deckDisplayAvailable) TapControlRow(store, display.tapControl)
 }
 
@@ -61,6 +62,24 @@ private fun UndoCountdownRow(store: JarnLookStore, visible: Boolean) {
         onCheckedChange = { show -> store.updateDisplay { it.copy(undoCountdownVisible = show) } },
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_settings_undo_countdown_hint),
+    )
+}
+
+@Composable
+private fun ScreenSwitchLengthRow(store: JarnLookStore, millis: Int) {
+    JarnSliderRow(
+        label = stringResource(R.string.jarnfe_settings_screen_switch_length),
+        value = millis.toFloat(),
+        valueText = stringResource(R.string.jarnfe_settings_milliseconds, millis),
+        onValueChange = { value ->
+            store.updateDisplay {
+                it.copy(screenSwitchMillis = JarnDisplayPrefs.snappedScreenSwitchMillis(value))
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+        valueRange = JarnDisplayPrefs.MIN_SCREEN_SWITCH_MILLIS.toFloat()..
+            JarnDisplayPrefs.MAX_SCREEN_SWITCH_MILLIS.toFloat(),
+        steps = JarnDisplayPrefs.SCREEN_SWITCH_STEPS,
     )
 }
 

@@ -337,8 +337,41 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `screen switch length survives a backup`() = runTest {
+        store.updateDisplay { it.copy(screenSwitchMillis = 700) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(screenSwitchMillis = 300) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(700, store.display.screenSwitchMillis)
+    }
+
+    @Test
+    fun `an older backup leaves the screen switch length alone`() = runTest {
+        store.updateDisplay { it.copy(screenSwitchMillis = 800) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(800, store.display.screenSwitchMillis)
+    }
+
+    @Test
+    fun `a hand edited screen switch length stays in range`() {
+        store.updateDisplay { it.copy(screenSwitchMillis = 99_999) }
+        assertEquals(1000, store.display.screenSwitchMillis)
+        store.updateDisplay { it.copy(screenSwitchMillis = 1) }
+        assertEquals(300, store.display.screenSwitchMillis)
+        assertEquals(500, JarnDisplayPrefs.snappedScreenSwitchMillis(512f))
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(50, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

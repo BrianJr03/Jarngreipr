@@ -62,6 +62,7 @@ class JarnLookStore @Inject constructor(
             putString(KEY_TAP_CONTROL, next.tapControl.id)
             putBoolean(KEY_APP_NAMES_VISIBLE, next.appNamesVisible)
             putBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, next.undoCountdownVisible)
+            putInt(KEY_SCREEN_SWITCH_MILLIS, next.screenSwitchMillis)
         }
     }
 
@@ -92,6 +93,7 @@ class JarnLookStore @Inject constructor(
         tapControl = JarnTapControl.fromId(prefs.getString(KEY_TAP_CONTROL, null)) ?: JarnTapControl.FollowTap,
         appNamesVisible = prefs.getBoolean(KEY_APP_NAMES_VISIBLE, true),
         undoCountdownVisible = prefs.getBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, true),
+        screenSwitchMillis = prefs.getInt(KEY_SCREEN_SWITCH_MILLIS, JarnDisplayPrefs.DEFAULT_SCREEN_SWITCH_MILLIS),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -132,6 +134,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_TAP_CONTROL = "tap_control"
         const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
         const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
+        const val KEY_SCREEN_SWITCH_MILLIS = "screen_switch_millis"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

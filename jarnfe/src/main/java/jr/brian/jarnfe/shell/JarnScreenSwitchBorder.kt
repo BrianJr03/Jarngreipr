@@ -20,9 +20,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnSessionState
 
-internal const val JARN_SWITCH_RING_MILLIS = 300
 private const val RING_ROTATION_DEGREES = 540f
 private const val RING_FADE_FRACTION = 0.2f
 private const val RING_MIDDLE_ALPHA = 0.8f
@@ -45,6 +45,7 @@ internal fun JarnScreenSwitchBorder(screen: JarnScreen, state: JarnSessionState)
     if (!state.deckDisplayAvailable || JarnTheme.motion.reduced) return
     val isLit = state.isLit(screen)
     val accent = JarnTheme.colors.accent
+    val duration = rememberJarnDisplay().screenSwitchMillis
     val progress = remember { Animatable(1f) }
     val wasLit = remember { booleanArrayOf(isLit) }
     LaunchedEffect(isLit) {
@@ -52,7 +53,7 @@ internal fun JarnScreenSwitchBorder(screen: JarnScreen, state: JarnSessionState)
         wasLit[0] = isLit
         if (received) {
             progress.snapTo(0f)
-            progress.animateTo(1f, tween(JARN_SWITCH_RING_MILLIS, easing = LinearEasing))
+            progress.animateTo(1f, tween(duration, easing = LinearEasing))
         } else if (!isLit) {
             progress.snapTo(1f)
         }
