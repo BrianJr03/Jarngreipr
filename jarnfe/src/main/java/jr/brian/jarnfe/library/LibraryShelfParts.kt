@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnText
@@ -34,22 +35,22 @@ private const val SHELF_WASH_ALPHA = 0.22f
 private val ShelfWashBlur = 48.dp
 private const val SHELF_BADGE_SURFACE_ALPHA = 0.82f
 
-/** The grid's tile with the same scale and float on focus, on a card so logos never float bare. */
+/**
+ * A card so logos never float bare, with the grid's scale, float and focus border. The card itself
+ * never changes for focus or dimming, only the art on it does.
+ */
 @Composable
-internal fun LibraryShelfCard(
-    aspectRatio: Float,
-    description: String,
-    onClick: () -> Unit,
-    modifier: Modifier,
-    art: @Composable BoxScope.() -> Unit,
-) {
+internal fun LibraryShelfCard(slot: LibraryShelfSlotCard, art: @Composable BoxScope.() -> Unit) {
     JarnGameTile(
-        title = description,
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        aspectRatio = aspectRatio,
+        title = slot.description,
+        onClick = slot.onClick,
+        modifier = slot.modifier.fillMaxWidth(),
+        aspectRatio = slot.aspectRatio,
+        focusBorder = true,
     ) {
-        Box(Modifier.fillMaxSize().background(JarnTheme.colors.raised)) { art() }
+        Box(Modifier.fillMaxSize().background(JarnTheme.colors.raised)) {
+            Box(Modifier.fillMaxSize().graphicsLayer { alpha = slot.artAlpha() }, content = art)
+        }
     }
 }
 
@@ -84,7 +85,7 @@ internal fun <T> BoxScope.LibraryShelfCaption(item: T, content: LibraryShelfCont
         verticalArrangement = Arrangement.spacedBy(space.xs),
     ) {
         JarnText(
-            text = heroTitle(content.itemTitle(item)),
+            text = content.headline(item),
             style = JarnTheme.type.heading,
             color = colors.textHigh,
             maxLines = 1,

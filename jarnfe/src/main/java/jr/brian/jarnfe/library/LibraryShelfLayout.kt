@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.library
 
+import jr.brian.core.ui.focus.jarnFocusBorderReach
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -17,6 +18,13 @@ internal const val SHELF_CENTER_Y = 0.42f
 internal const val SHELF_SETTLE_MS = 150L
 internal const val SHELF_BADGE_HOLD_MS = 450L
 
+/** Space under the card for one line (systems: name and game count) or two (games), in dp. */
+internal const val SHELF_ONE_LINE_CAPTION = 48f
+internal const val SHELF_TWO_LINE_CAPTION = 72f
+
+/** Kept between the focus border's furthest reach and a neighbor, in dp. */
+internal const val SHELF_BORDER_CLEARANCE = 2f
+
 /** Narrow windows get a wider card, so one partial neighbor peeks on each side. */
 private const val SHELF_NARROW_GROWTH = 1.8f
 
@@ -29,9 +37,10 @@ internal enum class LibraryShelfKind(
     val aspectRatio: Float,
     val neighborScale: Float,
     val gapFraction: Float,
+    val captionReserve: Float,
 ) {
-    Systems(widthFraction = 0.30f, aspectRatio = 16f / 10f, neighborScale = 0.62f, gapFraction = 0.02f),
-    Games(widthFraction = 0.17f, aspectRatio = 3f / 4f, neighborScale = 0.70f, gapFraction = 0.016f),
+    Systems(0.30f, aspectRatio = 16f / 10f, neighborScale = 0.62f, gapFraction = 0.02f, captionReserve = SHELF_ONE_LINE_CAPTION),
+    Games(0.17f, aspectRatio = 3f / 4f, neighborScale = 0.70f, gapFraction = 0.016f, captionReserve = SHELF_TWO_LINE_CAPTION),
     ;
 
     fun cardWidthFraction(narrow: Boolean): Float =
@@ -65,10 +74,16 @@ internal fun shelfComposedIndices(center: Int, count: Int): List<Int> {
 }
 
 /** Horizontal center of the slot [distance] away from a [card] wide center, in the same unit as [shelfWidth]. */
-internal fun shelfSlotX(distance: Int, shelfWidth: Float, kind: LibraryShelfKind, card: Float): Float {
+internal fun shelfSlotX(
+    distance: Int,
+    shelfWidth: Float,
+    kind: LibraryShelfKind,
+    card: Float,
+    minGap: Float = 0f,
+): Float {
     if (distance == 0) return 0f
     val side = card * kind.neighborScale
-    val gap = kind.gapFraction * shelfWidth
+    val gap = maxOf(kind.gapFraction * shelfWidth, minGap)
     val steps = abs(distance)
     return distance.sign * (card / 2 + gap + side / 2 + (steps - 1) * (side + gap))
 }
@@ -81,6 +96,18 @@ internal fun shelfSlotAlpha(distance: Int): Float = when (abs(distance)) {
     in 1..SHELF_NEIGHBORS -> SHELF_NEIGHBOR_ALPHA
     else -> 0f
 }
+
+/**
+ * One animated value drives both: below the neighbor dim the whole slot fades in or out, and
+ * above it only the art brightens, so a card's background never changes for focus.
+ */
+internal fun shelfSlotVisibility(slotAlpha: Float): Float = (slotAlpha / SHELF_NEIGHBOR_ALPHA).coerceAtMost(1f)
+
+internal fun shelfArtAlpha(slotAlpha: Float): Float = maxOf(slotAlpha, SHELF_NEIGHBOR_ALPHA)
+
+/** The gap a centered card [cardWidth] by [cardHeight] needs so its focus border clears a neighbor. */
+internal fun shelfMinGap(cardWidth: Float, cardHeight: Float): Float =
+    jarnFocusBorderReach(cardWidth, cardHeight).sides + SHELF_BORDER_CLEARANCE
 
 /** A move of more than one slot is a wrap, which snaps instead of sliding across the row. */
 internal fun shelfSlotJumps(previous: Int?, next: Int): Boolean =

@@ -36,6 +36,9 @@ import jr.brian.jarnfe.transition.JarnSystemSlide
 
 internal val SystemCellMinSize = 148.dp
 internal val GameCellMinSize = 112.dp
+
+/** Taller than a focused tile's border can reach upward, so it never touches the row above. */
+internal val LibraryGridRowSpacing = 24.dp
 private val HeroHeight = 160.dp
 private const val SYSTEM_SKELETON_RATIO = 16f / 10f
 private const val GAME_SKELETON_RATIO = 3f / 4f
@@ -156,6 +159,7 @@ private fun LibrarySystemGrid(
         focusedKey = state.focusedSystem?.id,
         onFocused = onFocused,
         cellMinSize = cellMinSize,
+        rowSpacing = LibraryGridRowSpacing,
         header = state.hero?.let { hero ->
             {
                 LibraryHeroBanner(
@@ -171,6 +175,7 @@ private fun LibrarySystemGrid(
             subtitle = gameCountText(system.gameCount),
             onClick = { onOpenSystem(system.id) },
             modifier = modifier.librarySystemAnchor(system.id).fillMaxWidth(),
+            focusBorder = true,
         ) { LibrarySystemArt(system) }
     }
 }
@@ -180,8 +185,8 @@ private fun systemShelfContent(onOpenSystem: (String) -> Unit) = LibraryShelfCon
     itemTitle = JarnLibrarySystem::title,
     onOpen = { onOpenSystem(it.id) },
     itemModifier = { Modifier.librarySystemAnchor(it.id) },
-    caption = { gameCountText(it.gameCount) },
-    art = { LibrarySystemArt(it) },
+    headline = { stringResource(R.string.jarnfe_library_system_line, it.title, gameCountText(it.gameCount)) },
+    art = { LibrarySystemArt(it, logoAlignment = Alignment.Center) },
 )
 
 private fun gameShelfContent(library: JarnLibraryStore) = LibraryShelfContent<JarnLibraryGame>(
@@ -190,6 +195,15 @@ private fun gameShelfContent(library: JarnLibraryStore) = LibraryShelfContent<Ja
     onOpen = library::play,
     caption = { playSummary(it.metadata) },
     art = { LibraryCoverArt(it) },
+    card = { game, slot ->
+        LibraryGameTile(
+            game = game,
+            onClick = slot.onClick,
+            modifier = slot.modifier.fillMaxWidth(),
+            slotAspectRatio = slot.aspectRatio,
+            artAlpha = slot.artAlpha,
+        )
+    },
 )
 
 private fun systemsEmptyCopy(hiddenCount: Int) = if (hiddenCount > 0) {
@@ -277,12 +291,13 @@ private fun LibraryGames(
                     onFocused = onFocused,
                     cellMinSize = cellMinSize,
                     refocusSignal = library.stageRefocus,
+                    rowSpacing = LibraryGridRowSpacing,
                 ) { game, modifier ->
-                    JarnGameTile(
-                        title = game.title,
+                    LibraryGameTile(
+                        game = game,
                         onClick = { library.play(game) },
                         modifier = modifier.fillMaxWidth(),
-                    ) { LibraryCoverArt(game) }
+                    )
                 }
             },
             shelf = {

@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.focus.JarnTabsFocus
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
@@ -43,6 +44,9 @@ private const val HEADER_KEY = "library_header"
 private const val ITEM_KEY_PREFIX = "item:"
 private const val SKELETON_TILE_COUNT = 12
 private const val FIRST_ROW_BELOW_HEADER = 1
+
+/** Wider than a focused cover's border can reach sideways. */
+internal val LibraryGridColumnSpacing = 12.dp
 
 /**
  * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
@@ -58,6 +62,7 @@ internal fun <T : Any> LibraryFocusGrid(
     cellMinSize: Dp,
     modifier: Modifier = Modifier,
     refocusSignal: Int = 0,
+    rowSpacing: Dp = JarnTheme.space.md,
     header: (@Composable () -> Unit)? = null,
     itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
 ) {
@@ -87,8 +92,8 @@ internal fun <T : Any> LibraryFocusGrid(
             state = gridState,
             modifier = modifier.fillMaxSize(),
             contentPadding = libraryGridPadding(),
-            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
-            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+            horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
+            verticalArrangement = Arrangement.spacedBy(rowSpacing),
         ) {
             header?.let { content ->
                 item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {

@@ -49,17 +49,31 @@ import kotlinx.coroutines.launch
 
 private const val SHELF_SLIDE_MS = 200
 
-/** A heading line, a label line and the gaps around them. */
-private val ShelfCaptionReserve = 72.dp
+/** What the shelf hands a card: its slot shape, focus and click wiring, and how dim its art is. */
+internal class LibraryShelfSlotCard(
+    val aspectRatio: Float,
+    val modifier: Modifier,
+    val onClick: () -> Unit,
+    val description: String,
+    val artAlpha: () -> Float,
+)
 
-/** What a shelf shows for one item. [onOpen] runs for A, or a tap on the centered card. */
+/**
+ * What a shelf shows for one item. [onOpen] runs for A, or a tap on the centered card. [headline]
+ * is the line under the centered card and [caption] an optional second line. [card] draws one
+ * item, by default [art] on a card.
+ */
 internal class LibraryShelfContent<T>(
     val itemKey: (T) -> String,
     val itemTitle: (T) -> String,
     val onOpen: (T) -> Unit,
     val itemModifier: (T) -> Modifier = { Modifier },
+    val headline: @Composable (T) -> String = { heroTitle(itemTitle(it)) },
     val caption: @Composable (T) -> String? = { null },
     val art: @Composable BoxScope.(T) -> Unit,
+    val card: @Composable (T, LibraryShelfSlotCard) -> Unit = { item, slot ->
+        LibraryShelfCard(slot) { art(this, item) }
+    },
 )
 
 /**
@@ -121,7 +135,7 @@ internal fun <T : Any> LibraryShelf(
             kind = kind,
             narrow = narrow,
             topMargin = JarnTheme.space.focusEdge.value,
-            captionReserve = ShelfCaptionReserve.value,
+            captionReserve = kind.captionReserve,
         )
         val metrics = ShelfMetrics(kind, maxWidth, fit)
         val cardWidth = metrics.cardWidth
@@ -137,7 +151,7 @@ internal fun <T : Any> LibraryShelf(
                     modifier = content.itemModifier(item).focusRequester(requesterFor(itemKey)),
                     onClick = { if (itemKey == centerKey) content.onOpen(item) else chosenKey = itemKey },
                     description = content.itemTitle(item),
-                ) { content.art(this, item) }
+                ) { slot -> content.card(item, slot) }
             }
         }
         LibraryShelfCaption(items[center], content, metrics)
@@ -151,6 +165,9 @@ internal class ShelfMetrics(val kind: LibraryShelfKind, val width: Dp, fit: Shel
     val cardWidth: Dp = fit.cardWidth.dp
     val cardHeight: Dp = fit.cardHeight.dp
     val centerY: Dp = fit.centerY.dp
+
+    /** Room for the centered card's focus border, so it never reaches a neighbor. */
+    val minGap: Dp = shelfMinGap(fit.cardWidth, fit.cardHeight).dp
 }
 
 private fun <T> shelfCenterIndex(items: List<T>, itemKey: (T) -> String, chosen: String?, focused: String?): Int {
@@ -234,12 +251,13 @@ private fun BoxScope.ShelfSlot(
     modifier: Modifier,
     onClick: () -> Unit,
     description: String,
-    art: @Composable BoxScope.() -> Unit,
+    card: @Composable (LibraryShelfSlotCard) -> Unit,
 ) {
     val density = LocalDensity.current
     val widthPx = with(density) { metrics.width.toPx() }
     val cardPx = with(density) { metrics.cardWidth.toPx() }
-    val targetX = shelfSlotX(distance, widthPx, metrics.kind, cardPx)
+    val minGapPx = with(density) { metrics.minGap.toPx() }
+    val targetX = shelfSlotX(distance, widthPx, metrics.kind, cardPx, minGapPx)
     val targetScale = shelfSlotScale(distance, metrics.kind)
     val targetAlpha = shelfSlotAlpha(distance)
     val x = remember { Animatable(targetX) }
@@ -264,16 +282,18 @@ private fun BoxScope.ShelfSlot(
             .graphicsLayer {
                 scaleX = scale.value
                 scaleY = scale.value
-                this.alpha = alpha.value
+                this.alpha = shelfSlotVisibility(alpha.value)
             }
             .width(metrics.cardWidth),
     ) {
-        LibraryShelfCard(
-            aspectRatio = metrics.kind.aspectRatio,
-            description = description,
-            onClick = onClick,
-            modifier = modifier,
-            art = art,
+        card(
+            LibraryShelfSlotCard(
+                aspectRatio = metrics.kind.aspectRatio,
+                modifier = modifier,
+                onClick = onClick,
+                description = description,
+                artAlpha = { shelfArtAlpha(alpha.value) },
+            ),
         )
     }
 }

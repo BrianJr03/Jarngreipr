@@ -49,15 +49,18 @@ internal fun <T : Any> LibraryShelfPreview(
                         .graphicsLayer {
                             scaleX = shelfSlotScale(distance, kind)
                             scaleY = scaleX
-                            alpha = shelfSlotAlpha(distance)
+                            alpha = shelfSlotVisibility(shelfSlotAlpha(distance))
                         }
                         .width(cardWidth),
                 ) {
                     LibraryShelfCard(
-                        aspectRatio = kind.aspectRatio,
-                        description = description(item),
-                        onClick = {},
-                        modifier = Modifier.focusProperties { canFocus = false },
+                        LibraryShelfSlotCard(
+                            aspectRatio = kind.aspectRatio,
+                            modifier = Modifier.focusProperties { canFocus = false },
+                            onClick = {},
+                            description = description(item),
+                            artAlpha = { shelfArtAlpha(shelfSlotAlpha(distance)) },
+                        ),
                     ) { art(item) }
                 }
             }
