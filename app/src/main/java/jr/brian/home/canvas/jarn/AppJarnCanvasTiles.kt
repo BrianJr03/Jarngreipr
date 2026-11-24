@@ -118,7 +118,7 @@ class AppJarnCanvasTiles @Inject constructor(
             is JarnCanvasNewTile.LibraryRom -> addRom(pageIndex, tile.rom.key, tile.rom.toPinnedRom())
             is JarnCanvasNewTile.Widget -> {
                 val item = CanvasItem.WidgetItem("widget-${tile.widgetId}", tile.widgetId)
-                layouts.addItem(pageIndex, item, colSpan = tile.columns, rowSpan = tile.rows)
+                layouts.addItem(pageIndex, item, colSpan = tile.columns, rowSpan = tile.rows, honorReserved = false)
                 item.id
             }
             JarnCanvasNewTile.Art -> place(
@@ -173,12 +173,14 @@ class AppJarnCanvasTiles @Inject constructor(
             pins[key] = rom
             CanvasItem.RomItem("rom-$key", key)
         }
-        val plan = jarnPlanCanvasAdds(layout, items)
+        val plan = jarnPlanCanvasAdds(layout.withoutClassicMenuCell(), items)
         val placed = plan.placedIds.toSet()
         items.filterIsInstance<CanvasItem.RomItem>().filter { it.id in placed }.forEach { item ->
             pinnedRoms.addPinnedRom(pageIndex, pins.getValue(item.romKey), CanvasTabType.VALUE)
         }
-        if (placed.isNotEmpty()) layouts.replaceLayout(pageIndex, plan.layout)
+        if (placed.isNotEmpty()) {
+            layouts.replaceLayout(pageIndex, plan.layout.copy(menuButtonVisible = layout.menuButtonVisible))
+        }
         JarnCanvasAddResult(plan.placedIds, alreadyPlaced, plan.noRoom, failed)
     }
 
@@ -217,7 +219,11 @@ class AppJarnCanvasTiles @Inject constructor(
         }
         val pinAdded = romKey != null && pinOn(move.toPage, romKey) == null
         if (pinAdded && rom != null) pinnedRoms.addPinnedRom(move.toPage, rom, CanvasTabType.VALUE)
-        layouts.replaceLayout(move.toPage, jarnLayoutWithArrival(destination, source, item, move))
+        layouts.replaceLayout(
+            move.toPage,
+            jarnLayoutWithArrival(destination.withoutClassicMenuCell(), source, item, move)
+                .copy(menuButtonVisible = destination.menuButtonVisible),
+        )
         layouts.removeItem(move.fromPage, move.itemId)
         val sourceAfter = layouts.getLayout(move.fromPage)
         val pinRemoved = romKey != null &&
@@ -406,7 +412,7 @@ class AppJarnCanvasTiles @Inject constructor(
         rss.get().allItems.first().filter { it.audioUrl.isNotEmpty() }
 
     private fun place(pageIndex: Int, item: CanvasItem): String {
-        layouts.addItem(pageIndex, item)
+        layouts.addItem(pageIndex, item, honorReserved = false)
         return item.id
     }
 

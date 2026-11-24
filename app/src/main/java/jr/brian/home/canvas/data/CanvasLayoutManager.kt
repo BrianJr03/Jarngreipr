@@ -84,7 +84,8 @@ class CanvasLayoutManager(context: Context) {
         item: CanvasItem,
         colSpan: Int = defaultSpanFor(item).first,
         rowSpan: Int = defaultSpanFor(item).second,
-        atCellInActive: GridCell? = null
+        atCellInActive: GridCell? = null,
+        honorReserved: Boolean = true
     ) {
         update(pageIndex) { layout ->
             val existingIndex = layout.items.indexOfFirst { it.id == item.id }
@@ -103,7 +104,7 @@ class CanvasLayoutManager(context: Context) {
                 pushDirection = PushDirection.DOWN,
                 preferredCell = atCellInActive
                     .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.VERTICAL },
-                reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.VERTICAL)
+                reservedRects = if (honorReserved) reservedRectsFor(layout, CanvasScrollOrientation.VERTICAL) else emptyList()
             )
             val horizontal = layout.horizontalArrangement.placeIfAbsent(
                 itemId = item.id,
@@ -113,7 +114,7 @@ class CanvasLayoutManager(context: Context) {
                 pushDirection = PushDirection.RIGHT,
                 preferredCell = atCellInActive
                     .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.HORIZONTAL },
-                reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.HORIZONTAL)
+                reservedRects = if (honorReserved) reservedRectsFor(layout, CanvasScrollOrientation.HORIZONTAL) else emptyList()
             )
 
             layout.copy(
@@ -206,6 +207,17 @@ class CanvasLayoutManager(context: Context) {
         if (BuildAssert.ENABLED) repaired.validateInvariant()
         _layoutsByPage.value = _layoutsByPage.value + (pageIndex to repaired)
         persist(pageIndex, repaired)
+    }
+
+    /**
+     * Jarn FE has no inline menu tile, so its tiles may use that cell. Classic still
+     * draws the tile there, so it calls this to move them aside before showing a layout.
+     */
+    fun reconcileReservedCells() {
+        _layoutsByPage.value.forEach { (pageIndex, layout) ->
+            val reconciled = reconcileReserved(layout)
+            if (reconciled !== layout) update(pageIndex) { reconciled }
+        }
     }
 
     /** Drop every layout. Used before applying an imported config. */
@@ -420,20 +432,19 @@ private fun relocateOverlaps(
     if (arrangement.none { (_, rect) -> reservedRects.any { it.overlaps(rect) } }) {
         return arrangement
     }
-    val result = LinkedHashMap<String, GridRect>(arrangement.size)
-    for ((id, rect) in arrangement) {
-        if (reservedRects.any { it.overlaps(rect) }) {
-            result[id] = firstFreeRect(
-                occupied = result.values,
-                crossAxisCount = crossAxisCount,
-                pushDirection = pushDirection,
-                colSpan = rect.colSpan,
-                rowSpan = rect.rowSpan,
-                reservedRects = reservedRects
-            )
-        } else {
-            result[id] = rect
-        }
+    val result = LinkedHashMap(arrangement)
+    val pending = arrangement.filterValues { rect -> reservedRects.any { it.overlaps(rect) } }.keys.toMutableSet()
+    for (id in pending.toList()) {
+        val rect = arrangement.getValue(id)
+        pending -= id
+        result[id] = firstFreeRect(
+            occupied = result.filterKeys { it != id && it !in pending }.values,
+            crossAxisCount = crossAxisCount,
+            pushDirection = pushDirection,
+            colSpan = rect.colSpan,
+            rowSpan = rect.rowSpan,
+            reservedRects = reservedRects
+        )
     }
     return result
 }
