@@ -4,11 +4,8 @@ import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import dagger.hilt.EntryPoint
@@ -18,24 +15,27 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.R
 import jr.brian.home.data.ExperienceSwitcher
 import jr.brian.home.data.JarnFeOffer
-import jr.brian.home.ui.components.JarnFePreviewSheet
+import jr.brian.home.ui.meetjarn.MeetJarnDialog
+import jr.brian.home.ui.meetjarn.openFromSettings
+import jr.brian.home.ui.meetjarn.rememberMeetJarnState
+import kotlinx.coroutines.launch
 
+/** Opens the full-screen Meet Jarn preview, whatever its counters say, while the build offers Jarn. */
 @Composable
 fun SwitchToJarnSettingItem() {
     val context = LocalContext.current
     val isOffered = remember(context) { JarnFeOffer.isOffered(context) }
     if (!isOffered) return
 
-    var showPreview by rememberSaveable { mutableStateOf(false) }
+    val meetJarn = rememberMeetJarnState()
+    val scope = rememberCoroutineScope()
     SettingItem(
         title = stringResource(R.string.settings_switch_to_jarn_title),
         description = stringResource(R.string.settings_switch_to_jarn_description),
         icon = Icons.Default.SwapHoriz,
-        onClick = { showPreview = true },
+        onClick = { if (!meetJarn.isOpen) scope.launch { meetJarn.openFromSettings(context) } },
     )
-    if (showPreview) {
-        JarnFePreviewSheet(onDismiss = { showPreview = false })
-    }
+    MeetJarnDialog(meetJarn)
 }
 
 /** Switches through [ExperienceSwitcher], and shows a message if Jarn FE can't open. */

@@ -16,12 +16,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -29,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.JarnFeOffer
-import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.components.settings.rememberTryJarnFe
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -42,21 +38,6 @@ fun JarnFeWhatsNewPreview(onOpened: () -> Unit) {
 
     JarnFePreviewCard(onOpened = onOpened)
     Spacer(modifier = Modifier.height(16.dp))
-}
-
-@Composable
-fun JarnFePreviewSheet(onDismiss: () -> Unit) {
-    val focusRequester = remember { FocusRequester() }
-    AppBottomSheet(onDismissRequest = onDismiss) {
-        JarnFePreviewCard(
-            onOpened = onDismiss,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
-            buttonModifier = Modifier.focusRequester(focusRequester),
-        )
-    }
-    LaunchedEffect(Unit) {
-        runCatching { focusRequester.requestFocus() }
-    }
 }
 
 @Composable
