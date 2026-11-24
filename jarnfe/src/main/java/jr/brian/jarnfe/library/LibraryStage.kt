@@ -25,6 +25,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.LibrarySection
+import jr.brian.jarnfe.transition.JarnSystemSlide
 
 internal val SystemCellMinSize = 148.dp
 internal val GameCellMinSize = 112.dp
@@ -192,7 +193,7 @@ private fun LibraryGames(
 @Composable
 internal fun LibraryGameList(library: JarnLibraryStore) {
     val state = library.state
-    key(state.openSystemId) {
+    JarnSystemSlide(state.openSystemId) {
         LibraryGames(
             feed = state.openGames,
             focusedKey = state.focusedOpenGame?.id,

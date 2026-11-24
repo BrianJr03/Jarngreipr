@@ -29,7 +29,7 @@ internal val NowTopZone = 240.dp
 internal fun LibraryNowPanel(selection: LibrarySelection) {
     val settled = rememberSettledSelection(selection)
     val sceneNow = settled.sceneSystemId()?.let { rememberSystemNow(it) }
-    val reveal = rememberNowReveal(settled) { it.focusKey() }
+    val reveal = rememberNowReveal(settled, followsRoute = ::isRouteChange) { it.focusKey() }
     val shown = reveal.shown
     val shownNow = rememberShownSystemNow(sceneNow, shown.sceneSystemId())
     CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
@@ -53,6 +53,10 @@ internal fun LibraryNowPanel(selection: LibrarySelection) {
         }
     }
 }
+
+/** A switch between a system and a game, which is mostly the Stage opening a system or going back. */
+internal fun isRouteChange(from: LibrarySelection, to: LibrarySelection): Boolean =
+    from !is LibrarySelection.None && to !is LibrarySelection.None && from::class != to::class
 
 /**
  * The Stage can change the selection while the controller is on Now. If that removes the focused
