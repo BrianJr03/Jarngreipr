@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnEdgeScroll
@@ -91,12 +92,17 @@ internal fun NowPill(text: String, strong: Boolean) {
     )
 }
 
+/**
+ * One row of game covers. Each keeps its own shape at [coverHeight], and they share one bottom
+ * edge, with art that leaves room drawn against that edge rather than floating in the middle.
+ */
 @Composable
 internal fun NowCoverRow(
     shelf: List<JarnShelfGame>,
     coverHeight: Dp,
     coverModifier: (JarnLibraryGame) -> Modifier,
     onCover: (JarnLibraryGame) -> Unit,
+    aspectOf: (JarnLibraryGame, IntSize?) -> Float = { _, bounds -> nowCoverAspect(bounds) },
 ) {
     JarnEdgeScroll(margin = JarnTheme.space.deckMargin) {
         Row(
@@ -105,6 +111,7 @@ internal fun NowCoverRow(
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = JarnTheme.space.deckMargin),
             horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
+            verticalAlignment = Alignment.Bottom,
         ) {
             shelf.forEachIndexed { index, item ->
                 key(item.game.id) {
@@ -118,8 +125,8 @@ internal fun NowCoverRow(
                             .padding(start = groupGap)
                             .then(coverModifier(item.game))
                             .height(coverHeight),
-                        aspectRatio = nowCoverAspect(coverBounds),
-                    ) { LibraryCoverArt(item.game) }
+                        aspectRatio = aspectOf(item.game, coverBounds),
+                    ) { LibraryCoverArt(item.game, alignment = Alignment.BottomCenter) }
                 }
             }
         }
