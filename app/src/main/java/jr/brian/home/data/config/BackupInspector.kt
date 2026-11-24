@@ -216,6 +216,9 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             systemNamesVisible = it.systemNamesVisible ?: shown?.systemNamesVisible,
             randomVisible = it.randomVisible ?: shown?.randomVisible,
             lastPlayedVisible = it.lastPlayedVisible ?: shown?.lastPlayedVisible,
+            systemLogoVisible = it.systemLogoVisible ?: shown?.systemLogoVisible,
+            gameCountVisible = it.gameCountVisible ?: shown?.gameCountVisible,
+            lastPlayedTextVisible = it.lastPlayedTextVisible ?: shown?.lastPlayedTextVisible,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

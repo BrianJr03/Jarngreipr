@@ -6,7 +6,8 @@ import jr.brian.jarnfe.deck.showsNowShortcuts
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.isFocused
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -61,7 +62,11 @@ class NowSystemViewTest {
     }
     private var clicked = 0
 
-    private fun showWithHeader(actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {})): () -> FocusManager {
+    private fun showWithHeader(
+        actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {}),
+        parts: NowSystemParts = NowSystemParts(),
+        shown: JarnLibrarySystem = system,
+    ): () -> FocusManager {
         lateinit var focusManager: FocusManager
         rule.setContent {
             focusManager = LocalFocusManager.current
@@ -74,12 +79,13 @@ class NowSystemViewTest {
                         }
                         if (showSystem) {
                             NowSystemContent(
-                                system = system,
+                                system = shown,
                                 shelf = shelf,
                                 isLoaded = true,
                                 actions = actions,
                                 pendingCoverId = null,
                                 onCoverRestored = {},
+                                parts = parts,
                             )
                         }
                     }
@@ -88,6 +94,71 @@ class NowSystemViewTest {
         }
         rule.waitForIdle()
         return { focusManager }
+    }
+
+    private val played = system.copy(lastPlayedAtMs = 1_764_000_000_000L)
+
+    private fun showPlate(parts: NowSystemParts): () -> FocusManager =
+        showWithHeader(parts = parts, shown = played)
+
+    private fun assertShelfStays(focusManager: () -> FocusManager) {
+        rule.onNodeWithText("Recently played").assertExists()
+        rule.onNodeWithContentDescription("one").assertIsFocused()
+        move(focusManager(), FocusDirection.Up)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+    }
+
+    @Test
+    fun `everything shows by default`() {
+        showPlate(NowSystemParts())
+        rule.onNodeWithText("SNES").assertExists()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+    }
+
+    @Test
+    fun `hiding the logo keeps the count and last played`() {
+        val focusManager = showPlate(NowSystemParts(showsLogo = false))
+        rule.onNodeWithText("SNES").assertDoesNotExist()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+        assertShelfStays(focusManager)
+    }
+
+    @Test
+    fun `hiding the game count leaves last played on the line alone`() {
+        val focusManager = showPlate(NowSystemParts(showsCount = false))
+        rule.onNodeWithText("games").assertDoesNotExist()
+        rule.onNodeWithText("SNES").assertExists()
+        rule.onNodeWithText("Last played", substring = true).assertExists()
+        assertShelfStays(focusManager)
+    }
+
+    @Test
+    fun `hiding last played leaves the count on the line alone`() {
+        val focusManager = showPlate(NowSystemParts(showsLastPlayed = false))
+        rule.onNodeWithText("Last played", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("games").assertExists()
+        rule.onNodeWithText("SNES").assertExists()
+        assertShelfStays(focusManager)
+    }
+
+    @Test
+    fun `with all three hidden the plate is gone and the shelf still leads`() {
+        val focusManager = showPlate(NowSystemParts(showsLogo = false, showsCount = false, showsLastPlayed = false))
+        rule.onNodeWithText("SNES").assertDoesNotExist()
+        rule.onNodeWithText("games").assertDoesNotExist()
+        rule.onNodeWithText("Last played", substring = true).assertDoesNotExist()
+        assertShelfStays(focusManager)
+    }
+
+    @Test
+    fun `the plate is skipped only when nothing in it is left`() {
+        val none = NowSystemParts(showsLogo = false, showsCount = false, showsLastPlayed = false)
+        assertFalse(nowPlateHasContent(played, none))
+        assertTrue(nowPlateHasContent(played.copy(favoriteCount = 2), none))
+        assertTrue(nowPlateHasContent(played, none.copy(showsLastPlayed = true)))
+        assertFalse(nowPlateHasContent(system, none.copy(showsLastPlayed = true)))
     }
 
     @Test

@@ -75,6 +75,22 @@ internal fun nowShortcuts(
 
 internal enum class NowShelfLayout { Hidden, Empty, Single, Shelf }
 
+/** The optional parts of the system view, from Settings > Display > Now page. */
+@Immutable
+internal data class NowSystemParts(
+    val showsLogo: Boolean = true,
+    val showsCount: Boolean = true,
+    val showsLastPlayed: Boolean = true,
+)
+
+/** True when the name plate has anything left to show. */
+internal fun nowPlateHasContent(system: JarnLibrarySystem, parts: NowSystemParts): Boolean =
+    parts.showsLogo || nowStatsHaveContent(system, parts)
+
+internal fun nowStatsHaveContent(system: JarnLibrarySystem, parts: NowSystemParts): Boolean =
+    parts.showsCount || system.favoriteCount > 0 || system.playtimeMinutes > 0 ||
+        (parts.showsLastPlayed && system.lastPlayedAtMs != null)
+
 internal fun nowShelfLayout(gameCount: Int, shelfSize: Int): NowShelfLayout = when {
     gameCount == 0 -> NowShelfLayout.Empty
     shelfSize == 0 -> NowShelfLayout.Hidden
@@ -108,6 +124,11 @@ internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
         actions = actions,
         pendingCoverId = store.pendingCoverId,
         onCoverRestored = store::coverRestored,
+        parts = NowSystemParts(
+            showsLogo = display.systemLogoVisible,
+            showsCount = display.gameCountVisible,
+            showsLastPlayed = display.lastPlayedTextVisible,
+        ),
     )
 }
 
@@ -127,6 +148,7 @@ internal fun NowSystemContent(
     actions: NowSystemActions,
     pendingCoverId: String?,
     onCoverRestored: () -> Unit,
+    parts: NowSystemParts = NowSystemParts(),
 ) {
     val focus = remember { NowSystemFocus() }
     val shelfIds = remember(shelf) { shelf.map { it.game.id } }
@@ -156,7 +178,7 @@ internal fun NowSystemContent(
                         .padding(top = JarnTheme.space.md, bottom = JarnTheme.space.focusEdge),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    NowNamePlate(system)
+                    NowNamePlate(system, parts)
                     NowLowerArea(system, shelf, isLoaded, coverHeight, focus, actions)
                 }
             }
@@ -179,7 +201,8 @@ private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, acti
 }
 
 @Composable
-private fun NowNamePlate(system: JarnLibrarySystem) {
+private fun NowNamePlate(system: JarnLibrarySystem, parts: NowSystemParts) {
+    if (!nowPlateHasContent(system, parts)) return
     Box(Modifier.padding(horizontal = JarnTheme.space.deckMargin)) {
         Column(
             modifier = Modifier
@@ -187,12 +210,13 @@ private fun NowNamePlate(system: JarnLibrarySystem) {
                 .padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.sm),
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
         ) {
-            NowSystemMark(system)
-            NowSystemStats(system)
+            if (parts.showsLogo) NowSystemMark(system)
+            if (nowStatsHaveContent(system, parts)) NowSystemStats(system, parts)
         }
     }
 }
 
+/** The logo, or the name in its place when there is none. */
 @Composable
 private fun NowSystemMark(system: JarnLibrarySystem) {
     var logoFailed by remember(system.logoPath) { mutableStateOf(false) }
@@ -211,15 +235,17 @@ private fun NowSystemMark(system: JarnLibrarySystem) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NowSystemStats(system: JarnLibrarySystem) {
+private fun NowSystemStats(system: JarnLibrarySystem, parts: NowSystemParts) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        NowStat(
-            system.gameCount.toString(),
-            pluralStringResource(R.plurals.jarnfe_now_stat_games, system.gameCount),
-        )
+        if (parts.showsCount) {
+            NowStat(
+                system.gameCount.toString(),
+                pluralStringResource(R.plurals.jarnfe_now_stat_games, system.gameCount),
+            )
+        }
         if (system.favoriteCount > 0) {
             NowStat(
                 system.favoriteCount.toString(),
@@ -229,7 +255,7 @@ private fun NowSystemStats(system: JarnLibrarySystem) {
         if (system.playtimeMinutes > 0) {
             NowStat(nowPlaytimeValue(system.playtimeMinutes), stringResource(R.string.jarnfe_now_stat_played))
         }
-        system.lastPlayedAtMs?.let { lastPlayed ->
+        system.lastPlayedAtMs?.takeIf { parts.showsLastPlayed }?.let { lastPlayed ->
             JarnText(
                 text = stringResource(R.string.jarnfe_library_last_played, formatDate(lastPlayed)),
                 style = JarnTheme.type.caption,

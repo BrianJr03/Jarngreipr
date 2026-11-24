@@ -2,11 +2,6 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
-import jr.brian.core.ui.motion.JarnPageTransition
-import jr.brian.core.ui.theme.JarnSwitchCue
-import jr.brian.frontend.look.JarnBrowseView
-import jr.brian.frontend.look.JarnDisplayPrefs
-import jr.brian.frontend.look.JarnTapControl
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
@@ -231,7 +226,9 @@ data class JarngreiprConfig(
         //      blobs; import only raises the count and only turns tried on.
         // v58: added JarnDisplayConfig.randomVisible and lastPlayedVisible, Jarn FE "Show Random" and
         //      "Show Last Played" on Now. Null on older blobs, and import keeps the current value.
-        const val CONFIG_VERSION = 58
+        // v59: added JarnDisplayConfig.systemLogoVisible, gameCountVisible and lastPlayedTextVisible,
+        //      the optional parts of Jarn FE Now's system view. Null on older blobs keeps them.
+        const val CONFIG_VERSION = 59
     }
 }
 
@@ -460,40 +457,9 @@ data class JarnDisplayConfig(
     val systemNamesVisible: Boolean? = null,
     val randomVisible: Boolean? = null,
     val lastPlayedVisible: Boolean? = null,
-)
-
-internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
-    systemTileScale = systemTileScale,
-    gameTileScale = gameTileScale,
-    hintsVisible = hintsVisible,
-    buttonHaptics = buttonHaptics,
-    tapControl = tapControl.id,
-    appNamesVisible = appNamesVisible,
-    undoCountdownVisible = undoCountdownVisible,
-    switchCue = switchCue.id,
-    systemView = systemView.id,
-    gameView = gameView.id,
-    pageTransition = pageTransition.id,
-    systemNamesVisible = systemNamesVisible,
-    randomVisible = randomVisible,
-    lastPlayedVisible = lastPlayedVisible,
-)
-
-internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
-    systemTileScale = systemTileScale ?: current.systemTileScale,
-    gameTileScale = gameTileScale ?: current.gameTileScale,
-    hintsVisible = hintsVisible ?: current.hintsVisible,
-    buttonHaptics = buttonHaptics ?: current.buttonHaptics,
-    tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
-    appNamesVisible = appNamesVisible ?: current.appNamesVisible,
-    undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
-    switchCue = switchCue?.let(JarnSwitchCue::fromId) ?: current.switchCue,
-    systemView = systemView?.let(JarnBrowseView::fromId) ?: current.systemView,
-    gameView = gameView?.let(JarnBrowseView::fromId) ?: current.gameView,
-    pageTransition = pageTransition?.let(JarnPageTransition::fromId) ?: current.pageTransition,
-    systemNamesVisible = systemNamesVisible ?: current.systemNamesVisible,
-    randomVisible = randomVisible ?: current.randomVisible,
-    lastPlayedVisible = lastPlayedVisible ?: current.lastPlayedVisible,
+    val systemLogoVisible: Boolean? = null,
+    val gameCountVisible: Boolean? = null,
+    val lastPlayedTextVisible: Boolean? = null,
 )
 
 @Serializable

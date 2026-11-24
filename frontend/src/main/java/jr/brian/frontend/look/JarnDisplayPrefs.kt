@@ -31,6 +31,9 @@ data class JarnDisplayPrefs(
     val systemNamesVisible: Boolean = true,
     val randomVisible: Boolean = true,
     val lastPlayedVisible: Boolean = true,
+    val systemLogoVisible: Boolean = true,
+    val gameCountVisible: Boolean = true,
+    val lastPlayedTextVisible: Boolean = true,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),
