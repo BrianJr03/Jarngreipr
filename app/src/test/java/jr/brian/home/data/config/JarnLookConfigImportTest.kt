@@ -61,6 +61,7 @@ class JarnLookConfigImportTest {
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
             playStatsBackup = io.mockk.mockk(relaxed = true),
             backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 
@@ -506,7 +507,7 @@ class JarnLookConfigImportTest {
 
     @Test
     fun `schema version covers app names`() {
-        assertEquals(56, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(57, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

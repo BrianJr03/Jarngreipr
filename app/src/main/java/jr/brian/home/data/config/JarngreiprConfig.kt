@@ -227,7 +227,10 @@ data class JarngreiprConfig(
         //      older blobs, and import keeps the current value. An unknown id falls back to jarn_slide.
         // v56: added JarnDisplayConfig.systemNamesVisible, Jarn FE "Show system names" for the
         //      line under system cards. Null on older blobs, and import keeps the current value.
-        const val CONFIG_VERSION = 56
+        // v57: added FeatureConfig.jarnPreview, the Meet Jarn preview's showings, last version
+        //      shown and tried flag. Null on older blobs, and import changes nothing. Import only
+        //      raises the count and only turns tried on.
+        const val CONFIG_VERSION = 57
     }
 }
 
@@ -420,7 +423,9 @@ data class FeatureConfig(
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
-    val jarnWallpaperScreens: JarnWallpaperScreensConfig? = null
+    val jarnWallpaperScreens: JarnWallpaperScreensConfig? = null,
+    /** v57: Meet Jarn preview state. Null on pre-v57 exports, and import keeps the current state. */
+    val jarnPreview: JarnPreviewConfig? = null
 )
 
 @Serializable

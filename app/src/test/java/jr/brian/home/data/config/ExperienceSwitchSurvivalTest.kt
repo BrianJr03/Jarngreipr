@@ -63,6 +63,7 @@ class ExperienceSwitchSurvivalTest {
             appPinStore = pins,
             playStatsBackup = io.mockk.mockk(relaxed = true),
             backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 
