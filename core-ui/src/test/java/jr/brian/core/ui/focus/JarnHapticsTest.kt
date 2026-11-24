@@ -2,7 +2,8 @@ package jr.brian.core.ui.focus
 
 import android.app.Application
 import android.os.SystemClock
-import android.view.HapticFeedbackConstants
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.View
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -33,15 +35,25 @@ class JarnHapticsTest {
     val rule = createComposeRule()
 
     private var now = 1_000L
-    private val effects = mutableListOf<Int>()
     private var enabled = true
+    private var hasVibrator = true
+    private val vibrated = mutableListOf<JarnHapticEffect>()
+    private val viewFeedback = mutableListOf<JarnHapticEffect>()
+    private val defaultVibratorOf = JarnHaptics.vibratorOf
+    private val defaultVibrate = JarnHaptics.vibrate
+    private val defaultViewFeedback = JarnHaptics.viewFeedback
+
+    private val vibrator: Vibrator?
+        get() = RuntimeEnvironment.getApplication().getSystemService(VibratorManager::class.java)?.defaultVibrator
 
     @Before
     fun setUp() {
         JarnHaptics.gate = JarnHapticGate()
         JarnHaptics.clock = { now }
-        JarnHaptics.performer = { _, effect -> effects += effect }
         JarnHaptics.isEnabled = { enabled }
+        JarnHaptics.vibratorOf = { if (hasVibrator) vibrator else null }
+        JarnHaptics.vibrate = { _, effect -> vibrated += effect }
+        JarnHaptics.viewFeedback = { _, effect -> viewFeedback += effect }
     }
 
     @After
@@ -49,7 +61,9 @@ class JarnHapticsTest {
         JarnHaptics.isEnabled = { true }
         JarnHaptics.gate = JarnHapticGate()
         JarnHaptics.clock = SystemClock::uptimeMillis
-        JarnHaptics.performer = { target, effect -> target.performHapticFeedback(effect) }
+        JarnHaptics.vibratorOf = defaultVibratorOf
+        JarnHaptics.vibrate = defaultVibrate
+        JarnHaptics.viewFeedback = defaultViewFeedback
     }
 
     private val view: View get() = View(RuntimeEnvironment.getApplication())
@@ -65,37 +79,66 @@ class JarnHapticsTest {
     }
 
     @Test
-    fun `button vibration off silences every tick and deliberate effect`() {
-        enabled = false
+    fun `a press ticks through the vibrator, not the view`() {
+        assertNotNull("Robolectric has a vibrator", vibrator)
         JarnHaptics.tick(view)
-        JarnHaptics.perform(view, HapticFeedbackConstants.LONG_PRESS)
-        assertEquals(emptyList<Int>(), effects)
+        assertEquals(listOf(JarnHapticEffect.Tick), vibrated)
+        assertEquals(emptyList<JarnHapticEffect>(), viewFeedback)
     }
 
     @Test
-    fun `a button press ticks once with the light effect`() {
+    fun `quick presses share the rate limit`() {
         JarnHaptics.tick(view)
-        assertEquals(listOf(HapticFeedbackConstants.CLOCK_TICK), effects)
+        now += 30
+        JarnHaptics.tick(view)
+        now += 40
+        JarnHaptics.tick(view)
+        assertEquals(listOf(JarnHapticEffect.Tick, JarnHapticEffect.Tick), vibrated)
+    }
+
+    @Test
+    fun `button vibration off silences every tick and deliberate effect`() {
+        enabled = false
+        JarnHaptics.tick(view)
+        JarnHaptics.perform(view, JarnHapticEffect.Grab)
+        assertEquals(emptyList<JarnHapticEffect>(), vibrated)
+        assertEquals(emptyList<JarnHapticEffect>(), viewFeedback)
+    }
+
+    @Test
+    fun `with no vibrator the view's haptic stands in`() {
+        hasVibrator = false
+        JarnHaptics.tick(view)
+        assertEquals(emptyList<JarnHapticEffect>(), vibrated)
+        assertEquals(listOf(JarnHapticEffect.Tick), viewFeedback)
+    }
+
+    @Test
+    fun `canvas grab and drag keep their own effects and skip the rate limit`() {
+        JarnHaptics.perform(view, JarnHapticEffect.Grab)
+        JarnHaptics.perform(view, JarnHapticEffect.Tick)
+        assertEquals(listOf(JarnHapticEffect.Grab, JarnHapticEffect.Tick), vibrated)
     }
 
     @Test
     fun `focus arriving after a d-pad press ticks once, a restore never does`() {
         JarnHaptics.onFocusArrived(view)
-        assertEquals(emptyList<Int>(), effects)
+        assertEquals(emptyList<JarnHapticEffect>(), vibrated)
 
         JarnHaptics.armNavigation()
         now += 16
         JarnHaptics.onFocusArrived(view)
         now += 100
         JarnHaptics.onFocusArrived(view)
-        assertEquals(listOf(HapticFeedbackConstants.CLOCK_TICK), effects)
+        assertEquals(listOf(JarnHapticEffect.Tick), vibrated)
     }
 
     @Test
-    fun `deliberate effects keep their own strength and skip the rate limit`() {
-        JarnHaptics.perform(view, HapticFeedbackConstants.LONG_PRESS)
-        JarnHaptics.perform(view, HapticFeedbackConstants.CLOCK_TICK)
-        assertEquals(listOf(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.CLOCK_TICK), effects)
+    fun `a vibration builds for every effect on this vibrator`() {
+        val shaker = vibrator
+        assertNotNull(shaker)
+        assertNotNull(jarnVibrationFor(shaker!!, JarnHapticEffect.Tick))
+        assertNotNull(jarnVibrationFor(shaker, JarnHapticEffect.Grab))
     }
 
     @Test
@@ -113,13 +156,13 @@ class JarnHapticsTest {
         }
         rule.runOnIdle { first.requestFocus() }
         rule.waitForIdle()
-        assertEquals(emptyList<Int>(), effects)
+        assertEquals(emptyList<JarnHapticEffect>(), vibrated)
 
         rule.runOnIdle {
             JarnHaptics.armNavigation()
             second.requestFocus()
         }
         rule.waitForIdle()
-        assertEquals(listOf(HapticFeedbackConstants.CLOCK_TICK), effects)
+        assertEquals(listOf(JarnHapticEffect.Tick), vibrated)
     }
 }
