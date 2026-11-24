@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.library
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -23,6 +25,8 @@ import jr.brian.core.ui.library.JarnHeroPanel
 import jr.brian.core.ui.library.JarnSystemTile
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.LocalJarnScreen
+import jr.brian.jarnfe.launch.JarnGameFileStatus
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.transition.JarnSystemSlide
@@ -40,6 +44,7 @@ internal fun LibraryHome(
     onOpenSystem: (String) -> Unit,
     emptyActions: @Composable () -> Unit,
 ) {
+    ResumeMissingDialog()
     key(section) {
         when (section) {
             LibrarySection.Systems -> LibrarySystems(library, onOpenSystem, emptyActions)
@@ -132,17 +137,7 @@ private fun LibraryHeroBanner(
 ) {
     DisposableEffect(Unit) { onDispose { onFocusChange(false) } }
     when (hero) {
-        is LibraryHero.ContinuePlaying -> JarnHeroPanel(
-            eyebrow = stringResource(R.string.jarnfe_library_continue_playing),
-            title = heroTitle(hero.game.title),
-            body = playSummary(hero.game.metadata),
-            modifier = Modifier
-                .onFocusChanged { onFocusChange(it.isFocused) }
-                .fillMaxWidth()
-                .height(HeroHeight),
-            onClick = onPlay?.let { play -> { play(hero.game) } },
-            art = { LibraryCoverArt(hero.game, Alignment.CenterEnd) },
-        )
+        is LibraryHero.ContinuePlaying -> ContinuePlayingBanner(hero.game, onPlay != null, onFocusChange)
         is LibraryHero.FocusedSystem -> JarnHeroPanel(
             eyebrow = null,
             title = hero.system.title,
@@ -151,6 +146,29 @@ private fun LibraryHeroBanner(
             art = { LibrarySystemArt(hero.system) },
         )
     }
+}
+
+/** A missing file dims the art and says so, and A opens the notice instead of launching. */
+@Composable
+private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFocusChange: (Boolean) -> Unit) {
+    val status = rememberGameFileStatus(game)
+    val screen = LocalJarnScreen.current
+    val missing = status == JarnGameFileStatus.Missing
+    JarnHeroPanel(
+        eyebrow = stringResource(R.string.jarnfe_library_continue_playing),
+        title = heroTitle(game.title),
+        body = if (missing) stringResource(R.string.jarnfe_resume_file_missing) else playSummary(game.metadata),
+        modifier = Modifier
+            .onFocusChanged { onFocusChange(it.isFocused) }
+            .fillMaxWidth()
+            .height(HeroHeight),
+        onClick = { resumeGame(game, status, screen) }.takeIf { canPlay },
+        art = {
+            Box(Modifier.matchParentSize().alpha(missingArtAlpha(status))) {
+                LibraryCoverArt(game, Alignment.CenterEnd)
+            }
+        },
+    )
 }
 
 /** ROM names carry tags like "(USA) (Rev 1)" that don't belong in a headline. */

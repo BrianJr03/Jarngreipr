@@ -21,6 +21,7 @@ import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.jarnfe.launch.JarnEmulatorChoice
 import jr.brian.jarnfe.launch.JarnEmulatorChoiceKind
+import jr.brian.jarnfe.launch.JarnGameFileStatus
 import jr.brian.jarnfe.launch.JarnGameLauncher
 import jr.brian.jarnfe.launch.JarnGameRef
 import jr.brian.jarnfe.launch.JarnLaunchFailure
@@ -40,6 +41,13 @@ private const val TAG = "AppJarnGameLauncher"
  */
 internal fun isRomDefinitelyMissing(canSeeAllFiles: Boolean, exists: Boolean): Boolean =
     canSeeAllFiles && !exists
+
+/** Present only when the file was really seen, so a scoped-storage blind spot stays Unknown. */
+internal fun romFileStatus(missing: Boolean, canSeeAllFiles: Boolean): JarnGameFileStatus = when {
+    missing -> JarnGameFileStatus.Missing
+    canSeeAllFiles -> JarnGameFileStatus.Present
+    else -> JarnGameFileStatus.Unknown
+}
 
 internal fun RomLaunchOutcome.toJarnResult(companionChoices: List<String>): JarnLaunchResult =
     when (this) {
@@ -103,6 +111,15 @@ class AppJarnGameLauncher @Inject constructor(
         runCatching {
             persistSafTreeForSystem(host, esdePrefs, game.systemName, treeUri.toUri())
         }.onFailure { Log.w(TAG, "Could not save the folder grant", it) }.isSuccess
+
+    override fun fileStatus(game: JarnGameRef): JarnGameFileStatus {
+        val resolved = resolveGame(game)
+        if (isAndroidSystem(resolved.systemName)) return JarnGameFileStatus.Unknown
+        return romFileStatus(
+            missing = isMissing(resolved) || isMissingFromFolder(resolved, game),
+            canSeeAllFiles = runCatching { Environment.isExternalStorageManager() }.getOrDefault(false),
+        )
+    }
 
     private fun launchHost(host: Activity, companionChoices: MutableList<String>) =
         object : RomLaunchHost {

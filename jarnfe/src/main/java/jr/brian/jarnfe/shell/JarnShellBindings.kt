@@ -57,7 +57,7 @@ internal fun JarnBindingsBuilder.stageBindings(
             session.update { activate(JarnScreen.Deck) }
         }
     } else if (library.bannerHasFocus(state)) {
-        hint(JarnAction.Confirm, R.string.jarnfe_hint_play)
+        hint(JarnAction.Confirm, R.string.jarnfe_hint_resume)
     } else {
         confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
     }
@@ -76,7 +76,7 @@ private fun JarnBindingsBuilder.gameActionsBinding(
     session: JarnSessionStore,
     library: JarnLibraryStore,
 ) {
-    val selection = library.state.selection(state.stageRoute, state.librarySection)
+    val selection = library.nowSelection(state.stageRoute, state.librarySection)
     if (selection !is LibrarySelection.Game || JarnGameActions.controller == null) return
     on(JarnAction.Context, R.string.jarnfe_hint_context) {
         if (state.stageRoute == StageRoute.Search) JarnSearch.showActions()

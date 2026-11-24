@@ -12,7 +12,9 @@ import jr.brian.frontend.library.art.LibraryGame
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.shell.JarnNotices
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** The message for a launch that did not start a game. Null when nothing needs saying. */
 @StringRes
@@ -75,6 +77,13 @@ internal class JarnPlayController(
                 launching = false
             }
         }
+    }
+
+    /** A game no longer in the library is missing. Anything the launcher can't check is Unknown. */
+    suspend fun fileStatus(game: JarnLibraryGame): JarnGameFileStatus = withContext(Dispatchers.IO) {
+        val ref = data.findGame(game.id)?.toGameRef(game.defaultArtPath)?.let { located(it, game.id) }
+            ?: return@withContext JarnGameFileStatus.Missing
+        runCatching { launcher.fileStatus(ref) }.getOrDefault(JarnGameFileStatus.Unknown)
     }
 
     private suspend fun located(ref: JarnGameRef, libraryKey: String): JarnGameRef =
