@@ -42,6 +42,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnFolderPicker
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryStatus
@@ -50,6 +51,7 @@ import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
+import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.settings.JarnLookPicker
 import jr.brian.jarnfe.settings.labelRes
 import jr.brian.core.ui.theme.JarnLooks
@@ -66,10 +68,12 @@ internal fun FirstRunStepContent(
             R.string.jarnfe_first_run_welcome_title,
             if (twoScreens) R.string.jarnfe_first_run_welcome_body else R.string.jarnfe_first_run_welcome_body_single,
         )
+        JarnFirstRunStep.Ready -> FirstRunReadyStep(twoScreens, actions)
         JarnFirstRunStep.Library -> FirstRunLibraryStep()
         JarnFirstRunStep.Media -> FirstRunMediaStep(actions)
         JarnFirstRunStep.Look -> FirstRunLookStep()
-        JarnFirstRunStep.Done -> FirstRunDoneStep(twoScreens)
+        JarnFirstRunStep.SwitchCue -> FirstRunSwitchCueStep(actions)
+        JarnFirstRunStep.Done -> FirstRunDoneStep(twoScreens, fromClassic = run.path != JarnFirstRunPath.Full)
         else -> FirstRunLesson(step, run, twoScreens)
     }
 }
@@ -162,7 +166,7 @@ private fun FirstRunMediaStep(actions: JarnFirstRunActions) {
 
 /** Rechecks on every return, because file access is granted in a system screen. */
 @Composable
-private fun rememberFirstRunMedia(data: JarnLibraryData): JarnMediaSummary {
+internal fun rememberFirstRunMedia(data: JarnLibraryData): JarnMediaSummary {
     val context = LocalContext.current
     val detector = remember(context) { context.jarnArtDetectorOrNull() }
     val owner = LocalLifecycleOwner.current
@@ -227,20 +231,29 @@ private fun sourceName(source: ArtSource): String = stringResource(source.labelR
 
 @Composable
 private fun FirstRunFileAccessButton() {
-    val activity = LocalActivity.current
     FirstRunNote(R.string.jarnfe_first_run_media_access_why)
     JarnButton(
         label = stringResource(R.string.jarnfe_first_run_media_access),
-        onClick = {
-            val target = activity ?: return@JarnButton
-            val intent = Intent(
-                Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                "package:${target.packageName}".toUri(),
-            )
-            runCatching { target.startActivity(intent) }
-        },
+        onClick = rememberFileAccessOpener(),
         variant = JarnButtonVariant.Secondary,
     )
+}
+
+/** Opens Android's All files access screen for this app. */
+@Composable
+internal fun rememberFileAccessOpener(): () -> Unit {
+    val activity = LocalActivity.current
+    return remember(activity) {
+        {
+            activity?.let { target ->
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    "package:${target.packageName}".toUri(),
+                )
+                runCatching { target.startActivity(intent) }
+            }
+        }
+    }
 }
 
 @Composable
@@ -258,7 +271,8 @@ private fun FirstRunLesson(step: JarnFirstRunStep, run: JarnFirstRunState, twoSc
     val lesson = lessonFor(step, twoScreens)
     FirstRunHeading(lesson.titleRes, lesson.bodyRes)
     FirstRunKeys(lesson.keys)
-    if (step == JarnFirstRunStep.PressTabs) FirstRunPracticeTabs(run.practiceTab)
+    lesson.noteRes?.let { FirstRunNote(it) }
+    if (step == JarnSession.state.practiceTabsStepOn(JarnScreen.Deck)) FirstRunPracticeTabs(run.practiceTab)
     if (run.practiced) {
         JarnText(
             text = stringResource(R.string.jarnfe_first_run_nice),
@@ -269,10 +283,12 @@ private fun FirstRunLesson(step: JarnFirstRunStep, run: JarnFirstRunState, twoSc
     }
 }
 
+/** [noteRes] is one extra line under the keys, such as holding X to swap the screens. */
 private class FirstRunLessonCopy(
     @param:StringRes val titleRes: Int,
     @param:StringRes val bodyRes: Int,
     val keys: List<JarnKey>,
+    @param:StringRes val noteRes: Int? = null,
 )
 
 private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLessonCopy = when (step) {
@@ -282,18 +298,19 @@ private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLess
         listOf(JarnKey.B),
     )
     JarnFirstRunStep.PressX -> FirstRunLessonCopy(
-        R.string.jarnfe_first_run_x_title,
-        if (twoScreens) R.string.jarnfe_first_run_x_body else R.string.jarnfe_first_run_x_body_single,
-        listOf(JarnKey.X),
+        R.string.jarnfe_first_run_options_title,
+        if (twoScreens) R.string.jarnfe_first_run_options_body else R.string.jarnfe_first_run_options_body_single,
+        listOf(JarnKey.Select),
     )
     JarnFirstRunStep.PressSelect -> FirstRunLessonCopy(
-        R.string.jarnfe_first_run_select_title,
-        R.string.jarnfe_first_run_select_body,
-        listOf(JarnKey.Select),
+        R.string.jarnfe_first_run_switch_title,
+        R.string.jarnfe_first_run_switch_body,
+        listOf(JarnKey.X),
+        noteRes = R.string.jarnfe_first_run_switch_hold,
     )
     JarnFirstRunStep.PressTabs -> FirstRunLessonCopy(
         R.string.jarnfe_first_run_tabs_title,
-        R.string.jarnfe_first_run_tabs_body,
+        if (twoScreens) R.string.jarnfe_first_run_tabs_body else R.string.jarnfe_first_run_tabs_body_single,
         listOf(JarnKey.L1, JarnKey.R1),
     )
     JarnFirstRunStep.PressOtherTabs -> FirstRunLessonCopy(
@@ -309,19 +326,23 @@ private fun lessonFor(step: JarnFirstRunStep, twoScreens: Boolean): FirstRunLess
 }
 
 @Composable
-private fun FirstRunDoneStep(twoScreens: Boolean) {
+private fun FirstRunDoneStep(twoScreens: Boolean, fromClassic: Boolean) {
     FirstRunHeading(R.string.jarnfe_first_run_done_title, R.string.jarnfe_first_run_done_body)
     FirstRunCheatRow(listOf(JarnKey.A), R.string.jarnfe_first_run_cheat_a)
     FirstRunCheatRow(listOf(JarnKey.B), R.string.jarnfe_first_run_cheat_b)
-    FirstRunCheatRow(listOf(JarnKey.X), R.string.jarnfe_hint_context)
+    FirstRunCheatRow(listOf(JarnKey.Select), R.string.jarnfe_hint_context)
     FirstRunCheatRow(listOf(JarnKey.Y), R.string.jarnfe_hint_search)
     FirstRunCheatRow(listOf(JarnKey.Start), R.string.jarnfe_route_settings)
     FirstRunCheatRow(
-        listOf(JarnKey.Select),
-        if (twoScreens) R.string.jarnfe_first_run_cheat_select else R.string.jarnfe_first_run_cheat_select_single,
+        listOf(JarnKey.X),
+        if (twoScreens) R.string.jarnfe_first_run_cheat_switch else R.string.jarnfe_first_run_cheat_switch_single,
     )
-    FirstRunCheatRow(listOf(JarnKey.L1, JarnKey.R1), R.string.jarnfe_first_run_cheat_tabs)
+    FirstRunCheatRow(
+        listOf(JarnKey.L1, JarnKey.R1),
+        if (twoScreens) R.string.jarnfe_first_run_cheat_tabs else R.string.jarnfe_first_run_cheat_tabs_single,
+    )
     if (twoScreens) FirstRunCheatRow(listOf(JarnKey.L2, JarnKey.R2), R.string.jarnfe_first_run_cheat_other_tabs)
+    if (fromClassic) FirstRunSwitchBackNote()
 }
 
 /** Focusable so the D-pad can scroll the whole list on a short screen. */

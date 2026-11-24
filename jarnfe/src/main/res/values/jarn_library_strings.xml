@@ -4,6 +4,7 @@
 
     <string name="jarnfe_library_continue_playing">Continue playing</string>
     <string name="jarnfe_library_game_position">Game %1$d of %2$d</string>
+    <string name="jarnfe_library_system_line">%1$s · %2$s</string>
     <string name="jarnfe_library_scan_progress">Loaded %1$d of %2$d</string>
     <string name="jarnfe_library_loading">Loading your library</string>
     <string name="jarnfe_library_try_again">Try again</string>

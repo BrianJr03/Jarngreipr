@@ -1,5 +1,6 @@
 package jr.brian.core.ui.focus
 
+import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -15,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
@@ -37,13 +40,20 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.theme.JARN_PULSE_RING_EXTRA
+import jr.brian.core.ui.theme.JarnFocusMaxReach
+import jr.brian.core.ui.theme.JarnPulseExtra
 import jr.brian.core.ui.theme.LocalJarnColors
 import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.core.ui.theme.LocalJarnMotion
 import jr.brian.core.ui.theme.LocalJarnScreenActivation
+import jr.brian.core.ui.theme.LocalJarnSwitchPulse
+import jr.brian.core.ui.theme.jarnPulseAdmitsFocus
+import kotlin.math.abs
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -57,7 +67,17 @@ private const val JarnFocusLandingSpread = 1.4f
 internal fun jarnPressScale(pressScale: Float, pressProgress: Float): Float =
     (1f + (pressScale - 1f) * pressProgress).coerceAtMost(1f)
 
-enum class JarnFocusStyle { Ring, Scale, Float }
+/**
+ * [ScaleBorder] and [FloatBorder] act like [Scale] and [Float] and add a thin border outside the
+ * item, past a small gap, so focus never relies on a color change.
+ */
+enum class JarnFocusStyle { Ring, Scale, Float, ScaleBorder, FloatBorder }
+
+private val JarnFocusStyle.floats: Boolean
+    get() = this == JarnFocusStyle.Float || this == JarnFocusStyle.FloatBorder
+
+private val JarnFocusStyle.bordered: Boolean
+    get() = this == JarnFocusStyle.ScaleBorder || this == JarnFocusStyle.FloatBorder
 
 private const val JarnFocusScale = 1.08f
 
@@ -70,6 +90,56 @@ internal val JarnFocusFloatAmplitude = 3.dp
 internal val JarnFocusFloatMaxGrowth = 6.dp
 private const val JarnFocusFloatPeriodMs = 1800
 private const val JarnFocusFloatSettleMs = 180
+
+internal val JarnFocusBorderWidth = 2.5.dp
+internal val JarnFocusBorderGap = 1.5.dp
+
+/**
+ * How far a focused bordered item's border can reach past each side of its bounds, in dp.
+ * [innerGap] is the clear space between the item's own scaled edge and the inside of the border.
+ */
+data class JarnFocusReach(val sides: Float, val top: Float, val bottom: Float, val innerGap: Float)
+
+/** The same corners, pushed out by [amount], so the border stays concentric with the art. */
+private fun RoundRect.grownBy(amount: Float): RoundRect = RoundRect(
+    left = left - amount,
+    top = top - amount,
+    right = right + amount,
+    bottom = bottom + amount,
+    topLeftCornerRadius = topLeftCornerRadius.grownBy(amount),
+    topRightCornerRadius = topRightCornerRadius.grownBy(amount),
+    bottomRightCornerRadius = bottomRightCornerRadius.grownBy(amount),
+    bottomLeftCornerRadius = bottomLeftCornerRadius.grownBy(amount),
+)
+
+private fun CornerRadius.grownBy(amount: Float): CornerRadius =
+    if (x <= 0f && y <= 0f) this else CornerRadius(x + amount, y + amount)
+
+/**
+ * The worst case for an item [widthDp] by [heightDp] in [style]: full growth, the float at its
+ * highest and lowest, and the border scaled with the item. Spacing at least this wide keeps the
+ * border clear of neighbors and of the screen edge.
+ */
+fun jarnFocusBorderReach(
+    widthDp: Float,
+    heightDp: Float,
+    style: JarnFocusStyle = JarnFocusStyle.FloatBorder,
+): JarnFocusReach {
+    val floats = style.floats
+    val maxGrowth = if (floats) JarnFocusFloatMaxGrowth.value else JarnFocusMaxGrowth.value
+    val maxSide = maxOf(widthDp, heightDp)
+    val scale = if (maxSide > 0f) minOf(JarnFocusScale, 1f + 2f * maxGrowth / maxSide) else 1f
+    val growth = (scale - 1f) * maxSide / 2f
+    val border = (JarnFocusBorderGap.value + JarnFocusBorderWidth.value) * scale
+    val highest = if (floats) JarnFocusLift.value + JarnFocusFloatAmplitude.value else 0f
+    val lowest = if (floats) JarnFocusLift.value - JarnFocusFloatAmplitude.value else 0f
+    return JarnFocusReach(
+        sides = growth + border,
+        top = growth + highest + border,
+        bottom = growth - lowest + border,
+        innerGap = JarnFocusBorderGap.value * scale,
+    )
+}
 
 /** Large items grow by less, so no side ever moves past [maxGrowthPx]. */
 internal fun jarnFocusScale(
@@ -92,8 +162,25 @@ internal fun jarnFocusFloatOffset(
     liftPx: Float,
     amplitudePx: Float,
 ): Float {
-    if (style != JarnFocusStyle.Float) return 0f
+    if (!style.floats) return 0f
     return (-liftPx + amplitudePx * floatPhase) * focusProgress * activation
+}
+
+/** Extra scale for a switch pulse, limited so the tile stays within [reachLimitPx] of its slot. */
+internal fun jarnPulseScale(
+    style: JarnFocusStyle,
+    overshoot: Float,
+    focusProgress: Float,
+    baseScale: Float,
+    maxSidePx: Int,
+    translationPx: Float,
+    extraPx: Float,
+    reachLimitPx: Float,
+): Float {
+    if (style == JarnFocusStyle.Ring || maxSidePx <= 0) return 0f
+    val reach = (baseScale - 1f) * maxSidePx / 2f + abs(translationPx)
+    val extra = minOf(extraPx * overshoot * focusProgress, reachLimitPx - reach).coerceAtLeast(0f)
+    return 2f * extra / maxSidePx
 }
 
 fun Modifier.jarnFocus(
@@ -135,6 +222,7 @@ private class JarnFocusNode(
     private var style by mutableStateOf(style)
     private var activePresses = 0
     private var interactionJob: Job? = null
+    private var ignoredPulse = -1
 
     private var maxSidePx = 0
     private var cachedPath: Path? = null
@@ -144,18 +232,34 @@ private class JarnFocusNode(
 
     private val layerBlock: GraphicsLayerScope.() -> Unit = {
         val activation = currentValueOf(LocalJarnScreenActivation).value
-        val maxGrowth = if (style == JarnFocusStyle.Float) JarnFocusFloatMaxGrowth else JarnFocusMaxGrowth
+        val maxGrowth = if (style.floats) JarnFocusFloatMaxGrowth else JarnFocusMaxGrowth
         val growth = jarnFocusScale(style, focusProgress.value, activation, maxSidePx, maxGrowth.toPx())
-        val scale = currentScale() * growth
-        scaleX = scale
-        scaleY = scale
-        translationY = jarnFocusFloatOffset(
+        val lift = jarnFocusFloatOffset(
             style = style,
             floatPhase = floatPhase.value,
             focusProgress = focusProgress.value,
             activation = activation,
             liftPx = JarnFocusLift.toPx(),
             amplitudePx = JarnFocusFloatAmplitude.toPx(),
+        )
+        val scale = currentScale() * (growth + pulseGrowth(growth, lift))
+        scaleX = scale
+        scaleY = scale
+        translationY = lift
+    }
+
+    /** Bordered items skip the pulse growth, so the border keeps the spacing [jarnFocusBorderReach] promises. */
+    private fun GraphicsLayerScope.pulseGrowth(growth: Float, lift: Float): Float {
+        if (focusProgress.value <= 0f || style.bordered) return 0f
+        return jarnPulseScale(
+            style = style,
+            overshoot = currentValueOf(LocalJarnSwitchPulse).overshootFor(ignoredPulse),
+            focusProgress = focusProgress.value,
+            baseScale = growth,
+            maxSidePx = maxSidePx,
+            translationPx = lift,
+            extraPx = JarnPulseExtra.toPx(),
+            reachLimitPx = JarnFocusMaxReach.toPx(),
         )
     }
 
@@ -219,7 +323,10 @@ private class JarnFocusNode(
     }
 
     private fun animateFocus(focused: Boolean) {
+        val arrived = focused && !isFocused
         isFocused = focused
+        if (arrived) JarnHaptics.onFocusArrived(currentValueOf(LocalView))
+        if (focused) notePulseOnFocus()
         updateFloat(focused)
         val motion = currentValueOf(LocalJarnMotion)
         val token = if (focused) motion.focusIn else motion.focusOut
@@ -228,10 +335,17 @@ private class JarnFocusNode(
         }
     }
 
+    /** A pulse belongs to the item holding focus at the switch, never to one moved to later. */
+    private fun notePulseOnFocus() {
+        val pulse = currentValueOf(LocalJarnSwitchPulse)
+        val admitted = jarnPulseAdmitsFocus(SystemClock.uptimeMillis() - pulse.startedAtMillis)
+        ignoredPulse = if (admitted) -1 else pulse.generation
+    }
+
     private fun updateFloat(focused: Boolean) {
         floatJob?.cancel()
         floatJob = null
-        if (!focused || style != JarnFocusStyle.Float) return
+        if (!focused || !style.floats) return
         floatJob = coroutineScope.launch {
             snapshotFlow {
                 currentValueOf(LocalJarnFocusFloatAllowed).value &&
@@ -280,6 +394,23 @@ private class JarnFocusNode(
         drawContent()
         val progress = focusProgress.value
         if (style == JarnFocusStyle.Ring && (isFocused || progress > 0f)) drawIndicator(progress)
+        if (style.bordered && (isFocused || progress > 0f)) drawBorder(progress)
+    }
+
+    /** Outside the item past a gap, so it never covers the art, and only on the active screen. */
+    private fun DrawScope.drawBorder(progress: Float) {
+        val alpha = progress * currentValueOf(LocalJarnScreenActivation).value
+        if (alpha <= 0f) return
+        val width = JarnFocusBorderWidth.toPx()
+        val inset = JarnFocusBorderGap.toPx() + width / 2f
+        val path = Path().apply {
+            when (val outline = shape.createOutline(size, layoutDirection, this@drawBorder)) {
+                is Outline.Rectangle -> addRect(outline.rect.inflate(inset))
+                is Outline.Rounded -> addRoundRect(outline.roundRect.grownBy(inset))
+                is Outline.Generic -> addRect(outline.bounds.inflate(inset))
+            }
+        }
+        drawPath(path, currentValueOf(LocalJarnColors).focus, alpha, Stroke(width = width))
     }
 
     /** The ring exists only on the active screen, and settles as that screen takes control. */
@@ -287,8 +418,14 @@ private class JarnFocusNode(
         val activation = currentValueOf(LocalJarnScreenActivation).value
         if (activation <= 0f) return
         val colors = currentValueOf(LocalJarnColors)
-        val spread = 1f + (1f - activation) * JarnFocusLandingSpread
-        drawRing(outlinePath(), currentScale(), colors.focus, colors.focusGap, progress * activation, spread)
+        val pulse = currentValueOf(LocalJarnSwitchPulse)
+        val spread = if (pulse.enabled) {
+            1f + JARN_PULSE_RING_EXTRA * pulse.ringExtraFor(ignoredPulse)
+        } else {
+            1f + (1f - activation) * JarnFocusLandingSpread
+        }
+        val alpha = progress * activation * if (pulse.enabled) pulse.ringFadeFor(ignoredPulse) else 1f
+        drawRing(outlinePath(), currentScale(), colors.focus, colors.focusGap, alpha, spread)
     }
 
     /** Clipped to the item's shape, so the ring can't reach a neighbor or be cut off by one. */

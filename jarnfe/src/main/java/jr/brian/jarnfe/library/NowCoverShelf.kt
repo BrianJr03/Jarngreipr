@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnEdgeScroll
@@ -29,6 +30,9 @@ import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.wallpaper.JarnWallpaperScreen
+import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperScreen
 
 private const val PLATE_ALPHA = 0.86f
 private const val SOLO_COVER_RATIO = 3f / 4f
@@ -91,13 +95,31 @@ internal fun NowPill(text: String, strong: Boolean) {
     )
 }
 
+/** Now on the larger top screen, after a swap, shows its covers 20% bigger. */
+internal const val NOW_TOP_SCREEN_COVER_SCALE = 1.2f
+
+internal fun nowCoverScale(screen: JarnWallpaperScreen?, hasTwoScreens: Boolean): Float =
+    if (hasTwoScreens && screen == JarnWallpaperScreen.Top) NOW_TOP_SCREEN_COVER_SCALE else 1f
+
+/** Read from the window's own display, so a swap is what moves Now to the bigger size. */
+@Composable
+internal fun rememberNowCoverScale(): Float =
+    nowCoverScale(rememberJarnWallpaperScreen(), JarnSession.state.deckDisplayAvailable)
+
+/**
+ * One row of game covers. Each keeps its own shape at [coverHeight], and they share one bottom
+ * edge, with art that leaves room drawn against that edge rather than floating in the middle.
+ */
 @Composable
 internal fun NowCoverRow(
     shelf: List<JarnShelfGame>,
     coverHeight: Dp,
     coverModifier: (JarnLibraryGame) -> Modifier,
     onCover: (JarnLibraryGame) -> Unit,
+    aspectOf: (JarnLibraryGame, IntSize?) -> Float = { _, bounds -> nowCoverAspect(bounds) },
+    scale: Float = rememberNowCoverScale(),
 ) {
+    val height = coverHeight * scale
     JarnEdgeScroll(margin = JarnTheme.space.deckMargin) {
         Row(
             modifier = Modifier
@@ -105,6 +127,7 @@ internal fun NowCoverRow(
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = JarnTheme.space.deckMargin),
             horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
+            verticalAlignment = Alignment.Bottom,
         ) {
             shelf.forEachIndexed { index, item ->
                 key(item.game.id) {
@@ -117,9 +140,9 @@ internal fun NowCoverRow(
                         modifier = Modifier
                             .padding(start = groupGap)
                             .then(coverModifier(item.game))
-                            .height(coverHeight),
-                        aspectRatio = nowCoverAspect(coverBounds),
-                    ) { LibraryCoverArt(item.game) }
+                            .height(height),
+                        aspectRatio = aspectOf(item.game, coverBounds),
+                    ) { LibraryCoverArt(item.game, alignment = Alignment.BottomCenter) }
                 }
             }
         }

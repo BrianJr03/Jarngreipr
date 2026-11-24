@@ -108,7 +108,8 @@ class JarnAppsScrollTest {
     @Test
     fun `the next section title comes into view with its first row`() {
         show()
-        press(Key.DirectionDown)
+        press(Key.DirectionDown, times = 2)
+        rule.onNodeWithTag("pkg.13").assertIsFocused()
         assertVisible(string(R.string.jarnfe_apps_section_all))
     }
 

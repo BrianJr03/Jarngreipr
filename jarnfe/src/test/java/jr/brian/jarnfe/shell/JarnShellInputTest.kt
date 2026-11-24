@@ -12,6 +12,7 @@ import jr.brian.jarnfe.library.JarnLibraryFeed
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.JarnLibrarySystem
+import jr.brian.jarnfe.search.JarnSearchStore
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
@@ -32,11 +33,18 @@ class JarnShellInputTest {
     private val stageLayer = router.createLayer(JarnScreen.Stage)
     private val deckLayer = router.createLayer(JarnScreen.Deck)
     private val panelLayer = router.createLayer(JarnScreen.Stage, JarnLayerMode.Modal, depth = 1)
+    private val search = JarnSearchStore()
     private var clock = 0L
 
     @Before
     fun setUp() {
-        router.setGlobalBindings(jarnGlobalBindings(session))
+        router.setGlobalBindings(
+            jarnGlobalBindings(
+                session,
+                onScreenTab = { pair, delta -> stepScreenTabs(pair, delta, session, library, search, router) },
+            ),
+        )
+        router.shellTabTarget = { shellTabTarget(it, session, library, search, router) }
         router.attach(stageLayer)
         router.attach(deckLayer)
         session.update { withDeckDisplay(true) }
@@ -86,7 +94,7 @@ class JarnShellInputTest {
 
     @Test
     fun `select switches the router and the session together`() {
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         assertEquals(JarnScreen.Deck, session.state.activeScreen)
         assertEquals(JarnScreen.Deck, router.activeScreen)
         press(KeyEvent.KEYCODE_BACK)
@@ -95,13 +103,16 @@ class JarnShellInputTest {
     }
 
     @Test
-    fun `shoulders change tabs only on the active screen`() {
+    fun `without a deck window shoulders only reach the active screen`() {
         press(KeyEvent.KEYCODE_BUTTON_R1)
         assertEquals(LibrarySection.Favorites, session.state.librarySection)
         assertEquals(DeckTab.Now, session.state.deckTab)
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
-        press(KeyEvent.KEYCODE_BUTTON_R1)
+        press(KeyEvent.KEYCODE_BUTTON_R2)
+        assertEquals(DeckTab.Now, session.state.deckTab)
+        press(KeyEvent.KEYCODE_BUTTON_X)
+        press(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Apps, session.state.deckTab)
+        press(KeyEvent.KEYCODE_BUTTON_R1)
         assertEquals(LibrarySection.Favorites, session.state.librarySection)
     }
 
@@ -159,19 +170,39 @@ class JarnShellInputTest {
 
     @Test
     fun `hints only declare working actions`() {
-        assertEquals(listOf(JarnKey.A, JarnKey.Start, JarnKey.Select), hintKeys(JarnScreen.Stage))
-        assertEquals(listOf(JarnKey.Select), hintKeys(JarnScreen.Deck))
+        assertEquals(listOf(JarnKey.A, JarnKey.Start, JarnKey.X), hintKeys(JarnScreen.Stage))
+        assertEquals(listOf(JarnKey.X), hintKeys(JarnScreen.Deck))
         session.update { openRoute(StageRoute.Settings) }
         refreshLayers()
-        assertEquals(listOf(JarnKey.A, JarnKey.B, JarnKey.Select), hintKeys(JarnScreen.Stage))
+        assertEquals(listOf(JarnKey.A, JarnKey.B, JarnKey.X), hintKeys(JarnScreen.Stage))
     }
 
     @Test
     fun `each screen hints the shoulder pair that moves its tabs`() {
         assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
         assertEquals(null, router.tabHintFor(JarnScreen.Deck))
-        router.oppositeTabsAvailable = { true }
+        session.update { withDeckHost(true) }
         assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Deck)?.key)
+        press(KeyEvent.KEYCODE_BUTTON_X)
+        assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
+        assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Deck)?.key)
+    }
+
+    @Test
+    fun `after a swap each screen keeps the pair of the screen it sits on`() {
+        session.update { withDeckHost(true).withSwapRequested(true) }
+        assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Stage)?.key)
+        assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Deck)?.key)
+    }
+
+    @Test
+    fun `a single screen gives both pairs to its tabs and hints l1 and r1`() {
+        session.update { withDeckDisplay(false) }
+        assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
+        press(KeyEvent.KEYCODE_BUTTON_R2)
+        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        press(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals(LibrarySection.Recent, session.state.librarySection)
     }
 
     @Test
@@ -185,12 +216,14 @@ class JarnShellInputTest {
     @Test
     fun `single screen panel owns input and closes one layer at a time`() {
         session.update { withDeckDisplay(false).openRoute(StageRoute.GameList) }
-        press(KeyEvent.KEYCODE_BUTTON_SELECT)
+        press(KeyEvent.KEYCODE_BUTTON_X)
         assertTrue(session.state.deckPanelOpen)
         assertEquals(JarnScreen.Stage, router.activeScreen)
         router.attach(panelLayer)
         press(KeyEvent.KEYCODE_BUTTON_R1)
         assertEquals(DeckTab.Apps, session.state.deckTab)
+        press(KeyEvent.KEYCODE_BUTTON_R2)
+        assertEquals(DeckTab.Canvas, session.state.deckTab)
         press(KeyEvent.KEYCODE_BACK)
         assertFalse(session.state.deckPanelOpen)
         assertEquals(StageRoute.GameList, session.state.stageRoute)

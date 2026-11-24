@@ -1,6 +1,5 @@
 package jr.brian.jarnfe.apps
 
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +21,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +38,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
@@ -48,11 +45,10 @@ import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.focus.JarnRevealLazyItems
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.focus.JarnFocusStyle
-import jr.brian.core.ui.focus.jarnInteractive
+import jr.brian.core.ui.focus.jarnClickable
+import jr.brian.core.ui.focus.jarnFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.canvas.CanvasDisplayChoiceSheet
-import jr.brian.jarnfe.canvas.findActivity
 import jr.brian.jarnfe.dock.JarnDockApp
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -62,7 +58,6 @@ import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.settings.rememberJarnLauncherPrefs
 import kotlinx.coroutines.flow.first
 
-private val AppTileMinWidth = 104.dp
 private val AppIconSize = 48.dp
 
 internal class JarnAppsCommands(
@@ -105,15 +100,9 @@ internal fun JarnAppsRoute() {
         JarnAppsEmpty()
         return
     }
-    val snapshot by remember(data) { data.snapshot }.collectAsState(null)
-    val host = LocalActivity.current
-    val commands = remember(data, host) {
-        JarnAppsCommands(
-            open = { packageName -> host?.let { data.launchApp(it, packageName) } },
-            options = data,
-        )
-    }
-    snapshot?.let { JarnAppsDrawer(it, commands) }
+    LaunchedEffect(data) { JarnApps.observe(data) }
+    val commands = rememberJarnAppsCommands(data)
+    JarnApps.snapshot?.let { JarnAppsDrawer(it, commands) }
 }
 
 @Composable
@@ -133,14 +122,10 @@ internal fun JarnAppsDrawer(snapshot: JarnAppsSnapshot, commands: JarnAppsComman
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val margin = JarnTheme.space.deckMargin
-        val gap = JarnTheme.space.sm
-        val columns = jarnAppColumns(maxWidth - margin * 2, gap)
+        val columns = jarnAppColumns((maxWidth - margin * 2).value)
         JarnAppsContent(snapshot, sections, columns, commands)
     }
 }
-
-private fun jarnAppColumns(width: Dp, gap: Dp): Int =
-    ((width + gap) / (AppTileMinWidth + gap)).toInt().coerceAtLeast(1)
 
 @Composable
 private fun JarnAppsContent(
@@ -204,14 +189,9 @@ private fun JarnAppsContent(
         columns = columns,
         listState = listState,
         focus = focus,
-        onOpen = { packageName ->
-            if (commands.options.appOptions(packageName).shouldAskDisplay()) {
-                askKey = packageName
-            } else {
-                commands.open(packageName)
-            }
-        },
+        onOpen = { packageName -> commands.launchOrAsk(packageName) { askKey = it } },
         onToggleHidden = { expandedState = !expanded },
+        onOptions = { menuKey = it },
     )
     menuApp?.let { app ->
         val moveFocusAndClose = {
@@ -232,18 +212,10 @@ private fun JarnAppsContent(
         )
     }
     askKey?.let { packageName ->
-        val activity = LocalContext.current.findActivity()
-        val closeAsk = {
+        JarnAppDisplayAsk(packageName, commands) {
             focus.pending = packageName
             askKey = null
         }
-        CanvasDisplayChoiceSheet(
-            onPick = { display ->
-                closeAsk()
-                activity?.let { commands.options.launchAppOn(it, packageName, display) }
-            },
-            onClose = closeAsk,
-        )
     }
 }
 
@@ -292,6 +264,7 @@ private fun JarnAppsList(
     focus: JarnAppsFocus,
     onOpen: (String) -> Unit,
     onToggleHidden: () -> Unit,
+    onOptions: (String) -> Unit,
 ) {
     val labelSize = rememberJarnLauncherPrefs().appLabelSize
     val namesVisible = rememberJarnDisplay().appNamesVisible
@@ -306,11 +279,12 @@ private fun JarnAppsList(
                 horizontal = JarnTheme.space.deckMargin,
                 vertical = JarnTheme.space.focusEdge,
             ),
-            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
+            verticalArrangement = Arrangement.spacedBy(AppTileRowGap.dp),
         ) {
             items(rows, key = { it.key }, contentType = { it::class }) { row ->
                 when (row) {
-                    is JarnAppsRow.Apps -> JarnAppsRowContent(row, columns, labelSize, namesVisible, focus, onOpen)
+                    is JarnAppsRow.Apps ->
+                        JarnAppsRowContent(row, columns, labelSize, namesVisible, focus, onOpen, onOptions)
                     is JarnAppsRow.HiddenHeader -> JarnHiddenHeader(row, focus, onToggleHidden)
                 }
             }
@@ -326,10 +300,11 @@ private fun JarnAppsRowContent(
     namesVisible: Boolean,
     focus: JarnAppsFocus,
     onOpen: (String) -> Unit,
+    onOptions: (String) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AppTileRowGap.dp)) {
         if (row.showsTitle) JarnAppsSectionTitle(row.section)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AppTileColumnGap.dp)) {
             row.apps.forEach { app ->
                 key(app.packageName) {
                     JarnAppTile(
@@ -341,6 +316,7 @@ private fun JarnAppsRowContent(
                             .focusRequester(focus.requester(app.packageName))
                             .onFocusChanged { if (it.isFocused) focus.onFocused(app.packageName) },
                         onClick = { onOpen(app.packageName) },
+                        onLongClick = { onOptions(app.packageName) },
                     )
                 }
             }
@@ -364,13 +340,18 @@ private fun JarnAppsSectionTitle(section: JarnAppsSection) {
     JarnText(stringResource(title), JarnTheme.type.label, JarnTheme.colors.textMid, maxLines = 1)
 }
 
+/**
+ * The focus look sits inside the clickable, so D-pad search and scrolling use the tile's slot.
+ * Applied outside, the floating tile would look like it sits above its row neighbors.
+ */
 @Composable
-private fun JarnAppTile(
+internal fun JarnAppTile(
     app: JarnDockApp,
     labelSize: Int,
     nameVisible: Boolean,
     modifier: Modifier,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val shape = JarnTheme.radius.mdShape
     val iconSize = jarnAppIconSize(AppIconSize, nameVisible)
@@ -379,7 +360,8 @@ private fun JarnAppTile(
         modifier = modifier
             .testTag(app.packageName)
             .semantics { contentDescription = app.label }
-            .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
+            .jarnClickable(source, onLongClick = onLongClick, onClick = onClick)
+            .jarnFocus(shape, source, style = JarnFocusStyle.FloatBorder)
             .background(JarnTheme.colors.raised, shape)
             .padding(JarnTheme.space.sm),
         horizontalAlignment = Alignment.CenterHorizontally,

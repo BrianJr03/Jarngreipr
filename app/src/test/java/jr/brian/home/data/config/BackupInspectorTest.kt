@@ -84,6 +84,13 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `preview showings never show as a settings change`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnPreview = JarnPreviewConfig(0, null, false)))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnPreview = JarnPreviewConfig(2, "3.1.0", true)))
+        assertEquals(0, buildBackupPreview(backup, now).changeCount)
+    }
+
+    @Test
     fun `a different app names choice shows as a look change`() {
         val now = JarngreiprConfig(
             feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(appNamesVisible = true)),
@@ -152,6 +159,36 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a different Now shortcut choice shows as a look change, and a missing one as staying`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(randomVisible = true)))
+        val off = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(randomVisible = false)))
+        val older = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig()))
+        val look = { backup: JarngreiprConfig -> buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look } }
+        assertEquals(JarnBackupChange.Replaces, look(off).change)
+        assertEquals(JarnBackupChange.Same, look(older).change)
+    }
+
+    @Test
+    fun `a hidden Now page part shows as a look change, and a missing one as staying`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameCountVisible = true)))
+        val off = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameCountVisible = false)))
+        val older = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig()))
+        val look = { backup: JarngreiprConfig -> buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look } }
+        assertEquals(JarnBackupChange.Replaces, look(off).change)
+        assertEquals(JarnBackupChange.Same, look(older).change)
+    }
+
+    @Test
+    fun `a hidden game row shows as a look change, and a missing one as staying`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameRowVisible = true)))
+        val off = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(gameRowVisible = false)))
+        val older = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig()))
+        val look = { backup: JarngreiprConfig -> buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look } }
+        assertEquals(JarnBackupChange.Replaces, look(off).change)
+        assertEquals(JarnBackupChange.Same, look(older).change)
+    }
+
+    @Test
     fun `a backup that changes matching shows the look as replaced`() {
         val now = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = false))
         val backup = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = true))
@@ -197,6 +234,27 @@ class BackupInspectorTest {
         val now = JarngreiprConfig(feature = FeatureConfig(experience = Experience.JarnFE.name))
         val backup = JarngreiprConfig(feature = FeatureConfig(experience = Experience.Classic.name))
         assertTrue(buildBackupPreview(backup, now).leavesJarnFe)
+    }
+
+    @Test
+    fun `a different bottom screen wallpaper shows the wallpaper as replaced`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(true, null)))
+        val backup = JarngreiprConfig(
+            feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(false, "file:///b.gif")),
+        )
+        val items = buildBackupPreview(backup, now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.Wallpaper).change)
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+        assertEquals(1, buildBackupPreview(backup, now).imageReferenceCount)
+    }
+
+    @Test
+    fun `a backup without per screen wallpapers keeps the current choice`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnWallpaperScreens = JarnWallpaperScreensConfig(false, "file:///b.gif")),
+        )
+        val items = buildBackupPreview(JarngreiprConfig(), now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.Wallpaper).change)
     }
 
     @Test

@@ -31,7 +31,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
@@ -39,6 +38,7 @@ import jr.brian.core.ui.focus.JarnRevealLazyItems
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnDrawableIcon
 import jr.brian.jarnfe.apps.jarnAppsDataOrNull
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.tools.ToolsInitialFocus
@@ -163,7 +163,7 @@ private fun RecentAppRow(app: JarnRecentApp, onClick: () -> Unit, modifier: Modi
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(RecentIconSize))
+        JarnDrawableIcon(app.icon, Modifier.size(RecentIconSize))
         JarnText(
             text = app.label,
             style = JarnTheme.type.label,

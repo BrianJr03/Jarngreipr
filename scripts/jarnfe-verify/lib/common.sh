@@ -2,7 +2,9 @@
 # Reporting, read-only device access, and the one guarded path for sending keys.
 
 KEY_UP=19 KEY_DOWN=20 KEY_LEFT=21 KEY_RIGHT=22
-KEY_B=97 KEY_L1=102 KEY_R1=103 KEY_START=108 KEY_SELECT=109
+KEY_B=97 KEY_L1=102 KEY_R1=103 KEY_L2=104 KEY_R2=105 KEY_L3=106 KEY_X=99 KEY_START=108
+# Keys a script may add to the allow list on top of the navigation keys, such as L3 for Swap.
+EXTRA_KEYS=""
 
 PASS_COUNT=0 FAIL_COUNT=0 SKIP_COUNT=0
 ABORTED=0 KEYS_SENT=0
@@ -37,13 +39,19 @@ read_prefs() {
   sh_dev run-as "$PKG" cat "shared_prefs/$1.xml"
 }
 
+key_allowed() {
+  case "$1" in
+    "$KEY_UP"|"$KEY_DOWN"|"$KEY_LEFT"|"$KEY_RIGHT"|"$KEY_B"|"$KEY_L1"|"$KEY_R1"|"$KEY_L2"|"$KEY_R2") return 0 ;;
+    "$KEY_START"|"$KEY_X") return 0 ;;
+  esac
+  case " $EXTRA_KEYS " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
 # Only navigation keys are allowed, and only while Jarn FE holds top focus.
 key() {
   local code="$1" display app
-  case "$code" in
-    "$KEY_UP"|"$KEY_DOWN"|"$KEY_LEFT"|"$KEY_RIGHT"|"$KEY_B"|"$KEY_L1"|"$KEY_R1"|"$KEY_START"|"$KEY_SELECT") ;;
-    *) fail "refused key $code (not on the allow list)"; ABORTED=1; return 1 ;;
-  esac
+  key_allowed "$code" || { fail "refused key $code (not on the allow list)"; ABORTED=1; return 1; }
   [ "$ABORTED" = 0 ] || return 1
   display="$(top_display)"
   app="$(focused_app "${display:-0}")"

@@ -120,7 +120,7 @@ private fun JarnBindingsBuilder.firstRunBindings(
     on(JarnAction.Search, R.string.jarnfe_first_run_skip, onPress = actions::skip)
     if (!run.confirmingSkip) gestureBindings(run.step, actions)
     if (run.confirmingSkip || run.step.gesture != JarnFirstRunGesture.SwitchScreen) {
-        val label = R.string.jarnfe_hint_switch_screen.takeIf { confirmHere }
+        val label = R.string.jarnfe_hint_switch_screen.takeIf { confirmHere || run.step == JarnFirstRunStep.SwitchCue }
         on(JarnAction.SwitchScreen, label, onPress = actions::switchScreen)
     }
 }
@@ -138,8 +138,8 @@ private fun JarnBindingsBuilder.gestureBindings(step: JarnFirstRunStep, actions:
             on(JarnAction.TabNext) { actions.perform(JarnFirstRunGesture.Tabs, tabDelta = 1) }
         }
         JarnFirstRunGesture.OtherTabs -> {
-            on(JarnAction.OppositeTabPrevious) { actions.perform(JarnFirstRunGesture.OtherTabs, tabDelta = -1) }
-            on(JarnAction.OppositeTabNext) { actions.perform(JarnFirstRunGesture.OtherTabs, tabDelta = 1) }
+            on(JarnAction.BottomTabPrevious) { actions.perform(JarnFirstRunGesture.OtherTabs, tabDelta = -1) }
+            on(JarnAction.BottomTabNext) { actions.perform(JarnFirstRunGesture.OtherTabs, tabDelta = 1) }
         }
         JarnFirstRunGesture.Back, null -> Unit
     }
@@ -181,7 +181,7 @@ private fun FirstRunStageShowcase(run: JarnFirstRunState, modifier: Modifier) {
         JarnScrim(JarnScrimEdge.Full, Modifier.fillMaxSize())
         Crossfade(run.step, animationSpec = JarnTheme.motion.panel.spec(), label = "firstRunStage") { step ->
             JarnSurface(Modifier.padding(JarnTheme.space.lg)) {
-                FirstRunStageCaption(step, run)
+                FirstRunStageCaption(step, run, JarnSession.state.practiceTabsStepOn(JarnScreen.Stage))
             }
         }
     }
@@ -207,14 +207,14 @@ private fun FirstRunArtWall() {
 }
 
 @Composable
-private fun FirstRunStageCaption(step: JarnFirstRunStep, run: JarnFirstRunState) {
+private fun FirstRunStageCaption(step: JarnFirstRunStep, run: JarnFirstRunState, practiceStep: JarnFirstRunStep?) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(JarnTheme.space.stageMargin),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
     ) {
         JarnText(
-            text = stringResource(stageTitleRes(step)),
+            text = stringResource(stageTitleRes(step, practiceStep)),
             style = JarnTheme.type.title,
             color = JarnTheme.colors.textHigh,
             textAlign = TextAlign.Center,
@@ -227,18 +227,21 @@ private fun FirstRunStageCaption(step: JarnFirstRunStep, run: JarnFirstRunState)
             textAlign = TextAlign.Center,
             maxLines = 2,
         )
-        if (step == JarnFirstRunStep.PressOtherTabs) FirstRunPracticeTabs(run.practiceTab)
+        if (step == practiceStep) FirstRunPracticeTabs(run.practiceTab)
+        if (step == JarnFirstRunStep.SwitchCue) FirstRunCueSample()
     }
 }
 
 @StringRes
-private fun stageTitleRes(step: JarnFirstRunStep): Int = when (step) {
+private fun stageTitleRes(step: JarnFirstRunStep, practiceStep: JarnFirstRunStep?): Int = when (step) {
+    practiceStep -> R.string.jarnfe_first_run_stage_other_tabs
     JarnFirstRunStep.Welcome -> R.string.jarnfe_first_run_stage_welcome
+    JarnFirstRunStep.Ready -> R.string.jarnfe_ready_title
     JarnFirstRunStep.Library -> R.string.jarnfe_first_run_library_title
     JarnFirstRunStep.Media -> R.string.jarnfe_first_run_media_title
     JarnFirstRunStep.Look -> R.string.jarnfe_first_run_look_title
-    JarnFirstRunStep.PressSelect -> R.string.jarnfe_first_run_stage_select
-    JarnFirstRunStep.PressOtherTabs -> R.string.jarnfe_first_run_stage_other_tabs
+    JarnFirstRunStep.SwitchCue -> R.string.jarnfe_first_run_cue_title
+    JarnFirstRunStep.PressSelect -> R.string.jarnfe_first_run_stage_switch
     JarnFirstRunStep.Done -> R.string.jarnfe_first_run_done_title
     else -> R.string.jarnfe_first_run_stage_practice
 }

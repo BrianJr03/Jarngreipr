@@ -10,35 +10,43 @@ import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.jarnfe.deck.DeckScreen
 import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
 import jr.brian.jarnfe.firstrun.rememberJarnFirstRun
+import jr.brian.jarnfe.library.JarnEsdeRomsNoticeHost
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
+import jr.brian.jarnfe.look.JarnSwitchCuePreview
 import jr.brian.jarnfe.look.rememberJarnAppearance
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.stage.StageScreen
-import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperCanAnimate
+import jr.brian.jarnfe.wallpaper.rememberJarnFocusFloatAllowed
 
 @Composable
 internal fun JarnShellRoot(screen: JarnScreen) {
     val state = JarnSession.state
     val appearance = rememberJarnAppearance()
+    val savedCue = rememberJarnDisplay().switchCue
+    val switchCue = jarnShownCue(JarnSwitchCuePreview.cue ?: savedCue, state.settingsOnDeck)
     RememberDeckTab(state.deckTab)
     JarnTheme(
         look = appearance.look,
         reducedMotion = appearance.reducedMotion,
         screenActive = state.isLit(screen),
+        switchCue = switchCue,
     ) {
-        CompositionLocalProvider(LocalJarnFocusFloatAllowed provides rememberJarnWallpaperCanAnimate()) {
+        CompositionLocalProvider(LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed()) {
             ProvideJarnInput(JarnInput, screen) {
                 val firstRun = rememberJarnFirstRun(state.stageRoute)
-                Box(Modifier.fillMaxSize()) {
+                val dimTarget = jarnDimTarget(switchCue, state.isLit(screen), state.settingsOnDeck)
+                val dim = rememberJarnScreenDim(dimTarget)
+                Box(Modifier.fillMaxSize().jarnScreenDim(dim)) {
                     when {
                         firstRun?.coversShell(state.stageRoute) == true -> JarnFirstRunScreen(screen, state, firstRun)
                         screen == JarnScreen.Stage -> StageScreen(state)
                         else -> DeckScreen(state)
                     }
-                    JarnScreenSwitchBorder(screen, state)
+                    JarnEsdeRomsNoticeHost(screen)
                 }
             }
         }

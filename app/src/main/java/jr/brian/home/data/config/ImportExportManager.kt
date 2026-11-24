@@ -55,6 +55,8 @@ class ImportExportManager @Inject constructor(
     private val artChoiceStore: jr.brian.frontend.library.art.GameArtChoiceStore,
     private val appPinStore: jr.brian.frontend.apps.JarnAppPinStore,
     private val playStatsBackup: jr.brian.frontend.library.play.PlayStatsBackup,
+    private val backupExtras: SettingsBackupExtras,
+    private val jarnPreviewStore: jr.brian.home.data.preview.JarnPreviewStore,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -73,7 +75,7 @@ class ImportExportManager @Inject constructor(
                 jarnPlayStats = playStatsBackup.export()?.map { it.toConfig() },
             ),
             system = buildSystemConfig()
-        )
+        ).let { backupExtras.addTo(it) }
     }
 
     private suspend fun buildUiConfig(): UiConfig {
@@ -300,6 +302,8 @@ class ImportExportManager @Inject constructor(
             jarnLiveWallpaper = jarnLookStore.liveWallpaperBackup(),
             jarnFirstRunDone = jarnLookStore.firstRunDone,
             jarnMatchCommandPanel = jarnLookStore.matchCommandPanel,
+            jarnWallpaperScreens = jarnLookStore.wallpaperScreensBackup(),
+            jarnPreview = jarnPreviewStore.previewBackup(),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -363,7 +367,8 @@ class ImportExportManager @Inject constructor(
 
     // ── Import ──────────────────────────────────────────────────────────────
 
-    suspend fun applyConfig(config: JarngreiprConfig) = withContext(Dispatchers.Main) {
+    suspend fun applyConfig(backup: JarngreiprConfig) = withContext(Dispatchers.Main) {
+        val config = backupExtras.prepareForRestore(backup)
         applyUiConfig(config.ui)
         applyAppConfig(config.app)
         applyPageConfig(config.page)
@@ -375,6 +380,7 @@ class ImportExportManager @Inject constructor(
         config.feature.jarnPlayStats?.let { stats ->
             playStatsBackup.restore(stats.map { it.toBackedUpPlayStat() })
         }
+        backupExtras.restore(config)
     }
 
     private suspend fun applyUiConfig(config: UiConfig) {
@@ -709,6 +715,8 @@ class ImportExportManager @Inject constructor(
         jarnLookStore.restoreLiveWallpaper(config.jarnLiveWallpaper)
         if (config.jarnFirstRunDone == true) jarnLookStore.markFirstRunDone()
         config.jarnMatchCommandPanel?.let(jarnLookStore::setMatchCommandPanel)
+        jarnLookStore.restoreWallpaperScreens(config.jarnWallpaperScreens)
+        jarnPreviewStore.restorePreview(config.jarnPreview)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

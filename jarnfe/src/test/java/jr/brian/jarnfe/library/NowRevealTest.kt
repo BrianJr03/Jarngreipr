@@ -27,11 +27,11 @@ class NowRevealTest {
     private var partReady by mutableStateOf(false)
     private lateinit var gate: NowRevealGate
 
-    private fun show() {
+    private fun show(followsRoute: Boolean = false) {
         rule.mainClock.autoAdvance = false
         rule.setContent {
             JarnTheme {
-                val reveal = rememberNowReveal(value) { it }
+                val reveal = rememberNowReveal(value, followsRoute = { _, _ -> followsRoute }) { it }
                 gate = reveal.gate
                 CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
                     NowRevealBox(reveal) {
@@ -52,6 +52,18 @@ class NowRevealTest {
         rule.mainClock.advanceTimeByFrame()
         rule.onNodeWithText("old").assertExists()
         rule.mainClock.advanceTimeBy(200)
+        rule.onNodeWithText("new").assertExists()
+    }
+
+    @Test
+    fun `a route change trails the Stage by 40ms before fading`() {
+        show(followsRoute = true)
+        partReady = true
+        rule.runOnIdle { value = "new" }
+        rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(120)
+        rule.onNodeWithText("old").assertExists()
+        rule.mainClock.advanceTimeBy(80)
         rule.onNodeWithText("new").assertExists()
     }
 

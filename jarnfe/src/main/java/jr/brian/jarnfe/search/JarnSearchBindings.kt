@@ -3,9 +3,12 @@ package jr.brian.jarnfe.search
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.input.tabBindings
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.shell.shoulderPairsFor
 
 /** Starts a search, scoped to the open system in a game list. Inside Search it returns to the keyboard. */
 internal fun openJarnSearch(
@@ -21,11 +24,7 @@ internal fun openJarnSearch(
     session.update { openSearch() }
 }
 
-internal fun JarnBindingsBuilder.searchTabBindings(search: JarnSearchStore) {
-    on(JarnAction.TabPrevious) { search.stepTab(-1) }
-    on(JarnAction.TabNext) { search.stepTab(1) }
-}
-
+/** The results sit on Stage, so the shoulder pair for Stage's screen steps their tabs from the keyboard. */
 internal fun JarnBindingsBuilder.searchKeyboardBindings(
     session: JarnSessionStore,
     search: JarnSearchStore,
@@ -40,6 +39,6 @@ internal fun JarnBindingsBuilder.searchKeyboardBindings(
     }
     if (!search.results.isEmpty) {
         on(JarnAction.Search, R.string.jarnfe_search_hint_results) { session.update { back() } }
-        searchTabBindings(search)
+        tabBindings(session.state.shoulderPairsFor(JarnScreen.Stage), search::stepTab)
     }
 }

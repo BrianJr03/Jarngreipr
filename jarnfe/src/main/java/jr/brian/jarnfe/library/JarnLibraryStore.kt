@@ -4,6 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import jr.brian.jarnfe.launch.JarnGameFileStatus
+import jr.brian.jarnfe.session.LibrarySection
+import jr.brian.jarnfe.session.StageRoute
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,12 +30,47 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     /** True while the Continue playing banner holds focus, so hints describe the banner. */
     var heroFocused by mutableStateOf(false)
 
+    /** Null until launching is connected. Checks a game's file without launching it. */
+    var checkFile by mutableStateOf<(suspend (JarnLibraryGame) -> JarnGameFileStatus)?>(null)
+
+    /** What Now and game actions follow: the Continue playing game while its banner has focus. */
+    fun nowSelection(route: StageRoute, section: LibrarySection): LibrarySelection =
+        state.resumeSelection(route, section, heroFocused) ?: state.selection(route, section)
+
+    /** A move the open game list makes on its own, cleared once it lands. */
+    internal var jump by mutableStateOf<LibraryJump?>(null)
+        private set
+    private var jumps = 0L
+
+    internal fun requestJump(systemId: String, gameId: String, spin: Boolean) {
+        jump = LibraryJump(systemId, gameId, spin, ++jumps)
+    }
+
+    /** Focus and Now move only here, at the end of the motion. */
+    internal fun landJump(gameId: String) {
+        jump = null
+        update { focusOpenGame(gameId) }
+        requestStageRefocus()
+    }
+
     /** Grows each time Stage should take focus back on its current game. */
     var stageRefocus by mutableIntStateOf(0)
         private set
 
     fun requestStageRefocus() {
         stageRefocus += 1
+    }
+
+    /** Set when the Continue playing card should take focus once it is on screen. */
+    var heroFocusPending by mutableStateOf(false)
+        private set
+
+    fun requestHeroFocus() {
+        heroFocusPending = true
+    }
+
+    fun consumeHeroFocus() {
+        heroFocusPending = false
     }
 
     private val openSystemId = MutableStateFlow<String?>(null)

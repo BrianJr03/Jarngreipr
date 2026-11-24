@@ -2,7 +2,7 @@
 <resources>
     <string name="jarnfe_keyboard_clear">Clear</string>
     <string name="jarnfe_tools_title">Input tools</string>
-    <string name="jarnfe_tools_settings_hint">Trackpad and back button shortcuts</string>
+    <string name="jarnfe_tools_settings_hint">Trackpad and Back button shortcuts.</string>
     <string name="jarnfe_tools_unavailable">Input tools aren\'t available on this device.</string>
     <string name="jarnfe_tools_trackpad">Trackpad</string>
     <string name="jarnfe_tools_trackpad_supporting">Move a cursor with touch or the D-pad</string>

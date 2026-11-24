@@ -56,6 +56,13 @@ class JarnLogicTest {
     }
 
     @Test
+    fun `ambient motion follows only the in-app toggle`() {
+        assertFalse(JarnMotion(reduced = true, ambientReduced = false).ambientReduced)
+        assertTrue(JarnMotion(reduced = true).ambientReduced)
+        assertFalse(JarnMotion().ambientReduced)
+    }
+
+    @Test
     fun `reduced motion follows the toggle or a zero animator scale`() {
         assertTrue(jarnShouldReduceMotion(true, 1f))
         assertTrue(jarnShouldReduceMotion(false, 0f))

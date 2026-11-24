@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -26,6 +27,8 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
+import jr.brian.jarnfe.library.NowShortcutControls
+import jr.brian.jarnfe.library.nowShortcutGap
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.JarnSearchDeck
 import jr.brian.jarnfe.session.DeckTab
@@ -104,6 +107,9 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
     }
 }
 
+/** Random and Last Played live in the header only on Now, opposite the tabs. */
+internal fun DeckTab.showsNowShortcuts(): Boolean = this == DeckTab.Now
+
 @Composable
 private fun DeckTabStrip(selected: DeckTab) {
     val tabs = DeckTab.entries
@@ -117,8 +123,10 @@ private fun DeckTabStrip(selected: DeckTab) {
                 selectedIndex = tabs.indexOf(selected),
                 onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
                 modifier = Modifier.weight(1f),
+                showsSwitchMark = true,
             )
             if (selected == DeckTab.Canvas) CanvasHeaderControls()
+            if (selected.showsNowShortcuts()) NowShortcutControls(Modifier.padding(start = nowShortcutGap(JarnTheme.space.md.value).dp))
         }
         if (selected == DeckTab.Canvas) CanvasHeaderEditBanner(Modifier.matchParentSize())
     }
@@ -128,7 +136,7 @@ private fun DeckTabStrip(selected: DeckTab) {
 private fun DeckTabContent(state: JarnSessionState) {
     when (state.deckTab) {
         DeckTab.Now -> LibraryNowPanel(
-            selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
+            selection = JarnLibrary.nowSelection(state.stageRoute, state.librarySection),
         )
         DeckTab.Apps -> JarnAppsRoute()
         DeckTab.Canvas -> CanvasRoute(state)

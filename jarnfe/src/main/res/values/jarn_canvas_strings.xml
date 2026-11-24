@@ -2,7 +2,7 @@
 <resources>
     <string name="jarnfe_canvas_loading">Loading your pages</string>
     <string name="jarnfe_canvas_no_pages_title">No pages yet</string>
-    <string name="jarnfe_canvas_no_pages_message">Press X, then choose Pages to add one.</string>
+    <string name="jarnfe_canvas_no_pages_message">Press Select, then choose Pages to add one.</string>
     <string name="jarnfe_canvas_other_page_title">This page opens in Classic</string>
     <string name="jarnfe_canvas_other_page_message">You can still move it, delete it, or set it as Home from Pages.</string>
     <string name="jarnfe_canvas_page_of">Page %1$d of %2$d</string>
@@ -146,9 +146,9 @@
     <string name="jarnfe_canvas_remove_photo_message">This photo is removed from Jarngreipr.</string>
 
     <string name="jarnfe_canvas_widget_unbound">Widget needs setup</string>
-    <string name="jarnfe_canvas_widget_unbound_detail">Press X, then choose the widget again.</string>
+    <string name="jarnfe_canvas_widget_unbound_detail">Press Select, then choose the widget again.</string>
     <string name="jarnfe_canvas_widget_gone">Widget not available</string>
-    <string name="jarnfe_canvas_widget_gone_detail">Press X to remove it, then add it again.</string>
+    <string name="jarnfe_canvas_widget_gone_detail">Press Select to remove it, then add it again.</string>
     <string name="jarnfe_canvas_hint_press">Press</string>
     <string name="jarnfe_canvas_hint_leave">Leave widget</string>
 

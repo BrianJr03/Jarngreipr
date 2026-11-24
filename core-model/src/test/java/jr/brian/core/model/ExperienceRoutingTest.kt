@@ -15,9 +15,9 @@ class ExperienceRoutingTest {
     }
 
     @Test
-    fun `no saved choice opens jarn fe when it is available`() {
+    fun `no saved choice opens classic even when jarn fe is available`() {
         assertEquals(
-            Experience.JarnFE,
+            Experience.Classic,
             resolveLauncherExperience(jarnAvailable = true, stored = null, forceClassic = false),
         )
     }

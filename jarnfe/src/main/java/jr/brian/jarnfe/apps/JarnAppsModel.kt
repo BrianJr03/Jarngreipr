@@ -53,6 +53,10 @@ internal fun jarnAppSections(snapshot: JarnAppsSnapshot): JarnAppSections {
     )
 }
 
+/** The apps the drawer lists outside its Hidden section, so hidden apps stay out of Search too. */
+internal fun jarnShownApps(snapshot: JarnAppsSnapshot): List<JarnDockApp> =
+    jarnAppSections(snapshot).let { it.pinned + it.all }
+
 internal enum class JarnAppsSection { Pinned, All, Hidden }
 
 internal sealed interface JarnAppsRow {

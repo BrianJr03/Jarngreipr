@@ -15,7 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal const val CANVAS_UNDO_WINDOW_MS = 6_000L
+internal const val CANVAS_UNDO_WINDOW_MS = 2_000L
 
 /** Long enough for the saved layout to arrive, so a finished removal never flashes back. */
 internal const val CANVAS_REMOVAL_HIDE_MS = 1_000L

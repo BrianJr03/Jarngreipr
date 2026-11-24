@@ -12,11 +12,13 @@
     <string name="jarnfe_first_run_nice">Nice, that\'s it.</string>
     <string name="jarnfe_first_run_replay">Replay the tour</string>
     <string name="jarnfe_first_run_replay_hint">Walk through the screens and buttons again.</string>
+    <string name="jarnfe_meet_jarn">Meet Jarn</string>
+    <string name="jarnfe_meet_jarn_hint">See the screen Classic players get when Jarn is new.</string>
 
     <string name="jarnfe_first_run_stage_cue">Follow along on the Deck.</string>
     <string name="jarnfe_first_run_stage_welcome">Stage shows it. Deck does it.</string>
     <string name="jarnfe_first_run_stage_practice">Try it on your controller</string>
-    <string name="jarnfe_first_run_stage_select">Select jumps between screens</string>
+    <string name="jarnfe_first_run_stage_switch">X jumps between screens</string>
     <string name="jarnfe_first_run_stage_other_tabs">These tabs move from the other screen</string>
 
     <string name="jarnfe_first_run_welcome_title">Welcome to Jarn</string>
@@ -58,26 +60,32 @@
     <string name="jarnfe_first_run_look_title">Pick a look</string>
     <string name="jarnfe_first_run_look_body">Move up to try one on both screens, and press A to keep it. Fjord is the default.</string>
 
+    <string name="jarnfe_first_run_cue_title">Pick a switch cue</string>
+    <string name="jarnfe_first_run_cue_body">Highlight one and press X to feel it. Press A to keep it. Pulse is the default.</string>
+
     <string name="jarnfe_first_run_a_title">A selects</string>
     <string name="jarnfe_first_run_a_body">Press A to open or confirm whatever is highlighted.</string>
     <string name="jarnfe_first_run_b_title">B goes back</string>
     <string name="jarnfe_first_run_b_body">Press B to step back one level. Try it now.</string>
-    <string name="jarnfe_first_run_x_title">X shows options</string>
-    <string name="jarnfe_first_run_x_body">Press X on a game to see what you can do with it on the Deck. Try it now.</string>
-    <string name="jarnfe_first_run_x_body_single">Press X on a game to open the Deck panel with its options. Try it now.</string>
-    <string name="jarnfe_first_run_select_title">Select switches screens</string>
-    <string name="jarnfe_first_run_select_body">Press Select to move your controller to the other screen. Try it now.</string>
+    <string name="jarnfe_first_run_options_title">Select shows options</string>
+    <string name="jarnfe_first_run_options_body">Press Select on a game to see what you can do with it on the Deck. Try it now.</string>
+    <string name="jarnfe_first_run_options_body_single">Press Select on a game to open the Deck panel with its options. Try it now.</string>
+    <string name="jarnfe_first_run_switch_title">X switches screens</string>
+    <string name="jarnfe_first_run_switch_body">Press X to move your controller to the other screen. Try it now.</string>
+    <string name="jarnfe_first_run_switch_hold">Hold X to swap the two screens.</string>
     <string name="jarnfe_first_run_tabs_title">L1 and R1 change tabs</string>
-    <string name="jarnfe_first_run_tabs_body">Press L1 or R1 to move between tabs on this screen.</string>
-    <string name="jarnfe_first_run_other_tabs_title">L2 and R2 reach across</string>
-    <string name="jarnfe_first_run_other_tabs_body">Press L2 or R2 to change tabs on the other screen without leaving this one.</string>
+    <string name="jarnfe_first_run_tabs_body">Press L1 or R1 to change tabs on the top screen, wherever your controller is.</string>
+    <string name="jarnfe_first_run_tabs_body_single">Press L1 or R1 to move between tabs on this screen.</string>
+    <string name="jarnfe_first_run_other_tabs_title">L2 and R2 change bottom tabs</string>
+    <string name="jarnfe_first_run_other_tabs_body">Press L2 or R2 to change tabs on the bottom screen, wherever your controller is.</string>
 
     <string name="jarnfe_first_run_done_title">You\'re all set</string>
     <string name="jarnfe_first_run_done_body">Here are your buttons. Replay this tour anytime from Settings, General.</string>
     <string name="jarnfe_first_run_cheat_a">Open or confirm</string>
     <string name="jarnfe_first_run_cheat_b">Go back</string>
-    <string name="jarnfe_first_run_cheat_select">Switch screens</string>
-    <string name="jarnfe_first_run_cheat_select_single">Open the Deck panel</string>
-    <string name="jarnfe_first_run_cheat_tabs">Change tabs</string>
-    <string name="jarnfe_first_run_cheat_other_tabs">Change tabs on the other screen</string>
+    <string name="jarnfe_first_run_cheat_switch">Switch screens</string>
+    <string name="jarnfe_first_run_cheat_switch_single">Open the Deck panel</string>
+    <string name="jarnfe_first_run_cheat_tabs">Change tabs on the top screen</string>
+    <string name="jarnfe_first_run_cheat_tabs_single">Change tabs</string>
+    <string name="jarnfe_first_run_cheat_other_tabs">Change tabs on the bottom screen</string>
 </resources>

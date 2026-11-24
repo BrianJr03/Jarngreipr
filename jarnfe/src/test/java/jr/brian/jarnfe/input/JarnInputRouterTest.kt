@@ -39,26 +39,73 @@ class JarnInputRouterTest {
         on(action, R.string.jarnfe_hint_confirm) { log += name }
 
     @Test
-    fun `hinted button reports one press and ignores its repeat`() {
+    fun `a button that acts reports one press and ignores its repeat`() {
         var presses = 0
-        router.onHintPressed = { presses++ }
+        router.onButtonPressed = { presses++ }
         layer { logs(JarnAction.Context, "context") }
 
-        down(KeyEvent.KEYCODE_BUTTON_X)
-        down(KeyEvent.KEYCODE_BUTTON_X, time = 5, repeat = 1)
-        up(KeyEvent.KEYCODE_BUTTON_X)
+        down(KeyEvent.KEYCODE_BUTTON_SELECT)
+        down(KeyEvent.KEYCODE_BUTTON_SELECT, time = 5, repeat = 1)
+        up(KeyEvent.KEYCODE_BUTTON_SELECT)
 
         assertEquals(1, presses)
     }
 
     @Test
-    fun `button without a hint reports nothing`() {
+    fun `an unhinted binding such as l1 tabs still reports its press`() {
         var presses = 0
-        router.onHintPressed = { presses++ }
+        router.onButtonPressed = { presses++ }
+        layer { on(JarnAction.TabNext) { log += "tab" } }
 
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_R1)
+
+        assertEquals(1, presses)
+        assertEquals(listOf("tab"), log)
+    }
+
+    @Test
+    fun `a button that does nothing reports nothing`() {
+        var presses = 0
+        router.onButtonPressed = { presses++ }
+
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
 
         assertEquals(0, presses)
+    }
+
+    @Test
+    fun `every d-pad press and repeat arms navigation and never counts as a button`() {
+        var directions = 0
+        var buttons = 0
+        router.onDirectionPressed = { directions++ }
+        router.onButtonPressed = { buttons++ }
+
+        down(KeyEvent.KEYCODE_DPAD_RIGHT)
+        down(KeyEvent.KEYCODE_DPAD_RIGHT, time = 50, repeat = 1)
+        down(KeyEvent.KEYCODE_DPAD_RIGHT, time = 100, repeat = 2)
+        up(KeyEvent.KEYCODE_DPAD_RIGHT, time = 120)
+
+        assertEquals(3, directions)
+        assertEquals(0, buttons)
+    }
+
+    @Test
+    fun `holding x to swap reports one press`() {
+        var presses = 0
+        router.setGlobalBindings(
+            jarnBindings {
+                on(JarnAction.SwitchScreen) { log += "switch" }
+                on(JarnAction.Swap) { log += "swap" }
+            },
+        )
+        router.onButtonPressed = { presses++ }
+
+        down(KeyEvent.KEYCODE_BUTTON_X)
+        down(KeyEvent.KEYCODE_BUTTON_X, time = JARN_LONG_PRESS_MS + 10, repeat = 1)
+        up(KeyEvent.KEYCODE_BUTTON_X, time = JARN_LONG_PRESS_MS + 50)
+
+        assertEquals(listOf("swap"), log)
+        assertEquals(2, presses)
     }
 
     @Test
@@ -71,14 +118,14 @@ class JarnInputRouterTest {
             KeyEvent.KEYCODE_BUTTON_B to JarnAction.Back,
             KeyEvent.KEYCODE_BACK to JarnAction.Back,
             KeyEvent.KEYCODE_ESCAPE to JarnAction.Back,
-            KeyEvent.KEYCODE_BUTTON_X to JarnAction.Context,
+            KeyEvent.KEYCODE_BUTTON_SELECT to JarnAction.Context,
             KeyEvent.KEYCODE_BUTTON_Y to JarnAction.Search,
             KeyEvent.KEYCODE_BUTTON_START to JarnAction.Menu,
-            KeyEvent.KEYCODE_BUTTON_SELECT to JarnAction.SwitchScreen,
+            KeyEvent.KEYCODE_BUTTON_X to JarnAction.SwitchScreen,
             KeyEvent.KEYCODE_BUTTON_L1 to JarnAction.TabPrevious,
             KeyEvent.KEYCODE_BUTTON_R1 to JarnAction.TabNext,
-            KeyEvent.KEYCODE_BUTTON_L2 to JarnAction.OppositeTabPrevious,
-            KeyEvent.KEYCODE_BUTTON_R2 to JarnAction.OppositeTabNext,
+            KeyEvent.KEYCODE_BUTTON_L2 to JarnAction.BottomTabPrevious,
+            KeyEvent.KEYCODE_BUTTON_R2 to JarnAction.BottomTabNext,
             KeyEvent.KEYCODE_BUTTON_THUMBL to JarnAction.Swap,
             KeyEvent.KEYCODE_BUTTON_THUMBR to JarnAction.Swap,
             KeyEvent.KEYCODE_DPAD_UP to JarnAction.MoveUp,
@@ -150,16 +197,16 @@ class JarnInputRouterTest {
     @Test
     fun `long press is detected on release when the pad sends no repeats`() {
         layer { on(JarnAction.Context, onLongPress = { log += "long" }) { log += "tap" } }
-        down(KeyEvent.KEYCODE_BUTTON_X)
-        up(KeyEvent.KEYCODE_BUTTON_X, time = 700)
+        down(KeyEvent.KEYCODE_BUTTON_SELECT)
+        up(KeyEvent.KEYCODE_BUTTON_SELECT, time = 700)
         assertEquals(listOf("long"), log)
     }
 
     @Test
     fun `short press with a long press binding is a tap`() {
         layer { on(JarnAction.Context, onLongPress = { log += "long" }) { log += "tap" } }
-        down(KeyEvent.KEYCODE_BUTTON_X)
-        up(KeyEvent.KEYCODE_BUTTON_X, time = 100)
+        down(KeyEvent.KEYCODE_BUTTON_SELECT)
+        up(KeyEvent.KEYCODE_BUTTON_SELECT, time = 100)
         assertEquals(listOf("tap"), log)
     }
 
@@ -225,10 +272,10 @@ class JarnInputRouterTest {
     fun `unbound non-focus buttons are consumed so system fallbacks cannot fire`() {
         listOf(
             KeyEvent.KEYCODE_BUTTON_B,
-            KeyEvent.KEYCODE_BUTTON_X,
+            KeyEvent.KEYCODE_BUTTON_SELECT,
             KeyEvent.KEYCODE_BUTTON_Y,
             KeyEvent.KEYCODE_BUTTON_START,
-            KeyEvent.KEYCODE_BUTTON_SELECT,
+            KeyEvent.KEYCODE_BUTTON_X,
             KeyEvent.KEYCODE_BUTTON_L1,
             KeyEvent.KEYCODE_BUTTON_R1,
             KeyEvent.KEYCODE_BUTTON_THUMBL,
@@ -283,7 +330,7 @@ class JarnInputRouterTest {
     fun `top layer gets the action first and passive layers fall through`() {
         layer { logs(JarnAction.Context, "low-x"); logs(JarnAction.Search, "low-y") }
         layer(depth = 1) { logs(JarnAction.Context, "top-x") }
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         tap(KeyEvent.KEYCODE_BUTTON_Y)
         assertEquals(listOf("top-x", "low-y"), log)
     }
@@ -292,7 +339,7 @@ class JarnInputRouterTest {
     fun `depth wins over registration order`() {
         layer(depth = 1) { logs(JarnAction.Context, "deep") }
         layer(depth = 0) { logs(JarnAction.Context, "shallow") }
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         assertEquals(listOf("deep"), log)
     }
 
@@ -301,7 +348,7 @@ class JarnInputRouterTest {
         layer { logs(JarnAction.Context, "low") }
         router.setGlobalBindings(jarnBindings { on(JarnAction.Menu) { log += "menu" } })
         layer(mode = JarnLayerMode.Modal, depth = 1) { logs(JarnAction.Back, "close") }
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         tap(KeyEvent.KEYCODE_BUTTON_START)
         assertEquals(emptyList<String>(), log)
         assertFalse(down(KeyEvent.KEYCODE_DPAD_UP))
@@ -331,7 +378,7 @@ class JarnInputRouterTest {
         }
         tap(KeyEvent.KEYCODE_BUTTON_L1)
         tap(KeyEvent.KEYCODE_BUTTON_R1)
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         tap(KeyEvent.KEYCODE_DPAD_LEFT)
         tap(KeyEvent.KEYCODE_BUTTON_A)
         tap(KeyEvent.KEYCODE_BUTTON_B)
@@ -377,9 +424,9 @@ class JarnInputRouterTest {
     fun `input only reaches the active screen`() {
         layer(JarnScreen.Stage) { logs(JarnAction.Context, "stage") }
         layer(JarnScreen.Deck) { logs(JarnAction.Context, "deck") }
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         router.activate(JarnScreen.Deck)
-        tap(KeyEvent.KEYCODE_BUTTON_X)
+        tap(KeyEvent.KEYCODE_BUTTON_SELECT)
         assertEquals(listOf("stage", "deck"), log)
     }
 
@@ -403,7 +450,7 @@ class JarnInputRouterTest {
         assertEquals(
             listOf(
                 JarnInputHint(JarnKey.A, R.string.jarnfe_hint_play),
-                JarnInputHint(JarnKey.X, R.string.jarnfe_hint_context),
+                JarnInputHint(JarnKey.Select, R.string.jarnfe_hint_context),
             ),
             router.hintsFor(JarnScreen.Stage),
         )

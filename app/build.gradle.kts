@@ -16,8 +16,8 @@ android {
         applicationId = "jr.brian.home"
         minSdk = 33
         targetSdk = 37
-        versionCode = 3
-        versionName = "3.1.3"
+        versionCode = 4
+        versionName = "4.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -190,6 +190,8 @@ dependencies {
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+    testImplementation(composeBom)
+    testImplementation(libs.androidx.ui.test.junit4)
 
     // Android testing dependencies
     androidTestImplementation(libs.kotlinx.coroutines.test)

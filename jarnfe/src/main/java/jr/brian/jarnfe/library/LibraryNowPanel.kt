@@ -28,8 +28,8 @@ internal val NowTopZone = 240.dp
 @Composable
 internal fun LibraryNowPanel(selection: LibrarySelection) {
     val settled = rememberSettledSelection(selection)
-    val sceneNow = settled.sceneSystemId()?.let { rememberSystemNow(it) }
-    val reveal = rememberNowReveal(settled) { it.focusKey() }
+    val sceneNow = settled.sceneSystemId()?.takeUnless { settled.isResume() }?.let { rememberSystemNow(it) }
+    val reveal = rememberNowReveal(settled, followsRoute = ::isRouteChange) { it.focusKey() }
     val shown = reveal.shown
     val shownNow = rememberShownSystemNow(sceneNow, shown.sceneSystemId())
     CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
@@ -45,14 +45,21 @@ internal fun LibraryNowPanel(selection: LibrarySelection) {
                             is LibrarySelection.System -> key(shown.system.id) {
                                 NowSystemView(shown.system, shownNow)
                             }
-                            is LibrarySelection.Game -> NowGameView(shown.game)
+                            is LibrarySelection.Game -> NowGameView(shown.game, shown.resume)
                         }
                     }
                 }
             }
         }
     }
+    ResumeMissingDialog()
 }
+
+/** A switch between a system and a game, which is mostly the Stage opening a system or going back. */
+internal fun isRouteChange(from: LibrarySelection, to: LibrarySelection): Boolean =
+    from !is LibrarySelection.None && to !is LibrarySelection.None && from::class != to::class
+
+private fun LibrarySelection.isResume(): Boolean = this is LibrarySelection.Game && resume
 
 /**
  * The Stage can change the selection while the controller is on Now. If that removes the focused
@@ -86,7 +93,7 @@ private fun NowFocusKeeper(selection: LibrarySelection, content: @Composable () 
 internal fun LibrarySelection.focusKey(): String? = when (this) {
     LibrarySelection.None -> null
     is LibrarySelection.System -> "system:${system.id}"
-    is LibrarySelection.Game -> "game:${game.id}"
+    is LibrarySelection.Game -> if (resume) "resume:${game.id}" else "game:${game.id}"
 }
 
 @Composable

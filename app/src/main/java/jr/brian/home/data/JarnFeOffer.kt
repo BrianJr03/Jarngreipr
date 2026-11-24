@@ -9,7 +9,7 @@ import jr.brian.home.ui.util.hasJarnFeActivity
  * release builds ship the Jarn FE activities, which are in the debug manifest only today.
  */
 object JarnFeOffer {
-    private const val OFFER_IN_RELEASE_BUILDS = false
+    private const val OFFER_IN_RELEASE_BUILDS = true
 
     fun isOffered(context: Context): Boolean = shouldOfferJarnFe(
         isDebugBuild = BuildConfig.DEBUG,

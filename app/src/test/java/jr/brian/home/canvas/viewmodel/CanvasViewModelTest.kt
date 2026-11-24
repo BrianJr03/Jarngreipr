@@ -5,6 +5,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -319,32 +320,62 @@ class CanvasViewModelTest {
         }
     }
 
-    @Test
-    fun `removeItemAndCleanup also deletes folder entity for FolderItems`() = runTest {
-        val vm = newVm()
-        vm.setPageIndex(2)
-        advanceUntilIdle()
-
+    private fun givenFolderTileOnPage2() {
+        every { canvasLayoutManager.getLayout(2) } returns layoutOf(
+            CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x"),
+            CanvasItem.FolderItem(id = "folder-y", folderId = "fld-y"),
+            CanvasItem.AppItem("app", packageName = "com.x")
+        )
+        coEvery { folderManager.readFolders(2, CanvasTabType.VALUE) } returns emptyList()
         coEvery { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) } returns true
-        val folderItem = CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x")
-        vm.removeItemAndCleanup(folderItem)
-        advanceUntilIdle()
-
-        coVerify { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) }
-        verify { canvasLayoutManager.removeItem(2, "folder-x") }
     }
 
     @Test
-    fun `removeItemAndCleanup keeps the tile when the folder delete is refused`() = runTest {
+    fun `removeItemAndCleanup removes the folder tile before the folder entity`() = runTest {
         val vm = newVm()
         vm.setPageIndex(2)
         advanceUntilIdle()
-        coEvery { folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE) } returns false
+        givenFolderTileOnPage2()
 
         vm.removeItemAndCleanup(CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x"))
         advanceUntilIdle()
 
-        verify(exactly = 0) { canvasLayoutManager.removeItem(2, "folder-x") }
+        coVerifyOrder {
+            canvasLayoutManager.removeItem(2, "folder-x")
+            folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE)
+        }
+        verify(exactly = 0) { canvasLayoutManager.removeItem(2, "folder-y") }
+        verify(exactly = 0) { canvasLayoutManager.removeItem(2, "app") }
+    }
+
+    @Test
+    fun `removeItemAndCleanup keeps the tile and folder when the folder store is unreadable`() = runTest {
+        val vm = newVm()
+        vm.setPageIndex(2)
+        advanceUntilIdle()
+        givenFolderTileOnPage2()
+        coEvery { folderManager.readFolders(2, CanvasTabType.VALUE) } returns null
+
+        vm.removeItemAndCleanup(CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x"))
+        advanceUntilIdle()
+
+        verify(exactly = 0) { canvasLayoutManager.removeItem(any(), any()) }
+        coVerify(exactly = 0) { folderManager.deleteFolder(any(), any(), any()) }
+    }
+
+    @Test
+    fun `deleting a folder from its sheet takes its tile with it`() = runTest {
+        val vm = newVm()
+        vm.setPageIndex(2)
+        advanceUntilIdle()
+        givenFolderTileOnPage2()
+
+        assertTrue(vm.deleteFolderWithTiles("fld-x"))
+
+        coVerifyOrder {
+            canvasLayoutManager.removeItem(2, "folder-x")
+            folderManager.deleteFolder(2, "fld-x", CanvasTabType.VALUE)
+        }
     }
 
     @Test

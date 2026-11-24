@@ -182,7 +182,7 @@ private fun FolderAppGrid(
     }
 }
 
-/** A opens and X gives options through the sheet's layer. Touch gets tap and long-press here. */
+/** A opens and Select gives options through the sheet's layer. Touch gets tap and long-press here. */
 @Composable
 private fun FolderAppCell(
     app: JarnCanvasApp,

@@ -53,6 +53,8 @@ class JarnFirstRunConfigImportTest {
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(context),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(context),
             playStatsBackup = mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 
@@ -63,7 +65,7 @@ class JarnFirstRunConfigImportTest {
 
     @Test
     fun `schema version covers first run`() {
-        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(60, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

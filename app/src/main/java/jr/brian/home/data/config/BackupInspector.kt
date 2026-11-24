@@ -1,7 +1,11 @@
 package jr.brian.home.data.config
 
+import jr.brian.core.ui.motion.JarnPageTransition
+import jr.brian.core.ui.theme.JarnSwitchCue
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
+import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.jarnfe.backup.JarnBackupArea
 import jr.brian.jarnfe.backup.JarnBackupChange
 import jr.brian.jarnfe.backup.JarnBackupItem
@@ -128,7 +132,8 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             null,
             null,
             backup.ui.wallpaper == current.ui.wallpaper &&
-                backup.ui.frontendWallpaper == current.ui.frontendWallpaper,
+                backup.ui.frontendWallpaper == current.ui.frontendWallpaper &&
+                wallpaperScreensAfter(b.jarnWallpaperScreens, c.jarnWallpaperScreens) == c.jarnWallpaperScreens,
         ),
         replaced(
             JarnBackupArea.Scraper,
@@ -143,6 +148,16 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             backup.otherSettings(current) == current.otherSettings(current),
         ),
     )
+}
+
+/** What restoring [backup] leaves, since a missing field keeps the current value. */
+private fun wallpaperScreensAfter(
+    backup: JarnWallpaperScreensConfig?,
+    current: JarnWallpaperScreensConfig?,
+): JarnWallpaperScreensConfig? {
+    backup ?: return current
+    val same = backup.sameOnBoth ?: current?.sameOnBoth
+    return JarnWallpaperScreensConfig(sameOnBoth = same, bottomUri = backup.bottomUri.takeUnless { same == true })
 }
 
 private fun replaced(area: JarnBackupArea, backupCount: Int?, currentCount: Int?, same: Boolean) =
@@ -194,7 +209,17 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
             appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
             undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
-            screenSwitchMillis = it.screenSwitchMillis ?: shown?.screenSwitchMillis,
+            switchCue = it.switchCue?.let { id -> JarnSwitchCue.fromId(id).id } ?: shown?.switchCue,
+            systemView = it.systemView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.systemView,
+            gameView = it.gameView?.let { id -> JarnBrowseView.fromId(id).id } ?: shown?.gameView,
+            pageTransition = it.pageTransition?.let { id -> JarnPageTransition.fromId(id).id } ?: shown?.pageTransition,
+            systemNamesVisible = it.systemNamesVisible ?: shown?.systemNamesVisible,
+            randomVisible = it.randomVisible ?: shown?.randomVisible,
+            lastPlayedVisible = it.lastPlayedVisible ?: shown?.lastPlayedVisible,
+            systemLogoVisible = it.systemLogoVisible ?: shown?.systemLogoVisible,
+            gameCountVisible = it.gameCountVisible ?: shown?.gameCountVisible,
+            lastPlayedTextVisible = it.lastPlayedTextVisible ?: shown?.lastPlayedTextVisible,
+            gameRowVisible = it.gameRowVisible ?: shown?.gameRowVisible,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
@@ -205,7 +230,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
 }
 
 private fun JarngreiprConfig.homeLayout(): List<Any> =
-    listOf(page, app.positions, app.visibility)
+    listOf(page.copy(widgetProviders = null), app.positions, app.visibility)
 
 private fun JarnArtChoicesConfig.count(): Int =
     topBySystem.size + bottomBySystem.size + topByGame.size + bottomByGame.size
@@ -222,7 +247,11 @@ private fun ScraperConfig.withoutSecrets(): ScraperConfig = copy(
 private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): JarngreiprConfig = copy(
     version = 0,
     exportedAt = "",
-    ui = ui.copy(wallpaper = WallpaperConfig(), frontendWallpaper = WallpaperConfig()),
+    ui = ui.copy(
+        wallpaper = WallpaperConfig(),
+        frontendWallpaper = WallpaperConfig(),
+        appearance = current.ui.appearance?.let { now -> ui.appearance?.mergedInto(now) ?: now },
+    ),
     app = AppConfig(),
     page = PageConfig(),
     feature = feature.copy(
@@ -237,11 +266,18 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnDisplay = null,
         jarnFirstRunDone = null,
         jarnMatchCommandPanel = null,
+        jarnWallpaperScreens = null,
+        jarnPreview = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,
         systemArtSource = feature.systemArtSource ?: current.feature.systemArtSource,
         romSearch = feature.romSearch.copy(scraper = ScraperConfig(), hintsKbVisible = true),
+        rssFeeds = mergeRssFeeds(current.feature.rssFeeds.orEmpty(), feature.rssFeeds),
+        jingles = feature.jingles.copy(
+            enabled = feature.jingles.enabled ?: current.feature.jingles.enabled,
+            repos = mergeJingleRepos(current.feature.jingles.repos.orEmpty(), feature.jingles.repos).sorted(),
+        ),
     ),
     system = system.copy(hiddenSystems = emptyList()),
 )
@@ -255,7 +291,11 @@ private fun JarngreiprConfig.imageReferences(): Set<String> = buildSet {
             wallpaper.savedVideoUri,
         ).filterTo(this) { it.isNotBlank() }
     }
+    feature.jarnWallpaperScreens?.bottomUri?.takeIf { it.isNotBlank() }?.let(::add)
     app.folders.values.flatten().mapNotNullTo(this) { folder ->
         folder.backgroundImagePath?.takeIf { it.isNotBlank() }
     }
+    page.canvasLayouts.values.flatMap { it.items }
+        .filterIsInstance<CanvasItem.PhotoContainer>()
+        .mapNotNullTo(this) { photo -> photo.imageUri?.takeIf { it.isNotBlank() } }
 }

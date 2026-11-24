@@ -2,8 +2,6 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.art.ArtChoice
 import jr.brian.frontend.library.art.GameArtChoices
-import jr.brian.frontend.look.JarnDisplayPrefs
-import jr.brian.frontend.look.JarnTapControl
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
@@ -207,9 +205,31 @@ data class JarngreiprConfig(
         // v50: added FeatureConfig.jarnMatchCommandPanel, whether Jarn FE follows Command
         //      Panel's colors. Null on older blobs, and import keeps the current value.
         //      The palette itself is never backed up.
-        // v51: added JarnDisplayConfig.screenSwitchMillis, how long Jarn FE's screen switch
-        //      ring plays. Null on older blobs, and import keeps the current value.
-        const val CONFIG_VERSION = 51
+        // v51: added JarnDisplayConfig.switchCue, how Jarn FE shows a screen switch (pulse, dim
+        //      or tab_mark). Null on older blobs, and import keeps the current value. An
+        //      unknown id falls back to pulse.
+        // v52: added UiConfig.appearance (theme, custom themes, OLED, icon shape, tab animation),
+        //      FeatureConfig.rssFeeds, JinglesConfig.enabled and repos, and
+        //      PageConfig.widgetProviders. All null on older blobs, and import keeps current values.
+        //      Feeds, repos and custom themes are only ever added. Restore also clears photo tiles
+        //      whose file is missing and widget tiles whose widget isn't the one backed up.
+        // v53: added JarnDisplayConfig.systemView and gameView, the Jarn FE Grid or Carousel
+        //      choices (grid or carousel). Null on older blobs, and import keeps the current
+        //      value. An unknown id falls back to grid.
+        // v54: added FeatureConfig.jarnWallpaperScreens, Jarn FE "Same on both screens" and the
+        //      bottom screen's own image or GIF. Null on older blobs, and import keeps both.
+        // v55: added JarnDisplayConfig.pageTransition, how a Jarn FE Canvas page arrives. Null on
+        //      older blobs, and import keeps the current value. An unknown id falls back to jarn_slide.
+        // v56: added JarnDisplayConfig.systemNamesVisible, Jarn FE "Show system names" for the
+        //      line under system cards. Null on older blobs, and import keeps the current value.
+        // v57: added FeatureConfig.jarnPreview (Meet Jarn showings, last version, tried). Null on older
+        //      blobs; import only raises the count and only turns tried on.
+        // v58: added JarnDisplayConfig.randomVisible and lastPlayedVisible, Jarn FE "Show Random" and
+        //      "Show Last Played" on Now. Null on older blobs, and import keeps the current value.
+        // v59: added JarnDisplayConfig.systemLogoVisible, gameCountVisible and lastPlayedTextVisible,
+        //      the optional parts of Jarn FE Now's system view. Null on older blobs keeps them.
+        // v60: added JarnDisplayConfig.gameRowVisible, Jarn FE "Show game row" on Now. Null keeps it.
+        const val CONFIG_VERSION = 60
     }
 }
 
@@ -223,7 +243,9 @@ data class UiConfig(
     val wallpaper: WallpaperConfig = WallpaperConfig(),
     val frontendWallpaper: WallpaperConfig = WallpaperConfig(),
     val searchLayout: SearchLayoutConfig = SearchLayoutConfig(),
-    val customAppNames: Map<String, String> = emptyMap()
+    val customAppNames: Map<String, String> = emptyMap(),
+    /** v52: theme and icon look. Null on pre-v52 exports, and import keeps the current look. */
+    val appearance: AppearanceConfig? = null
 )
 
 @Serializable
@@ -326,7 +348,9 @@ data class PageConfig(
     val homeTabIndex: Int = 0,
     val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap(),
     /** Per-page Unified Canvas layouts, keyed by pageIndex.toString(). */
-    val canvasLayouts: Map<String, CanvasLayout> = emptyMap()
+    val canvasLayouts: Map<String, CanvasLayout> = emptyMap(),
+    /** v52: widget id to provider, so restore can tell a live widget from a reused id. */
+    val widgetProviders: Map<String, String>? = null
 )
 
 @Serializable
@@ -394,7 +418,13 @@ data class FeatureConfig(
     /** v49: Jarn FE tour finished. Null on pre-v49 exports. Import never turns it back off. */
     val jarnFirstRunDone: Boolean? = null,
     /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
-    val jarnMatchCommandPanel: Boolean? = null
+    val jarnMatchCommandPanel: Boolean? = null,
+    /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
+    val rssFeeds: List<RssFeedConfig>? = null,
+    /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
+    val jarnWallpaperScreens: JarnWallpaperScreensConfig? = null,
+    /** v57: Meet Jarn preview state. Null on pre-v57 exports, and import keeps the current state. */
+    val jarnPreview: JarnPreviewConfig? = null
 )
 
 @Serializable
@@ -421,29 +451,17 @@ data class JarnDisplayConfig(
     val tapControl: String? = null,
     val appNamesVisible: Boolean? = null,
     val undoCountdownVisible: Boolean? = null,
-    val screenSwitchMillis: Int? = null,
-)
-
-internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
-    systemTileScale = systemTileScale,
-    gameTileScale = gameTileScale,
-    hintsVisible = hintsVisible,
-    buttonHaptics = buttonHaptics,
-    tapControl = tapControl.id,
-    appNamesVisible = appNamesVisible,
-    undoCountdownVisible = undoCountdownVisible,
-    screenSwitchMillis = screenSwitchMillis,
-)
-
-internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
-    systemTileScale = systemTileScale ?: current.systemTileScale,
-    gameTileScale = gameTileScale ?: current.gameTileScale,
-    hintsVisible = hintsVisible ?: current.hintsVisible,
-    buttonHaptics = buttonHaptics ?: current.buttonHaptics,
-    tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
-    appNamesVisible = appNamesVisible ?: current.appNamesVisible,
-    undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
-    screenSwitchMillis = screenSwitchMillis ?: current.screenSwitchMillis,
+    val switchCue: String? = null,
+    val systemView: String? = null,
+    val gameView: String? = null,
+    val pageTransition: String? = null,
+    val systemNamesVisible: Boolean? = null,
+    val randomVisible: Boolean? = null,
+    val lastPlayedVisible: Boolean? = null,
+    val systemLogoVisible: Boolean? = null,
+    val gameCountVisible: Boolean? = null,
+    val lastPlayedTextVisible: Boolean? = null,
+    val gameRowVisible: Boolean? = null,
 )
 
 @Serializable
@@ -560,7 +578,11 @@ data class JinglesConfig(
     val isMuted: Boolean = false,
     val volume: Float = 1.0f,
     val regexPriority: Boolean = false,
-    val isNormalizationEnabled: Boolean = false
+    val isNormalizationEnabled: Boolean = false,
+    /** v52: jingles on or off. Null on pre-v52 exports, and import keeps the current value. */
+    val enabled: Boolean? = null,
+    /** v52: GitHub jingle repos. Null on pre-v52 exports. Import only adds missing repos. */
+    val repos: List<String>? = null
 )
 
 @Serializable

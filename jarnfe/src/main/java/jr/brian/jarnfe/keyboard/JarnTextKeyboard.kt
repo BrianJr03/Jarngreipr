@@ -24,7 +24,7 @@ private const val MASK_CHAR = '•'
 private const val VISIBLE_ENTRY_CHARS = 40
 
 /**
- * Full text entry for pads. A types, X deletes (hold to repeat), Y shifts, L1 toggles symbols,
+ * Full text entry for pads. A types, Select deletes (hold to repeat), Y shifts, L1 toggles symbols,
  * R1 adds a space, Start finishes, B cancels.
  */
 @Composable

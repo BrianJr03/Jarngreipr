@@ -130,6 +130,7 @@ internal fun LibraryGameWithArt.toJarnGame() = JarnLibraryGame(
         rating = ratingText(game.rating),
         playtimeMinutes = game.playTimeMinutes.toLong(),
         lastPlayedAtMs = game.lastPlayed,
+        playCount = game.playCount.takeIf { it > 0 },
     ),
 )
 

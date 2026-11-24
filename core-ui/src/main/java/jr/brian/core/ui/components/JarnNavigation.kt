@@ -9,6 +9,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -54,6 +56,7 @@ import jr.brian.core.ui.R
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.core.ui.theme.LocalJarnSwitchMark
 
 private const val SELECTED_TAB_TINT_ALPHA = 0.14f
 
@@ -69,6 +72,7 @@ fun JarnTabs(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     style: JarnTabsStyle = JarnTabsStyle.Top,
+    showsSwitchMark: Boolean = false,
 ) {
     val shoulderModifier = modifier.onKeyEvent { event ->
         val delta = when (event.key) {
@@ -106,7 +110,7 @@ fun JarnTabs(
                 .horizontalScroll(rememberScrollState())
                 .padding(ringPadding),
             horizontalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier, showsSwitchMark) }
 
         JarnTabsStyle.Rail -> Column(
             modifier = focusModifier
@@ -114,7 +118,7 @@ fun JarnTabs(
                 .verticalScroll(rememberScrollState())
                 .padding(ringPadding),
             verticalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier.fillMaxWidth()) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier.fillMaxWidth(), showsSwitchMark) }
     }
 }
 
@@ -125,9 +129,11 @@ private fun JarnTabItems(
     requesters: List<FocusRequester>,
     onSelect: (Int) -> Unit,
     itemModifier: Modifier,
+    showsSwitchMark: Boolean,
 ) {
     labels.forEachIndexed { index, label ->
-        JarnTab(label, index == selectedIndex, requesters[index], { onSelect(index) }, itemModifier)
+        val selected = index == selectedIndex
+        JarnTab(label, selected, requesters[index], { onSelect(index) }, itemModifier, showsSwitchMark && selected)
     }
 }
 
@@ -138,6 +144,7 @@ private fun JarnTab(
     requester: FocusRequester,
     onClick: () -> Unit,
     modifier: Modifier,
+    showsSwitchMark: Boolean,
 ) {
     val colors = JarnTheme.colors
     val source = remember { MutableInteractionSource() }
@@ -153,15 +160,39 @@ private fun JarnTab(
             .semantics { this.selected = selected }
             .jarnInteractive(shape, source, role = Role.Tab, onClick = onClick)
             .heightIn(min = 36.dp)
-            .background(background, shape)
-            .padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.xs),
+            .background(background, shape),
         contentAlignment = Alignment.CenterStart,
     ) {
         JarnText(
             text = label,
+            modifier = Modifier.padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.xs),
             style = if (selected) JarnTheme.type.labelStrong else JarnTheme.type.label,
             color = if (selected) colors.textHigh else colors.textMid,
             maxLines = 1,
+        )
+        if (showsSwitchMark) JarnSwitchMarkLine()
+    }
+}
+
+/** Sized by its parent, so showing it never changes the parent's layout. */
+@Composable
+fun BoxScope.JarnSwitchMarkLine() {
+    val mark = LocalJarnSwitchMark.current
+    if (!mark.enabled) return
+    val accent = JarnTheme.colors.accent
+    Box(
+        modifier = Modifier.matchParentSize().padding(horizontal = JarnTheme.space.md),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .graphicsLayer {
+                    scaleX = mark.widthFraction
+                    alpha = mark.alpha
+                }
+                .background(accent, CircleShape),
         )
     }
 }
@@ -254,16 +285,32 @@ fun JarnKeyCap(key: JarnKey, modifier: Modifier = Modifier, active: Boolean = tr
 @Immutable
 data class JarnHint(val key: JarnKey, val label: String)
 
+/** [trailing] hints sit at the right end, with the same padding as the start. */
 @Composable
-fun JarnHintBar(hints: List<JarnHint>, modifier: Modifier = Modifier, active: Boolean = true) {
-    val colors = JarnTheme.colors
+fun JarnHintBar(
+    hints: List<JarnHint>,
+    modifier: Modifier = Modifier,
+    active: Boolean = true,
+    trailing: List<JarnHint> = emptyList(),
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(JarnTheme.space.hintBarHeight)
-            .background(colors.surface)
-            .horizontalScroll(rememberScrollState())
+            .background(JarnTheme.colors.surface)
             .padding(horizontal = JarnTheme.space.lg),
+        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        JarnHintGroup(hints, active, Modifier.weight(1f).horizontalScroll(rememberScrollState()))
+        if (trailing.isNotEmpty()) JarnHintGroup(trailing, active)
+    }
+}
+
+@Composable
+private fun JarnHintGroup(hints: List<JarnHint>, active: Boolean, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {

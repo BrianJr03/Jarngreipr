@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
+import jr.brian.core.ui.motion.JarnPageTransition
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStore
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.frontend.look.JarnLookStore
@@ -57,6 +60,8 @@ class JarnLookConfigImportTest {
             artChoiceStore = jr.brian.frontend.library.art.GameArtChoiceStore(ApplicationProvider.getApplicationContext()),
             appPinStore = jr.brian.frontend.apps.JarnAppPinStore(ApplicationProvider.getApplicationContext()),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 
@@ -337,41 +342,266 @@ class JarnLookConfigImportTest {
     }
 
     @Test
-    fun `screen switch length survives a backup`() = runTest {
-        store.updateDisplay { it.copy(screenSwitchMillis = 700) }
+    fun `switch cue survives a backup`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.TabMark) }
         val json = importExport.encodeToJson(
             JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
         )
-        store.updateDisplay { it.copy(screenSwitchMillis = 300) }
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Pulse) }
 
         val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
-        assertEquals(700, store.display.screenSwitchMillis)
+        assertEquals(JarnSwitchCue.TabMark, store.display.switchCue)
     }
 
     @Test
-    fun `an older backup leaves the screen switch length alone`() = runTest {
-        store.updateDisplay { it.copy(screenSwitchMillis = 800) }
+    fun `an older backup leaves the switch cue alone`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
 
         val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
-        assertEquals(800, store.display.screenSwitchMillis)
+        assertEquals(JarnSwitchCue.Dim, store.display.switchCue)
     }
 
     @Test
-    fun `a hand edited screen switch length stays in range`() {
-        store.updateDisplay { it.copy(screenSwitchMillis = 99_999) }
-        assertEquals(1000, store.display.screenSwitchMillis)
-        store.updateDisplay { it.copy(screenSwitchMillis = 1) }
-        assertEquals(300, store.display.screenSwitchMillis)
-        assertEquals(500, JarnDisplayPrefs.snappedScreenSwitchMillis(512f))
+    fun `an unknown switch cue falls back to pulse`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
+        val backup = """{ "version": 51, "feature": { "jarnDisplay": { "switchCue": "future" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnSwitchCue.Pulse, store.display.switchCue)
+    }
+
+    @Test
+    fun `browse views survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Carousel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Grid, gameView = JarnBrowseView.Grid) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertEquals(JarnBrowseView.Carousel, reloaded.systemView)
+        assertEquals(JarnBrowseView.Carousel, reloaded.gameView)
+    }
+
+    @Test
+    fun `an older backup leaves the browse views alone`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Grid) }
+        val v52 = """{ "version": 52, "feature": { "jarnDisplay": { "switchCue": "dim" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v52.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnBrowseView.Carousel, store.display.systemView)
+        assertEquals(JarnBrowseView.Grid, store.display.gameView)
+        assertEquals(JarnSwitchCue.Dim, store.display.switchCue)
+    }
+
+    @Test
+    fun `an unknown browse view falls back to grid`() = runTest {
+        store.updateDisplay { it.copy(systemView = JarnBrowseView.Carousel, gameView = JarnBrowseView.Carousel) }
+        val backup = """{ "version": 53, "feature": { "jarnDisplay": { "systemView": "wall", "gameView": "carousel" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnBrowseView.Grid, store.display.systemView)
+        assertEquals(JarnBrowseView.Carousel, store.display.gameView)
+    }
+
+    @Test
+    fun `per screen wallpapers survive a backup and a restart`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnWallpaperScreens = store.wallpaperScreensBackup())),
+        )
+        store.setSameWallpaperOnBoth(true)
+        store.setBottomWallpaperUri(null)
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext())
+        assertFalse(reloaded.sameWallpaperOnBoth)
+        assertEquals("file:///bottom.gif", reloaded.bottomWallpaperUri)
+    }
+
+    @Test
+    fun `an older backup leaves per screen wallpapers alone`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val v53 = """{ "version": 53, "feature": { "jarnLook": "forge" } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v53.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.sameWallpaperOnBoth)
+        assertEquals("file:///bottom.gif", store.bottomWallpaperUri)
+        assertNull(importExport.decodeFromJson(v53).feature.jarnWallpaperScreens)
+    }
+
+    @Test
+    fun `a backup that shares one wallpaper clears the bottom choice`() = runTest {
+        store.setSameWallpaperOnBoth(false)
+        store.setBottomWallpaperUri("file:///bottom.gif")
+        val backup = """{ "version": 54, "feature": { "jarnWallpaperScreens": { "sameOnBoth": true } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(store.sameWallpaperOnBoth)
+        assertNull(store.bottomWallpaperUri)
+    }
+
+    @Test
+    fun `sharing one wallpaper is the default`() {
+        assertTrue(store.sameWallpaperOnBoth)
+        assertNull(store.bottomWallpaperUri)
+    }
+
+    @Test
+    fun `page transition survives a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Carousel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.JarnSlide) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertEquals(JarnPageTransition.Carousel, reloaded.pageTransition)
+    }
+
+    @Test
+    fun `an older backup leaves the page transition alone`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Depth) }
+        val v54 = """{ "version": 54, "feature": { "jarnDisplay": { "gameView": "carousel" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v54.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnPageTransition.Depth, store.display.pageTransition)
+    }
+
+    @Test
+    fun `an unknown page transition falls back to the jarn slide`() = runTest {
+        store.updateDisplay { it.copy(pageTransition = JarnPageTransition.Fade) }
+        val backup = """{ "version": 55, "feature": { "jarnDisplay": { "pageTransition": "cube" } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(JarnPageTransition.JarnSlide, store.display.pageTransition)
+    }
+
+    @Test
+    fun `Now shortcut choices survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(randomVisible = false, lastPlayedVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(randomVisible = true, lastPlayedVisible = true) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertFalse(reloaded.randomVisible)
+        assertFalse(reloaded.lastPlayedVisible)
+    }
+
+    @Test
+    fun `an older backup leaves the Now shortcut choices alone`() = runTest {
+        store.updateDisplay { it.copy(randomVisible = false, lastPlayedVisible = true) }
+        val v56 = """{ "version": 56, "feature": { "jarnDisplay": { "systemNamesVisible": false } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v56.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.randomVisible)
+        assertTrue(store.display.lastPlayedVisible)
+        assertFalse(store.display.systemNamesVisible)
+    }
+
+    @Test
+    fun `Now shortcuts default to shown`() {
+        assertTrue(store.display.randomVisible)
+        assertTrue(store.display.lastPlayedVisible)
+    }
+
+    @Test
+    fun `Now page parts survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(systemLogoVisible = false, gameCountVisible = false, lastPlayedTextVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemLogoVisible = true, gameCountVisible = true, lastPlayedTextVisible = true) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertFalse(reloaded.systemLogoVisible)
+        assertFalse(reloaded.gameCountVisible)
+        assertFalse(reloaded.lastPlayedTextVisible)
+    }
+
+    @Test
+    fun `an older backup leaves the Now page parts alone`() = runTest {
+        store.updateDisplay { it.copy(systemLogoVisible = false, gameCountVisible = true, lastPlayedTextVisible = false) }
+        val v58 = """{ "version": 58, "feature": { "jarnDisplay": { "randomVisible": false } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v58.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.systemLogoVisible)
+        assertTrue(store.display.gameCountVisible)
+        assertFalse(store.display.lastPlayedTextVisible)
+        assertFalse(store.display.randomVisible)
+    }
+
+    @Test
+    fun `Now page parts default to shown`() {
+        assertTrue(store.display.systemLogoVisible)
+        assertTrue(store.display.gameCountVisible)
+        assertTrue(store.display.lastPlayedTextVisible)
+    }
+
+    @Test
+    fun `the game row choice survives a backup, and an older backup leaves it alone`() = runTest {
+        store.updateDisplay { it.copy(gameRowVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(gameRowVisible = true) }
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(json.toByteArray())).isSuccess)
+        assertFalse(JarnLookStore(ApplicationProvider.getApplicationContext()).display.gameRowVisible)
+
+        val v59 = """{ "version": 59, "feature": { "jarnDisplay": { "gameCountVisible": false } } }"""
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(v59.toByteArray())).isSuccess)
+        assertFalse(store.display.gameRowVisible)
+        assertFalse(store.display.gameCountVisible)
+    }
+
+    @Test
+    fun `the game row shows by default`() {
+        assertTrue(store.display.gameRowVisible)
     }
 
     @Test
     fun `schema version covers app names`() {
-        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(60, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

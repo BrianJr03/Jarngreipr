@@ -418,8 +418,8 @@ class CanvasViewModel @Inject constructor(
      * X-handle callsite before delegating here.
      *
      * Per-variant:
-     * - FolderItem — deletes the folder entity from [FolderManager] so the
-     *   reactive folder-sync loop doesn't immediately re-add a FolderItem.
+     * - FolderItem: goes through [deleteFolderWithTiles]: the tiles leave
+     *   first, then the folder, so no tile is left on a missing folder.
      * - RomItem — unpins from [PinnedRomManager] under [CanvasTabType.VALUE]
      *   so the ROM stops appearing in the canvas pinned-list.
      * - PhotoContainer — deletes the internal-storage file the picker copied
@@ -431,11 +431,7 @@ class CanvasViewModel @Inject constructor(
         val pageIndex = boundPage() ?: return
         when (item) {
             is CanvasItem.FolderItem -> {
-                viewModelScope.launch {
-                    if (folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)) {
-                        canvasLayoutManager.removeItem(pageIndex, item.id)
-                    }
-                }
+                viewModelScope.launch { deleteFolderWithTiles(item.folderId) }
                 return
             }
             is CanvasItem.RomItem ->
@@ -449,6 +445,19 @@ class CanvasViewModel @Inject constructor(
             is CanvasItem.LastPlayedItem -> Unit
         }
         canvasLayoutManager.removeItem(pageIndex, item.id)
+    }
+
+    /**
+     * Deletes a folder from its sheet along with its tiles. The tiles go first: if the folder then
+     * survives, the folder sync above gives it a tile again, so no tile is left on a missing folder.
+     */
+    suspend fun deleteFolderWithTiles(folderId: String): Boolean {
+        val pageIndex = boundPage() ?: return false
+        if (folderManager.readFolders(pageIndex, CanvasTabType.VALUE) == null) return false
+        canvasLayoutManager.getLayout(pageIndex).items
+            .filter { it is CanvasItem.FolderItem && it.folderId == folderId }
+            .forEach { canvasLayoutManager.removeItem(pageIndex, it.id) }
+        return folderManager.deleteFolder(pageIndex, folderId, CanvasTabType.VALUE)
     }
 
     fun savedLayouts(): Collection<CanvasLayout> = canvasLayoutManager.layoutsByPage.value.values

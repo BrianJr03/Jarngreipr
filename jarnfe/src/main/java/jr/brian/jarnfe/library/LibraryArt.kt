@@ -11,6 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
@@ -30,6 +32,7 @@ internal fun BoxScope.LibraryArt(
     title: String,
     contentScale: ContentScale = ContentScale.Crop,
     alignment: Alignment = Alignment.Center,
+    onAspectRatio: ((Float?) -> Unit)? = null,
 ) {
     var failed by remember(path) { mutableStateOf(false) }
     if (path.isNullOrBlank() || failed) {
@@ -41,15 +44,29 @@ internal fun BoxScope.LibraryArt(
             modifier = Modifier.matchParentSize(),
             alignment = alignment,
             contentScale = contentScale,
-            onError = { failed = true },
+            onSuccess = { loaded -> onAspectRatio?.invoke(loaded.painter.intrinsicSize.aspectRatioOrNull()) },
+            onError = {
+                failed = true
+                onAspectRatio?.invoke(null)
+            },
         )
     }
 }
 
-/** A game's cover, shown whole whatever its shape. */
+private fun Size.aspectRatioOrNull(): Float? =
+    if (isSpecified && width > 0f && height > 0f) width / height else null
+
+/**
+ * A game's cover, shown whole whatever its shape. [onAspectRatio] gets the cover's own shape once
+ * it loads, or null for the title card.
+ */
 @Composable
-internal fun BoxScope.LibraryCoverArt(game: JarnLibraryGame, alignment: Alignment = Alignment.Center) {
-    LibraryArt(game.artPath, game.title, ContentScale.Fit, alignment)
+internal fun BoxScope.LibraryCoverArt(
+    game: JarnLibraryGame,
+    alignment: Alignment = Alignment.Center,
+    onAspectRatio: ((Float?) -> Unit)? = null,
+) {
+    LibraryArt(game.artPath, game.title, ContentScale.Fit, alignment, onAspectRatio)
 }
 
 /** The art chosen for the Deck when it is readable, otherwise the game's whole tile art. */
@@ -70,16 +87,19 @@ internal fun BoxScope.LibraryDeckArt(game: JarnLibraryGame) {
     }
 }
 
-/** A system's background with its logo on top. Either one can be missing. */
+/**
+ * A system's background with its logo on top. Either one can be missing. The logo sits high to
+ * clear a caption, or in the [logoAlignment] given when there is none.
+ */
 @Composable
-internal fun BoxScope.LibrarySystemArt(system: JarnLibrarySystem) {
+internal fun BoxScope.LibrarySystemArt(system: JarnLibrarySystem, logoAlignment: Alignment = Alignment.TopCenter) {
     if (system.artPath != null || system.logoPath == null) LibraryArt(system.artPath, system.title)
     system.logoPath?.let { logo ->
         AsyncImage(
             model = rememberStillImage(logo),
             contentDescription = null,
             modifier = Modifier
-                .align(Alignment.TopCenter)
+                .align(logoAlignment)
                 .fillMaxHeight(SYSTEM_LOGO_AREA_HEIGHT)
                 .fillMaxWidth(SYSTEM_LOGO_FRACTION),
             contentScale = ContentScale.Fit,

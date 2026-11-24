@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import jr.brian.core.model.CommandPanelPalette
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
+import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.core.ui.theme.adaptCommandPanelPalette
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
@@ -27,6 +28,11 @@ internal fun Context.jarnLookStoreOrNull(): JarnLookStore? =
 /** An unsaved look shown on both screens while the picker has focus. */
 internal object JarnLookPreview {
     var lookId by mutableStateOf<String?>(null)
+}
+
+/** An unsaved cue, so X can play whichever choice is highlighted in the tour. */
+internal object JarnSwitchCuePreview {
+    var cue by mutableStateOf<JarnSwitchCue?>(null)
 }
 
 @Immutable

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_home_ready_todo">Pressing Home opens another app</string>
+    <string name="jarnfe_home_ready_action">Make Jarn your Home</string>
+    <string name="jarnfe_home_ready_done">Jarn is your Home</string>
+</resources>

@@ -15,15 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnLookCard
-import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.LocalJarnScreenActive
-import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.JarnLookPreview
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
@@ -39,13 +36,13 @@ internal fun JarnLookSection() {
     val savedId by store.lookIdState.collectAsState()
     val savedLook = JarnLooks.fromId(savedId)
     val matchCard = rememberJarnMatchCard(store, savedLook)
-    SettingsSectionTitle(R.string.jarnfe_look_title)
-    JarnLookPicker(
-        chosen = savedLook.takeUnless { matchCard.state.isMatching },
-        onChoose = { store.setLookId(it.id) },
-    )
-    JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
-    ReducedMotionRow(store)
+    SettingsGroup(R.string.jarnfe_look_theme_title) {
+        JarnLookPicker(
+            chosen = savedLook.takeUnless { matchCard.state.isMatching },
+            onChoose = { store.setLookId(it.id) },
+        )
+        JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
+    }
 }
 
 @Composable
@@ -97,16 +94,4 @@ internal fun nextFocusedLook(current: String?, lookId: String, isFocused: Boolea
     isFocused -> lookId
     current == lookId -> null
     else -> current
-}
-
-@Composable
-private fun ReducedMotionRow(store: JarnLookStore) {
-    val reducedMotion by store.reducedMotionState.collectAsState()
-    JarnToggleRow(
-        label = stringResource(R.string.jarnfe_look_reduced_motion),
-        checked = reducedMotion,
-        onCheckedChange = store::setReducedMotion,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(R.string.jarnfe_look_reduced_motion_hint),
-    )
 }

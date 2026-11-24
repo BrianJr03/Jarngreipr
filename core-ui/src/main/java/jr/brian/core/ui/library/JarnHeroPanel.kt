@@ -18,8 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
@@ -42,10 +41,11 @@ fun JarnHeroPanel(
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
     val source = remember { MutableInteractionSource() }
+    val shape = JarnTheme.tileShape
     Box(
         modifier = modifier
-            .then(onClick?.let { Modifier.jarnInteractive(RectangleShape, source, focusStyle = JarnFocusStyle.Scale, onClick = it) } ?: Modifier)
-            .clipToBounds()
+            .then(onClick?.let { Modifier.jarnInteractive(shape, source, focusStyle = JarnFocusStyle.ScaleBorder, onClick = it) } ?: Modifier)
+            .clip(shape)
             .background(JarnTheme.colors.raised),
     ) {
         JarnArtSlot(captioned = true, art = art)

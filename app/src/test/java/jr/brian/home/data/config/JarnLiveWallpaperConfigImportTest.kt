@@ -58,6 +58,8 @@ class JarnLiveWallpaperConfigImportTest {
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = JarnAppPinStore(context),
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 

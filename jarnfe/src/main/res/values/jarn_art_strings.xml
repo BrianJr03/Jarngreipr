@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_art_title">Art</string>
+    <string name="jarnfe_art_game_art_title">Game art</string>
+    <string name="jarnfe_art_scraping_title">Scraping</string>
     <string name="jarnfe_art_source_esde" translatable="false">ES-DE</string>
     <string name="jarnfe_art_source_retrohrai" translatable="false">RetroHrai</string>
     <string name="jarnfe_art_source_scraped">Scraped</string>

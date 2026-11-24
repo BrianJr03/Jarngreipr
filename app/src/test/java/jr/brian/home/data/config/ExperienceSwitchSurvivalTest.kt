@@ -24,7 +24,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -62,6 +61,8 @@ class ExperienceSwitchSurvivalTest {
             artChoiceStore = GameArtChoiceStore(context),
             appPinStore = pins,
             playStatsBackup = io.mockk.mockk(relaxed = true),
+            backupExtras = testBackupExtras(),
+            jarnPreviewStore = io.mockk.mockk(relaxed = true),
         )
     }
 
@@ -91,16 +92,6 @@ class ExperienceSwitchSurvivalTest {
         assertFalse(switchExperience(experience, Experience.Classic) { error("no activity") })
 
         assertEquals(Experience.JarnFE, ExperienceStore(context).experience)
-    }
-
-    @Test
-    fun `an unopened default is not saved until it is adopted`() {
-        assertNull(experience.storedExperience)
-
-        experience.adoptIfUnset(Experience.JarnFE)
-        experience.adoptIfUnset(Experience.Classic)
-
-        assertEquals(Experience.JarnFE, ExperienceStore(context).storedExperience)
     }
 
     @Test

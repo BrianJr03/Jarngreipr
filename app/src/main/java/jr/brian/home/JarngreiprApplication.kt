@@ -16,11 +16,14 @@ import jr.brian.home.service.HomeInterceptionKeepAliveService
 import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
+import jr.brian.home.canvas.jarn.JarnTileRemovalRecovery
+import jr.brian.home.jarn.AppJarnMeetJarn
 import jr.brian.home.jarn.AppJarnAppsData
 import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
 import jr.brian.home.jarn.AppJarnInputTools
 import jr.brian.home.jarn.AppJarnExperienceSwitch
+import jr.brian.home.jarn.AppJarnHomeApp
 import jr.brian.home.jarn.AppJarnLauncherSettings
 import jr.brian.home.jarn.AppJarnScreenSwap
 import jr.brian.home.jarn.AppJarnUpdates
@@ -46,11 +49,16 @@ import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.launch.JarnPlaySessionsProvider
+import jr.brian.jarnfe.home.JarnHomeApp
+import jr.brian.jarnfe.home.JarnHomeAppProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
+import jr.brian.jarnfe.library.JarnEsdeRomsProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
 import jr.brian.jarnfe.settings.JarnLauncherSettings
 import jr.brian.jarnfe.settings.JarnLauncherSettingsProvider
+import jr.brian.jarnfe.settings.JarnMeetJarn
+import jr.brian.jarnfe.settings.JarnMeetJarnProvider
 import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystemManagerProvider
 import jr.brian.jarnfe.scraper.JarnScraperSetup
@@ -65,6 +73,8 @@ import jr.brian.jarnfe.utilities.JarnUtilitiesProvider
 import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.play.PlaySessionRecorder
+import jr.brian.frontend.library.setup.EsdeRomsFolderFinder
+import jr.brian.frontend.library.setup.EsdeRomsFolderSource
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.look.JarnLookStore
 import javax.inject.Inject
@@ -94,7 +104,16 @@ class JarngreiprApplication :
     JarnRssDataProvider,
     JarnLauncherSettingsProvider,
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
-    JarnArtDetectorProvider {
+    JarnArtDetectorProvider,
+    JarnEsdeRomsProvider,
+    JarnHomeAppProvider,
+    JarnMeetJarnProvider {
+
+    @Inject
+    lateinit var jarnMeetJarnProvider: Provider<AppJarnMeetJarn>
+
+    override val jarnMeetJarn: JarnMeetJarn
+        get() = jarnMeetJarnProvider.get()
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -108,6 +127,12 @@ class JarngreiprApplication :
 
     override val jarnLibrarySetup: LibrarySetup
         get() = jarnLibrarySetupProvider.get()
+
+    @Inject
+    lateinit var jarnEsdeRomsFolderProvider: Provider<EsdeRomsFolderFinder>
+
+    override val jarnEsdeRomsFolder: EsdeRomsFolderSource
+        get() = jarnEsdeRomsFolderProvider.get()
 
     /** A [Provider] so Classic never runs Jarn FE's art detection. */
     @Inject
@@ -222,6 +247,12 @@ class JarngreiprApplication :
 
     /** A [Provider] so Classic never builds Jarn FE's launcher settings. */
     @Inject
+    lateinit var jarnHomeAppProvider: Provider<AppJarnHomeApp>
+
+    override val jarnHomeApp: JarnHomeApp
+        get() = jarnHomeAppProvider.get()
+
+    @Inject
     lateinit var jarnLauncherSettingsProvider: Provider<AppJarnLauncherSettings>
 
     override val jarnLauncherSettings: JarnLauncherSettings
@@ -265,6 +296,9 @@ class JarngreiprApplication :
     @Inject
     lateinit var sourcesSyncService: jr.brian.home.data.SourcesSyncService
 
+    @Inject
+    lateinit var tileRemovalRecovery: JarnTileRemovalRecovery
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(hiltWorkerFactory)
@@ -280,6 +314,7 @@ class JarngreiprApplication :
         // the Application.
         screenSwapListener.start()
         sourcesSyncService.start()
+        tileRemovalRecovery.start()
         // Reconcile AYN's Focus Lock to the current screen assignment
         // on boot. No-op without Shizuku or when the toggle is off.
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(

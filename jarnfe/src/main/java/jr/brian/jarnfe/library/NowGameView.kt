@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -62,6 +64,7 @@ import jr.brian.jarnfe.launch.GameActionsPage
 import jr.brian.jarnfe.launch.GameSetupRows
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.launch.JarnGameActionsController
+import jr.brian.jarnfe.launch.JarnGameFileStatus
 
 private const val MARQUEE_WIDTH_FRACTION = 0.8f
 private const val MEDIA_SIZE_FRACTION = 0.84f
@@ -74,19 +77,33 @@ private val FavoriteIconSize = 22.dp
 
 private data class NowPosterSizes(val title: Dp, val caseWidth: Dp, val caseHeight: Dp, val peek: Dp)
 
-private val RegularPoster = NowPosterSizes(title = 76.dp, caseWidth = 118.dp, caseHeight = 150.dp, peek = 24.dp)
-private val CompactPoster = NowPosterSizes(title = 64.dp, caseWidth = 96.dp, caseHeight = 124.dp, peek = 20.dp)
+/**
+ * The case is about 10% larger than it first shipped (118 by 150, and 96 by 124 compact). The room
+ * comes from the disc's peek and the gap to the text, so the text column keeps its width.
+ */
+private val RegularPoster = NowPosterSizes(title = 76.dp, caseWidth = 130.dp, caseHeight = 165.dp, peek = 16.dp)
+private val CompactPoster = NowPosterSizes(title = 64.dp, caseWidth = 106.dp, caseHeight = 137.dp, peek = 14.dp)
+internal const val NOW_CASE_TAG = "now_case"
+internal const val NOW_POSTER_TEXT_TAG = "now_poster_text"
 
 /** The selected game's foreground. Call it outside a vertical scroller, since it scrolls itself. */
 @Composable
-internal fun NowGameView(game: JarnLibraryGame) {
+internal fun NowGameView(game: JarnLibraryGame, resume: Boolean = false) {
     val controller = JarnGameActions.controller
     val confirmHint = remember(game.id) { NowConfirmHint() }
+    val resumeStatus = if (resume) rememberGameFileStatus(game) else null
+    val resumeFocus = remember { FocusRequester() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val viewport = maxHeight.takeIf { constraints.hasBoundedHeight }
         NowGameScroller(game.id, viewport, showsPicker = controller != null && JarnGameActions.page != GameActionsPage.Actions) {
             if (controller == null) {
-                NowGamePage(game, viewport, confirmHint)
+                NowGamePage(
+                    game = game,
+                    viewport = viewport,
+                    confirmHint = confirmHint,
+                    resume = NowResumeLook(resume, resumeStatus),
+                    playRow = { if (resume) NowResumeRow(game, resumeStatus, resumeFocus, null, confirmHint) },
+                )
             } else {
                 GameActionsHost(game, controller) { playFocus ->
                     JarnInputLayer(
@@ -97,7 +114,14 @@ internal fun NowGameView(game: JarnLibraryGame) {
                         game = game,
                         viewport = viewport,
                         confirmHint = confirmHint,
-                        playRow = { NowPlayRow(game, controller, playFocus, confirmHint) },
+                        resume = NowResumeLook(resume, resumeStatus),
+                        playRow = {
+                            if (resume) {
+                                NowResumeRow(game, resumeStatus, playFocus, controller, confirmHint)
+                            } else {
+                                NowPlayRow(game, controller, playFocus, confirmHint)
+                            }
+                        },
                         setupRows = { GameSetupRows(game, controller) },
                     )
                 }
@@ -141,6 +165,7 @@ private fun NowGamePage(
     game: JarnLibraryGame,
     viewport: Dp?,
     confirmHint: NowConfirmHint,
+    resume: NowResumeLook = NowResumeLook(),
     playRow: @Composable () -> Unit = {},
     setupRows: (@Composable () -> Unit)? = null,
 ) {
@@ -152,7 +177,7 @@ private fun NowGamePage(
             (art.coverPath == null || coverBounds != null),
     )
     val sizes = if (viewport != null && viewport < CompactHeight) CompactPoster else RegularPoster
-    NowPoster(game, art, sizes, viewport, playRow)
+    NowPoster(game, art, sizes, viewport, resume, playRow)
     NowMoreSheet(game, setupRows, confirmHint)
 }
 
@@ -162,8 +187,10 @@ private fun NowPoster(
     art: NowGameArt,
     sizes: NowPosterSizes,
     viewport: Dp?,
+    resume: NowResumeLook,
     playRow: @Composable () -> Unit,
 ) {
+    val artAlpha = missingArtAlpha(resume.status)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -176,27 +203,42 @@ private fun NowPoster(
             ),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        key(game.id) { NowTitleArt(game.title, art, sizes.title) }
+        Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
+            if (resume.isResume) NowResumeEyebrow()
+            key(game.id) { NowTitleArt(game.title, art, sizes.title, Modifier.alpha(artAlpha)) }
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.sm),
-            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
             verticalAlignment = Alignment.Bottom,
         ) {
-            key(game.id) { NowGameCase(game.title, art, sizes) }
+            key(game.id) { NowGameCase(game.title, art, sizes, Modifier.alpha(artAlpha).testTag(NOW_CASE_TAG)) }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag(NOW_POSTER_TEXT_TAG),
                 verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
             ) {
-                NowFactsPlate(remember(game.metadata) { game.metadata.nowFacts() })
+                if (resume.isResume) {
+                    NowResumeFacts(game, resume.status)
+                } else {
+                    NowFactsPlate(remember(game.metadata) { game.metadata.nowFacts() })
+                }
                 playRow()
+            }
+        }
+        if (resume.isResume) {
+            Box(Modifier.padding(top = JarnTheme.space.md)) {
+                NowAlsoRecent(viewport?.let(::nowCoverHeight) ?: nowCoverHeight(Dp.Infinity))
             }
         }
     }
 }
 
+/** How the poster reads for the Continue playing card. [status] is null while it is checked. */
+private data class NowResumeLook(val isResume: Boolean = false, val status: JarnGameFileStatus? = null)
+
 @Composable
-private fun NowTitleArt(title: String, art: NowGameArt, height: Dp) {
-    Box(Modifier.fillMaxWidth().height(height)) {
+private fun NowTitleArt(title: String, art: NowGameArt, height: Dp, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth().height(height)) {
         val marquee = art.marqueePath
         when {
             !art.isLoaded -> Unit
@@ -249,8 +291,8 @@ private fun NowTitlePlate(title: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun NowGameCase(title: String, art: NowGameArt, sizes: NowPosterSizes) {
-    Box(Modifier.size(sizes.caseWidth + sizes.peek, sizes.caseHeight)) {
+private fun NowGameCase(title: String, art: NowGameArt, sizes: NowPosterSizes, modifier: Modifier = Modifier) {
+    Box(modifier.size(sizes.caseWidth + sizes.peek, sizes.caseHeight)) {
         art.mediaPath?.let { NowPhysicalMedia(it, sizes, Modifier.align(Alignment.CenterEnd)) }
         val coverSize = nowCaseCoverSize(sizes, nowCoverAspect(rememberNowArtBounds(art.coverPath)))
         NowCover(title, art, Modifier.align(Alignment.BottomStart).size(coverSize.width, coverSize.height))
@@ -332,6 +374,33 @@ private fun NowPlayRow(
             onToggle = { controller.toggleFavorite(game) },
             modifier = Modifier.nowConfirmHint(confirmHint, R.string.jarnfe_game_favorite),
         )
+    }
+}
+
+@Composable
+private fun NowResumeRow(
+    game: JarnLibraryGame,
+    status: JarnGameFileStatus?,
+    resumeFocus: FocusRequester,
+    controller: JarnGameActionsController?,
+    confirmHint: NowConfirmHint,
+) {
+    val setup = JarnGameActions.setup
+    Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+        NowResumeButton(
+            game = game,
+            status = status,
+            focus = resumeFocus,
+            modifier = Modifier.weight(1f).nowConfirmHint(confirmHint, R.string.jarnfe_hint_resume),
+        )
+        controller?.let {
+            NowFavoriteButton(
+                isFavorite = setup?.isFavorite == true,
+                enabled = setup != null,
+                onToggle = { it.toggleFavorite(game) },
+                modifier = Modifier.nowConfirmHint(confirmHint, R.string.jarnfe_game_favorite),
+            )
+        }
     }
 }
 

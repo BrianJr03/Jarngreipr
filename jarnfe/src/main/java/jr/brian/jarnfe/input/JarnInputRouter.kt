@@ -61,8 +61,15 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private val presses = HashMap<Int, Press>()
     private var nextSequence = 0L
 
-    /** Runs once per physical press of a button the active screen's hint bar shows. */
-    var onHintPressed: (() -> Unit)? = null
+    /**
+     * Runs once per physical press of a button that does something (a binding, a focused item's A,
+     * or the hold X swap). Its repeats and duplicates never run it. D-pad presses use
+     * [onDirectionPressed] instead, since only a move that lands should be felt.
+     */
+    var onButtonPressed: (() -> Unit)? = null
+
+    /** Runs for every D-pad press and repeat, whatever handles it. */
+    var onDirectionPressed: (() -> Unit)? = null
 
     fun activate(screen: JarnScreen) {
         activeScreen = screen
@@ -141,7 +148,11 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     fun hasModalLayer(screen: JarnScreen): Boolean =
         layers.any { it.screen == screen && it.mode != JarnLayerMode.Passive }
 
-    var oppositeTabsAvailable: () -> Boolean = { false }
+    /**
+     * The screen whose tabs a shell-level press of [JarnShoulderPair] would step right now, or null
+     * when there is nothing to step. Set by the shell, which knows where each role sits.
+     */
+    var shellTabTarget: (JarnShoulderPair) -> JarnScreen? = { null }
 
     fun hintsFor(screen: JarnScreen): List<JarnInputHint> {
         val hints = LinkedHashMap<JarnKey, JarnInputHint>()
@@ -153,13 +164,20 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         return hints.values.toList()
     }
 
-    /** The shoulder pair that moves this screen's tabs: L1/R1 while active, L2/R2 from the other screen. */
-    fun tabHintFor(screen: JarnScreen): JarnInputHint? = when {
-        screen == activeScreen -> JarnInputHint(JarnKey.L1R1, R.string.jarnfe_hint_tabs).takeIf {
-            bindsWithoutLabel(screen, JarnAction.TabPrevious) && bindsWithoutLabel(screen, JarnAction.TabNext)
+    /**
+     * The shoulder pair that moves this screen's tabs: L1/R1 on the top screen and L2/R2 on the
+     * bottom one. A layer that claims a pair without a label is taken to step the active screen.
+     */
+    fun tabHintFor(screen: JarnScreen): JarnInputHint? =
+        JarnShoulderPair.entries.firstOrNull { tabTarget(it) == screen }
+            ?.let { JarnInputHint(it.key, R.string.jarnfe_hint_tabs) }
+
+    private fun tabTarget(pair: JarnShoulderPair): JarnScreen? {
+        if (!bindsWithoutLabel(activeScreen, pair.previous) || !bindsWithoutLabel(activeScreen, pair.next)) {
+            return null
         }
-        oppositeTabsAvailable() -> JarnInputHint(JarnKey.L2R2, R.string.jarnfe_hint_tabs)
-        else -> null
+        val layer = (lookup(activeScreen, pair.previous) as? Lookup.Found)?.layer
+        return if (layer === globalLayer) shellTabTarget(pair) else activeScreen
     }
 
     private fun bindsWithoutLabel(screen: JarnScreen, action: JarnAction): Boolean =
@@ -177,10 +195,11 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         val isDuplicate = presses.any { (code, press) ->
             code != input.keyCode && press.action == action && press.route != Route.PassThrough
         }
-        if (!isDuplicate && action.hintKey != null && hintLabel(activeScreen, action) != null) {
-            onHintPressed?.invoke()
-        }
         val route = if (isDuplicate) Route.Swallow else resolve(action)
+        when {
+            action.isDirection -> onDirectionPressed?.invoke()
+            route != Route.Swallow -> onButtonPressed?.invoke()
+        }
         val press = Press(action, route, input.eventTimeMs)
         presses[input.keyCode] = press
         if (route == Route.PassThrough) return false
@@ -194,7 +213,9 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
 
     private fun onKeyRepeat(input: JarnKeyInput): Boolean {
         val press = presses[input.keyCode] ?: return true
+        if (press.action.isDirection) onDirectionPressed?.invoke()
         if (press.route == Route.PassThrough) return false
+        if (press.firesHeldAction(input)) return true
         val binding = press.binding() ?: return true
         when {
             binding.repeats -> (binding.onRepeat ?: binding.onPress)?.invoke()
@@ -214,6 +235,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
             activate(JarnScreen.Stage)
             return true
         }
+        if (press.firesHeldAction(input)) return true
         val binding = press.binding() ?: return true
         val longPress = binding.onLongPress
         if (longPress != null && press.isLong(input)) longPress() else binding.onPress?.invoke()
@@ -265,6 +287,19 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         }
 
         fun isLong(input: JarnKeyInput) = input.eventTimeMs - downTimeMs >= longPressMs
+
+        /** Runs [JarnAction.heldAction] once a press is long, unless the binding has its own long press. */
+        fun firesHeldAction(input: JarnKeyInput): Boolean {
+            val held = action.heldAction ?: return false
+            if (fired || !isLong(input) || binding()?.onLongPress != null) return false
+            fired = true
+            val route = resolve(held) as? Route.Bound
+            route?.layer?.entries?.get(held)?.onPress?.let { swap ->
+                onButtonPressed?.invoke()
+                swap()
+            }
+            return true
+        }
     }
 
     private sealed interface Route {

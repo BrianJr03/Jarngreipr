@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Debug builds only. DUMP keeps these to adb shell, which holds that permission. -->
+        <receiver
+            android:name="jr.brian.home.debug.BackupVerifyReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="jr.brian.home.debug.backup.seed" />
+                <action android:name="jr.brian.home.debug.backup.export" />
+                <action android:name="jr.brian.home.debug.backup.mutate" />
+                <action android:name="jr.brian.home.debug.backup.restore" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="jr.brian.home.debug.JarnWallpaperDebugReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="jr.brian.home.debug.JARN_WALLPAPER" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

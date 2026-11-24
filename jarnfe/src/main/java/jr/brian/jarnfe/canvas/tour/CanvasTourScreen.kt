@@ -88,8 +88,8 @@ private fun JarnBindingsBuilder.canvasTourBindings(run: CanvasTourState, tour: C
     on(JarnAction.Search) { tour.press(CanvasTourInput.Undo) }
     on(JarnAction.TabPrevious) { tour.press(CanvasTourInput.Shrink) }
     on(JarnAction.TabNext) { tour.press(CanvasTourInput.Grow) }
-    on(JarnAction.OppositeTabPrevious, onPress = tour::finish)
-    on(JarnAction.OppositeTabNext, onPress = tour::doItForMe)
+    on(JarnAction.BottomTabPrevious, onPress = tour::finish)
+    on(JarnAction.BottomTabNext, onPress = tour::doItForMe)
     on(JarnAction.SwitchScreen) { JarnSession.update { switchActiveScreen() } }
     direction(JarnAction.MoveUp, CanvasTourInput.Up, tour)
     direction(JarnAction.MoveDown, CanvasTourInput.Down, tour)
@@ -250,7 +250,7 @@ internal fun lessonFor(step: CanvasTourStep): CanvasTourLessonCopy = when (step)
     CanvasTourStep.TileOptions -> CanvasTourLessonCopy(
         R.string.jarnfe_canvas_tour_options_title,
         R.string.jarnfe_canvas_tour_options_body,
-        listOf(JarnKey.X),
+        listOf(JarnKey.Select),
     )
     CanvasTourStep.OneShotMove -> CanvasTourLessonCopy(
         R.string.jarnfe_canvas_tour_move_title,

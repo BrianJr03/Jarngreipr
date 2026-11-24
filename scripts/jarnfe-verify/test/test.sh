@@ -28,7 +28,7 @@ scenario() {
   LOG="$dir/adb.log"
   : >"$LOG"
   OUTPUT="$(env FAKE_STATE="$dir/state.json" FAKE_LOG="$LOG" ${vars[@]+"${vars[@]}"} \
-    "$BASH" "$SUITE" --out "$dir/out" "$@" 2>&1)"
+    "$BASH" "${SCRIPT:-$SUITE}" --out "$dir/out" "$@" 2>&1)"
   CODE=$?
   STATE="$dir/state.json"
   printf '%s\n' "$OUTPUT" >"$dir/output.txt"
@@ -36,6 +36,7 @@ scenario() {
 
 state_field() { python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "$STATE" "$1"; }
 has() { if grep -qF -- "$2" <<<"$OUTPUT"; then ok "$1"; else bad "$1 (missing: $2)"; fi; }
+has_text() { if grep -qF -- "$2" <<<"$3"; then ok "$1"; else bad "$1 (missing: $2)"; fi; }
 lacks() { if grep -qF -- "$2" <<<"$OUTPUT"; then bad "$1 (found: $2)"; else ok "$1"; fi; }
 
 # No destructive adb command and no key outside the allow list, in any scenario.
@@ -47,7 +48,7 @@ assert_safe() {
   fi
   local keys
   keys="$(grep -oE 'keyevent [0-9]+' "$LOG" | awk '{print $2}')"
-  if [ -n "$keys" ] && grep -qvE '^(19|20|21|22|97|102|103|108|109)$' <<<"$keys"; then
+  if [ -n "$keys" ] && grep -qvE '^(19|20|21|22|97|99|102|103|104|105|108)$' <<<"$keys"; then
     bad "$1: key outside the allow list"
   else
     ok "$1: only allowed keys"
@@ -84,11 +85,11 @@ test_clean_run() {
   scenario clean FAKE_MODE=Top --
   expect "clean run exits 0" 0 "$CODE"
   has "clean run summary" "FAIL 0"
-  has "switching checked" "Select moved focus to display 4"
+  has "switching checked" "X moved focus to display 4"
   has "dpad deck checked" "Deck active: focus ring moved on the active screen only"
   has "dpad stage checked" "Stage active: focus ring moved on the active screen only"
   has "tab focus checked" "focusing a tab selects it: Favorites"
-  has "settings checked" "R1 opens section: Display"
+  has "settings checked" "R2 opens section: Display"
   has "settings exit checked" "B leaves Settings"
   assert_safe "clean"
   expect "restored active screen" 0 "$(state_field active)"
@@ -114,18 +115,18 @@ test_focus_lock_gate() {
   scenario follow FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 --
   expect "Follow mode has no failures" 0 "$CODE"
   has "Follow holds back switching" "may rewrite screen_focus_lock"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "Follow mode sent Select or Start"; else ok "Follow mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "Follow mode sent X or Start"; else ok "Follow mode sent no X or Start"; fi
   expect "Follow leaves lock alone" 1 "$(state_field lock)"
   scenario default-mode FAKE_MODE=MISSING FAKE_FOLLOW_WRITES=1 --
   has "missing pref counts as Follow" "Focus Lock mode Follow"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "default mode sent Select or Start"; else ok "default mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "default mode sent X or Start"; else ok "default mode sent no X or Start"; fi
   scenario runas FAKE_RUNAS_FAIL=1 FAKE_FOLLOW_WRITES=1 --
   has "unreadable mode holds back" "Focus Lock mode is unreadable"
-  if grep -qE 'keyevent (108|109)' "$LOG"; then bad "unreadable mode sent Select or Start"; else ok "unreadable mode sent no Select or Start"; fi
+  if grep -qE 'keyevent (108|99)' "$LOG"; then bad "unreadable mode sent X or Start"; else ok "unreadable mode sent no X or Start"; fi
   scenario top-mismatch FAKE_MODE=Top FAKE_LOCK=2 --
   has "Top mode at 2 holds back" "Focus Lock mode Top may rewrite"
   scenario opt-in FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 -- --allow-app-focus-sync
-  has "opt-in runs switching" "Select moved focus to display 4"
+  has "opt-in runs switching" "X moved focus to display 4"
   has "opt-in lock returns" "screen_focus_lock still 1"
   assert_safe "opt-in"
 }
@@ -146,12 +147,12 @@ test_failures_are_caught() {
 }
 
 test_input_stops_when_focus_is_lost() {
-  scenario foreign FAKE_FOREIGN_AFTER=109 --
+  scenario foreign FAKE_FOREIGN_AFTER=99 --
   expect "focus loss fails" 1 "$CODE"
   has "focus loss reported" "Jarn FE lost focus"
   has "focus loss summary" "Input was stopped early"
   local after
-  after="$(awk '/keyevent 109/ { seen = 1; next } seen && /keyevent/' "$LOG" | wc -l | tr -d ' ')"
+  after="$(awk '/keyevent 99/ { seen = 1; next } seen && /keyevent/' "$LOG" | wc -l | tr -d ' ')"
   expect "no key sent after focus loss" 0 "$after"
 }
 
@@ -201,13 +202,13 @@ test_stale_ui_window() {
   scenario ui-lag FAKE_UI_LAG=3 -- --only hints,tabs,settings
   expect "lagging dump passes" 0 "$CODE"
   has "lagging dump reads Deck hints" "Deck shows the Back hint"
-  has "lagging dump reads Deck tabs" "R1 moves one Deck tab: Canvas"
-  has "lagging dump reads Settings" "R1 opens section: Display"
+  has "lagging dump reads Deck tabs" "R2 moves one Deck tab: Canvas"
+  has "lagging dump reads Settings" "R2 opens section: Display"
   lacks "lagging dump has no Library skip" "not on the Library screen"
   scenario ui-stuck FAKE_UI_LAG=999 -- --only hints,tabs,settings
   expect "stuck dump falls back without failing" 0 "$CODE"
-  has "stuck dump: Deck tabs by pixels" "Deck tabs: R1 changed the content"
-  has "stuck dump: Settings by pixels" "Settings: R1 changed the content"
+  has "stuck dump: Deck tabs by pixels" "Deck tabs: R2 changed the content"
+  has "stuck dump: Settings by pixels" "Settings: R2 changed the content"
   has "stuck dump: Deck hints skip" "Deck could not be read"
   expect "stuck dump leaves Settings" library "$(state_field route)"
   expect "stuck dump restores Stage" 0 "$(state_field active)"
@@ -217,6 +218,32 @@ test_swapped_screens() {
   scenario swapped FAKE_ASSIGNMENT=FRONTEND_ON_BOTTOM -- --only displays,focus-lock
   has "swap read" "Stage on display 4, Deck on display 0"
   expect "swapped read-only run" 0 "$CODE"
+}
+
+# #377: the shoulder script on the fake, with the real map and with the old one.
+test_shoulders_377() {
+  local script="$TEST_DIR/../verify-377-shoulders.sh"
+  SCRIPT="$script" scenario shoulders FAKE_MODE=Top FAKE_DECK_TAB=2 --
+  expect "shoulder run passes" 0 "$CODE"
+  has "shoulders summary" "FAIL 0"
+  has "top pair reaches the Deck after a swap" "swapped, controller top, L1/R1 -> top (Deck)"
+  has "Deck read from either screen" "moved the Deck tabs (Canvas to Apps)"
+  has "Stage read by pixels from the Deck" "changed Stage's content (by pixels)"
+  has "controller stays put" "controller stayed on the bottom screen"
+  has "swap restored" "L3 swapped the roles (not swapped)"
+  expect "swap restored in state" False "$(state_field swapped)"
+  expect "active screen restored" 0 "$(state_field active)"
+  expect "Deck tab restored" 2 "$(state_field deck)"
+  expect "library tab restored" 1 "$(state_field library)"
+  expect "lock untouched by shoulders" 1 "$(state_field lock)"
+  if grep -qE 'uninstall|settings put|settings delete|pm clear' "$LOG"; then bad "shoulders: forbidden command sent"
+  else ok "shoulders: no forbidden command"; fi
+  SCRIPT="$script" scenario shoulders-old FAKE_MODE=Top FAKE_OLD_SHOULDERS=1 --
+  expect "old shoulder map fails" 1 "$CODE"
+  has "old map reported" "did not move the Deck tabs"
+  SCRIPT="$script" scenario shoulders-follow FAKE_MODE=Follow FAKE_FOLLOW_WRITES=1 --
+  expect "Follow mode still passes" 0 "$CODE"
+  if grep -qE 'keyevent (106|108|99)' "$LOG"; then bad "Follow mode sent X or Swap"; else ok "Follow mode sent no X or Swap"; fi
 }
 
 test_device_selection() {
@@ -243,7 +270,29 @@ test_static_and_args() {
   expect "unknown check" 2 "$CODE"
 }
 
+# The #371 heading check: learns a first row walking down, then flags its heading going missing.
+test_settings_query() {
+  local dir="$WORK/settings-query" out query="$TEST_DIR/../lib/settingsquery.py"
+  mkdir -p "$dir"
+  query_row() { printf '<node text="" focusable="true" focused="%s" bounds="[0,%d][100,%d]"><node text="%s" bounds="[0,%d][100,%d]" /></node>' "$1" "$2" "$(($2 + 50))" "$3" "$2" "$(($2 + 50))"; }
+  query_heading() { printf '<node text="%s" focusable="false" bounds="[0,%d][100,%d]" />' "$1" "$2" "$(($2 + $3))"; }
+  query_page() { printf '<?xml version="1.0"?><hierarchy><node scrollable="true" bounds="[0,0][100,300]">%s</node></hierarchy>' "$1" >"$dir/ui.xml"; }
+  query_page "$(query_heading Tiles 10 20)$(query_row true 40 'System tile size')$(query_row false 100 'Game tile size')"
+  out="$(python3 -I "$query" "$dir/state.json" "$dir/ui.xml" Tiles Feedback)"
+  has_text "query learns the first row" $'first\tTiles\tok' "$out"
+  query_page "$(query_heading Tiles 0 8)$(query_row true 10 'System tile size')"
+  out="$(python3 -I "$query" "$dir/state.json" "$dir/ui.xml" Tiles Feedback)"
+  has_text "query flags a clipped heading" $'first\tTiles\thidden' "$out"
+  query_page "$(query_row true 10 'System tile size')$(query_row false 70 'Game tile size')"
+  out="$(python3 -I "$query" "$dir/state.json" "$dir/ui.xml" Tiles Feedback)"
+  has_text "query flags a missing heading" $'first\tTiles\thidden' "$out"
+  query_page "$(query_heading Tiles 10 20)$(query_row false 40 'System tile size')$(query_row true 100 'Game tile size')"
+  out="$(python3 -I "$query" "$dir/state.json" "$dir/ui.xml" Tiles Feedback)"
+  if grep -q '^first' <<<"$out"; then bad "query ignores a later row"; else ok "query ignores a later row"; fi
+}
+
 test_parsers
+test_settings_query
 test_clean_run
 test_restores_start
 test_focus_lock_gate
@@ -254,6 +303,7 @@ test_long_dumps_do_not_break_pipes
 test_deck_follows_stage
 test_stale_ui_window
 test_swapped_screens
+test_shoulders_377
 test_device_selection
 test_static_and_args
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Compares screenshots while ignoring whatever moves on its own (wallpaper, clock).
 
-Usage: framediff.py IDLE1 IDLE2 IDLE3 AFTER
+Usage: framediff.py [--keep-top] IDLE1 IDLE2 IDLE3 AFTER
 Prints: changed=N usable=N total=N ring=0|1
 
 The frame is cut into a grid. A cell that differs between any idle frames is masked, along with
-its neighbors, and the top strip (status and clock) is always masked. "changed" counts the
-remaining cells that differ between the last idle frame and AFTER.
+its neighbors, and the top strip (status and clock) is masked unless --keep-top is given, for
+checks that watch the tab row up there. "changed" counts the remaining cells that differ between
+the last idle frame and AFTER.
 
 "ring" is 1 when the change from the last idle frame to AFTER contains a focus ring: long, thin,
 high-contrast strokes in both directions. Wallpaper motion is too faint to qualify, and content
@@ -52,8 +53,8 @@ def neighbors(index):
             yield next_row * COLUMNS + next_column
 
 
-def noisy_cells(idle_frames):
-    noisy = set(range(TOP_STRIP_ROWS * COLUMNS))
+def noisy_cells(idle_frames, keep_top=False):
+    noisy = set() if keep_top else set(range(TOP_STRIP_ROWS * COLUMNS))
     for earlier, later in zip(idle_frames, idle_frames[1:]):
         for index, (first, second) in enumerate(zip(earlier, later)):
             if differs(first, second):
@@ -110,8 +111,11 @@ def load(path):
 
 
 def main(argv):
+    keep_top = len(argv) > 1 and argv[1] == "--keep-top"
+    if keep_top:
+        argv = argv[:1] + argv[2:]
     if len(argv) != 5:
-        print("usage: framediff.py IDLE1 IDLE2 IDLE3 AFTER", file=sys.stderr)
+        print("usage: framediff.py [--keep-top] IDLE1 IDLE2 IDLE3 AFTER", file=sys.stderr)
         return 2
     try:
         images = [load(path) for path in argv[1:]]
@@ -122,7 +126,7 @@ def main(argv):
         return 2
     frames = [cells(image) for image in images]
     idle, after = frames[:3], frames[3]
-    noisy = noisy_cells(idle)
+    noisy = noisy_cells(idle, keep_top)
     total = COLUMNS * ROWS
     changed = sum(
         1

@@ -28,6 +28,7 @@ data class JarnGameMetadata(
     val rating: String? = null,
     val playtimeMinutes: Long? = null,
     val lastPlayedAtMs: Long? = null,
+    val playCount: Int? = null,
 )
 
 /** [id] must be unique across the whole library and stable between refreshes. */

@@ -1,5 +1,7 @@
 package jr.brian.jarnfe.splash
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -66,17 +68,31 @@ internal object JarnSplashTimeline {
     }
 }
 
+/** How long after the first window opens the splash may still run before it is cut short. */
+private const val SPLASH_DEADLINE_MS = JarnSplashTimeline.END.toLong() + 3_000L
+
 /** Plays once per app start, shared by the Stage and Deck windows. */
 internal object JarnSplash {
     var elapsedMs by mutableFloatStateOf(0f)
         private set
     var markBounds by mutableStateOf<Rect?>(null)
+    private var isDeadlineArmed = false
 
     val isPlaying by derivedStateOf { elapsedMs < JarnSplashTimeline.END }
     val isIntro by derivedStateOf { elapsedMs < JarnSplashTimeline.REVEAL_START }
 
     fun finish() {
         elapsedMs = JarnSplashTimeline.END
+    }
+
+    /**
+     * The splash runs on Stage frames, so a Stage screen that stops drawing or leaves mid-splash
+     * would leave it playing and every wallpaper held. Called on the main thread by each new window.
+     */
+    fun armDeadline() {
+        if (isDeadlineArmed || !isPlaying) return
+        isDeadlineArmed = true
+        Handler(Looper.getMainLooper()).postDelayed(::finish, SPLASH_DEADLINE_MS)
     }
 
     suspend fun play(reducedMotion: Boolean) {

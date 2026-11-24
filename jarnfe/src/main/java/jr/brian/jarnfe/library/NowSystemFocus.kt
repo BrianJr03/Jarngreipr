@@ -19,10 +19,14 @@ import jr.brian.core.ui.theme.LocalJarnScreenActive
 private const val FRAMES_AFTER_SCREEN_FOCUS = 3
 
 internal sealed interface NowFocusTarget {
-    data object Browse : NowFocusTarget
-    data object Manage : NowFocusTarget
+    data object Random : NowFocusTarget
+    data object LastPlayed : NowFocusTarget
     data class Cover(val game: JarnLibraryGame) : NowFocusTarget
 }
+
+/** The last button used while it is still shown, otherwise the first one. */
+internal fun nowActionEntry(actions: List<NowFocusTarget>, last: NowFocusTarget): NowFocusTarget? =
+    last.takeIf { it in actions } ?: actions.firstOrNull()
 
 /** The remembered cover when it is still on the shelf, otherwise the first one. */
 internal fun nowShelfEntryId(shelfIds: List<String>, lastId: String?): String? =
@@ -34,23 +38,41 @@ internal fun nowTakesEntryFocus(activated: Boolean, holdsFocus: Boolean, tabsHav
 
 @Stable
 internal class NowSystemFocus {
-    val browse = FocusRequester()
-    val manage = FocusRequester()
+    val random = FocusRequester()
+    val lastPlayed = FocusRequester()
     private val covers = HashMap<String, FocusRequester>()
     var shelfIds by mutableStateOf(emptyList<String>())
     var focused by mutableStateOf<NowFocusTarget?>(null)
         private set
     var holdsFocus by mutableStateOf(false)
     private var lastCoverId by mutableStateOf<String?>(null)
-    private var lastAction by mutableStateOf<NowFocusTarget>(NowFocusTarget.Browse)
+    private var lastAction by mutableStateOf<NowFocusTarget>(NowFocusTarget.Random)
+
+    /** The buttons on screen, first one first. Empty when both are turned off. */
+    var actions by mutableStateOf(emptyList<NowFocusTarget>())
 
     fun cover(id: String): FocusRequester = covers.getOrPut(id) { FocusRequester() }
 
     val coverEntry: FocusRequester
-        get() = nowShelfEntryId(shelfIds, lastCoverId)?.let(::cover) ?: FocusRequester.Default
+        get() = coverEntryFor(shelfIds) ?: FocusRequester.Default
 
+    /** The header shortcut to enter on when the view has no game row, or null when none is shown. */
+    fun shortcutEntryFor(buttons: List<NowFocusTarget>): FocusRequester? = when (buttons.firstOrNull()) {
+        NowFocusTarget.Random -> random
+        NowFocusTarget.LastPlayed -> lastPlayed
+        else -> null
+    }
+
+    /** The cover to enter on for [ids], usable before [shelfIds] catches up on the first frame. */
+    fun coverEntryFor(ids: List<String>): FocusRequester? = nowShelfEntryId(ids, lastCoverId)?.let(::cover)
+
+    /** The last button used while it is still shown, otherwise the first, or none at all. */
     val actionEntry: FocusRequester
-        get() = if (lastAction == NowFocusTarget.Manage) manage else browse
+        get() = when (nowActionEntry(actions, lastAction)) {
+            NowFocusTarget.Random -> random
+            NowFocusTarget.LastPlayed -> lastPlayed
+            else -> FocusRequester.Default
+        }
 
     fun remember(coverId: String) {
         lastCoverId = coverId

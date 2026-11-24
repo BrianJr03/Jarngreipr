@@ -1,6 +1,8 @@
 package jr.brian.jarnfe.library
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -41,8 +43,8 @@ internal class NowRevealGate {
         parts.remove(part)
     }
 
-    suspend fun awaitReady() {
-        delay(NOW_REVEAL_MIN_HOLD_MILLIS)
+    suspend fun awaitReady(minHoldMillis: Long = NOW_REVEAL_MIN_HOLD_MILLIS) {
+        delay(minHoldMillis)
         withFrameNanos { }
         withTimeoutOrNull(NOW_REVEAL_MAX_WAIT_MILLIS) { snapshotFlow { isReady }.first { it } }
     }
@@ -70,9 +72,17 @@ internal class NowReveal<T>(val shown: T, val gate: NowRevealGate, private val a
     val modifier: Modifier = Modifier.fillMaxSize().graphicsLayer { this.alpha = this@NowReveal.alpha.value }
 }
 
-/** Fades the old value out, swaps it while hidden, and fades in once the new one is ready. */
+/**
+ * Fades the old value out, swaps it while hidden, and fades in once the new one is ready. A change
+ * [followsRoute] (the Stage moving between systems and games) trails the Stage by the Deck follow
+ * timing instead, so the two screens never move at once.
+ */
 @Composable
-internal fun <T> rememberNowReveal(target: T, keyOf: (T) -> Any?): NowReveal<T> {
+internal fun <T> rememberNowReveal(
+    target: T,
+    followsRoute: (from: T, to: T) -> Boolean = { _, _ -> false },
+    keyOf: (T) -> Any?,
+): NowReveal<T> {
     val state = remember { NowRevealState(target) }
     val motion = JarnTheme.motion
     val latest by rememberUpdatedState(target)
@@ -80,12 +90,21 @@ internal fun <T> rememberNowReveal(target: T, keyOf: (T) -> Any?): NowReveal<T> 
     val isSame = key == keyOf(state.held)
     if (isSame) SideEffect { state.held = target }
     LaunchedEffect(key) {
-        if (key != keyOf(state.held)) {
+        if (key == keyOf(state.held)) {
+            state.alpha.animateTo(1f, motion.small.spec())
+        } else if (followsRoute(state.held, latest)) {
+            val follow = motion.deckFollow
+            delay(follow.delayMillis.toLong())
+            state.alpha.animateTo(0f, tween(follow.outMillis, easing = LinearEasing))
+            state.held = latest
+            state.gate.awaitReady(minHoldMillis = 0L)
+            state.alpha.animateTo(1f, tween(follow.inMillis, easing = LinearEasing))
+        } else {
             state.alpha.animateTo(0f, motion.focusOut.spec())
             state.held = latest
             state.gate.awaitReady()
+            state.alpha.animateTo(1f, motion.small.spec())
         }
-        state.alpha.animateTo(1f, motion.small.spec())
     }
     return NowReveal(if (isSame) target else state.held, state.gate, state.alpha)
 }

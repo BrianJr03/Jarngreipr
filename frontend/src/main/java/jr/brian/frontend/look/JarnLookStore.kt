@@ -3,7 +3,9 @@ package jr.brian.frontend.look
 import android.content.Context
 import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnLooks
+import jr.brian.core.ui.theme.JarnSwitchCue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +49,18 @@ class JarnLookStore @Inject constructor(
     val liveWallpaperIdState: StateFlow<String?> = _liveWallpaperId.asStateFlow()
     val liveWallpaperId: String? get() = _liveWallpaperId.value
 
+    private val _sameWallpaperOnBoth = MutableStateFlow(prefs.getBoolean(KEY_SAME_WALLPAPER_ON_BOTH, true))
+
+    /** True shows the frontend wallpaper on both screens. False gives the bottom screen its own. */
+    val sameWallpaperOnBothState: StateFlow<Boolean> = _sameWallpaperOnBoth.asStateFlow()
+    val sameWallpaperOnBoth: Boolean get() = _sameWallpaperOnBoth.value
+
+    private val _bottomWallpaperUri = MutableStateFlow(prefs.getString(KEY_BOTTOM_WALLPAPER_URI, null))
+
+    /** The bottom screen's own image or GIF, used only while [sameWallpaperOnBoth] is off. */
+    val bottomWallpaperUriState: StateFlow<String?> = _bottomWallpaperUri.asStateFlow()
+    val bottomWallpaperUri: String? get() = _bottomWallpaperUri.value
+
     private val _display = MutableStateFlow(readDisplay())
     val displayState: StateFlow<JarnDisplayPrefs> = _display.asStateFlow()
     val display: JarnDisplayPrefs get() = _display.value
@@ -62,7 +76,17 @@ class JarnLookStore @Inject constructor(
             putString(KEY_TAP_CONTROL, next.tapControl.id)
             putBoolean(KEY_APP_NAMES_VISIBLE, next.appNamesVisible)
             putBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, next.undoCountdownVisible)
-            putInt(KEY_SCREEN_SWITCH_MILLIS, next.screenSwitchMillis)
+            putString(KEY_SWITCH_CUE, next.switchCue.id)
+            putString(KEY_SYSTEM_VIEW, next.systemView.id)
+            putString(KEY_GAME_VIEW, next.gameView.id)
+            putString(KEY_PAGE_TRANSITION, next.pageTransition.id)
+            putBoolean(KEY_SYSTEM_NAMES_VISIBLE, next.systemNamesVisible)
+            putBoolean(KEY_RANDOM_VISIBLE, next.randomVisible)
+            putBoolean(KEY_LAST_PLAYED_VISIBLE, next.lastPlayedVisible)
+            putBoolean(KEY_SYSTEM_LOGO_VISIBLE, next.systemLogoVisible)
+            putBoolean(KEY_GAME_COUNT_VISIBLE, next.gameCountVisible)
+            putBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, next.lastPlayedTextVisible)
+            putBoolean(KEY_GAME_ROW_VISIBLE, next.gameRowVisible)
         }
     }
 
@@ -93,7 +117,17 @@ class JarnLookStore @Inject constructor(
         tapControl = JarnTapControl.fromId(prefs.getString(KEY_TAP_CONTROL, null)) ?: JarnTapControl.FollowTap,
         appNamesVisible = prefs.getBoolean(KEY_APP_NAMES_VISIBLE, true),
         undoCountdownVisible = prefs.getBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, true),
-        screenSwitchMillis = prefs.getInt(KEY_SCREEN_SWITCH_MILLIS, JarnDisplayPrefs.DEFAULT_SCREEN_SWITCH_MILLIS),
+        switchCue = JarnSwitchCue.fromId(prefs.getString(KEY_SWITCH_CUE, null)),
+        systemView = JarnBrowseView.fromId(prefs.getString(KEY_SYSTEM_VIEW, null)),
+        gameView = JarnBrowseView.fromId(prefs.getString(KEY_GAME_VIEW, null)),
+        pageTransition = JarnPageTransition.fromId(prefs.getString(KEY_PAGE_TRANSITION, null)),
+        systemNamesVisible = prefs.getBoolean(KEY_SYSTEM_NAMES_VISIBLE, true),
+        randomVisible = prefs.getBoolean(KEY_RANDOM_VISIBLE, true),
+        lastPlayedVisible = prefs.getBoolean(KEY_LAST_PLAYED_VISIBLE, true),
+        systemLogoVisible = prefs.getBoolean(KEY_SYSTEM_LOGO_VISIBLE, true),
+        gameCountVisible = prefs.getBoolean(KEY_GAME_COUNT_VISIBLE, true),
+        lastPlayedTextVisible = prefs.getBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, true),
+        gameRowVisible = prefs.getBoolean(KEY_GAME_ROW_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -119,6 +153,18 @@ class JarnLookStore @Inject constructor(
         }
     }
 
+    fun setSameWallpaperOnBoth(same: Boolean) {
+        _sameWallpaperOnBoth.value = same
+        prefs.edit { putBoolean(KEY_SAME_WALLPAPER_ON_BOTH, same) }
+    }
+
+    fun setBottomWallpaperUri(uri: String?) {
+        _bottomWallpaperUri.value = uri
+        prefs.edit {
+            if (uri == null) remove(KEY_BOTTOM_WALLPAPER_URI) else putString(KEY_BOTTOM_WALLPAPER_URI, uri)
+        }
+    }
+
     private fun String?.withoutOffValue() = takeUnless { it == JARN_LIVE_WALLPAPER_OFF }
 
     private companion object {
@@ -127,6 +173,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
+        const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
+        const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"
         const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"
         const val KEY_HINTS_VISIBLE = "hints_visible"
@@ -134,7 +182,17 @@ class JarnLookStore @Inject constructor(
         const val KEY_TAP_CONTROL = "tap_control"
         const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
         const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
-        const val KEY_SCREEN_SWITCH_MILLIS = "screen_switch_millis"
+        const val KEY_SWITCH_CUE = "switch_cue"
+        const val KEY_SYSTEM_VIEW = "system_view"
+        const val KEY_GAME_VIEW = "game_view"
+        const val KEY_PAGE_TRANSITION = "page_transition"
+        const val KEY_SYSTEM_NAMES_VISIBLE = "system_names_visible"
+        const val KEY_RANDOM_VISIBLE = "now_random_visible"
+        const val KEY_LAST_PLAYED_VISIBLE = "now_last_played_visible"
+        const val KEY_SYSTEM_LOGO_VISIBLE = "now_system_logo_visible"
+        const val KEY_GAME_COUNT_VISIBLE = "now_game_count_visible"
+        const val KEY_LAST_PLAYED_TEXT_VISIBLE = "now_last_played_text_visible"
+        const val KEY_GAME_ROW_VISIBLE = "now_game_row_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

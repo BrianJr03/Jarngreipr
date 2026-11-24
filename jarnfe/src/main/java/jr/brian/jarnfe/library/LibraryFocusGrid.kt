@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.focus.JarnTabsFocus
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
@@ -44,9 +45,13 @@ private const val ITEM_KEY_PREFIX = "item:"
 private const val SKELETON_TILE_COUNT = 12
 private const val FIRST_ROW_BELOW_HEADER = 1
 
+/** Wider than a focused cover's border can reach sideways. */
+internal val LibraryGridColumnSpacing = 12.dp
+
 /**
  * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
- * the focused item disappears in a refresh.
+ * the focused item disappears in a refresh. Right after a Library tab switch it focuses its first
+ * item instead, once the tab has slid open.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -58,7 +63,10 @@ internal fun <T : Any> LibraryFocusGrid(
     cellMinSize: Dp,
     modifier: Modifier = Modifier,
     refocusSignal: Int = 0,
+    rowSpacing: Dp = JarnTheme.space.md,
     header: (@Composable () -> Unit)? = null,
+    jump: LibraryJump? = null,
+    onLanded: (String) -> Unit = {},
     itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
 ) {
     val gridState = rememberLazyGridState()
@@ -66,7 +74,10 @@ internal fun <T : Any> LibraryFocusGrid(
     var lastFocused by remember { mutableStateOf<String?>(null) }
     val keys = remember(items) { items.mapTo(HashSet(), itemKey) }
     val focusLost = lastFocused?.let { it !in keys } ?: false
-    val target = remember(items.isEmpty(), focusLost, refocusSignal) { focusedKey ?: items.firstOrNull()?.let(itemKey) }
+    val gate = LocalLibraryRevealGate.current
+    val target = remember(items.isEmpty(), focusLost, refocusSignal) {
+        focusedKey.takeUnless { gate.preferFirst && lastFocused == null } ?: items.firstOrNull()?.let(itemKey)
+    }
     val headerCount = if (header != null) 1 else 0
     var headerHeight by remember { mutableIntStateOf(0) }
     val spacingPx = with(LocalDensity.current) { JarnTheme.space.md.roundToPx() }
@@ -78,17 +89,26 @@ internal fun <T : Any> LibraryFocusGrid(
     val tabsFocus = LocalJarnTabsFocus.current
     LaunchedEffect(target, refocusSignal) {
         val index = items.indexOfFirst { itemKey(it) == target }
-        if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus)
+        if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus, gate)
     }
+
+    val landing = rememberLibraryGridJump(
+        state = gridState,
+        jump = jump,
+        itemIndex = items.indexOfFirst { itemKey(it) == jump?.gameId },
+        headerCount = headerCount,
+        isSettled = { lastFocused != null },
+        onLanded = onLanded,
+    )
 
     CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(cellMinSize),
             state = gridState,
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().libraryJumpStopper(landing),
             contentPadding = libraryGridPadding(),
-            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
-            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+            horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
+            verticalArrangement = Arrangement.spacedBy(rowSpacing),
         ) {
             header?.let { content ->
                 item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {
@@ -143,13 +163,14 @@ private suspend fun LazyGridState.restoreFocus(
     index: Int,
     requester: FocusRequester,
     tabsFocus: JarnTabsFocus,
+    gate: LibraryRevealGate,
 ) {
     snapshotFlow { layoutInfo.totalItemsCount }.first { it > index }
-    if (tabsFocus.hasFocus) return
+    if (tabsFocus.hasFocus && !gate.willForce) return
     if (layoutInfo.visibleItemsInfo.none { it.index == index }) scrollToItem(index)
     snapshotFlow { layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
     withFrameNanos { }
-    if (!tabsFocus.hasFocus) requester.requestFocus()
+    gate.whenOpen { (gate.forcing || !tabsFocus.hasFocus) && requester.requestFocus() }
 }
 
 @Composable

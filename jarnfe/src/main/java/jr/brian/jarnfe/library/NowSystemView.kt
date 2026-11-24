@@ -20,6 +20,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,8 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import jr.brian.core.ui.components.JarnButton
-import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.core.ui.theme.JarnTheme
@@ -39,24 +38,59 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.launch.JarnGameActions
-import jr.brian.jarnfe.session.JarnSession
-import jr.brian.jarnfe.systems.JarnSystems
+import jr.brian.jarnfe.look.rememberJarnDisplay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 
-private const val BROWSE_WEIGHT = 1.55f
 private const val MINUTES_PER_HOUR = 60L
 private val UnboundedPanelHeight = 1000.dp
 private val NowNameSpacing = 1.4.sp
 
+/** [onRandom] and [onLastPlayed] are null while their button is hidden. Neither launches a game. */
 @Immutable
 internal class NowSystemActions(
-    val onBrowse: () -> Unit,
-    val onManage: (() -> Unit)?,
+    val onRandom: (() -> Unit)?,
+    val onLastPlayed: (() -> Unit)?,
     val onPlay: ((JarnLibraryGame) -> Unit)?,
     val onDetails: ((JarnLibraryGame) -> Unit)?,
+) {
+    val buttons: List<NowFocusTarget>
+        get() = listOfNotNull(
+            NowFocusTarget.Random.takeIf { onRandom != null },
+            NowFocusTarget.LastPlayed.takeIf { onLastPlayed != null },
+        )
+}
+
+/** Random needs games to pick from. Last Played needs a game played in this system. */
+internal fun nowShortcuts(
+    gameCount: Int,
+    lastPlayed: JarnLibraryGame?,
+    randomVisible: Boolean,
+    lastPlayedVisible: Boolean,
+): List<NowFocusTarget> = listOfNotNull(
+    NowFocusTarget.Random.takeIf { randomVisible && gameCount > 0 },
+    NowFocusTarget.LastPlayed.takeIf { lastPlayedVisible && lastPlayed != null },
 )
 
 internal enum class NowShelfLayout { Hidden, Empty, Single, Shelf }
+
+/** The optional parts of the system view, from Settings > Display > Now page. */
+@Immutable
+internal data class NowSystemParts(
+    val showsLogo: Boolean = true,
+    val showsCount: Boolean = true,
+    val showsLastPlayed: Boolean = true,
+    val showsGameRow: Boolean = true,
+)
+
+/** True when the name plate has anything left to show. */
+internal fun nowPlateHasContent(system: JarnLibrarySystem, parts: NowSystemParts): Boolean =
+    parts.showsLogo || nowStatsHaveContent(system, parts)
+
+internal fun nowStatsHaveContent(system: JarnLibrarySystem, parts: NowSystemParts): Boolean =
+    parts.showsCount || system.favoriteCount > 0 || system.playtimeMinutes > 0 ||
+        (parts.showsLastPlayed && system.lastPlayedAtMs != null)
 
 internal fun nowShelfLayout(gameCount: Int, shelfSize: Int): NowShelfLayout = when {
     gameCount == 0 -> NowShelfLayout.Empty
@@ -72,11 +106,14 @@ internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
     LaunchedEffect(JarnGameActions.gameId, JarnGameActions.page) { store.followLaunchedCover() }
     val canPlay = JarnLibrary.canPlay
     val hasDetails = JarnGameActions.controller != null
-    val hasManager = JarnSystems.manager != null
-    val actions = remember(system.id, canPlay, hasDetails, hasManager) {
+    val display = rememberJarnDisplay()
+    val lastPlayed = libraryLastPlayed(now?.shelf.orEmpty())
+    val shown = nowShortcuts(system.gameCount, lastPlayed, display.randomVisible, display.lastPlayedVisible)
+    val scope = rememberCoroutineScope()
+    val actions = remember(system.id, canPlay, hasDetails, shown, lastPlayed?.id) {
         NowSystemActions(
-            onBrowse = { store.browse(system.id) },
-            onManage = manageAction(system.id).takeIf { hasManager },
+            onRandom = spinAction(scope, store, system.id).takeIf { NowFocusTarget.Random in shown },
+            onLastPlayed = lastPlayed?.let { jumpAction(store, it) }.takeIf { NowFocusTarget.LastPlayed in shown },
             onPlay = if (canPlay) store::play else null,
             onDetails = if (hasDetails) store::openDetails else null,
         )
@@ -88,12 +125,21 @@ internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
         actions = actions,
         pendingCoverId = store.pendingCoverId,
         onCoverRestored = store::coverRestored,
+        parts = NowSystemParts(
+            showsLogo = display.systemLogoVisible,
+            showsCount = display.gameCountVisible,
+            showsLastPlayed = display.lastPlayedTextVisible,
+            showsGameRow = display.gameRowVisible,
+        ),
     )
 }
 
-private fun manageAction(systemId: String): () -> Unit = {
-    JarnSystems.openAt(systemId)
-    JarnSession.update { openSystems() }
+private fun spinAction(scope: CoroutineScope, store: JarnNowShelfStore, systemId: String): () -> Unit = {
+    scope.launch { store.spin(systemId) }
+}
+
+private fun jumpAction(store: JarnNowShelfStore, game: JarnLibraryGame): () -> Unit = {
+    store.jumpTo(game.systemId, game.id, spin = false)
 }
 
 @Composable
@@ -104,15 +150,18 @@ internal fun NowSystemContent(
     actions: NowSystemActions,
     pendingCoverId: String?,
     onCoverRestored: () -> Unit,
+    parts: NowSystemParts = NowSystemParts(),
 ) {
     val focus = remember { NowSystemFocus() }
+    val shelf = if (parts.showsGameRow) shelf else emptyList()
     val shelfIds = remember(shelf) { shelf.map { it.game.id } }
-    SideEffect { focus.shelfIds = shelfIds }
-    val entry = when {
-        system.gameCount > 0 -> focus.browse
-        actions.onManage != null -> focus.manage
-        else -> null
+    val buttons = actions.buttons
+    SideEffect {
+        focus.shelfIds = shelfIds
+        focus.actions = buttons
     }
+    PublishNowShortcuts(actions, focus)
+    val entry = focus.coverEntryFor(shelfIds) ?: focus.shortcutEntryFor(buttons)
     NowEntryFocus(focus, entry, pendingCoverId != null)
     NowCoverRestore(focus, entry, isLoaded, pendingCoverId, onCoverRestored)
     JarnInputLayer(
@@ -132,7 +181,7 @@ internal fun NowSystemContent(
                         .padding(top = JarnTheme.space.md, bottom = JarnTheme.space.focusEdge),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    NowNamePlate(system)
+                    NowPlateSlot(system, parts)
                     NowLowerArea(system, shelf, isLoaded, coverHeight, focus, actions)
                 }
             }
@@ -142,8 +191,8 @@ internal fun NowSystemContent(
 
 private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, actions: NowSystemActions) {
     when (focused) {
-        NowFocusTarget.Browse -> hint(JarnAction.Confirm, R.string.jarnfe_now_hint_browse)
-        NowFocusTarget.Manage -> hint(JarnAction.Confirm, R.string.jarnfe_now_hint_manage)
+        NowFocusTarget.Random -> hint(JarnAction.Confirm, R.string.jarnfe_now_random)
+        NowFocusTarget.LastPlayed -> hint(JarnAction.Confirm, R.string.jarnfe_now_last_played)
         is NowFocusTarget.Cover -> {
             if (actions.onPlay != null) hint(JarnAction.Confirm, R.string.jarnfe_hint_play)
             actions.onDetails?.let { open ->
@@ -154,8 +203,18 @@ private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, acti
     }
 }
 
+/**
+ * Always takes the first place in the page, even when the plate has nothing to show, so the game
+ * row below stays anchored to the bottom whatever is hidden above it.
+ */
 @Composable
-private fun NowNamePlate(system: JarnLibrarySystem) {
+private fun NowPlateSlot(system: JarnLibrarySystem, parts: NowSystemParts) {
+    Box { NowNamePlate(system, parts) }
+}
+
+@Composable
+private fun NowNamePlate(system: JarnLibrarySystem, parts: NowSystemParts) {
+    if (!nowPlateHasContent(system, parts)) return
     Box(Modifier.padding(horizontal = JarnTheme.space.deckMargin)) {
         Column(
             modifier = Modifier
@@ -163,12 +222,13 @@ private fun NowNamePlate(system: JarnLibrarySystem) {
                 .padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.sm),
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
         ) {
-            NowSystemMark(system)
-            NowSystemStats(system)
+            if (parts.showsLogo) NowSystemMark(system)
+            if (nowStatsHaveContent(system, parts)) NowSystemStats(system, parts)
         }
     }
 }
 
+/** The logo, or the name in its place when there is none. */
 @Composable
 private fun NowSystemMark(system: JarnLibrarySystem) {
     var logoFailed by remember(system.logoPath) { mutableStateOf(false) }
@@ -187,15 +247,17 @@ private fun NowSystemMark(system: JarnLibrarySystem) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NowSystemStats(system: JarnLibrarySystem) {
+private fun NowSystemStats(system: JarnLibrarySystem, parts: NowSystemParts) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        NowStat(
-            system.gameCount.toString(),
-            pluralStringResource(R.plurals.jarnfe_now_stat_games, system.gameCount),
-        )
+        if (parts.showsCount) {
+            NowStat(
+                system.gameCount.toString(),
+                pluralStringResource(R.plurals.jarnfe_now_stat_games, system.gameCount),
+            )
+        }
         if (system.favoriteCount > 0) {
             NowStat(
                 system.favoriteCount.toString(),
@@ -205,7 +267,7 @@ private fun NowSystemStats(system: JarnLibrarySystem) {
         if (system.playtimeMinutes > 0) {
             NowStat(nowPlaytimeValue(system.playtimeMinutes), stringResource(R.string.jarnfe_now_stat_played))
         }
-        system.lastPlayedAtMs?.let { lastPlayed ->
+        system.lastPlayedAtMs?.takeIf { parts.showsLastPlayed }?.let { lastPlayed ->
             JarnText(
                 text = stringResource(R.string.jarnfe_library_last_played, formatDate(lastPlayed)),
                 style = JarnTheme.type.caption,
@@ -245,12 +307,12 @@ private fun NowLowerArea(
     actions: NowSystemActions,
 ) {
     val layout = nowShelfLayout(system.gameCount, shelf.size)
+    if (layout == NowShelfLayout.Hidden) return
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.md),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
     ) {
         if (layout == NowShelfLayout.Empty && isLoaded) NowEmptyPlate()
-        NowActionRow(system.gameCount, focus, actions)
         when (layout) {
             NowShelfLayout.Hidden, NowShelfLayout.Empty -> Unit
             NowShelfLayout.Single -> NowSoloShelf(shelf.first().game, coverHeight, focus, actions)
@@ -298,32 +360,4 @@ private fun NowSoloShelf(
         modifier = Modifier.nowCoverFocus(game, focus),
         onClick = { actions.onPlay?.invoke(game) },
     )
-}
-
-@Composable
-private fun NowActionRow(gameCount: Int, focus: NowSystemFocus, actions: NowSystemActions) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
-    ) {
-        if (gameCount > 0) {
-            JarnButton(
-                label = pluralStringResource(R.plurals.jarnfe_now_browse_games, gameCount, gameCount),
-                onClick = actions.onBrowse,
-                modifier = Modifier
-                    .weight(BROWSE_WEIGHT)
-                    .nowActionFocus(focus.browse, NowFocusTarget.Browse, focus),
-            )
-        }
-        actions.onManage?.let { manage ->
-            JarnButton(
-                label = stringResource(R.string.jarnfe_systems_manage_one),
-                onClick = manage,
-                modifier = Modifier
-                    .weight(1f)
-                    .nowActionFocus(focus.manage, NowFocusTarget.Manage, focus),
-                variant = JarnButtonVariant.Secondary,
-            )
-        }
-    }
 }
