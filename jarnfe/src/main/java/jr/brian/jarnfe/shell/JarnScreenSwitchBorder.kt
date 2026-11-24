@@ -22,7 +22,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.session.JarnSessionState
 
-internal const val JARN_SWITCH_RING_MILLIS = 1500
+internal const val JARN_SWITCH_RING_MILLIS = 300
 private const val RING_ROTATION_DEGREES = 540f
 private const val RING_FADE_FRACTION = 0.2f
 private const val RING_MIDDLE_ALPHA = 0.8f
