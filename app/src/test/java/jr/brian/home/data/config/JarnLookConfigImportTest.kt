@@ -579,8 +579,29 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `the game row choice survives a backup, and an older backup leaves it alone`() = runTest {
+        store.updateDisplay { it.copy(gameRowVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(gameRowVisible = true) }
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(json.toByteArray())).isSuccess)
+        assertFalse(JarnLookStore(ApplicationProvider.getApplicationContext()).display.gameRowVisible)
+
+        val v59 = """{ "version": 59, "feature": { "jarnDisplay": { "gameCountVisible": false } } }"""
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(v59.toByteArray())).isSuccess)
+        assertFalse(store.display.gameRowVisible)
+        assertFalse(store.display.gameCountVisible)
+    }
+
+    @Test
+    fun `the game row shows by default`() {
+        assertTrue(store.display.gameRowVisible)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(59, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(60, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {
