@@ -14,6 +14,8 @@ import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
+import kotlinx.coroutines.flow.first
+import kotlin.random.Random
 
 /** Where B goes from a game opened off a shelf cover. */
 internal data class NowShelfReturn(val systemId: String, val gameId: String, val route: StageRoute)
@@ -42,12 +44,27 @@ internal class JarnNowShelfStore(
         private set
     private var launched: JarnLibraryGame? = null
 
-    fun browse(systemId: String) {
+    /** Picks a visible game up front, never the one already focused there when it has a choice. */
+    suspend fun spin(systemId: String, random: Random = Random.Default) {
+        val loaded = library.state.gamesBySystem[systemId]?.takeIf { it.status == JarnLibraryStatus.Ready }
+        val games = loaded ?: library.source.observeGames(systemId).first { it.status !is JarnLibraryStatus.Loading }
+        val pick = libraryRandomGame(games.items.map { it.id }, library.state.focusedGameBySystem[systemId], random)
+        pick?.let { jumpTo(systemId, it, spin = true) }
+    }
+
+    /**
+     * Opens [systemId]'s games with the usual push, unless they are already open, and has the list
+     * move to [gameId] on its own. Nothing is launched.
+     */
+    fun jumpTo(systemId: String, gameId: String, spin: Boolean) {
         returnTo = null
-        library.update { openSystem(systemId) }
+        val isOpen = session.state.stageRoute == StageRoute.GameList && library.state.openSystemId == systemId
+        if (!isOpen) library.update { openSystem(systemId) }
         session.update {
-            openRoute(StageRoute.GameList).copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
+            val shown = if (isOpen) this else openRoute(StageRoute.GameList)
+            shown.copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
         }
+        library.requestJump(systemId, gameId, spin)
     }
 
     /** A leftover picker page is cleared so only this launch can open the game's actions. */

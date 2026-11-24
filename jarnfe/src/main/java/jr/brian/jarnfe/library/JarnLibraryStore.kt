@@ -37,6 +37,22 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     fun nowSelection(route: StageRoute, section: LibrarySection): LibrarySelection =
         state.resumeSelection(route, section, heroFocused) ?: state.selection(route, section)
 
+    /** A move the open game list makes on its own, cleared once it lands. */
+    internal var jump by mutableStateOf<LibraryJump?>(null)
+        private set
+    private var jumps = 0L
+
+    internal fun requestJump(systemId: String, gameId: String, spin: Boolean) {
+        jump = LibraryJump(systemId, gameId, spin, ++jumps)
+    }
+
+    /** Focus and Now move only here, at the end of the motion. */
+    internal fun landJump(gameId: String) {
+        jump = null
+        update { focusOpenGame(gameId) }
+        requestStageRefocus()
+    }
+
     /** Grows each time Stage should take focus back on its current game. */
     var stageRefocus by mutableIntStateOf(0)
         private set

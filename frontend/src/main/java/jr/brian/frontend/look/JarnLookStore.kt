@@ -81,6 +81,8 @@ class JarnLookStore @Inject constructor(
             putString(KEY_GAME_VIEW, next.gameView.id)
             putString(KEY_PAGE_TRANSITION, next.pageTransition.id)
             putBoolean(KEY_SYSTEM_NAMES_VISIBLE, next.systemNamesVisible)
+            putBoolean(KEY_RANDOM_VISIBLE, next.randomVisible)
+            putBoolean(KEY_LAST_PLAYED_VISIBLE, next.lastPlayedVisible)
         }
     }
 
@@ -116,6 +118,8 @@ class JarnLookStore @Inject constructor(
         gameView = JarnBrowseView.fromId(prefs.getString(KEY_GAME_VIEW, null)),
         pageTransition = JarnPageTransition.fromId(prefs.getString(KEY_PAGE_TRANSITION, null)),
         systemNamesVisible = prefs.getBoolean(KEY_SYSTEM_NAMES_VISIBLE, true),
+        randomVisible = prefs.getBoolean(KEY_RANDOM_VISIBLE, true),
+        lastPlayedVisible = prefs.getBoolean(KEY_LAST_PLAYED_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -175,6 +179,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_GAME_VIEW = "game_view"
         const val KEY_PAGE_TRANSITION = "page_transition"
         const val KEY_SYSTEM_NAMES_VISIBLE = "system_names_visible"
+        const val KEY_RANDOM_VISIBLE = "now_random_visible"
+        const val KEY_LAST_PLAYED_VISIBLE = "now_last_played_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

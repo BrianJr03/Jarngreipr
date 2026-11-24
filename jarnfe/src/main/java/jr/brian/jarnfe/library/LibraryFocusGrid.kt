@@ -65,6 +65,8 @@ internal fun <T : Any> LibraryFocusGrid(
     refocusSignal: Int = 0,
     rowSpacing: Dp = JarnTheme.space.md,
     header: (@Composable () -> Unit)? = null,
+    jump: LibraryJump? = null,
+    onLanded: (String) -> Unit = {},
     itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
 ) {
     val gridState = rememberLazyGridState()
@@ -90,11 +92,20 @@ internal fun <T : Any> LibraryFocusGrid(
         if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus, gate)
     }
 
+    val landing = rememberLibraryGridJump(
+        state = gridState,
+        jump = jump,
+        itemIndex = items.indexOfFirst { itemKey(it) == jump?.gameId },
+        headerCount = headerCount,
+        isSettled = { lastFocused != null },
+        onLanded = onLanded,
+    )
+
     CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(cellMinSize),
             state = gridState,
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().libraryJumpStopper(landing),
             contentPadding = libraryGridPadding(),
             horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
             verticalArrangement = Arrangement.spacedBy(rowSpacing),

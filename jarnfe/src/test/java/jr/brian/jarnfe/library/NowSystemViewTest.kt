@@ -41,7 +41,7 @@ class NowSystemViewTest {
     private val shelf = games.map { JarnShelfGame(it, JarnShelfGroup.Recent) }
 
     @Test
-    fun `deck starts on browse and moves through the shelf and back`() {
+    fun `deck starts on Random and moves through the shelf and back`() {
         lateinit var focusManager: FocusManager
         rule.setContent {
             focusManager = LocalFocusManager.current
@@ -61,13 +61,13 @@ class NowSystemViewTest {
             }
         }
         rule.waitForIdle()
-        rule.onNodeWithText("Browse 3 games").assertIsFocused()
+        rule.onNodeWithText("Random").assertIsFocused()
         move(focusManager, FocusDirection.Down)
         rule.onNodeWithContentDescription("one").assertIsFocused()
         move(focusManager, FocusDirection.Right)
         rule.onNodeWithContentDescription("two").assertIsFocused()
         move(focusManager, FocusDirection.Up)
-        rule.onNodeWithText("Browse 3 games").assertIsFocused()
+        rule.onNodeWithText("Random").assertIsFocused()
         move(focusManager, FocusDirection.Down)
         rule.onNodeWithContentDescription("two").assertIsFocused()
     }

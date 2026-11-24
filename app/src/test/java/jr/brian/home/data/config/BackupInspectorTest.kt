@@ -159,6 +159,16 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a different Now shortcut choice shows as a look change, and a missing one as staying`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(randomVisible = true)))
+        val off = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(randomVisible = false)))
+        val older = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig()))
+        val look = { backup: JarngreiprConfig -> buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look } }
+        assertEquals(JarnBackupChange.Replaces, look(off).change)
+        assertEquals(JarnBackupChange.Same, look(older).change)
+    }
+
+    @Test
     fun `a backup that changes matching shows the look as replaced`() {
         val now = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = false))
         val backup = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = true))

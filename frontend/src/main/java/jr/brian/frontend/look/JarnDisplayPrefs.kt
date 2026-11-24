@@ -29,6 +29,8 @@ data class JarnDisplayPrefs(
     val gameView: JarnBrowseView = JarnBrowseView.Grid,
     val pageTransition: JarnPageTransition = JarnPageTransition.JarnSlide,
     val systemNamesVisible: Boolean = true,
+    val randomVisible: Boolean = true,
+    val lastPlayedVisible: Boolean = true,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

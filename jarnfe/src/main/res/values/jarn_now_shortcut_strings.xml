@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_now_random">Random</string>
+    <string name="jarnfe_now_last_played">Last Played</string>
+    <string name="jarnfe_settings_show_random">Show Random</string>
+    <string name="jarnfe_settings_show_random_hint">A button on a system\'s Now page that spins to a random game.</string>
+    <string name="jarnfe_settings_show_last_played">Show Last Played</string>
+    <string name="jarnfe_settings_show_last_played_hint">A button on a system\'s Now page that goes to the game you played there last.</string>
+</resources>

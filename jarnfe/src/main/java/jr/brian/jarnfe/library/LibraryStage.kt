@@ -290,6 +290,7 @@ private fun LibraryGames(
     onFocused: (String) -> Unit,
     library: JarnLibraryStore,
     empty: @Composable () -> Unit,
+    jump: LibraryJump? = null,
 ) {
     val display = rememberJarnDisplay()
     val cellMinSize = GameCellMinSize * display.gameTileScale
@@ -311,6 +312,8 @@ private fun LibraryGames(
                     cellMinSize = cellMinSize,
                     refocusSignal = library.stageRefocus,
                     rowSpacing = LibraryGridRowSpacing,
+                    jump = jump,
+                    onLanded = library::landJump,
                 ) { game, modifier ->
                     LibraryGameTile(
                         game = game,
@@ -327,6 +330,8 @@ private fun LibraryGames(
                     focusedKey = focusedKey,
                     onFocused = onFocused,
                     refocusSignal = library.stageRefocus,
+                    jump = jump,
+                    onLanded = library::landJump,
                 )
             },
         )
@@ -352,6 +357,7 @@ private fun LibrarySystemGames(library: JarnLibraryStore, systemId: String?) {
         onFocused = { id -> if (library.state.openSystemId == systemId) library.update { focusOpenGame(id) } },
         library = library,
         empty = { LibraryEmptyMessage(gamesEmptyCopy(feed.hiddenCount)) },
+        jump = library.jump?.takeIf { it.systemId == systemId && library.state.openSystemId == systemId },
     )
 }
 

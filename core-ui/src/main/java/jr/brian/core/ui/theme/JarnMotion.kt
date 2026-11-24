@@ -21,6 +21,9 @@ val JarnEasingStandard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 val JarnEasingEmphasized: Easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
 val JarnEasingExit: Easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)
 
+/** Starts fast and settles slowly into place, never past it. */
+val JarnEasingSpin: Easing = CubicBezierEasing(0.1f, 0.75f, 0.2f, 1f)
+
 private const val REDUCED_FADE_MILLIS = 120
 
 @Immutable
@@ -57,6 +60,12 @@ data class JarnMotion(
     val panel = if (reduced) ReducedFade else JarnMotionToken(240, JarnEasingEmphasized)
     val screen = if (reduced) ReducedFade else JarnMotionToken(320, JarnEasingEmphasized)
     val art = if (reduced) ReducedFade else JarnMotionToken(400, LinearEasing)
+
+    /** A list scrolling itself to a chosen item. Reduced motion lands there at once. */
+    val listJump = if (reduced) Instant else JarnMotionToken(340, JarnEasingEmphasized)
+
+    /** A list spinning through many items before it lands on a chosen one. */
+    val listSpin = if (reduced) Instant else JarnMotionToken(1050, JarnEasingSpin)
 
     /** A Library tab's content sliding open, like Command Panel's settings rail groups. */
     val tabReveal = if (reduced) Instant else JarnMotionToken(87, FastOutSlowInEasing)

@@ -227,10 +227,11 @@ data class JarngreiprConfig(
         //      older blobs, and import keeps the current value. An unknown id falls back to jarn_slide.
         // v56: added JarnDisplayConfig.systemNamesVisible, Jarn FE "Show system names" for the
         //      line under system cards. Null on older blobs, and import keeps the current value.
-        // v57: added FeatureConfig.jarnPreview, the Meet Jarn preview's showings, last version
-        //      shown and tried flag. Null on older blobs, and import changes nothing. Import only
-        //      raises the count and only turns tried on.
-        const val CONFIG_VERSION = 57
+        // v57: added FeatureConfig.jarnPreview (Meet Jarn showings, last version, tried). Null on older
+        //      blobs; import only raises the count and only turns tried on.
+        // v58: added JarnDisplayConfig.randomVisible and lastPlayedVisible, Jarn FE "Show Random" and
+        //      "Show Last Played" on Now. Null on older blobs, and import keeps the current value.
+        const val CONFIG_VERSION = 58
     }
 }
 
@@ -457,6 +458,8 @@ data class JarnDisplayConfig(
     val gameView: String? = null,
     val pageTransition: String? = null,
     val systemNamesVisible: Boolean? = null,
+    val randomVisible: Boolean? = null,
+    val lastPlayedVisible: Boolean? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -472,6 +475,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     gameView = gameView.id,
     pageTransition = pageTransition.id,
     systemNamesVisible = systemNamesVisible,
+    randomVisible = randomVisible,
+    lastPlayedVisible = lastPlayedVisible,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -487,6 +492,8 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     gameView = gameView?.let(JarnBrowseView::fromId) ?: current.gameView,
     pageTransition = pageTransition?.let(JarnPageTransition::fromId) ?: current.pageTransition,
     systemNamesVisible = systemNamesVisible ?: current.systemNamesVisible,
+    randomVisible = randomVisible ?: current.randomVisible,
+    lastPlayedVisible = lastPlayedVisible ?: current.lastPlayedVisible,
 )
 
 @Serializable
