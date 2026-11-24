@@ -21,6 +21,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -97,6 +98,58 @@ class NowSystemViewTest {
     }
 
     private val played = system.copy(lastPlayedAtMs = 1_764_000_000_000L)
+    private var layoutParts by mutableStateOf(NowSystemParts())
+
+    /** Where the game row ends, in a 540 by [height] view, for each plate setting in turn. */
+    private fun rowBottoms(
+        shown: JarnLibrarySystem,
+        rowShelf: List<JarnShelfGame>,
+        rowNode: () -> SemanticsNodeInteraction,
+    ): List<Float> {
+        rule.setContent {
+            ProvideJarnInput(JarnInputRouter(), JarnScreen.Deck) {
+                JarnTheme {
+                    Box(Modifier.size(540.dp, VIEW_HEIGHT.dp)) {
+                        NowSystemContent(
+                            system = shown,
+                            shelf = rowShelf,
+                            isLoaded = true,
+                            actions = NowSystemActions({}, {}, {}, {}),
+                            pendingCoverId = null,
+                            onCoverRestored = {},
+                            parts = layoutParts,
+                        )
+                    }
+                }
+            }
+        }
+        val plates = listOf(
+            NowSystemParts(),
+            NowSystemParts(showsLogo = false),
+            NowSystemParts(showsCount = false, showsLastPlayed = false),
+            NowSystemParts(showsLogo = false, showsCount = false, showsLastPlayed = false),
+        )
+        return plates.map { parts ->
+            rule.runOnIdle { layoutParts = parts }
+            rule.waitForIdle()
+            rowNode().getUnclippedBoundsInRoot().bottom.value
+        }
+    }
+
+    @Test
+    fun `the game row stays at the bottom whatever the plate shows`() {
+        val bottoms = rowBottoms(played, shelf) { rule.onNodeWithContentDescription("one") }
+        bottoms.forEach { assertEquals(bottoms.first(), it, 0.5f) }
+        assertTrue(bottoms.first() > VIEW_HEIGHT - BOTTOM_ZONE)
+    }
+
+    @Test
+    fun `the single game card stays at the bottom whatever the plate shows`() {
+        val solo = played.copy(gameCount = 1)
+        val bottoms = rowBottoms(solo, shelf.take(1)) { rule.onNodeWithText("one") }
+        bottoms.forEach { assertEquals(bottoms.first(), it, 0.5f) }
+        assertTrue(bottoms.first() > VIEW_HEIGHT - BOTTOM_ZONE)
+    }
 
     private fun showPlate(parts: NowSystemParts): () -> FocusManager =
         showWithHeader(parts = parts, shown = played)
@@ -369,5 +422,10 @@ class NowSystemViewTest {
         assertEquals("two", store.returnTo?.gameId)
         store.forgetIfLeft(StageRoute.GameList, LibrarySelection.Game(games[2]))
         assertNull(store.returnTo)
+    }
+
+    private companion object {
+        const val VIEW_HEIGHT = 420f
+        const val BOTTOM_ZONE = 40f
     }
 }

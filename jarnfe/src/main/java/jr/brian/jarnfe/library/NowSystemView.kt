@@ -181,7 +181,7 @@ internal fun NowSystemContent(
                         .padding(top = JarnTheme.space.md, bottom = JarnTheme.space.focusEdge),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    NowNamePlate(system, parts)
+                    NowPlateSlot(system, parts)
                     NowLowerArea(system, shelf, isLoaded, coverHeight, focus, actions)
                 }
             }
@@ -201,6 +201,15 @@ private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, acti
         }
         null -> Unit
     }
+}
+
+/**
+ * Always takes the first place in the page, even when the plate has nothing to show, so the game
+ * row below stays anchored to the bottom whatever is hidden above it.
+ */
+@Composable
+private fun NowPlateSlot(system: JarnLibrarySystem, parts: NowSystemParts) {
+    Box { NowNamePlate(system, parts) }
 }
 
 @Composable
