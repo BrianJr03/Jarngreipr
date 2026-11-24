@@ -141,7 +141,11 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     fun hasModalLayer(screen: JarnScreen): Boolean =
         layers.any { it.screen == screen && it.mode != JarnLayerMode.Passive }
 
-    var oppositeTabsAvailable: () -> Boolean = { false }
+    /**
+     * The screen whose tabs a shell-level press of [JarnShoulderPair] would step right now, or null
+     * when there is nothing to step. Set by the shell, which knows where each role sits.
+     */
+    var shellTabTarget: (JarnShoulderPair) -> JarnScreen? = { null }
 
     fun hintsFor(screen: JarnScreen): List<JarnInputHint> {
         val hints = LinkedHashMap<JarnKey, JarnInputHint>()
@@ -153,13 +157,20 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         return hints.values.toList()
     }
 
-    /** The shoulder pair that moves this screen's tabs: L1/R1 while active, L2/R2 from the other screen. */
-    fun tabHintFor(screen: JarnScreen): JarnInputHint? = when {
-        screen == activeScreen -> JarnInputHint(JarnKey.L1R1, R.string.jarnfe_hint_tabs).takeIf {
-            bindsWithoutLabel(screen, JarnAction.TabPrevious) && bindsWithoutLabel(screen, JarnAction.TabNext)
+    /**
+     * The shoulder pair that moves this screen's tabs: L1/R1 on the top screen and L2/R2 on the
+     * bottom one. A layer that claims a pair without a label is taken to step the active screen.
+     */
+    fun tabHintFor(screen: JarnScreen): JarnInputHint? =
+        JarnShoulderPair.entries.firstOrNull { tabTarget(it) == screen }
+            ?.let { JarnInputHint(it.key, R.string.jarnfe_hint_tabs) }
+
+    private fun tabTarget(pair: JarnShoulderPair): JarnScreen? {
+        if (!bindsWithoutLabel(activeScreen, pair.previous) || !bindsWithoutLabel(activeScreen, pair.next)) {
+            return null
         }
-        oppositeTabsAvailable() -> JarnInputHint(JarnKey.L2R2, R.string.jarnfe_hint_tabs)
-        else -> null
+        val layer = (lookup(activeScreen, pair.previous) as? Lookup.Found)?.layer
+        return if (layer === globalLayer) shellTabTarget(pair) else activeScreen
     }
 
     private fun bindsWithoutLabel(screen: JarnScreen, action: JarnAction): Boolean =

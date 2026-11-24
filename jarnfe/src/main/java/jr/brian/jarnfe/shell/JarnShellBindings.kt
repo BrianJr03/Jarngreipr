@@ -5,13 +5,14 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindings
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.input.JarnShoulderPair
 import jr.brian.jarnfe.input.jarnBindings
+import jr.brian.jarnfe.input.tabBindings
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.LibraryConfirm
 import jr.brian.jarnfe.library.LibrarySelection
 import jr.brian.jarnfe.search.JarnSearch
-import jr.brian.jarnfe.search.searchTabBindings
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
@@ -20,12 +21,15 @@ import jr.brian.jarnfe.systems.JarnSystems
 /**
  * Back is bound here without a label so every press goes through the session's one-layer rule,
  * and the root stays silent. Screens add the visible hint only when Back can do something.
+ *
+ * Shell tab switching lives here too, so a press is resolved to the top or bottom screen when it
+ * lands, whichever role is there and whichever screen has the controller.
  */
 internal fun jarnGlobalBindings(
     session: JarnSessionStore,
     onSearch: (() -> Unit)? = null,
     onSwap: (() -> Unit)? = null,
-    onOppositeTab: ((Int) -> Unit)? = null,
+    onScreenTab: ((JarnShoulderPair, Int) -> Unit)? = null,
     deckMissing: Boolean = false,
     onBackAtRoot: (() -> Unit)? = null,
 ): JarnBindings = jarnBindings {
@@ -38,9 +42,8 @@ internal fun jarnGlobalBindings(
     }
     onSearch?.let { on(JarnAction.Search, R.string.jarnfe_hint_search, onPress = it) }
     onSwap?.let { on(JarnAction.Swap, onPress = it) }
-    onOppositeTab?.let { step ->
-        on(JarnAction.OppositeTabPrevious) { step(-1) }
-        on(JarnAction.OppositeTabNext) { step(1) }
+    onScreenTab?.let { step ->
+        JarnShoulderPair.entries.forEach { pair -> tabBindings(listOf(pair)) { step(pair, it) } }
     }
 }
 
@@ -65,19 +68,6 @@ internal fun JarnBindingsBuilder.stageBindings(
         on(JarnAction.Menu, R.string.jarnfe_route_settings) {
             session.update { openSettings() }
         }
-    }
-    when (state.stageRoute) {
-        StageRoute.Library -> {
-            on(JarnAction.TabPrevious) { session.update { stepLibrarySection(-1) } }
-            on(JarnAction.TabNext) { session.update { stepLibrarySection(1) } }
-        }
-        StageRoute.GameList -> {
-            on(JarnAction.TabPrevious) { library.update { stepOpenSystem(-1) } }
-            on(JarnAction.TabNext) { library.update { stepOpenSystem(1) } }
-        }
-        StageRoute.Search -> searchTabBindings(JarnSearch)
-        StageRoute.Settings -> settingsTabBindings(session)
-        StageRoute.Systems -> Unit
     }
 }
 
@@ -125,28 +115,16 @@ internal fun JarnBindingsBuilder.deckBindings(state: JarnSessionState, session: 
     backHint(state, session)
     if (state.stageRoute == StageRoute.Settings && state.settingsOnDeck) {
         hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
-        settingsTabBindings(session)
-    } else {
-        deckTabBindings(session)
     }
 }
 
-private fun JarnBindingsBuilder.settingsTabBindings(session: JarnSessionStore) {
-    on(JarnAction.TabPrevious) { session.update { stepSettingsSection(-1) } }
-    on(JarnAction.TabNext) { session.update { stepSettingsSection(1) } }
-}
-
+/** The single screen Deck panel, where both shoulder pairs step its tabs. */
 internal fun JarnBindingsBuilder.deckPanelBindings(session: JarnSessionStore) {
     on(JarnAction.Back, R.string.jarnfe_hint_back) { session.update { back() } }
     on(JarnAction.SwitchScreen, R.string.jarnfe_hint_switch_screen) {
         session.update { switchActiveScreen() }
     }
-    deckTabBindings(session)
-}
-
-private fun JarnBindingsBuilder.deckTabBindings(session: JarnSessionStore) {
-    on(JarnAction.TabPrevious) { session.update { stepDeckTab(-1) } }
-    on(JarnAction.TabNext) { session.update { stepDeckTab(1) } }
+    tabBindings(JarnShoulderPair.entries) { delta -> session.update { stepDeckTab(delta) } }
 }
 
 private fun JarnBindingsBuilder.backHint(state: JarnSessionState, session: JarnSessionStore) {

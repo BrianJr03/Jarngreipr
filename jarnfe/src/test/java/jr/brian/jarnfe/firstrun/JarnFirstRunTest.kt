@@ -3,6 +3,8 @@ package jr.brian.jarnfe.firstrun
 import jr.brian.core.model.ArtSource
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.library.art.ArtSourceStatus
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.StageRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -205,6 +207,18 @@ class JarnFirstRunTest {
             jarnMediaSummary(null, ArtSource.EsDe, listOf(status(ArtSource.EsDe, 0))),
         )
         assertEquals(JarnMediaSummary.Checking, jarnMediaSummary(null, ArtSource.EsDe, null))
+    }
+
+    @Test
+    fun `practice tabs show on the screen each shoulder pair reaches`() {
+        val dual = JarnSessionState(deckDisplayAvailable = true, deckHostReady = true)
+        assertEquals(JarnFirstRunStep.PressTabs, dual.practiceTabsStepOn(JarnScreen.Stage))
+        assertEquals(JarnFirstRunStep.PressOtherTabs, dual.practiceTabsStepOn(JarnScreen.Deck))
+        val swapped = dual.withSwapRequested(true)
+        assertEquals(JarnFirstRunStep.PressOtherTabs, swapped.practiceTabsStepOn(JarnScreen.Stage))
+        assertEquals(JarnFirstRunStep.PressTabs, swapped.practiceTabsStepOn(JarnScreen.Deck))
+        assertNull(JarnSessionState().practiceTabsStepOn(JarnScreen.Stage))
+        assertEquals(JarnFirstRunStep.PressTabs, JarnSessionState().practiceTabsStepOn(JarnScreen.Deck))
     }
 
     private fun status(source: ArtSource, count: Int) = ArtSourceStatus(source, count > 0, count)

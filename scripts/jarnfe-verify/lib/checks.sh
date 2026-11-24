@@ -41,9 +41,21 @@ activate_display() {
   wait_top_display "$1"
 }
 
-# Clamped tabs make this deterministic: L1 to the first tab, then R1 to the target.
+# L1/R1 step the top screen's tabs and L2/R2 the bottom screen's, whichever screen is active.
+# Sets TAB_PREV, TAB_NEXT and their names for the tabs on display $1.
+tab_keys_for() {
+  if [ "$1" = "$TOP_DISPLAY" ]; then
+    TAB_PREV=$KEY_L1 TAB_NEXT=$KEY_R1 PREV_NAME=L1 NEXT_NAME=R1
+  else
+    TAB_PREV=$KEY_L2 TAB_NEXT=$KEY_R2 PREV_NAME=L2 NEXT_NAME=R2
+  fi
+}
+
+# Clamped tabs make this deterministic: previous to the first tab, then next to the target.
+# $3 is the display the tabs are on.
 step_to_tab() {
-  press_times "$KEY_L1" "$(($2 - 1))" && press_times "$KEY_R1" "$1"
+  tab_keys_for "$3"
+  press_times "$TAB_PREV" "$(($2 - 1))" && press_times "$TAB_NEXT" "$1"
 }
 
 # Call while the matching screen is active, before anything moves its tabs.
@@ -158,7 +170,7 @@ check_dpad() {
   if ! python3 -I -c 'import PIL' 2>/dev/null; then skip "D-pad isolation: Pillow is not installed"; return; fi
   activate_display "$DECK_DISPLAY" || { fail "could not activate the Deck"; return; }
   remember_deck_tab
-  step_to_tab 1 "${#DECK_TABS[@]}" || return
+  step_to_tab 1 "${#DECK_TABS[@]}" "$DECK_DISPLAY" || return
   DECK_TAB_MOVED=1
   check_dpad_one "Deck active" "$DECK_PHYSICAL" "$STAGE_PHYSICAL" dpad-deck strict
   [ "$ABORTED" = 0 ] || return
@@ -199,21 +211,22 @@ expect_selected() {
   fail "$what: expected $want, got ${got:-nothing}"
 }
 
-# Fallback when the screen can't be read: each R1 must visibly replace the content.
+# Fallback when the screen can't be read: each next press must visibly replace the content.
 check_tabs_by_frames() {
-  local physical="$1" label="$2" count="$3" i prefix diff
-  press_times "$KEY_L1" "$((count - 1))" || return 1
+  local physical="$1" label="$2" count="$3" display="$4" i prefix diff
+  tab_keys_for "$display"
+  press_times "$TAB_PREV" "$((count - 1))" || return 1
   for ((i = 1; i < count; i++)); do
     prefix="$OUT_DIR/tabs-$label-$i"
     shot_idle "$physical" "$prefix" || { skip "$label: could not capture frames"; return 0; }
-    key "$KEY_R1" || return 1
+    key "$TAB_NEXT" || return 1
     pause 0.4
     shot "$physical" "$prefix-after.png" || { skip "$label: could not capture frames"; return 0; }
     diff="$(frame_changes "$prefix")" || { skip "$label: could not compare frames"; return 0; }
     if [ "$(diff_field "$diff" changed)" -gt "$CONTENT_CHANGE_CELLS" ]; then
-      pass "$label: R1 changed the content (step $i, by pixels)"
+      pass "$label: $NEXT_NAME changed the content (step $i, by pixels)"
     else
-      fail "$label: R1 did not change the content (step $i, $diff)"
+      fail "$label: $NEXT_NAME did not change the content (step $i, $diff)"
     fi
   done
 }
@@ -221,21 +234,22 @@ check_tabs_by_frames() {
 check_stage_tabs() {
   TAB_ROLE=stage
   if ! ui_wait_role stage; then
-    check_tabs_by_frames "$STAGE_PHYSICAL" "Stage tabs" "${#LIBRARY_TABS[@]}"
+    check_tabs_by_frames "$STAGE_PHYSICAL" "Stage tabs" "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY"
     return
   fi
   local i focused=""
   remember_library_tab
   [ -n "$(ui_selected "${LIBRARY_TABS[@]}")" ] || { skip "Stage tabs: not on the Library screen"; return; }
-  press_times "$KEY_L1" 2 || return
-  expect_selected Systems "L1 clamps to the first tab" "${LIBRARY_TABS[@]}"
-  key "$KEY_R1" || return
-  expect_selected Favorites "R1 moves one tab" "${LIBRARY_TABS[@]}"
-  key "$KEY_R1" || return
-  expect_selected Recent "R1 moves one tab" "${LIBRARY_TABS[@]}"
-  key "$KEY_R1" || return
-  expect_selected Recent "R1 clamps at the last tab" "${LIBRARY_TABS[@]}"
-  press_times "$KEY_L1" 2 || return
+  tab_keys_for "$STAGE_DISPLAY"
+  press_times "$TAB_PREV" 2 || return
+  expect_selected Systems "$PREV_NAME clamps to the first tab" "${LIBRARY_TABS[@]}"
+  key "$TAB_NEXT" || return
+  expect_selected Favorites "$NEXT_NAME moves one tab" "${LIBRARY_TABS[@]}"
+  key "$TAB_NEXT" || return
+  expect_selected Recent "$NEXT_NAME moves one tab" "${LIBRARY_TABS[@]}"
+  key "$TAB_NEXT" || return
+  expect_selected Recent "$NEXT_NAME clamps at the last tab" "${LIBRARY_TABS[@]}"
+  press_times "$TAB_PREV" 2 || return
   for i in 1 2 3 4 5; do
     ui_wait_role stage || break
     focused="$(ui_focused)"
@@ -261,16 +275,17 @@ check_deck_tabs() {
   DECK_TAB_MOVED=1
   if ui_wait_role deck; then
     remember_deck_tab
-    press_times "$KEY_L1" 2 || return
-    expect_selected Now "L1 clamps to the first Deck tab" "${DECK_TABS[@]}"
-    key "$KEY_R1" || return
-    expect_selected Apps "R1 moves one Deck tab" "${DECK_TABS[@]}"
-    key "$KEY_R1" || return
-    expect_selected Canvas "R1 moves one Deck tab" "${DECK_TABS[@]}"
-    key "$KEY_R1" || return
-    expect_selected Canvas "R1 clamps at the last Deck tab" "${DECK_TABS[@]}"
+    tab_keys_for "$DECK_DISPLAY"
+    press_times "$TAB_PREV" 2 || return
+    expect_selected Now "$PREV_NAME clamps to the first Deck tab" "${DECK_TABS[@]}"
+    key "$TAB_NEXT" || return
+    expect_selected Apps "$NEXT_NAME moves one Deck tab" "${DECK_TABS[@]}"
+    key "$TAB_NEXT" || return
+    expect_selected Canvas "$NEXT_NAME moves one Deck tab" "${DECK_TABS[@]}"
+    key "$TAB_NEXT" || return
+    expect_selected Canvas "$NEXT_NAME clamps at the last Deck tab" "${DECK_TABS[@]}"
   else
-    check_tabs_by_frames "$DECK_PHYSICAL" "Deck tabs" "${#DECK_TABS[@]}" || return
+    check_tabs_by_frames "$DECK_PHYSICAL" "Deck tabs" "${#DECK_TABS[@]}" "$DECK_DISPLAY" || return
   fi
   activate_display "$STAGE_DISPLAY" || fail "could not return to Stage"
 }
@@ -286,21 +301,22 @@ check_settings_by_ui() {
   local original name
   TAB_ROLE=deck
   original="$(ui_selected "${SETTINGS_TABS[@]}")"
-  press_times "$KEY_L1" "$((${#SETTINGS_TABS[@]} - 1))" || return
-  expect_selected Library "L1 clamps to the first section" "${SETTINGS_TABS[@]}"
+  tab_keys_for "$DECK_DISPLAY"
+  press_times "$TAB_PREV" "$((${#SETTINGS_TABS[@]} - 1))" || return
+  expect_selected Library "$PREV_NAME clamps to the first section" "${SETTINGS_TABS[@]}"
   for name in Art Look Display Apps General Data; do
-    key "$KEY_R1" || return
-    expect_selected "$name" "R1 opens section" "${SETTINGS_TABS[@]}"
+    key "$TAB_NEXT" || return
+    expect_selected "$name" "$NEXT_NAME opens section" "${SETTINGS_TABS[@]}"
   done
-  key "$KEY_R1" || return
-  expect_selected Data "R1 clamps at the last section" "${SETTINGS_TABS[@]}"
-  [ -n "$original" ] && step_to_tab "$(index_of "$original" "${SETTINGS_TABS[@]}")" "${#SETTINGS_TABS[@]}"
+  key "$TAB_NEXT" || return
+  expect_selected Data "$NEXT_NAME clamps at the last section" "${SETTINGS_TABS[@]}"
+  [ -n "$original" ] && step_to_tab "$(index_of "$original" "${SETTINGS_TABS[@]}")" "${#SETTINGS_TABS[@]}" "$DECK_DISPLAY"
 }
 
 # The starting section can't be read here, so it ends on the first one, the session default.
 check_settings_by_frames() {
-  check_tabs_by_frames "$DECK_PHYSICAL" "Settings" "${#SETTINGS_TABS[@]}" || return
-  press_times "$KEY_L1" "$((${#SETTINGS_TABS[@]} - 1))" || return
+  check_tabs_by_frames "$DECK_PHYSICAL" "Settings" "${#SETTINGS_TABS[@]}" "$DECK_DISPLAY" || return
+  press_times "$TAB_PREV" "$((${#SETTINGS_TABS[@]} - 1))" || return
   echo "  info  Settings section could not be read, left on the first section"
 }
 
