@@ -63,6 +63,7 @@ fun JarnGameTile(
         shape = JarnTheme.look.tileShape ?: JarnTheme.radius.smShape,
         aspectRatio = aspectRatio,
         captioned = false,
+        showCard = false,
         description = title,
         onClick = onClick,
         modifier = modifier,
@@ -75,6 +76,7 @@ private fun JarnLibraryTileFrame(
     shape: Shape,
     aspectRatio: Float,
     captioned: Boolean,
+    showCard: Boolean = true,
     description: String?,
     onClick: () -> Unit,
     modifier: Modifier,
@@ -88,7 +90,7 @@ private fun JarnLibraryTileFrame(
             .semantics { description?.let { contentDescription = it } }
             .jarnInteractive(shape, source, onClick = onClick)
             .clip(shape)
-            .background(JarnTheme.colors.raised),
+            .then(if (showCard) Modifier.background(JarnTheme.colors.raised) else Modifier),
     ) {
         JarnArtSlot(captioned, art)
         overlay()

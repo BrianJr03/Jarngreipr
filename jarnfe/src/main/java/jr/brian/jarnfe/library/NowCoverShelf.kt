@@ -147,7 +147,7 @@ internal fun NowSoloCard(
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.fillMaxHeight().aspectRatio(SOLO_COVER_RATIO).background(colors.raised)) {
+        Box(Modifier.fillMaxHeight().aspectRatio(SOLO_COVER_RATIO)) {
             LibraryCoverArt(game)
         }
         Column(Modifier.weight(1f).padding(end = JarnTheme.space.md)) {

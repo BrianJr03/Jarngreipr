@@ -223,7 +223,7 @@ internal fun CanvasGrid(
                             requester = focusRequesterFor(item.id),
                             editing = editing,
                             grabbed = outlined,
-                            showCard = (item as? CanvasItem.EsdeArtItem)?.isCardTransparent != true,
+                            showCard = item.showsCard(page),
                             folderDrop = driver.folderDropState(item.id),
                             growsAsDrop = item.id != grabbedId,
                             onFocused = { onFocused(item.id) },

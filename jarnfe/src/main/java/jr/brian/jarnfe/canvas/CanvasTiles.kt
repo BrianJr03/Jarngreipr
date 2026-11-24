@@ -62,6 +62,14 @@ internal fun BoxScope.CanvasTileContent(
     }
 }
 
+/** Game art sits straight on the wallpaper. A missing game keeps its card so its label stays readable. */
+internal fun CanvasItem.showsCard(page: JarnCanvasPage): Boolean = when (this) {
+    is CanvasItem.EsdeArtItem -> !isCardTransparent
+    is CanvasItem.RomItem -> page.roms[romKey] == null
+    is CanvasItem.LastPlayedItem -> false
+    else -> true
+}
+
 internal fun EsdeContentScale.toContentScale(): ContentScale = when (this) {
     EsdeContentScale.FIT -> ContentScale.Fit
     EsdeContentScale.CROP -> ContentScale.Crop
