@@ -4,7 +4,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -66,7 +69,17 @@ private fun ToursGroup() {
     SettingsGroup(R.string.jarnfe_launcher_tours_title) {
         PanelRow(R.string.jarnfe_first_run_replay, R.string.jarnfe_first_run_replay_hint) { JarnFirstRun.replay() }
         CanvasTourReplayRow()
+        MeetJarnRow()
     }
+}
+
+@Composable
+private fun MeetJarnRow() {
+    val context = LocalContext.current
+    val meetJarn = remember(context) { context.jarnMeetJarnOrNull() } ?: return
+    var showing by remember { mutableStateOf(false) }
+    PanelRow(R.string.jarnfe_meet_jarn, R.string.jarnfe_meet_jarn_hint) { showing = true }
+    if (showing) meetJarn.Replay(onClose = { showing = false })
 }
 
 @Composable

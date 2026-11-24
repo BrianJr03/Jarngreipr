@@ -17,6 +17,7 @@ import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
 import jr.brian.home.canvas.jarn.JarnTileRemovalRecovery
+import jr.brian.home.jarn.AppJarnMeetJarn
 import jr.brian.home.jarn.AppJarnAppsData
 import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
@@ -56,6 +57,8 @@ import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
 import jr.brian.jarnfe.settings.JarnLauncherSettings
 import jr.brian.jarnfe.settings.JarnLauncherSettingsProvider
+import jr.brian.jarnfe.settings.JarnMeetJarn
+import jr.brian.jarnfe.settings.JarnMeetJarnProvider
 import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystemManagerProvider
 import jr.brian.jarnfe.scraper.JarnScraperSetup
@@ -103,7 +106,14 @@ class JarngreiprApplication :
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
     JarnArtDetectorProvider,
     JarnEsdeRomsProvider,
-    JarnHomeAppProvider {
+    JarnHomeAppProvider,
+    JarnMeetJarnProvider {
+
+    @Inject
+    lateinit var jarnMeetJarnProvider: Provider<AppJarnMeetJarn>
+
+    override val jarnMeetJarn: JarnMeetJarn
+        get() = jarnMeetJarnProvider.get()
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
