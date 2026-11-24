@@ -83,6 +83,9 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_SYSTEM_NAMES_VISIBLE, next.systemNamesVisible)
             putBoolean(KEY_RANDOM_VISIBLE, next.randomVisible)
             putBoolean(KEY_LAST_PLAYED_VISIBLE, next.lastPlayedVisible)
+            putBoolean(KEY_SYSTEM_ART_VISIBLE, next.systemArtVisible)
+            putBoolean(KEY_GAME_COUNT_VISIBLE, next.gameCountVisible)
+            putBoolean(KEY_RECENT_SHELF_VISIBLE, next.recentShelfVisible)
         }
     }
 
@@ -120,6 +123,9 @@ class JarnLookStore @Inject constructor(
         systemNamesVisible = prefs.getBoolean(KEY_SYSTEM_NAMES_VISIBLE, true),
         randomVisible = prefs.getBoolean(KEY_RANDOM_VISIBLE, true),
         lastPlayedVisible = prefs.getBoolean(KEY_LAST_PLAYED_VISIBLE, true),
+        systemArtVisible = prefs.getBoolean(KEY_SYSTEM_ART_VISIBLE, true),
+        gameCountVisible = prefs.getBoolean(KEY_GAME_COUNT_VISIBLE, true),
+        recentShelfVisible = prefs.getBoolean(KEY_RECENT_SHELF_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -181,6 +187,9 @@ class JarnLookStore @Inject constructor(
         const val KEY_SYSTEM_NAMES_VISIBLE = "system_names_visible"
         const val KEY_RANDOM_VISIBLE = "now_random_visible"
         const val KEY_LAST_PLAYED_VISIBLE = "now_last_played_visible"
+        const val KEY_SYSTEM_ART_VISIBLE = "now_system_art_visible"
+        const val KEY_GAME_COUNT_VISIBLE = "now_game_count_visible"
+        const val KEY_RECENT_SHELF_VISIBLE = "now_recent_shelf_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

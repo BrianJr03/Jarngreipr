@@ -30,6 +30,7 @@ internal fun JarnDisplaySection() {
     val store = remember(context) { context.jarnLookStoreOrNull() } ?: return
     val display by store.displayState.collectAsState()
     BrowsingGroup(store, display)
+    NowPageGroup(store, display)
     TilesGroup(store, display)
     FeedbackGroup(store, display)
     if (JarnSession.state.deckDisplayAvailable) TwoScreensGroup(store, display)
@@ -45,20 +46,37 @@ private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             store.updateDisplay { it.copy(gameView = it.gameView.next()) }
         }
         SystemNamesRow(store, display.systemNamesVisible)
-        NowShortcutRow(R.string.jarnfe_settings_show_random, R.string.jarnfe_settings_show_random_hint, display.randomVisible) { show ->
+    }
+}
+
+/** What a system's Now page shows. Each part is on by default. */
+@Composable
+private fun NowPageGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    SettingsGroup(R.string.jarnfe_settings_now_page_title) {
+        NowPartRow(R.string.jarnfe_settings_show_random, R.string.jarnfe_settings_show_random_hint, display.randomVisible) { show ->
             store.updateDisplay { it.copy(randomVisible = show) }
         }
-        NowShortcutRow(
+        NowPartRow(
             R.string.jarnfe_settings_show_last_played,
             R.string.jarnfe_settings_show_last_played_hint,
             display.lastPlayedVisible,
         ) { show -> store.updateDisplay { it.copy(lastPlayedVisible = show) } }
+        NowPartRow(R.string.jarnfe_settings_show_system_art, R.string.jarnfe_settings_show_system_art_hint, display.systemArtVisible) { show ->
+            store.updateDisplay { it.copy(systemArtVisible = show) }
+        }
+        NowPartRow(R.string.jarnfe_settings_show_game_count, R.string.jarnfe_settings_show_game_count_hint, display.gameCountVisible) { show ->
+            store.updateDisplay { it.copy(gameCountVisible = show) }
+        }
+        NowPartRow(
+            R.string.jarnfe_settings_show_recent_shelf,
+            R.string.jarnfe_settings_show_recent_shelf_hint,
+            display.recentShelfVisible,
+        ) { show -> store.updateDisplay { it.copy(recentShelfVisible = show) } }
     }
 }
 
-/** A button shown on Now's system view, on by default. */
 @Composable
-private fun NowShortcutRow(
+private fun NowPartRow(
     @StringRes labelRes: Int,
     @StringRes hintRes: Int,
     visible: Boolean,

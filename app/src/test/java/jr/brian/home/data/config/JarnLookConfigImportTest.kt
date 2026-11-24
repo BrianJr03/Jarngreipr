@@ -541,8 +541,46 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `Now page parts survive a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(systemArtVisible = false, gameCountVisible = false, recentShelfVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemArtVisible = true, gameCountVisible = true, recentShelfVisible = true) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext()).display
+        assertFalse(reloaded.systemArtVisible)
+        assertFalse(reloaded.gameCountVisible)
+        assertFalse(reloaded.recentShelfVisible)
+    }
+
+    @Test
+    fun `an older backup leaves the Now page parts alone`() = runTest {
+        store.updateDisplay { it.copy(systemArtVisible = false, gameCountVisible = true, recentShelfVisible = false) }
+        val v58 = """{ "version": 58, "feature": { "jarnDisplay": { "randomVisible": false } } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(v58.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.display.systemArtVisible)
+        assertTrue(store.display.gameCountVisible)
+        assertFalse(store.display.recentShelfVisible)
+        assertFalse(store.display.randomVisible)
+    }
+
+    @Test
+    fun `Now page parts default to shown`() {
+        assertTrue(store.display.systemArtVisible)
+        assertTrue(store.display.gameCountVisible)
+        assertTrue(store.display.recentShelfVisible)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(58, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(59, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

@@ -75,6 +75,10 @@ internal fun nowShortcuts(
 
 internal enum class NowShelfLayout { Hidden, Empty, Single, Shelf }
 
+/** The optional parts of the system view, from Settings > Display > Now page. */
+@Immutable
+internal data class NowSystemParts(val showsStats: Boolean = true, val showsShelf: Boolean = true)
+
 internal fun nowShelfLayout(gameCount: Int, shelfSize: Int): NowShelfLayout = when {
     gameCount == 0 -> NowShelfLayout.Empty
     shelfSize == 0 -> NowShelfLayout.Hidden
@@ -108,6 +112,7 @@ internal fun NowSystemView(system: JarnLibrarySystem, now: JarnSystemNow?) {
         actions = actions,
         pendingCoverId = store.pendingCoverId,
         onCoverRestored = store::coverRestored,
+        parts = NowSystemParts(showsStats = display.gameCountVisible, showsShelf = display.recentShelfVisible),
     )
 }
 
@@ -127,8 +132,10 @@ internal fun NowSystemContent(
     actions: NowSystemActions,
     pendingCoverId: String?,
     onCoverRestored: () -> Unit,
+    parts: NowSystemParts = NowSystemParts(),
 ) {
     val focus = remember { NowSystemFocus() }
+    val shelf = if (parts.showsShelf) shelf else emptyList()
     val shelfIds = remember(shelf) { shelf.map { it.game.id } }
     val buttons = actions.buttons
     SideEffect {
@@ -136,7 +143,7 @@ internal fun NowSystemContent(
         focus.actions = buttons
     }
     PublishNowShortcuts(actions, focus)
-    val entry = focus.coverEntryFor(shelfIds)
+    val entry = focus.coverEntryFor(shelfIds) ?: focus.shortcutEntryFor(buttons)
     NowEntryFocus(focus, entry, pendingCoverId != null)
     NowCoverRestore(focus, entry, isLoaded, pendingCoverId, onCoverRestored)
     JarnInputLayer(
@@ -156,7 +163,7 @@ internal fun NowSystemContent(
                         .padding(top = JarnTheme.space.md, bottom = JarnTheme.space.focusEdge),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    NowNamePlate(system)
+                    NowNamePlate(system, parts.showsStats)
                     NowLowerArea(system, shelf, isLoaded, coverHeight, focus, actions)
                 }
             }
@@ -179,7 +186,7 @@ private fun JarnBindingsBuilder.nowSystemBindings(focused: NowFocusTarget?, acti
 }
 
 @Composable
-private fun NowNamePlate(system: JarnLibrarySystem) {
+private fun NowNamePlate(system: JarnLibrarySystem, showsStats: Boolean) {
     Box(Modifier.padding(horizontal = JarnTheme.space.deckMargin)) {
         Column(
             modifier = Modifier
@@ -188,7 +195,7 @@ private fun NowNamePlate(system: JarnLibrarySystem) {
             verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
         ) {
             NowSystemMark(system)
-            NowSystemStats(system)
+            if (showsStats) NowSystemStats(system)
         }
     }
 }
@@ -269,6 +276,7 @@ private fun NowLowerArea(
     actions: NowSystemActions,
 ) {
     val layout = nowShelfLayout(system.gameCount, shelf.size)
+    if (layout == NowShelfLayout.Hidden || (layout == NowShelfLayout.Empty && !isLoaded)) return
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.md),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),

@@ -6,7 +6,8 @@ import jr.brian.jarnfe.deck.showsNowShortcuts
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.isFocused
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -61,7 +62,10 @@ class NowSystemViewTest {
     }
     private var clicked = 0
 
-    private fun showWithHeader(actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {})): () -> FocusManager {
+    private fun showWithHeader(
+        actions: NowSystemActions = NowSystemActions({ clicked++ }, {}, {}, {}),
+        parts: NowSystemParts = NowSystemParts(),
+    ): () -> FocusManager {
         lateinit var focusManager: FocusManager
         rule.setContent {
             focusManager = LocalFocusManager.current
@@ -80,6 +84,7 @@ class NowSystemViewTest {
                                 actions = actions,
                                 pendingCoverId = null,
                                 onCoverRestored = {},
+                                parts = parts,
                             )
                         }
                     }
@@ -88,6 +93,41 @@ class NowSystemViewTest {
         }
         rule.waitForIdle()
         return { focusManager }
+    }
+
+    @Test
+    fun `hiding the game count drops the stats line and nothing else`() {
+        showWithHeader(parts = NowSystemParts(showsStats = false))
+        rule.onNodeWithText("games").assertDoesNotExist()
+        rule.onNodeWithText("SNES").assertExists()
+        rule.onNodeWithContentDescription("one").assertIsFocused()
+    }
+
+    @Test
+    fun `hiding the shelf leaves no covers, and focus starts on the header shortcut`() {
+        val focusManager = showWithHeader(parts = NowSystemParts(showsShelf = false))
+        rule.onNodeWithContentDescription("one").assertDoesNotExist()
+        rule.onNodeWithText("Recently played", substring = true).assertDoesNotExist()
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+        move(focusManager(), FocusDirection.Down)
+        rule.onNodeWithContentDescription("Random").assertIsFocused()
+    }
+
+    @Test
+    fun `hiding the shelf and both shortcuts leaves nothing to focus`() {
+        showWithHeader(NowSystemActions(null, null, {}, {}), NowSystemParts(showsShelf = false))
+        rule.onNodeWithContentDescription("one").assertDoesNotExist()
+        rule.onNodeWithTag(NOW_SHORTCUTS_TAG).assertDoesNotExist()
+        rule.onAllNodes(isFocused()).assertCountEquals(0)
+    }
+
+    @Test
+    fun `hiding system art hides the art and the cover wall only on a system`() {
+        val snes = LibrarySelection.System(system)
+        assertTrue(nowShowsWall(snes, showsSystemArt = true))
+        assertFalse(nowShowsWall(snes, showsSystemArt = false))
+        assertTrue(nowShowsWall(LibrarySelection.Game(games[0]), showsSystemArt = false))
+        assertFalse(nowShowsWall(LibrarySelection.None, showsSystemArt = true))
     }
 
     @Test
