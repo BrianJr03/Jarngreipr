@@ -8,13 +8,16 @@ import jr.brian.jarnfe.session.StageRoute
 sealed interface LibrarySelection {
     data object None : LibrarySelection
     data class System(val system: JarnLibrarySystem) : LibrarySelection
-    data class Game(val game: JarnLibraryGame) : LibrarySelection
+    /** [resume] is the Continue playing card, shown on Now as a Resume poster. */
+    data class Game(val game: JarnLibraryGame, val resume: Boolean = false) : LibrarySelection
 }
 
 sealed interface LibraryHero {
     data class ContinuePlaying(val game: JarnLibraryGame) : LibraryHero
     data class FocusedSystem(val system: JarnLibrarySystem) : LibraryHero
 }
+
+internal const val ALSO_RECENT_COUNT = 4
 
 /** What A does right now, so a hint is only declared when the press has an effect. */
 enum class LibraryConfirm { Open, Play, Generic, None }
@@ -56,6 +59,17 @@ data class JarnLibraryState(
     val hero: LibraryHero?
         get() = recent.items.firstOrNull()?.let(LibraryHero::ContinuePlaying)
             ?: focusedSystem?.let(LibraryHero::FocusedSystem)
+
+    /** The Continue playing game while its banner has focus on the Library's Systems tab. */
+    fun resumeSelection(route: StageRoute, section: LibrarySection, heroFocused: Boolean): LibrarySelection? {
+        if (!heroFocused || route != StageRoute.Library || section != LibrarySection.Systems) return null
+        val game = (hero as? LibraryHero.ContinuePlaying)?.game ?: return null
+        return LibrarySelection.Game(game, resume = true)
+    }
+
+    /** The next recent games after the Continue playing one, newest first, without [missing] ones. */
+    fun alsoRecent(missing: Set<String> = emptySet(), limit: Int = ALSO_RECENT_COUNT): List<JarnLibraryGame> =
+        recent.items.drop(1).filterNot { it.id in missing }.take(limit)
 
     fun selection(route: StageRoute, section: LibrarySection): LibrarySelection = when (route) {
         StageRoute.Library -> when (section) {

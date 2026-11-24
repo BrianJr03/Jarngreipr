@@ -63,6 +63,9 @@ import jr.brian.jarnfe.shell.JarnStatusReadout
 import jr.brian.jarnfe.shell.deckPanelBindings
 import jr.brian.jarnfe.shell.stageBindings
 import jr.brian.jarnfe.splash.JarnSplash
+import jr.brian.jarnfe.transition.JarnDepthAnchors
+import jr.brian.jarnfe.transition.JarnDepthPush
+import jr.brian.jarnfe.transition.JarnHeaderSwap
 import jr.brian.jarnfe.splash.JarnStageSplash
 import jr.brian.jarnfe.splash.jarnSplashFade
 import jr.brian.jarnfe.splash.jarnSplashMark
@@ -130,7 +133,14 @@ private fun StageHeader(state: JarnSessionState) {
 
 @Composable
 private fun StageHeaderTitle(state: JarnSessionState) {
-    when (state.stageRoute) {
+    JarnHeaderSwap(target = state.stageRoute, levelOf = ::stageRouteLevel) { route ->
+        StageRouteTitleFor(state, route)
+    }
+}
+
+@Composable
+private fun StageRouteTitleFor(state: JarnSessionState, route: StageRoute) {
+    when (route) {
         StageRoute.Library -> LibrarySectionTabs(state.librarySection)
         StageRoute.GameList -> LibraryGameListTitle(JarnLibrary.state)
         StageRoute.Settings -> StageRouteTitle(R.string.jarnfe_route_settings)
@@ -163,7 +173,24 @@ private fun LibrarySectionTabs(selected: LibrarySection) {
 
 @Composable
 private fun StageRouteContent(state: JarnSessionState) {
-    when (state.stageRoute) {
+    JarnDepthPush(
+        target = state.stageRoute,
+        levelOf = ::stageRouteLevel,
+        anchor = { JarnDepthAnchors.boundsOf(JarnLibrary.state.openSystemId) },
+        modifier = Modifier.fillMaxSize(),
+    ) { route -> StageRouteBody(state, route) }
+}
+
+/** Systems sit above their games. Other routes change without the depth push. */
+private fun stageRouteLevel(route: StageRoute): Int? = when (route) {
+    StageRoute.Library -> 0
+    StageRoute.GameList -> 1
+    else -> null
+}
+
+@Composable
+private fun StageRouteBody(state: JarnSessionState, route: StageRoute) {
+    when (route) {
         StageRoute.Library -> StageLibrary(state)
         StageRoute.GameList -> LibraryGameList(JarnLibrary)
         StageRoute.Settings -> StageSettings(state)

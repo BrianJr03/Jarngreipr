@@ -77,7 +77,7 @@ internal fun tabStripNow(
 ): JarnTabStrip? {
     val state = session.state
     val anyModalOpen = JarnScreen.entries.any(router::hasModalLayer)
-    val nowShowsGame = library.state.selection(state.stageRoute, state.librarySection) is LibrarySelection.Game
+    val nowShowsGame = library.nowSelection(state.stageRoute, state.librarySection) is LibrarySelection.Game
     val gameActionPageOpen = nowShowsGame && JarnGameActions.page != GameActionsPage.Actions
     return state.tabStripAt(pair, search.showingActions, anyModalOpen, gameActionPageOpen)
 }

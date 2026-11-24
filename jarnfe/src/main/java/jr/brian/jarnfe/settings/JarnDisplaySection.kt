@@ -13,6 +13,7 @@ import jr.brian.core.ui.components.JarnSliderRow
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.theme.JarnSwitchCue
+import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.frontend.look.JarnTapControl
@@ -28,19 +29,66 @@ internal fun JarnDisplaySection() {
     val context = LocalContext.current
     val store = remember(context) { context.jarnLookStoreOrNull() } ?: return
     val display by store.displayState.collectAsState()
+    BrowsingGroup(store, display)
     TilesGroup(store, display)
     FeedbackGroup(store, display)
     if (JarnSession.state.deckDisplayAvailable) TwoScreensGroup(store, display)
 }
 
 @Composable
-private fun TilesGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
-    SettingsGroup(R.string.jarnfe_settings_tiles_title) {
-        TileScaleRow(R.string.jarnfe_settings_system_tile_size, display.systemTileScale) { scale ->
-            store.updateDisplay { it.copy(systemTileScale = scale) }
+private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    SettingsGroup(R.string.jarnfe_settings_browsing_title) {
+        BrowseViewRow(R.string.jarnfe_settings_system_view, R.string.jarnfe_settings_system_view_hint, display.systemView) {
+            store.updateDisplay { it.copy(systemView = it.systemView.next()) }
         }
-        TileScaleRow(R.string.jarnfe_settings_game_tile_size, display.gameTileScale) { scale ->
-            store.updateDisplay { it.copy(gameTileScale = scale) }
+        BrowseViewRow(R.string.jarnfe_settings_game_view, R.string.jarnfe_settings_game_view_hint, display.gameView) {
+            store.updateDisplay { it.copy(gameView = it.gameView.next()) }
+        }
+    }
+}
+
+@Composable
+private fun BrowseViewRow(
+    @StringRes labelRes: Int,
+    @StringRes hintRes: Int,
+    view: JarnBrowseView,
+    onClick: () -> Unit,
+) {
+    JarnValueRow(
+        label = stringResource(labelRes),
+        value = stringResource(view.labelRes),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(hintRes),
+    )
+}
+
+@get:StringRes
+private val JarnBrowseView.labelRes: Int
+    get() = when (this) {
+        JarnBrowseView.Grid -> R.string.jarnfe_browse_view_grid
+        JarnBrowseView.Carousel -> R.string.jarnfe_browse_view_carousel
+    }
+
+private fun JarnBrowseView.next(): JarnBrowseView =
+    JarnBrowseView.entries[(ordinal + 1) % JarnBrowseView.entries.size]
+
+/** A carousel ignores tile size, so its row hides, and the group goes when neither view uses it. */
+@Composable
+private fun TilesGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
+    val systemsGrid = display.systemView == JarnBrowseView.Grid
+    val gamesGrid = display.gameView == JarnBrowseView.Grid
+    if (!systemsGrid && !gamesGrid) return
+    SettingsGroup(R.string.jarnfe_settings_tiles_title) {
+        if (systemsGrid) {
+            TileScaleRow(R.string.jarnfe_settings_system_tile_size, display.systemTileScale) { scale ->
+                store.updateDisplay { it.copy(systemTileScale = scale) }
+            }
+        }
+        if (gamesGrid) {
+            TileScaleRow(R.string.jarnfe_settings_game_tile_size, display.gameTileScale) { scale ->
+                store.updateDisplay { it.copy(gameTileScale = scale) }
+            }
         }
     }
 }

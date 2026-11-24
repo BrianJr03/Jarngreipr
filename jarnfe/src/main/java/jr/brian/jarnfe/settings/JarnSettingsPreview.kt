@@ -39,7 +39,10 @@ import jr.brian.jarnfe.library.GameCellMinSize
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.library.JarnLibrarySystem
+import jr.brian.jarnfe.library.LibraryBrowseSwitch
 import jr.brian.jarnfe.library.LibraryCoverArt
+import jr.brian.jarnfe.library.LibraryShelfKind
+import jr.brian.jarnfe.library.LibraryShelfPreview
 import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.SystemCellMinSize
 import jr.brian.jarnfe.library.gameCountText
@@ -65,8 +68,16 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
         if (JarnSession.state.settingsSection == SettingsSection.Apps) {
             PreviewAppRow()
         } else {
-            PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale)
-            PreviewGameRow(games, GameCellMinSize * display.gameTileScale)
+            LibraryBrowseSwitch(
+                view = display.systemView,
+                grid = { PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale) },
+                shelf = { PreviewSystemShelf(state.systems.items) },
+            )
+            LibraryBrowseSwitch(
+                view = display.gameView,
+                grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
+                shelf = { PreviewGameShelf(games) },
+            )
         }
     }
 }
@@ -158,6 +169,26 @@ private fun PreviewSystemRow(systems: List<JarnLibrarySystem>, tileWidth: Dp) {
             }
         }
     }
+}
+
+@Composable
+private fun PreviewSystemShelf(systems: List<JarnLibrarySystem>) {
+    val placeholder = stringResource(R.string.jarnfe_settings_preview_system)
+    LibraryShelfPreview(
+        items = systems,
+        kind = LibraryShelfKind.Systems,
+        description = { it?.title ?: placeholder },
+    ) { system -> system?.let { LibrarySystemArt(it) } }
+}
+
+@Composable
+private fun PreviewGameShelf(games: List<JarnLibraryGame>) {
+    val placeholder = stringResource(R.string.jarnfe_settings_preview_game)
+    LibraryShelfPreview(
+        items = games,
+        kind = LibraryShelfKind.Games,
+        description = { it?.title ?: placeholder },
+    ) { game -> game?.let { LibraryCoverArt(it) } }
 }
 
 @Composable

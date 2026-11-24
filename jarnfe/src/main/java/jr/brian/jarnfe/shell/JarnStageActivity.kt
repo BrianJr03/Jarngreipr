@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.launch.JarnGameActionsController
+import jr.brian.jarnfe.launch.JarnGameFileStatus
 import jr.brian.jarnfe.launch.JarnPlayController
 import jr.brian.jarnfe.launch.jarnGameOptionsOrNull
 import jr.brian.jarnfe.launch.jarnGameLauncherOrNull
@@ -37,6 +38,7 @@ class JarnStageActivity : JarnScreenActivity() {
         launch = ::launchDeck,
     )
     private var playHandler: ((JarnLibraryGame) -> Unit)? = null
+    private var fileCheck: (suspend (JarnLibraryGame) -> JarnGameFileStatus)? = null
     private var folderHandler: ((Uri?) -> Unit)? = null
     private var actionsController: JarnGameActionsController? = null
 
@@ -73,6 +75,8 @@ class JarnStageActivity : JarnScreenActivity() {
         val controller = JarnPlayController(this, data, launcher, options, actions)
         playHandler = controller::play
         JarnLibrary.onPlay = playHandler
+        fileCheck = controller::fileStatus
+        JarnLibrary.checkFile = fileCheck
     }
 
     /** Not onStart: the lifecycle only reports STARTED after onStart returns. */
@@ -106,6 +110,7 @@ class JarnStageActivity : JarnScreenActivity() {
         deckRecovery.cancel()
         JarnDeckWatch.detach(deckRecovery)
         if (JarnLibrary.onPlay === playHandler) JarnLibrary.onPlay = null
+        if (JarnLibrary.checkFile === fileCheck) JarnLibrary.checkFile = null
         if (JarnFolderPicker.open === folderHandler) JarnFolderPicker.open = null
         if (JarnGameActions.controller === actionsController) JarnGameActions.controller = null
         getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener)

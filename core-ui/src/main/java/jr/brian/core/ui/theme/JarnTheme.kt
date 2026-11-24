@@ -69,8 +69,9 @@ fun JarnTheme(
     val animatorScale = rememberAnimatorDurationScale()
     val shouldReduce = jarnShouldReduceMotion(reducedMotion, animatorScale)
     val colors = remember(look) { look.resolvedColors }
-    val motion = remember(shouldReduce, reducedMotion) {
-        JarnMotion(reduced = shouldReduce, ambientReduced = reducedMotion)
+    val animationsOff = animatorScale == 0f
+    val motion = remember(shouldReduce, reducedMotion, animationsOff) {
+        JarnMotion(reduced = shouldReduce, ambientReduced = reducedMotion, instant = animationsOff)
     }
     val focusEdgePx = with(LocalDensity.current) { LocalJarnSpacing.current.focusEdge.toPx() }
     val baseScrollSpec = LocalBringIntoViewSpec.current

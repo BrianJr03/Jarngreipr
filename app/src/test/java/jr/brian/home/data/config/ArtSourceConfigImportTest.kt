@@ -66,7 +66,7 @@ class ArtSourceConfigImportTest {
 
     @Test
     fun `schema version includes the art source field`() {
-        assertEquals(52, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(53, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

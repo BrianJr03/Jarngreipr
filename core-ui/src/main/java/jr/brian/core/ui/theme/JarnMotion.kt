@@ -35,9 +35,14 @@ private val ReducedFade = JarnMotionToken(REDUCED_FADE_MILLIS, LinearEasing)
  * [reduced] follows the in-app toggle or Android animations being off, for UI movement.
  * [ambientReduced] follows only the in-app toggle, for ambient motion such as live wallpapers
  * and GIFs, which many handheld players keep while turning Android animations off.
+ * [instant] is Android animations being off, where route changes skip even their crossfade.
  */
 @Immutable
-data class JarnMotion(val reduced: Boolean = false, val ambientReduced: Boolean = reduced) {
+data class JarnMotion(
+    val reduced: Boolean = false,
+    val ambientReduced: Boolean = reduced,
+    val instant: Boolean = false,
+) {
     val focusIn = if (reduced) Instant else JarnMotionToken(90, JarnEasingStandard)
     val focusOut = if (reduced) Instant else JarnMotionToken(70, JarnEasingExit)
     val press = if (reduced) Instant else JarnMotionToken(80, JarnEasingStandard)
@@ -51,6 +56,12 @@ data class JarnMotion(val reduced: Boolean = false, val ambientReduced: Boolean 
     val deckFollowDelayMillis: Int = if (reduced) 0 else 40
     val artDebounceMillis: Int = 150
     val animateNowPlaying: Boolean = !reduced
+
+    val depthOpen: JarnRouteChange = jarnDepthChange(opening = true, reduced, instant)
+    val depthBack: JarnRouteChange = jarnDepthChange(opening = false, reduced, instant)
+    val systemStep: JarnRouteStep = jarnSystemStep(reduced, instant)
+    val deckFollow: JarnRouteFollow = jarnDeckFollow(reduced, instant)
+    val headerSwap: JarnRouteLeg = jarnHeaderSwap(reduced, instant)
 
     fun panelEnter(offsetPx: Int): EnterTransition {
         val fade = fadeIn(panel.spec())

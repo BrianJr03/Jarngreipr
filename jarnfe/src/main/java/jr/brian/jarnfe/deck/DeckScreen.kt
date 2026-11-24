@@ -129,7 +129,7 @@ private fun DeckTabStrip(selected: DeckTab) {
 private fun DeckTabContent(state: JarnSessionState) {
     when (state.deckTab) {
         DeckTab.Now -> LibraryNowPanel(
-            selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
+            selection = JarnLibrary.nowSelection(state.stageRoute, state.librarySection),
         )
         DeckTab.Apps -> JarnAppsRoute()
         DeckTab.Canvas -> CanvasRoute(state)

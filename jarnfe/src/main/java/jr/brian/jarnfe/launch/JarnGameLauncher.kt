@@ -64,9 +64,15 @@ sealed interface JarnLaunchResult {
     ) : JarnLaunchResult
 }
 
+/** [Unknown] when the file can't be checked, for example without all-files access. */
+enum class JarnGameFileStatus { Present, Missing, Unknown }
+
 /** Launches games without showing UI. Every outcome the caller must handle is a result. */
 interface JarnGameLauncher {
     fun launch(host: Activity, request: JarnLaunchRequest): JarnLaunchResult
+
+    /** Checks the game's file without launching it. Unknown is never treated as missing. */
+    fun fileStatus(game: JarnGameRef): JarnGameFileStatus = JarnGameFileStatus.Unknown
 
     /** Returns false when the grant could not be saved. Retry [launch] after true. */
     fun grantFileAccess(host: Activity, game: JarnGameRef, treeUri: String): Boolean

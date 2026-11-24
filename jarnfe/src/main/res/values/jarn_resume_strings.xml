@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_hint_resume">Resume</string>
+    <string name="jarnfe_resume_file_missing">File not found</string>
+    <string name="jarnfe_resume_opens_in">Opens in %1$s</string>
+    <string name="jarnfe_resume_today">Today</string>
+    <string name="jarnfe_resume_yesterday">Yesterday</string>
+    <plurals name="jarnfe_resume_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="jarnfe_resume_plays">
+        <item quantity="one">%1$d play</item>
+        <item quantity="other">%1$d plays</item>
+    </plurals>
+    <string name="jarnfe_resume_also_recent">Also recent</string>
+    <string name="jarnfe_resume_see_all">See all</string>
+    <string name="jarnfe_resume_missing_title">Game file not found</string>
+    <string name="jarnfe_resume_missing_message">%1$s is no longer in its folder.</string>
+    <string name="jarnfe_resume_reconnect">Reconnect folder</string>
+    <string name="jarnfe_resume_cancel">Cancel</string>
+</resources>
