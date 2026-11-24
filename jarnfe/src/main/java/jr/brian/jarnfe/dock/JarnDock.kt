@@ -35,7 +35,10 @@ import jr.brian.core.ui.motion.rememberJarnTileEnter
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppOptionsFlow
+import jr.brian.jarnfe.apps.JarnAppOptionsTarget
 import jr.brian.jarnfe.apps.JarnDrawableIcon
+import jr.brian.jarnfe.apps.jarnAppsDataOrNull
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import kotlinx.coroutines.flow.Flow
@@ -74,10 +77,20 @@ internal fun JarnDockRow(modifier: Modifier = Modifier) {
     val apps by remember(data) { data.apps }.collectAsState(emptyList())
     if (apps.isEmpty()) return
     val host = LocalActivity.current
+    val options = remember(context) { context.jarnAppsDataOrNull() }
     var focused by remember { mutableStateOf(false) }
+    var focusedApp by remember { mutableStateOf<String?>(null) }
+    var menuKey by remember { mutableStateOf<String?>(null) }
+    val openOptions = options?.let { { packageName: String -> menuKey = packageName } }
     JarnInputLayer(
-        enabled = focused,
-        bindings = { hint(JarnAction.Confirm, R.string.jarnfe_hint_open) },
+        enabled = focused && menuKey == null,
+        bindings = {
+            hint(JarnAction.Confirm, R.string.jarnfe_hint_open)
+            val app = focusedApp
+            if (app != null && openOptions != null) {
+                on(JarnAction.Context, R.string.jarnfe_hint_context) { openOptions(app) }
+            }
+        },
     ) {
         BoxWithConstraints(modifier.fillMaxWidth().onFocusChanged { focused = it.hasFocus }) {
             Row(
@@ -88,15 +101,34 @@ internal fun JarnDockRow(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm, Alignment.CenterHorizontally),
             ) {
                 apps.forEach { app ->
-                    JarnDockTile(app) { host?.let { data.launch(it, app.packageName) } }
+                    JarnDockTile(
+                        app = app,
+                        onFocused = { focusedApp = app.packageName },
+                        onLongClick = openOptions?.let { open -> { open(app.packageName) } },
+                    ) { host?.let { data.launch(it, app.packageName) } }
                 }
             }
         }
     }
+    val menuApp = menuKey?.let { key -> apps.firstOrNull { it.packageName == key } }
+    if (options != null && menuApp != null) {
+        JarnAppOptionsFlow(
+            data = options,
+            target = JarnAppOptionsTarget(menuApp.packageName, menuApp.label, menuApp.iconPath != null),
+            extras = emptyList(),
+            onClose = { menuKey = null },
+            onLeave = { menuKey = null },
+        )
+    }
 }
 
 @Composable
-private fun JarnDockTile(app: JarnDockApp, onClick: () -> Unit) {
+private fun JarnDockTile(
+    app: JarnDockApp,
+    onFocused: () -> Unit,
+    onLongClick: (() -> Unit)?,
+    onClick: () -> Unit,
+) {
     val shape = JarnTheme.radius.mdShape
     val source = remember { MutableInteractionSource() }
     JarnTilePress {
@@ -105,7 +137,8 @@ private fun JarnDockTile(app: JarnDockApp, onClick: () -> Unit) {
                 .then(rememberJarnTileEnter())
                 .size(DockTileSize)
                 .semantics { contentDescription = app.label }
-                .jarnInteractive(shape, source, onClick = onClick)
+                .onFocusChanged { if (it.isFocused) onFocused() }
+                .jarnInteractive(shape, source, onLongClick = onLongClick, onClick = onClick)
                 .background(JarnTheme.colors.raised, shape),
             contentAlignment = Alignment.Center,
         ) {

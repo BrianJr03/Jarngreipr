@@ -1,6 +1,7 @@
 package jr.brian.core.ui.focus
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.ui.Modifier
@@ -24,21 +25,36 @@ import androidx.compose.ui.semantics.semantics
 
 internal const val JARN_DISABLED_ALPHA = 0.38f
 
+/** [onLongClick] is for touch only, with a haptic tick. The controller reaches the same action another way. */
 fun Modifier.jarnClickable(
     interactionSource: MutableInteractionSource,
     enabled: Boolean = true,
     focusableWhenDisabled: Boolean = false,
     role: Role = Role.Button,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ): Modifier = this
     .focusProperties { canFocus = enabled || focusableWhenDisabled }
     .then(JarnConfirmKeyElement(interactionSource, enabled, onClick))
     .semantics { if (!enabled) disabled() }
-    .clickable(
-        interactionSource = interactionSource,
-        indication = null,
-        role = role,
-        onClick = { if (enabled) onClick() },
+    .then(
+        if (onLongClick == null) {
+            Modifier.clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = role,
+                onClick = { if (enabled) onClick() },
+            )
+        } else {
+            Modifier.combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = role,
+                hapticFeedbackEnabled = true,
+                onLongClick = { if (enabled) onLongClick() },
+                onClick = { if (enabled) onClick() },
+            )
+        },
     )
 
 fun Modifier.jarnInteractive(
@@ -48,10 +64,11 @@ fun Modifier.jarnInteractive(
     focusableWhenDisabled: Boolean = false,
     role: Role = Role.Button,
     focusStyle: JarnFocusStyle = JarnFocusStyle.Ring,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ): Modifier = this
     .jarnFocus(shape, interactionSource, enabled, focusStyle)
-    .jarnClickable(interactionSource, enabled, focusableWhenDisabled, role, onClick)
+    .jarnClickable(interactionSource, enabled, focusableWhenDisabled, role, onLongClick, onClick)
     .jarnDisabledAlpha(enabled)
 
 fun Modifier.jarnDisabledAlpha(enabled: Boolean): Modifier =

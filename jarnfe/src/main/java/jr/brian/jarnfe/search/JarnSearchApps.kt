@@ -33,7 +33,7 @@ import jr.brian.jarnfe.settings.rememberJarnLauncherPrefs
 
 private val SearchAppCellMinSize = 104.dp
 
-/** App results: A opens the app like the Apps drawer, Select opens its options. */
+/** App results: A opens the app like the Apps drawer, Select or a long press opens its options. */
 @Composable
 internal fun SearchAppGrid(apps: List<JarnDockApp>, search: JarnSearchStore = JarnSearch) {
     val context = LocalContext.current
@@ -48,7 +48,13 @@ internal fun SearchAppGrid(apps: List<JarnDockApp>, search: JarnSearchStore = Ja
         onOptions = { menuKey = it },
     )
     Box(Modifier.fillMaxSize()) {
-        SearchAppTiles(apps, search, commands, Modifier.onFocusChanged { gridFocused = it.hasFocus }) { askKey = it }
+        SearchAppTiles(
+            apps = apps,
+            search = search,
+            commands = commands,
+            modifier = Modifier.onFocusChanged { gridFocused = it.hasFocus },
+            onOptions = { menuKey = it },
+        ) { askKey = it }
         apps.firstOrNull { it.packageName == menuKey }?.let { app ->
             SearchAppOptions(app, commands) { menuKey = null }
         }
@@ -62,6 +68,7 @@ private fun SearchAppTiles(
     search: JarnSearchStore,
     commands: JarnAppsCommands,
     modifier: Modifier,
+    onOptions: (String) -> Unit,
     onAsk: (String) -> Unit,
 ) {
     val labelSize = rememberJarnLauncherPrefs().appLabelSize
@@ -81,6 +88,7 @@ private fun SearchAppTiles(
             nameVisible = namesVisible,
             modifier = modifier.fillMaxWidth(),
             onClick = { commands.launchOrAsk(app.packageName, onAsk) },
+            onLongClick = { onOptions(app.packageName) },
         )
     }
 }
