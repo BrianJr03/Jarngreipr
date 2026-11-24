@@ -238,9 +238,10 @@ private fun ShelfReportsFocus(centerKey: String, fast: Boolean, onFocused: (Stri
 @Composable
 private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, requester: () -> FocusRequester) {
     val tabsFocus = LocalJarnTabsFocus.current
+    val gate = LocalLibraryRevealGate.current
     LaunchedEffect(centerKey, refocusSignal) {
         withFrameNanos { }
-        if (!tabsFocus.hasFocus) requester().requestFocus()
+        gate.whenOpen { !tabsFocus.hasFocus && requester().requestFocus() }
     }
 }
 

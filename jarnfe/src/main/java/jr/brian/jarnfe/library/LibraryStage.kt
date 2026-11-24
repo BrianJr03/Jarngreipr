@@ -51,7 +51,7 @@ internal fun LibraryHome(
     emptyActions: @Composable () -> Unit,
 ) {
     ResumeMissingDialog()
-    key(section) {
+    LibraryTabReveal(section) {
         when (section) {
             LibrarySection.Systems -> LibrarySystems(library, onOpenSystem, emptyActions)
             LibrarySection.Favorites -> LibraryGames(

@@ -4,6 +4,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.tween
@@ -50,6 +51,12 @@ data class JarnMotion(
     val panel = if (reduced) ReducedFade else JarnMotionToken(240, JarnEasingEmphasized)
     val screen = if (reduced) ReducedFade else JarnMotionToken(320, JarnEasingEmphasized)
     val art = if (reduced) ReducedFade else JarnMotionToken(400, LinearEasing)
+
+    /** A Library tab's content sliding open, like Command Panel's settings rail groups. */
+    val tabReveal = if (reduced) Instant else JarnMotionToken(87, FastOutSlowInEasing)
+
+    /** A short beat after [tabReveal] before focus lands, so it never arrives mid-slide. */
+    val tabFocusSettleMillis: Long = if (reduced) 0L else 13L
 
     val pressScale: Float = if (reduced) 1f else 0.97f
     val depthOffset: Dp = if (reduced) 0.dp else 24.dp
