@@ -2,6 +2,7 @@ package jr.brian.home.data
 
 import android.content.Context
 import jr.brian.core.model.Experience
+import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.ui.util.launchJarnFe
 import jr.brian.home.ui.util.routeToClassic
@@ -13,8 +14,10 @@ import javax.inject.Singleton
 class ExperienceSwitcher @Inject constructor(
     private val store: ExperienceStore,
     private val esdePreferences: ESDEPreferencesManager,
+    private val canvasLayouts: CanvasLayoutManager,
 ) {
     fun switchToClassic(host: Context): Boolean = switchExperience(store, Experience.Classic) {
+        canvasLayouts.reconcileReservedCells()
         routeToClassic(host, esdePreferences.state.value.frontendEnabled)
         true
     }

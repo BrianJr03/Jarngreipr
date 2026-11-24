@@ -180,7 +180,8 @@ private fun gameFolders(
 
 private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBackupChange {
     val display = backup.jarnDisplay
-    if (backup.jarnLook == null && backup.jarnReducedMotion == null && display == null) {
+    val match = backup.jarnMatchCommandPanel
+    if (backup.jarnLook == null && backup.jarnReducedMotion == null && display == null && match == null) {
         return JarnBackupChange.NotIncluded
     }
     val shown = current.jarnDisplay
@@ -193,10 +194,12 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             tapControl = it.tapControl?.takeIf { id -> JarnTapControl.fromId(id) != null } ?: shown?.tapControl,
             appNamesVisible = it.appNamesVisible ?: shown?.appNamesVisible,
             undoCountdownVisible = it.undoCountdownVisible ?: shown?.undoCountdownVisible,
+            screenSwitchMillis = it.screenSwitchMillis ?: shown?.screenSwitchMillis,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
         (backup.jarnReducedMotion ?: current.jarnReducedMotion) == current.jarnReducedMotion &&
+        (match ?: current.jarnMatchCommandPanel) == current.jarnMatchCommandPanel &&
         merged == shown
     return if (same) JarnBackupChange.Same else JarnBackupChange.Replaces
 }
@@ -232,6 +235,8 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnArtChoices = null,
         jarnPinnedApps = null,
         jarnDisplay = null,
+        jarnFirstRunDone = null,
+        jarnMatchCommandPanel = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,

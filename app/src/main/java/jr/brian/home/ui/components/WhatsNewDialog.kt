@@ -117,6 +117,8 @@ fun WhatsNewDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                JarnFeWhatsNewPreview(onOpened = onDismiss)
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

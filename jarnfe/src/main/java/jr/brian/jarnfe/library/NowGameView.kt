@@ -3,7 +3,6 @@ package jr.brian.jarnfe.library
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -294,9 +293,7 @@ private fun NowCover(title: String, art: NowGameArt, modifier: Modifier) {
     Box(
         modifier
             .clearAndSetSemantics {}
-            .clip(shape)
-            .background(JarnTheme.colors.raised, shape)
-            .border(1.dp, JarnTheme.colors.line, shape),
+            .clip(shape),
     ) {
         when {
             !art.isLoaded -> Unit

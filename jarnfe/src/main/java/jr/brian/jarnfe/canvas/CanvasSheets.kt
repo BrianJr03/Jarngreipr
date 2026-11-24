@@ -24,6 +24,7 @@ import jr.brian.core.ui.components.JarnSheet
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.canvas.tour.JarnCanvasTour
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -177,8 +178,23 @@ private fun CanvasOptionsList(
                 onClick = onPages,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (!alreadyEditing) CanvasTourRow(onClose)
         }
     }
+}
+
+@Composable
+private fun CanvasTourRow(onClose: () -> Unit) {
+    val context = LocalContext.current
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_canvas_tour_replay),
+        supporting = stringResource(R.string.jarnfe_canvas_tour_replay_hint),
+        onClick = {
+            onClose()
+            JarnCanvasTour.connect(context).start()
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

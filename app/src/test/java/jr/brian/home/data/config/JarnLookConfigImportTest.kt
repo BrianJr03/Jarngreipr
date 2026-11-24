@@ -273,8 +273,105 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `matching defaults to off`() {
+        assertFalse(store.matchCommandPanel)
+    }
+
+    @Test
+    fun `matching round trips through a backup without touching the look`() = runTest {
+        store.setLookId("grove")
+        val exported = JarngreiprConfig(
+            feature = FeatureConfig(jarnLook = "grove", jarnMatchCommandPanel = true),
+        )
+        val json = importExport.encodeToJson(exported)
+
+        assertEquals(true, importExport.decodeFromJson(json).feature.jarnMatchCommandPanel)
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(store.matchCommandPanel)
+        assertEquals("grove", store.lookId)
+    }
+
+    @Test
+    fun `a backup can turn matching off`() = runTest {
+        store.setMatchCommandPanel(true)
+        val backup = """{ "version": 50, "feature": { "jarnMatchCommandPanel": false } }"""
+
+        val result = importExport.importFromStream(ByteArrayInputStream(backup.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertFalse(store.matchCommandPanel)
+    }
+
+    @Test
+    fun `an older backup leaves matching alone in either state`() = runTest {
+        listOf(true, false).forEach { current ->
+            store.setMatchCommandPanel(current)
+
+            val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
+
+            assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+            assertEquals(current, store.matchCommandPanel)
+        }
+    }
+
+    @Test
+    fun `matching survives a store reload and never changes the saved look`() {
+        store.setLookId("forge")
+        store.setMatchCommandPanel(true)
+
+        val reloaded = JarnLookStore(ApplicationProvider.getApplicationContext())
+
+        assertTrue(reloaded.matchCommandPanel)
+        assertEquals("forge", reloaded.lookId)
+    }
+
+    @Test
+    fun `a backup never carries the palette`() {
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = true)),
+        )
+
+        assertFalse(json.contains("palette", ignoreCase = true))
+    }
+
+    @Test
+    fun `screen switch length survives a backup`() = runTest {
+        store.updateDisplay { it.copy(screenSwitchMillis = 700) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(screenSwitchMillis = 300) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(700, store.display.screenSwitchMillis)
+    }
+
+    @Test
+    fun `an older backup leaves the screen switch length alone`() = runTest {
+        store.updateDisplay { it.copy(screenSwitchMillis = 800) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(V40_BACKUP.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(800, store.display.screenSwitchMillis)
+    }
+
+    @Test
+    fun `a hand edited screen switch length stays in range`() {
+        store.updateDisplay { it.copy(screenSwitchMillis = 99_999) }
+        assertEquals(1000, store.display.screenSwitchMillis)
+        store.updateDisplay { it.copy(screenSwitchMillis = 1) }
+        assertEquals(300, store.display.screenSwitchMillis)
+        assertEquals(500, JarnDisplayPrefs.snappedScreenSwitchMillis(512f))
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(48, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(51, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

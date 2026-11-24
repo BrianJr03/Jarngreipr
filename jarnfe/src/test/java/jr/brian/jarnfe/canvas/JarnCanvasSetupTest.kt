@@ -86,37 +86,6 @@ class JarnCanvasSetupTest {
     }
 
     @Test
-    fun `hiding the menu tile moves nothing`() {
-        val start = layout(horizontal = mapOf("a" to GridRect(1, 0, 1, 1)), menu = true)
-        val next = canvasLayoutAfterSetup(start, JarnCanvasSetupChange.MenuTile(false)).applied()
-        assertFalse(next.menuButtonVisible)
-        assertEquals(start.horizontalArrangement, next.horizontalArrangement)
-        assertEquals(start.verticalArrangement, next.verticalArrangement)
-    }
-
-    @Test
-    fun `showing the menu tile is refused when a visible tile holds its cell`() {
-        val start = layout(horizontal = mapOf("a" to GridRect(0, 0, 1, 1)))
-        val result = canvasLayoutAfterSetup(start, JarnCanvasSetupChange.MenuTile(true))
-        assertEquals(JarnCanvasSetupResult.Refused(JarnCanvasSetupRefusal.MenuCellTaken), result)
-    }
-
-    @Test
-    fun `showing the menu tile moves only the blocking tile in the unseen orientation`() {
-        val start = layout(
-            horizontal = mapOf("a" to GridRect(1, 0, 1, 1), "b" to GridRect(2, 0, 1, 1)),
-            vertical = mapOf("a" to GridRect(3, 0, 1, 1), "b" to GridRect(0, 0, 1, 1)),
-        )
-        val next = canvasLayoutAfterSetup(start, JarnCanvasSetupChange.MenuTile(true)).applied()
-        assertTrue(next.menuButtonVisible)
-        assertEquals(start.horizontalArrangement, next.horizontalArrangement)
-        assertEquals(start.verticalArrangement["b"], next.verticalArrangement["b"])
-        assertEquals(setOf("a", "b"), next.verticalArrangement.keys)
-        assertFalse(next.verticalArrangement.getValue("a").overlaps(GridRect(3, 0, 1, 1)))
-        assertNoOverlaps(next.verticalArrangement)
-    }
-
-    @Test
     fun `tidy keeps every tile and closes gaps without overlap`() {
         val start = layout(
             horizontal = mapOf(

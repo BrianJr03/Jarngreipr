@@ -33,6 +33,12 @@ class JarnLookStore @Inject constructor(
     val reducedMotionState: StateFlow<Boolean> = _reducedMotion.asStateFlow()
     val reducedMotion: Boolean get() = _reducedMotion.value
 
+    private val _matchCommandPanel = MutableStateFlow(prefs.getBoolean(KEY_MATCH_COMMAND_PANEL, false))
+
+    /** Separate from the look id, so turning it off returns the saved look exactly. */
+    val matchCommandPanelState: StateFlow<Boolean> = _matchCommandPanel.asStateFlow()
+    val matchCommandPanel: Boolean get() = _matchCommandPanel.value
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -56,6 +62,26 @@ class JarnLookStore @Inject constructor(
             putString(KEY_TAP_CONTROL, next.tapControl.id)
             putBoolean(KEY_APP_NAMES_VISIBLE, next.appNamesVisible)
             putBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, next.undoCountdownVisible)
+            putInt(KEY_SCREEN_SWITCH_MILLIS, next.screenSwitchMillis)
+        }
+    }
+
+    private val _firstRunDone = MutableStateFlow(prefs.getBoolean(KEY_FIRST_RUN_DONE, false))
+    val firstRunDoneState: StateFlow<Boolean> = _firstRunDone.asStateFlow()
+    val firstRunDone: Boolean get() = _firstRunDone.value
+
+    /** The tour's place on this device. Never backed up, since it only matters mid-tour. */
+    val firstRunStep: String? get() = prefs.getString(KEY_FIRST_RUN_STEP, null)
+
+    fun saveFirstRunStep(step: String) {
+        prefs.edit { putString(KEY_FIRST_RUN_STEP, step) }
+    }
+
+    fun markFirstRunDone() {
+        _firstRunDone.value = true
+        prefs.edit {
+            putBoolean(KEY_FIRST_RUN_DONE, true)
+            remove(KEY_FIRST_RUN_STEP)
         }
     }
 
@@ -67,6 +93,7 @@ class JarnLookStore @Inject constructor(
         tapControl = JarnTapControl.fromId(prefs.getString(KEY_TAP_CONTROL, null)) ?: JarnTapControl.FollowTap,
         appNamesVisible = prefs.getBoolean(KEY_APP_NAMES_VISIBLE, true),
         undoCountdownVisible = prefs.getBoolean(KEY_UNDO_COUNTDOWN_VISIBLE, true),
+        screenSwitchMillis = prefs.getInt(KEY_SCREEN_SWITCH_MILLIS, JarnDisplayPrefs.DEFAULT_SCREEN_SWITCH_MILLIS),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -77,6 +104,11 @@ class JarnLookStore @Inject constructor(
     fun setReducedMotion(enabled: Boolean) {
         _reducedMotion.value = enabled
         prefs.edit { putBoolean(KEY_REDUCED_MOTION, enabled) }
+    }
+
+    fun setMatchCommandPanel(enabled: Boolean) {
+        _matchCommandPanel.value = enabled
+        prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL, enabled) }
     }
 
     fun setLiveWallpaperId(id: String?) {
@@ -93,6 +125,7 @@ class JarnLookStore @Inject constructor(
         const val PREFS_NAME = "jarnfe_look_prefs"
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
+        const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"
@@ -101,5 +134,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_TAP_CONTROL = "tap_control"
         const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
         const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
+        const val KEY_SCREEN_SWITCH_MILLIS = "screen_switch_millis"
+        const val KEY_FIRST_RUN_DONE = "first_run_done"
+        const val KEY_FIRST_RUN_STEP = "first_run_step"
     }
 }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
+import android.view.Display
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -30,6 +31,7 @@ import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.session.rememberedDeckTab
 import jr.brian.jarnfe.session.onScreenTapped
 import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
@@ -55,7 +57,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState != null) JarnSplash.finish()
-        JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION))
+        JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION), rememberedDeckTab())
         JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
         connectJarnLibrary(this)
         swap = jarnScreenSwapOrNull()
@@ -76,7 +78,10 @@ abstract class JarnScreenActivity : ComponentActivity() {
             val focusManager = LocalFocusManager.current
             val deckMissing = JarnSession.state.deckWindowLost
             LaunchedEffect(deckMissing) { installGlobalBindings(deckMissing) }
-            LaunchedEffect(needsHandoff) { if (needsHandoff) bringToFront() }
+            LaunchedEffect(needsHandoff) {
+                if (needsHandoff && !JarnHomeEntry.isCoveredByGame(screen)) bringToFront()
+            }
+            JarnGameFocusEffect(window, screen, isActive)
             LaunchedEffect(isActive) { if (isActive) takeContentFocus(focusManager) }
             LaunchedEffect(swap) {
                 swap?.swapped?.collect { JarnSession.update { withSwapRequested(it) } }
@@ -100,6 +105,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
                     stepOppositeTabs(delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
                 },
                 deckMissing = deckMissing,
+                onBackAtRoot = JarnHomeEntry::yieldToGame,
             ),
         )
     }
@@ -119,6 +125,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        JarnHomeEntry.onWindowResumed(screen)
         jarnPlaySessionsOrNull()?.onWindowResumed(screen.name)
     }
 
@@ -126,6 +133,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         JarnSession.update { onWindowCovered() }
+        if (!isChangingConfigurations && !isFinishing && display?.state == Display.STATE_ON) {
+            JarnHomeEntry.onWindowCovered(screen)
+        }
         if (!isChangingConfigurations) jarnPlaySessionsOrNull()?.onWindowStopped(screen.name)
     }
 
@@ -137,6 +147,11 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_HOME &&
+            jarnExperienceSwitchOrNull()?.handleHomeKey(this, event) == true
+        ) {
+            return true
+        }
         if (JarnSplash.isPlaying && event.isControllerNavigation()) {
             if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
             return true
@@ -192,6 +207,10 @@ abstract class JarnScreenActivity : ComponentActivity() {
     }
 
     private fun onTouchDown() {
+        if (JarnHomeEntry.reclaim(screen)) {
+            window.setFocusable(true)
+            bringToFront()
+        }
         val choice = jarnLookStoreOrNull()?.display?.tapControl ?: JarnTapControl.FollowTap
         val bothVisible = JarnScreen.entries.all { role ->
             liveWindows.any { it.screen == role && it.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) }

@@ -202,7 +202,14 @@ data class JarngreiprConfig(
         //      show app names and undo timer choices. Null on older blobs, and import keeps them.
         // v48: added FeatureConfig.jarnPlayStats, play counts and time per game. Null on
         //      older blobs, and import keeps current totals. Import only ever raises them.
-        const val CONFIG_VERSION = 48
+        // v49: added FeatureConfig.jarnFirstRunDone, whether the Jarn FE tour was finished.
+        //      Null on older blobs, and import keeps the current value. Import only sets it.
+        // v50: added FeatureConfig.jarnMatchCommandPanel, whether Jarn FE follows Command
+        //      Panel's colors. Null on older blobs, and import keeps the current value.
+        //      The palette itself is never backed up.
+        // v51: added JarnDisplayConfig.screenSwitchMillis, how long Jarn FE's screen switch
+        //      ring plays. Null on older blobs, and import keeps the current value.
+        const val CONFIG_VERSION = 51
     }
 }
 
@@ -383,7 +390,11 @@ data class FeatureConfig(
     /** v45: Jarn FE live wallpaper id or "off". Null on pre-v45 exports, and import keeps the current one. */
     val jarnLiveWallpaper: String? = null,
     /** v48: play totals per game. Null on pre-v48 exports, and import keeps current totals. */
-    val jarnPlayStats: List<JarnPlayStatConfig>? = null
+    val jarnPlayStats: List<JarnPlayStatConfig>? = null,
+    /** v49: Jarn FE tour finished. Null on pre-v49 exports. Import never turns it back off. */
+    val jarnFirstRunDone: Boolean? = null,
+    /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
+    val jarnMatchCommandPanel: Boolean? = null
 )
 
 @Serializable
@@ -410,6 +421,7 @@ data class JarnDisplayConfig(
     val tapControl: String? = null,
     val appNamesVisible: Boolean? = null,
     val undoCountdownVisible: Boolean? = null,
+    val screenSwitchMillis: Int? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -420,6 +432,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     tapControl = tapControl.id,
     appNamesVisible = appNamesVisible,
     undoCountdownVisible = undoCountdownVisible,
+    screenSwitchMillis = screenSwitchMillis,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -430,6 +443,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     tapControl = JarnTapControl.fromId(tapControl) ?: current.tapControl,
     appNamesVisible = appNamesVisible ?: current.appNamesVisible,
     undoCountdownVisible = undoCountdownVisible ?: current.undoCountdownVisible,
+    screenSwitchMillis = screenSwitchMillis ?: current.screenSwitchMillis,
 )
 
 @Serializable

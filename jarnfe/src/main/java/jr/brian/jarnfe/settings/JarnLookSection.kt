@@ -37,13 +37,21 @@ internal fun JarnLookSection() {
     val context = LocalContext.current
     val store = remember(context) { context.jarnLookStoreOrNull() } ?: return
     val savedId by store.lookIdState.collectAsState()
+    val savedLook = JarnLooks.fromId(savedId)
+    val matchCard = rememberJarnMatchCard(store, savedLook)
     SettingsSectionTitle(R.string.jarnfe_look_title)
-    JarnLookPicker(chosen = JarnLooks.fromId(savedId), onChoose = { store.setLookId(it.id) })
+    JarnLookPicker(
+        chosen = savedLook.takeUnless { matchCard.state.isMatching },
+        onChoose = { store.setLookId(it.id) },
+    )
+    JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
     ReducedMotionRow(store)
 }
 
 @Composable
-private fun JarnLookPicker(chosen: JarnLook, onChoose: (JarnLook) -> Unit) {
+internal fun JarnLookPicker(chosen: JarnLook?, onChoose: (JarnLook) -> Unit) {
+    val context = LocalContext.current
+    val store = remember(context) { context.jarnLookStoreOrNull() }
     var focusedId by remember { mutableStateOf<String?>(null) }
     LiveLookPreview(focusedId)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -58,7 +66,10 @@ private fun JarnLookPicker(chosen: JarnLook, onChoose: (JarnLook) -> Unit) {
                         JarnLookCard(
                             look = look,
                             chosen = look == chosen,
-                            onClick = { onChoose(look) },
+                            onClick = {
+                                store?.setMatchCommandPanel(false)
+                                onChoose(look)
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .onFocusChanged { state ->

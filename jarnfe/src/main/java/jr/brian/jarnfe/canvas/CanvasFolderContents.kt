@@ -33,6 +33,7 @@ import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnRevealScrollTop
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -198,7 +199,7 @@ private fun FolderAppCell(
         modifier = modifier
             .jarnHiddenAppName(app.label, nameVisible)
             .onFocusChanged { if (it.hasFocus) onFocused() }
-            .jarnInteractive(JarnTheme.radius.mdShape, source, onClick = onOpen)
+            .jarnInteractive(JarnTheme.radius.mdShape, source, focusStyle = JarnFocusStyle.Scale, onClick = onOpen)
             .pointerInput(app.packageName) {
                 detectTapGestures(onTap = { latestOpen() }, onLongPress = { latestOptions() })
             }

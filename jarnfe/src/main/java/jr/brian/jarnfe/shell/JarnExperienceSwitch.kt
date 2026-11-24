@@ -2,10 +2,14 @@ package jr.brian.jarnfe.shell
 
 import android.app.Activity
 import android.content.Context
+import android.view.KeyEvent
 
 /** Leaves Jarn FE for Classic. False means Classic did not open and the choice is unchanged. */
 interface JarnExperienceSwitch {
     fun switchToClassic(host: Activity): Boolean
+
+    /** True when the host took a Home key that reached a Jarn window. */
+    fun handleHomeKey(host: Activity, event: KeyEvent): Boolean = false
 }
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */

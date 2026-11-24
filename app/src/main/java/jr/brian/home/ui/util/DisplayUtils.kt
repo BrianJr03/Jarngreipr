@@ -4,7 +4,6 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
-import android.view.Display
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -17,14 +16,18 @@ import android.os.Looper
 import jr.brian.core.model.HomeLaunch
 import jr.brian.core.model.HomeLaunchActivity
 import jr.brian.core.model.HomeTarget
+import jr.brian.core.model.JarnHomeLaunch
+import jr.brian.core.model.JarnHomeWindow
 import jr.brian.core.model.MainScreen
 import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import jr.brian.core.model.ScreenAssignment
 import jr.brian.core.model.planClassicReturnLaunches
 import jr.brian.core.model.planHomeLaunches
+import jr.brian.core.model.planJarnHomeLaunches
 import jr.brian.core.model.planLauncherHomeLaunches
 import jr.brian.home.MainActivity
 import jr.brian.home.esde.ui.FrontEndActivity
+import jr.brian.jarnfe.shell.JarnHomeEntry
 
 /**
  * Returns the display id the bottom screen lives on (anything other than
@@ -171,16 +174,43 @@ fun routeToClassic(context: Context, frontendEnabled: Boolean) {
     )
 }
 
-/** False when this build has no Jarn FE, because its activities are debug-only. */
+/**
+ * Brings Jarn FE forward, reclaiming the bottom screen when its Deck is covered or lost. False
+ * when Stage did not open, which is always the case in builds without Jarn FE's debug activities.
+ */
 fun launchJarnFe(context: Context): Boolean {
-    val intent = Intent()
-        .setClassName(context, JARN_FE_ACTIVITY)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val options = ActivityOptions.makeBasic().setLaunchDisplayId(Display.DEFAULT_DISPLAY)
+    val plan = planJarnHomeLaunches(
+        bottomDisplayId = resolveBottomDisplayId(context),
+        shouldRaiseDeck = JarnHomeEntry.shouldRaiseDeck,
+        focus = JarnHomeEntry.focusWindow,
+    )
+    val results = plan.associate { it.window to startJarnWindow(context, it) }
+    return results.getValue(JarnHomeWindow.Stage)
+}
+
+/** Opens one Jarn window on the screen a game left free. Nothing else is started. */
+fun showJarnBesideGame(context: Context, window: JarnHomeWindow, displayId: Int) {
+    JarnHomeEntry.onShowingBesideGame(window)
+    if (!startJarnWindow(context, JarnHomeLaunch(window, displayId))) JarnHomeEntry.onShowFailed()
+}
+
+private fun startJarnWindow(context: Context, launch: JarnHomeLaunch): Boolean {
+    val (activity, flags) = when (launch.window) {
+        JarnHomeWindow.Stage -> JARN_STAGE_ACTIVITY to Intent.FLAG_ACTIVITY_NEW_TASK
+        JarnHomeWindow.Deck -> JARN_DECK_ACTIVITY to
+            (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+    }
+    val intent = Intent().setClassName(context, activity).addFlags(flags)
+    val options = ActivityOptions.makeBasic().setLaunchDisplayId(launch.displayId)
     return runCatching { context.startActivity(intent, options.toBundle()) }.isSuccess
 }
 
-private const val JARN_FE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
+fun hasJarnFeActivity(context: Context): Boolean =
+    Intent().setClassName(context, JARN_STAGE_ACTIVITY)
+        .resolveActivityInfo(context.packageManager, 0) != null
+
+private const val JARN_STAGE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
+private const val JARN_DECK_ACTIVITY = "jr.brian.jarnfe.shell.JarnDeckActivity"
 
 private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
     plan.forEach { launch ->

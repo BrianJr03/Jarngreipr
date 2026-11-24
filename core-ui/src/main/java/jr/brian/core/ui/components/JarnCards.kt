@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.R
+import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnColors
 import jr.brian.core.ui.theme.JarnLook
@@ -85,7 +86,7 @@ fun JarnLookCard(
                 selected = chosen
                 stateDescription = chosenState
             }
-            .jarnInteractive(shape, source, role = Role.RadioButton, onClick = onClick)
+            .jarnInteractive(shape, source, role = Role.RadioButton, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
             .height(156.dp)
             .background(JarnTheme.colors.surface, shape)
             .then(chosenBorder)
@@ -116,7 +117,7 @@ private fun JarnLookPreview(
 }
 
 @Composable
-private fun JarnLookSwatches(preview: JarnColors, modifier: Modifier) {
+fun JarnLookSwatches(preview: JarnColors, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.padding(JarnTheme.space.sm),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),

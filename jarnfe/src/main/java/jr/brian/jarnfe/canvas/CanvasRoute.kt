@@ -26,12 +26,12 @@ import jr.brian.core.ui.components.JarnEmptyState
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
-import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.GridCell
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.shouldAskDisplay
+import jr.brian.jarnfe.canvas.tour.CanvasTourGate
 import jr.brian.jarnfe.input.LocalJarnInputRouter
 import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.rss.JarnRssRoute
@@ -64,7 +64,7 @@ internal fun CanvasRoute(state: JarnSessionState) {
             color = JarnTheme.colors.textMid,
         )
     } else {
-        CanvasWorkspace(data, snapshot, state)
+        CanvasTourGate { CanvasWorkspace(data, snapshot, state) }
     }
 }
 
@@ -356,7 +356,7 @@ private fun CanvasPageSurface(
     }
 
     val focusTarget = page?.takeIf { it.kind != JarnCanvasPageKind.Rss }
-        ?.let { canvasFocusTarget(it, lastFocused, editor.editing) }
+        ?.let { canvasFocusTarget(it, lastFocused) }
     val tabsFocus = LocalJarnTabsFocus.current
     LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing) {
         if (focusTarget == null || sheetOpen || !isActive) return@LaunchedEffect
@@ -370,6 +370,7 @@ private fun CanvasPageSurface(
         next?.let { id -> runCatching { requesterFor(id).requestFocus() } }
     }
     val focusedTile = page?.layout?.items?.firstOrNull { it.id == lastFocused }
+    PublishCanvasStageStatus(editor, page, pageCount, lastFocused, isActive)
     val restoreUndo: () -> Unit = {
         val restored = undo.undo(page?.layout?.activeArrangement.orEmpty()) { moved, undone ->
             if (undone) {
@@ -429,7 +430,7 @@ private fun CanvasPageSurface(
     )
 
     Column(Modifier.fillMaxSize()) {
-        CanvasPageHeader(
+        PublishCanvasHeader(
             page = page,
             pageCount = pageCount,
             homePage = snapshot.homePage,
@@ -469,7 +470,6 @@ private fun CanvasPageSurface(
                         onCellSize = { cellPx = it },
                         onVisibleCells = editor::reportVisibleCells,
                         onTileClick = tapTile,
-                        onMenuClick = onOptions,
                     ) { item ->
                         if (item is CanvasItem.WidgetItem) {
                             CanvasWidgetTile(
@@ -570,15 +570,12 @@ private fun JarnCanvasPage?.visiblePlacements(editor: CanvasEditor): Map<String,
 private fun minSpansFor(data: JarnCanvasData, item: CanvasItem, cellPx: Float): Pair<Int, Int> =
     if (item is CanvasItem.WidgetItem) data.widgetMinSpans(item.widgetId, cellPx) else 1 to 1
 
-private fun canvasFocusTarget(page: JarnCanvasPage, last: String?, editing: Boolean): String? {
+private fun canvasFocusTarget(page: JarnCanvasPage, last: String?): String? {
     val placements = page.layout.activeArrangement
     val ids = page.layout.items.map { it.id }.filter { it in placements }
-    val hasMenu = !editing && reservedRectsForActive(page.layout).isNotEmpty()
     return when {
         last != null && last in ids -> last
-        last == CANVAS_MENU_FOCUS_ID && hasMenu -> last
         ids.isNotEmpty() -> ids.minWith(compareBy({ placements.getValue(it).row }, { placements.getValue(it).col }))
-        hasMenu -> CANVAS_MENU_FOCUS_ID
         else -> null
     }
 }

@@ -9,10 +9,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.core.model.CommandPanelPalette
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
+import jr.brian.core.ui.theme.adaptCommandPanelPalette
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
+import jr.brian.jarnfe.look.commandpanel.rememberCommandPanelPalette
 
 interface JarnLookStoreProvider {
     val jarnLookStore: JarnLookStore
@@ -29,8 +32,13 @@ internal object JarnLookPreview {
 @Immutable
 internal data class JarnAppearance(val look: JarnLook, val reducedMotion: Boolean)
 
-internal fun resolveJarnLook(savedId: String?, previewId: String?): JarnLook =
-    JarnLooks.fromId(previewId ?: savedId)
+/** A live preview wins, then the Command Panel match, then the saved look. */
+internal fun resolveJarnLook(
+    savedId: String?,
+    previewId: String?,
+    palette: CommandPanelPalette? = null,
+): JarnLook = previewId?.let { JarnLooks.fromId(it) }
+    ?: adaptCommandPanelPalette(palette, JarnLooks.fromId(savedId)).look
 
 @Composable
 internal fun rememberJarnAppearance(): JarnAppearance {
@@ -38,7 +46,11 @@ internal fun rememberJarnAppearance(): JarnAppearance {
     val store = remember(context) { context.jarnLookStoreOrNull() }
     val savedId = store?.lookIdState?.collectAsState()?.value
     val reducedMotion = store?.reducedMotionState?.collectAsState()?.value ?: false
-    return JarnAppearance(resolveJarnLook(savedId, JarnLookPreview.lookId), reducedMotion)
+    val matching = store?.matchCommandPanelState?.collectAsState()?.value ?: false
+    val palette by rememberCommandPanelPalette(matching)
+    val previewId = JarnLookPreview.lookId
+    val look = remember(savedId, previewId, palette) { resolveJarnLook(savedId, previewId, palette) }
+    return JarnAppearance(look, reducedMotion)
 }
 
 @Composable

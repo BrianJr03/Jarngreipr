@@ -33,7 +33,6 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import jr.brian.home.BuildConfig
 import jr.brian.home.R
 import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
@@ -166,7 +165,7 @@ fun SystemSection(
             }
         )
 
-        if (BuildConfig.DEBUG) SwitchToJarnSettingItem()
+        SwitchToJarnSettingItem()
 
         SettingItem(
             title = stringResource(id = R.string.settings_crash_logs_title),

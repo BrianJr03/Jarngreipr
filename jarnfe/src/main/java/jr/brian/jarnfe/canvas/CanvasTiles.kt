@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,6 +59,14 @@ internal fun BoxScope.CanvasTileContent(
         is CanvasItem.PhotoContainer -> PhotoTile(item)
         is CanvasItem.LastPlayedItem -> LastPlayedTile(item, snapshot.recent)
     }
+}
+
+/** Game art sits straight on the wallpaper. A missing game keeps its card so its label stays readable. */
+internal fun CanvasItem.showsCard(page: JarnCanvasPage): Boolean = when (this) {
+    is CanvasItem.EsdeArtItem -> !isCardTransparent
+    is CanvasItem.RomItem -> page.roms[romKey] == null
+    is CanvasItem.LastPlayedItem -> false
+    else -> true
 }
 
 internal fun EsdeContentScale.toContentScale(): ContentScale = when (this) {
@@ -276,14 +283,4 @@ private fun LastPlayedRow(game: JarnCanvasRom, scale: ContentScale) {
         ) { CanvasImage(game.artPath, game.title, scale) }
         JarnText(game.title, JarnTheme.type.caption, JarnTheme.colors.textHigh, maxLines = 1)
     }
-}
-
-@Composable
-internal fun BoxScope.CanvasMenuTileContent() {
-    Box(Modifier.fillMaxSize()) { LabelTile(stringResource(R.string.jarnfe_canvas_menu_tile)) }
-}
-
-@Composable
-internal fun BoxScope.CanvasLockedCellContent() {
-    LabelTile(stringResource(R.string.jarnfe_canvas_cell_locked))
 }

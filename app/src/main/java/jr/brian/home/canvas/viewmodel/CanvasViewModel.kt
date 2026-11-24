@@ -382,6 +382,7 @@ class CanvasViewModel @Inject constructor(
     }
 
     init {
+        canvasLayoutManager.reconcileReservedCells()
         // Reactive folder sync: any canvas-owned folder that appears in FolderManager
         // (created by CreateFolderDialog) auto-gets a CanvasItem.FolderItem on the
         // current canvas page. Removing the FolderItem also deletes the folder

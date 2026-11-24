@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import jr.brian.core.model.HomeTarget
+import jr.brian.core.model.JarnHomePress
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.ui.util.routeHome
 
@@ -48,7 +49,9 @@ object HomeKeyFallback {
             )
         }.getOrNull() ?: return false
         if (!entry.homeButtonManager().interceptionEnabled.value) return false
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
+            !entry.experienceHomeRouter().openJarnIfChosen(context, JarnHomePress.Single)
+        ) {
             routeHome(
                 context = context,
                 target = HomeTarget.BOTTOM,
@@ -64,5 +67,6 @@ object HomeKeyFallback {
     internal interface HomeFallbackEntryPoint {
         fun homeButtonManager(): HomeButtonManager
         fun esdePreferencesManager(): ESDEPreferencesManager
+        fun experienceHomeRouter(): ExperienceHomeRouter
     }
 }

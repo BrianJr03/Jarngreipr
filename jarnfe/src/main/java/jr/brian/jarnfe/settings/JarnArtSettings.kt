@@ -1,7 +1,9 @@
 package jr.brian.jarnfe.settings
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -12,15 +14,20 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import jr.brian.core.model.ArtSource
 import jr.brian.core.model.SystemArtSource
 import jr.brian.core.ui.components.JarnNavigateRow
+import jr.brian.core.ui.components.JarnSurface
+import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.components.JarnValueRow
+import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.art.ScrapeMissingArtResult
 import jr.brian.frontend.scrape.ScrapeState
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.firstrun.JarnFirstRun
 import jr.brian.jarnfe.scraper.JarnScraperFlow
 import jr.brian.jarnfe.shell.JarnNotices
 
@@ -47,6 +54,7 @@ internal fun JarnArtSection(data: JarnLibraryData) {
     val statuses by produceState<List<ArtSourceStatus>?>(null, revision) {
         value = data.artSourceStatus()
     }
+    if (JarnFirstRun.isArtDetour) JarnFirstRunArtCue()
     SettingsSectionTitle(R.string.jarnfe_art_title)
     ArtSource.entries.forEach { source ->
         ArtSourceRow(
@@ -59,6 +67,22 @@ internal fun JarnArtSection(data: JarnLibraryData) {
     ScraperSetupRow()
     ScrapeMissingArtRow(data, scrape)
     SystemArtSection(data)
+}
+
+@Composable
+private fun JarnFirstRunArtCue() {
+    JarnSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(2.dp, JarnTheme.colors.accent, JarnTheme.radius.mdShape),
+    ) {
+        JarnText(
+            text = stringResource(R.string.jarnfe_first_run_art_cue),
+            style = JarnTheme.type.labelStrong,
+            color = JarnTheme.colors.textHigh,
+            modifier = Modifier.padding(JarnTheme.space.md),
+        )
+    }
 }
 
 @Composable

@@ -109,6 +109,9 @@ internal fun PinnedRomInfo.toJarnRom() = JarnCanvasRom(
     launchCommand = launchCommand,
 )
 
+/** Jarn FE has no menu tile, so its cell is free here. The saved Classic setting is never changed. */
+internal fun CanvasLayout.withoutClassicMenuCell(): CanvasLayout = copy(menuButtonVisible = false)
+
 private data class CanvasSources(
     val types: List<PageType>,
     val home: Int,
@@ -182,8 +185,11 @@ class AppJarnCanvasData @Inject constructor(
         if (pageTypes.pageTypes.value.getOrNull(pageIndex) != PageType.UNIFIED_CANVAS) {
             return@editPages JarnCanvasSetupResult.Refused(JarnCanvasSetupRefusal.NotCanvas)
         }
-        val result = canvasLayoutAfterSetup(layouts.getLayout(pageIndex), change)
-        if (result is JarnCanvasSetupResult.Applied) layouts.replaceLayout(pageIndex, result.layout)
+        val stored = layouts.getLayout(pageIndex)
+        val result = canvasLayoutAfterSetup(stored.withoutClassicMenuCell(), change)
+        if (result is JarnCanvasSetupResult.Applied) {
+            layouts.replaceLayout(pageIndex, result.layout.copy(menuButtonVisible = stored.menuButtonVisible))
+        }
         result
     }
 
@@ -266,7 +272,7 @@ class AppJarnCanvasData @Inject constructor(
         music: JarnCanvasMusic?,
     ): JarnCanvasSnapshot {
         val pages = sources.types.mapIndexed { index, type ->
-            val layout = sources.layouts[index] ?: CanvasLayout()
+            val layout = (sources.layouts[index] ?: CanvasLayout()).withoutClassicMenuCell()
             val pageRefs = refs[index]
             if (type != PageType.UNIFIED_CANVAS || pageRefs == null) {
                 JarnCanvasPage(index, type.toJarnKind(), layout)

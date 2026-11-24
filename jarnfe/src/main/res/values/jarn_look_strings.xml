@@ -3,4 +3,13 @@
     <string name="jarnfe_look_title">Look</string>
     <string name="jarnfe_look_reduced_motion">Reduce motion</string>
     <string name="jarnfe_look_reduced_motion_hint">Swaps movement for quick fades. Always on when Android animations are off.</string>
+    <string name="jarnfe_look_match_cp">Match Command Panel colors</string>
+    <string name="jarnfe_look_match_cp_available">Colors only. Your saved look returns when this is off.</string>
+    <string name="jarnfe_look_match_cp_full">Matching Command Panel\'s colors.</string>
+    <string name="jarnfe_look_match_cp_accent_only">Accent color only, so text stays readable.</string>
+    <string name="jarnfe_look_match_cp_checking">Checking Command Panel.</string>
+    <string name="jarnfe_look_match_cp_waiting">Open Command Panel once to start matching.</string>
+    <string name="jarnfe_look_match_cp_unavailable">Unavailable. Install or update Command Panel.</string>
+    <string name="jarnfe_look_match_cp_unverified">Unavailable. This copy of Command Panel couldn\'t be verified.</string>
+    <string name="jarnfe_look_match_cp_unreadable">Unavailable. Command Panel\'s colors couldn\'t be read.</string>
 </resources>

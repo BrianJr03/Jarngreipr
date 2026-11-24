@@ -1,18 +1,12 @@
 package jr.brian.jarnfe.canvas
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-
-/** Tints the header row in place, so entering Arrange never changes the grid's size. */
-internal fun Modifier.canvasArrangeBackdrop(arranging: Boolean): Modifier =
-    if (arranging) composed { background(JarnTheme.colors.raised) } else this
 
 @Composable
 internal fun RowScope.CanvasArrangeBanner(step: CanvasArrangeStep) {

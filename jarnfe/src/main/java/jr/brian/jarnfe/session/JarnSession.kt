@@ -21,10 +21,10 @@ class JarnSessionStore(private val onInputScreenChanged: (JarnScreen) -> Unit = 
     }
 
     /** Only a new process restores, so a live session is never rolled back by a recreated activity. */
-    fun restoreIfFresh(encoded: String?) {
+    fun restoreIfFresh(encoded: String?, rememberedTab: DeckTab? = null) {
         if (initialized) return
         initialized = true
-        JarnSessionState.decode(encoded)?.let { state = it }
+        state = JarnSessionState.decode(encoded) ?: rememberedTab?.let { state.copy(deckTab = it) } ?: state
         onInputScreenChanged(state.inputScreen)
     }
 }

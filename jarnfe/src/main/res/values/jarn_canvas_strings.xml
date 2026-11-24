@@ -12,7 +12,6 @@
     <string name="jarnfe_canvas_arrange_choose">Pick a tile with A, or drag it. B when done.</string>
     <string name="jarnfe_canvas_arrange_holding">D-pad moves it, A drops it, B cancels.</string>
     <string name="jarnfe_canvas_arrange_holding_touch">Let go to place it.</string>
-    <string name="jarnfe_canvas_menu_tile">Canvas options</string>
 
     <string name="jarnfe_canvas_tile_widget">Widget</string>
     <string name="jarnfe_canvas_tile_rss">RSS</string>
@@ -73,7 +72,7 @@
     <string name="jarnfe_canvas_refused_largest">Can\'t get bigger</string>
     <string name="jarnfe_canvas_hint_change_photo">Change photo</string>
     <string name="jarnfe_canvas_hint_go_to_now">Go to Now</string>
-    <string name="jarnfe_canvas_cell_locked">Menu stays here</string>
+    <string name="jarnfe_canvas_cell_locked">This spot stays open</string>
     <string name="jarnfe_canvas_hint_done">Done</string>
     <string name="jarnfe_canvas_hint_shrink">Shrink</string>
     <string name="jarnfe_canvas_hint_grow">Grow</string>
@@ -94,8 +93,6 @@
     <string name="jarnfe_canvas_option_tidy_detail">Close the gaps between tiles</string>
     <string name="jarnfe_canvas_option_rows">Rows</string>
     <string name="jarnfe_canvas_option_columns">Columns</string>
-    <string name="jarnfe_canvas_option_menu_tile">Show menu tile</string>
-    <string name="jarnfe_canvas_option_menu_tile_detail">Start always opens Canvas options</string>
     <string name="jarnfe_canvas_option_wallpaper_detail">Choose what shows behind Jarn</string>
     <string name="jarnfe_canvas_hint_adjust">Adjust</string>
     <string name="jarnfe_canvas_tidy_title">Tidy this page?</string>

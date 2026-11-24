@@ -11,6 +11,9 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.audio.JarnAudioSettingsRow
+import jr.brian.jarnfe.canvas.jarnCanvasDataOrNull
+import jr.brian.jarnfe.canvas.tour.JarnCanvasTour
+import jr.brian.jarnfe.firstrun.JarnFirstRun
 import jr.brian.jarnfe.rss.JarnRssSettingsPanel
 import jr.brian.jarnfe.rss.jarnRssDataOrNull
 import jr.brian.jarnfe.shell.JarnNotices
@@ -53,9 +56,20 @@ private fun AboutGroup(actions: JarnSettingsActions) {
     PanelRow(R.string.jarnfe_launcher_whats_new, R.string.jarnfe_launcher_whats_new_hint) {
         actions.openPanel(JarnSettingsPanel.WhatsNew)
     }
+    PanelRow(R.string.jarnfe_first_run_replay, R.string.jarnfe_first_run_replay_hint) { JarnFirstRun.replay() }
+    CanvasTourReplayRow()
     SupportRow(JarnSupportLink.Discord, R.string.jarnfe_launcher_support_discord)
     SupportRow(JarnSupportLink.Coffee, R.string.jarnfe_launcher_support_coffee)
     SupportRow(JarnSupportLink.Kofi, R.string.jarnfe_launcher_support_kofi)
+}
+
+@Composable
+private fun CanvasTourReplayRow() {
+    val context = LocalContext.current
+    if (remember(context) { context.jarnCanvasDataOrNull() } == null) return
+    PanelRow(R.string.jarnfe_canvas_tour_replay, R.string.jarnfe_canvas_tour_replay_hint) {
+        JarnCanvasTour.replay(context)
+    }
 }
 
 @Composable

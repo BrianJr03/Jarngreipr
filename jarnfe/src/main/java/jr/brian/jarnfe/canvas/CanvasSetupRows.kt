@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnDialog
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSliderRow
-import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
@@ -60,13 +59,6 @@ internal fun CanvasSetupRows(
     CanvasAxisRow(page.layout, onAxisFocused) { count, onRefused ->
         apply(JarnCanvasSetupChange.CrossAxis(page.layout.activeOrientation, count), onRefused)
     }
-    JarnToggleRow(
-        label = stringResource(R.string.jarnfe_canvas_option_menu_tile),
-        supporting = stringResource(R.string.jarnfe_canvas_option_menu_tile_detail),
-        checked = page.layout.menuButtonVisible,
-        onCheckedChange = { apply(JarnCanvasSetupChange.MenuTile(it)) {} },
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 @Composable

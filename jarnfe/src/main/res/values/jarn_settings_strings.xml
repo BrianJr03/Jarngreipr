@@ -43,4 +43,6 @@
     <string name="jarnfe_switch_classic_title">Switch to Classic</string>
     <string name="jarnfe_switch_classic_hint">Keeps your setup. Classic also has legacy pages, the shade, Control Pad, Quick Delete, Powered Off and theme sharing.</string>
     <string name="jarnfe_switch_classic_failed">Couldn\'t open Classic</string>
+    <string name="jarnfe_settings_screen_switch_length">Screen switch animation</string>
+    <string name="jarnfe_settings_milliseconds">%1$d ms</string>
 </resources>

@@ -152,6 +152,25 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a backup that changes matching shows the look as replaced`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = false))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanel = true))
+        val items = buildBackupPreview(backup, now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.Look).change)
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+    }
+
+    @Test
+    fun `a backup without matching keeps the current choice`() {
+        val now = JarngreiprConfig(
+            feature = FeatureConfig(jarnLook = "ember", jarnMatchCommandPanel = true),
+        )
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember"))
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Same, look.change)
+    }
+
+    @Test
     fun `counts and added game folders are reported`() {
         val now = JarngreiprConfig(
             feature = FeatureConfig(

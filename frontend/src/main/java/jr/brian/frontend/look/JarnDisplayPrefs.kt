@@ -1,5 +1,7 @@
 package jr.brian.frontend.look
 
+import kotlin.math.roundToInt
+
 /** Which physical screen keeps the controller after a touch. */
 enum class JarnTapControl(val id: String) {
     FollowTap("follow"),
@@ -21,10 +23,12 @@ data class JarnDisplayPrefs(
     val tapControl: JarnTapControl = JarnTapControl.FollowTap,
     val appNamesVisible: Boolean = true,
     val undoCountdownVisible: Boolean = true,
+    val screenSwitchMillis: Int = DEFAULT_SCREEN_SWITCH_MILLIS,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),
         gameTileScale = coercedScale(gameTileScale),
+        screenSwitchMillis = snappedScreenSwitchMillis(screenSwitchMillis.toFloat()),
     )
 
     companion object {
@@ -32,6 +36,19 @@ data class JarnDisplayPrefs(
         const val MIN_TILE_SCALE = 0.75f
         const val MAX_TILE_SCALE = 1.5f
         const val TILE_SCALE_STEPS = 15
+        const val DEFAULT_SCREEN_SWITCH_MILLIS = 300
+        const val MIN_SCREEN_SWITCH_MILLIS = 300
+        const val MAX_SCREEN_SWITCH_MILLIS = 1000
+        private const val SCREEN_SWITCH_STEP_MILLIS = 100
+        const val SCREEN_SWITCH_STEPS =
+            (MAX_SCREEN_SWITCH_MILLIS - MIN_SCREEN_SWITCH_MILLIS) / SCREEN_SWITCH_STEP_MILLIS
+
+        /** Rounds to the slider's 100 ms steps and keeps a hand-edited backup in range. */
+        fun snappedScreenSwitchMillis(millis: Float): Int {
+            if (millis.isNaN()) return DEFAULT_SCREEN_SWITCH_MILLIS
+            val snapped = (millis / SCREEN_SWITCH_STEP_MILLIS).roundToInt() * SCREEN_SWITCH_STEP_MILLIS
+            return snapped.coerceIn(MIN_SCREEN_SWITCH_MILLIS, MAX_SCREEN_SWITCH_MILLIS)
+        }
 
         /** A hand-edited backup can hold NaN, which coerceIn would keep. */
         private fun coercedScale(scale: Float): Float =
