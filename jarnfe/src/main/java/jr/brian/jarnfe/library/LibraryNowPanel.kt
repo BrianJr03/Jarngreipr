@@ -45,7 +45,9 @@ internal fun LibraryNowPanel(selection: LibrarySelection) {
                             is LibrarySelection.System -> key(shown.system.id) {
                                 NowSystemView(shown.system, shownNow)
                             }
-                            is LibrarySelection.Game -> NowGameView(shown.game, shown.resume)
+                            is LibrarySelection.Game -> NowGameShortcuts(shown, shownNow) {
+                                NowGameView(shown.game, shown.resume)
+                            }
                         }
                     }
                 }

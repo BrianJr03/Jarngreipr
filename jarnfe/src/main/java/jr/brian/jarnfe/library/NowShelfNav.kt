@@ -45,10 +45,14 @@ internal class JarnNowShelfStore(
     private var launched: JarnLibraryGame? = null
 
     /** Picks a visible game up front, never the one already focused there when it has a choice. */
-    suspend fun spin(systemId: String, random: Random = Random.Default) {
+    suspend fun spin(
+        systemId: String,
+        avoid: String? = library.state.focusedGameBySystem[systemId],
+        random: Random = Random.Default,
+    ) {
         val loaded = library.state.gamesBySystem[systemId]?.takeIf { it.status == JarnLibraryStatus.Ready }
         val games = loaded ?: library.source.observeGames(systemId).first { it.status !is JarnLibraryStatus.Loading }
-        val pick = libraryRandomGame(games.items.map { it.id }, library.state.focusedGameBySystem[systemId], random)
+        val pick = libraryRandomGame(games.items.map { it.id }, avoid, random)
         pick?.let { jumpTo(systemId, it, spin = true) }
     }
 

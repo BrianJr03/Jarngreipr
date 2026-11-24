@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -358,6 +359,7 @@ private fun NowPlayRow(
     confirmHint: NowConfirmHint,
 ) {
     val setup = JarnGameActions.setup
+    val shortcutUp = LocalNowShortcutUp.current
     Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
         JarnButton(
             label = stringResource(R.string.jarnfe_hint_play),
@@ -366,7 +368,8 @@ private fun NowPlayRow(
             modifier = Modifier
                 .weight(1f)
                 .nowConfirmHint(confirmHint, R.string.jarnfe_hint_play)
-                .focusRequester(playFocus),
+                .focusRequester(playFocus)
+                .focusProperties { up = shortcutUp },
         )
         NowFavoriteButton(
             isFavorite = setup?.isFavorite == true,
