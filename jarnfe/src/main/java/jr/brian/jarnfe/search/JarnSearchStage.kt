@@ -14,6 +14,8 @@ import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.library.JarnSystemTile
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnApps
+import jr.brian.jarnfe.apps.jarnAppsDataOrNull
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
@@ -39,9 +41,10 @@ internal fun JarnSearchTabs(search: JarnSearchStore = JarnSearch) {
         labels = listOf(
             stringResource(R.string.jarnfe_search_tab_games, results.games.size),
             stringResource(R.string.jarnfe_search_tab_systems, results.systems.size),
+            stringResource(R.string.jarnfe_search_tab_apps, results.apps.size),
         ),
         selectedIndex = tabs.indexOf(results.visibleTab(search.tab)),
-        onSelect = { index -> search.stepTab(index - tabs.indexOf(results.visibleTab(search.tab))) },
+        onSelect = { index -> search.selectTab(tabs[index]) },
     )
 }
 
@@ -49,7 +52,9 @@ internal fun JarnSearchTabs(search: JarnSearchStore = JarnSearch) {
 internal fun JarnSearchResultsPanel(state: JarnSessionState, search: JarnSearchStore = JarnSearch) {
     val context = LocalContext.current
     val data = remember(context) { context.jarnLibraryDataOrNull() }
+    val appsData = remember(context) { context.jarnAppsDataOrNull() }
     LaunchedEffect(data) { data?.let { search.observe(it, JarnLibrary) } }
+    LaunchedEffect(appsData) { appsData?.let { JarnApps.observe(it) } }
     LaunchedEffect(state.activeScreen) {
         if (state.activeScreen == JarnScreen.Stage) search.showKeyboard()
     }
@@ -75,6 +80,7 @@ private fun SearchResultGrid(results: JarnSearchResults, tab: JarnSearchTab) {
     when (results.visibleTab(tab)) {
         JarnSearchTab.Games -> SearchGameGrid(results.games)
         JarnSearchTab.Systems -> SearchSystemGrid(results.systems)
+        JarnSearchTab.Apps -> SearchAppGrid(results.apps)
     }
 }
 

@@ -26,6 +26,9 @@ data class ArtSourceStatus(val source: ArtSource, val isAvailable: Boolean, val 
 
 data class LibrarySystem(val id: String, val displayName: String, val gameCount: Int)
 
+/** Just enough of a game to match its title. [JarnLibraryData.gamesById] loads the rest. */
+data class LibraryGameTitle(val id: Long, val systemId: String, val title: String)
+
 /** [key] survives a rescan, unlike [id], which Room reassigns. */
 data class LibraryGame(
     val id: Long,
