@@ -22,6 +22,9 @@ internal const val SHELF_BADGE_HOLD_MS = 450L
 internal const val SHELF_ONE_LINE_CAPTION = 48f
 internal const val SHELF_TWO_LINE_CAPTION = 72f
 
+/** Room left under the card with no caption: enough for its focus border, like the 20dp focus edge. */
+internal const val SHELF_NO_CAPTION = 20f
+
 /** Kept between the focus border's furthest reach and a neighbor, in dp. */
 internal const val SHELF_BORDER_CLEARANCE = 2f
 

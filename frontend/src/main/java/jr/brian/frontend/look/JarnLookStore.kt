@@ -80,6 +80,7 @@ class JarnLookStore @Inject constructor(
             putString(KEY_SYSTEM_VIEW, next.systemView.id)
             putString(KEY_GAME_VIEW, next.gameView.id)
             putString(KEY_PAGE_TRANSITION, next.pageTransition.id)
+            putBoolean(KEY_SYSTEM_NAMES_VISIBLE, next.systemNamesVisible)
         }
     }
 
@@ -114,6 +115,7 @@ class JarnLookStore @Inject constructor(
         systemView = JarnBrowseView.fromId(prefs.getString(KEY_SYSTEM_VIEW, null)),
         gameView = JarnBrowseView.fromId(prefs.getString(KEY_GAME_VIEW, null)),
         pageTransition = JarnPageTransition.fromId(prefs.getString(KEY_PAGE_TRANSITION, null)),
+        systemNamesVisible = prefs.getBoolean(KEY_SYSTEM_NAMES_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -172,6 +174,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_SYSTEM_VIEW = "system_view"
         const val KEY_GAME_VIEW = "game_view"
         const val KEY_PAGE_TRANSITION = "page_transition"
+        const val KEY_SYSTEM_NAMES_VISIBLE = "system_names_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

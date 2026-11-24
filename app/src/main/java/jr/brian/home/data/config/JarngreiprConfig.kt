@@ -225,7 +225,9 @@ data class JarngreiprConfig(
         //      bottom screen's own image or GIF. Null on older blobs, and import keeps both.
         // v55: added JarnDisplayConfig.pageTransition, how a Jarn FE Canvas page arrives. Null on
         //      older blobs, and import keeps the current value. An unknown id falls back to jarn_slide.
-        const val CONFIG_VERSION = 55
+        // v56: added JarnDisplayConfig.systemNamesVisible, Jarn FE "Show system names" for the
+        //      line under system cards. Null on older blobs, and import keeps the current value.
+        const val CONFIG_VERSION = 56
     }
 }
 
@@ -449,6 +451,7 @@ data class JarnDisplayConfig(
     val systemView: String? = null,
     val gameView: String? = null,
     val pageTransition: String? = null,
+    val systemNamesVisible: Boolean? = null,
 )
 
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -463,6 +466,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     systemView = systemView.id,
     gameView = gameView.id,
     pageTransition = pageTransition.id,
+    systemNamesVisible = systemNamesVisible,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -477,6 +481,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     systemView = systemView?.let(JarnBrowseView::fromId) ?: current.systemView,
     gameView = gameView?.let(JarnBrowseView::fromId) ?: current.gameView,
     pageTransition = pageTransition?.let(JarnPageTransition::fromId) ?: current.pageTransition,
+    systemNamesVisible = systemNamesVisible ?: current.systemNamesVisible,
 )
 
 @Serializable

@@ -60,7 +60,8 @@ internal class LibraryShelfSlotCard(
 
 /**
  * What a shelf shows for one item. [onOpen] runs for A, or a tap on the centered card. [headline]
- * is the line under the centered card and [caption] an optional second line. [card] draws one
+ * is the line under the centered card and [caption] an optional second line. With
+ * [showsCaption] off neither shows, and the card takes their room. [card] draws one
  * item, by default [art] on a card.
  */
 internal class LibraryShelfContent<T>(
@@ -70,6 +71,7 @@ internal class LibraryShelfContent<T>(
     val itemModifier: (T) -> Modifier = { Modifier },
     val headline: @Composable (T) -> String = { heroTitle(itemTitle(it)) },
     val caption: @Composable (T) -> String? = { null },
+    val showsCaption: Boolean = true,
     val art: @Composable BoxScope.(T) -> Unit,
     val card: @Composable (T, LibraryShelfSlotCard) -> Unit = { item, slot ->
         LibraryShelfCard(slot) { art(this, item) }
@@ -135,7 +137,7 @@ internal fun <T : Any> LibraryShelf(
             kind = kind,
             narrow = narrow,
             topMargin = JarnTheme.space.focusEdge.value,
-            captionReserve = kind.captionReserve,
+            captionReserve = if (content.showsCaption) kind.captionReserve else SHELF_NO_CAPTION,
         )
         val metrics = ShelfMetrics(kind, maxWidth, fit)
         val cardWidth = metrics.cardWidth
@@ -154,7 +156,7 @@ internal fun <T : Any> LibraryShelf(
                 ) { slot -> content.card(item, slot) }
             }
         }
-        LibraryShelfCaption(items[center], content, metrics)
+        if (content.showsCaption) LibraryShelfCaption(items[center], content, metrics)
         LibraryShelfBadge(content.itemTitle(items[center]), badgeTick, fast)
     }
 }
