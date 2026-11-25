@@ -1,0 +1,50 @@
+name: Wiki Downloads
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: wiki-downloads
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update the Downloads wiki page
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout wiki
+        run: |
+          if ! git clone --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" wiki; then
+            echo "::error::The wiki has no pages yet. Create any first page in the Wiki tab, then run this again."
+            exit 1
+          fi
+
+      - name: Build the page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/wiki-downloads.sh "${{ github.repository }}" > downloads.md
+
+      - name: Push if the counts changed
+        working-directory: wiki
+        run: |
+          if [ -f Downloads.md ] && diff -q <(sed '$d' Downloads.md) <(sed '$d' ../downloads.md) >/dev/null; then
+            echo "Counts unchanged, nothing to push."
+            exit 0
+          fi
+          cp ../downloads.md Downloads.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Downloads.md
+          git commit -m "Update download counts"
+          git push
