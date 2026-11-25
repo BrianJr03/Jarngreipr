@@ -3,6 +3,7 @@ package jr.brian.jarnfe.firstrun
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -62,8 +63,13 @@ internal fun FirstRunEsdeOfferEffect(controller: JarnFirstRunController, twoScre
 private fun esdePrimary(importer: JarnEsdeImporter): Boolean {
     if (importer.state is JarnEsdeImportState.Done) return false
     val screen = if (JarnSession.state.settingsOnDeck) JarnScreen.Deck else JarnScreen.Stage
-    importer.request(screen)
+    importer.request(screen, returnFocus = FirstRunEsdeFocus.primary)
     return true
+}
+
+/** The ES-DE step's primary button while it's on screen, so the consent dialog can return focus to it. */
+internal object FirstRunEsdeFocus {
+    var primary: FocusRequester? = null
 }
 
 /** One notice, once ever, for someone who skipped the tour with ES-DE never imported. */
@@ -128,6 +134,10 @@ internal fun FirstRunEsdePrimaryButton(
     val state = importer?.state
     val running = state is JarnEsdeImportState.Running
     importer?.let { RefocusAfterFileAccess(it, focus) }
+    DisposableEffect(focus) {
+        FirstRunEsdeFocus.primary = focus
+        onDispose { if (FirstRunEsdeFocus.primary === focus) FirstRunEsdeFocus.primary = null }
+    }
     JarnButton(
         label = state?.let { esdeImportProgressText(it) } ?: stringResource(esdePrimaryLabelRes(state)),
         onClick = actions::primary,

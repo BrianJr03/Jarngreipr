@@ -77,7 +77,7 @@ internal fun FirstRunReadyStep(twoScreens: Boolean, actions: JarnFirstRunActions
                 FirstRunReadyRowItem(
                     row = row,
                     fade = readyRowFade(index, JarnTheme.motion.reduced),
-                    focus = leadFocus?.requester?.takeIf { row === lead },
+                    focus = leadFocus?.requester?.takeIf { row === lead } ?: row.focus,
                 )
             }
         }

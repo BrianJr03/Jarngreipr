@@ -63,13 +63,16 @@ data class EsdeImportSummary(
         emulatorSkipped = result.skipped.size,
     )
 
-    /** One line for logcat. The device checks grep for its start. */
+    /** One line for logcat. The device checks grep for its start. Emulators get [emulatorLogLine]. */
     fun logLine(): String =
         "Gamelist import: $gamelistsFound gamelists, $skippedUnchanged skipped as unchanged, " +
             "$gamesUpdated games updated, $favoritesAdded favorites added, $playStatsUpdated stats updated, " +
-            "$unreadable unreadable, $systemsMatched systems matched, ${unrecognisedSystems.size} not recognised, " +
-            "emulators: $emulatorSystemsSet systems, $emulatorGamesSet games, $emulatorKeptExisting kept, " +
-            "$emulatorSkipped skipped"
+            "$unreadable unreadable, $systemsMatched systems matched, ${unrecognisedSystems.size} not recognised"
+
+    /** The emulator import's line, logged after it runs. Only user-started imports have one. */
+    fun emulatorLogLine(): String =
+        "ES-DE emulator import: $emulatorSystemsSet systems, $emulatorGamesSet games, " +
+            "$emulatorKeptExisting kept, $emulatorSkipped skipped"
 }
 
 /** How far an import is: [done] of [total] gamelists, now on [systemLabel]. */

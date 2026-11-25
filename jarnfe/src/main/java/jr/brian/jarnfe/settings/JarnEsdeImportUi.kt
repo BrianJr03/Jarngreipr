@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
@@ -53,30 +56,53 @@ internal fun WatchJarnEsdeImport(importer: JarnEsdeImporter, wantsNotice: Boolea
 /**
  * The consent dialog on [screen], and the return from the file access screen. One
  * dialog for first run and Settings. Focus starts on Continue, and B is Cancel: the
- * modal input layer keeps B from reaching the screen underneath.
+ * modal input layer keeps B from reaching the screen underneath. The dialog stays
+ * composed while closed, so closing it hands focus back to what opened it.
  */
 @Composable
 internal fun JarnEsdeImportNoticeHost(screen: JarnScreen) {
     val importer = rememberJarnEsdeImporter() ?: return
     val activity = LocalActivity.current
     ResumeEffect(importer::onResumed)
-    if (importer.consentOn != screen) return
+    val open = importer.consentOn == screen
+    RefocusAfterClose(open, importer.consentReturnFocus)
     JarnInputLayer(
         mode = JarnLayerMode.Modal,
+        enabled = open,
         bindings = {
             hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
             on(JarnAction.Back, R.string.jarnfe_hint_back, onPress = importer::cancelConsent)
         },
     ) {
         JarnDialog(
-            visible = true,
+            visible = open,
             title = stringResource(R.string.jarnfe_esde_import_notice_title),
             message = stringResource(R.string.jarnfe_esde_import_notice_message),
             confirmLabel = stringResource(R.string.jarnfe_esde_roms_notice_continue),
             dismissLabel = stringResource(R.string.jarnfe_esde_roms_notice_cancel),
             onConfirm = { importer.confirmConsent { openFileAccess(activity) } },
             onDismiss = importer::cancelConsent,
+            restoreFocusTo = importer.consentReturnFocus,
         )
+    }
+}
+
+/**
+ * Hands focus back once more a frame after the dialog closes. Settings moves focus to its tabs
+ * as a modal goes away, which wins over the dialog's own immediate restore.
+ */
+@Composable
+private fun RefocusAfterClose(open: Boolean, returnFocus: FocusRequester?) {
+    var wasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(open) {
+        if (open) {
+            wasOpen = true
+        } else if (wasOpen) {
+            wasOpen = false
+            withFrameNanos { }
+            withFrameNanos { }
+            runCatching { returnFocus?.requestFocus() }
+        }
     }
 }
 

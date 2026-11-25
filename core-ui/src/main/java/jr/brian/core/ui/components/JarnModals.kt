@@ -61,7 +61,8 @@ private fun JarnModal(
             wasOpen = true
         } else if (wasOpen) {
             wasOpen = false
-            restoreFocusTo?.requestFocus()
+            // What opened the modal can be gone by now; then focus simply stays where it is.
+            runCatching { restoreFocusTo?.requestFocus() }
         }
     }
     if (!visible && !transition.currentState && transition.isIdle) return

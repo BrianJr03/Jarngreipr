@@ -1,6 +1,7 @@
 package jr.brian.frontend.library.migrate
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -38,10 +39,25 @@ class EsdeImportSummaryTest {
     }
 
     @Test
-    fun `the log line keeps its start and adds the emulators`() {
+    fun `the gamelist line has no emulator part`() {
         val line = EsdeImportSummary(gamelistsFound = 3).withEmulators(EsdeAltEmulatorResult(gamesSet = 4)).logLine()
 
         assertTrue(line.startsWith("Gamelist import: 3 gamelists, 0 skipped as unchanged"))
-        assertTrue(line.contains("emulators: 0 systems, 4 games"))
+        assertFalse(line.contains("emulator"))
+    }
+
+    @Test
+    fun `the emulator line has the emulator counts`() {
+        val result = EsdeAltEmulatorResult(
+            systemsSet = 1,
+            gamesSet = 4,
+            keptExisting = 2,
+            skipped = listOf(EsdeAltEmulatorSkip("psx", "Mystery", EsdeAltEmulatorSkipReason.UnknownLabel)),
+        )
+
+        assertEquals(
+            "ES-DE emulator import: 1 systems, 4 games, 2 kept, 1 skipped",
+            EsdeImportSummary().withEmulators(result).emulatorLogLine(),
+        )
     }
 }
