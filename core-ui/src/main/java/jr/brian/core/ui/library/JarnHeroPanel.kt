@@ -23,8 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.components.JARN_STAT_SEPARATOR
 import jr.brian.core.ui.components.JarnScrim
 import jr.brian.core.ui.components.JarnScrimEdge
+import jr.brian.core.ui.components.JarnStatLine
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
@@ -38,6 +40,8 @@ private const val HERO_BODY_MAX_LINES = 3
  * A wide card with art behind a bottom-left caption. The caption keeps to the left
  * [HERO_TEXT_FRACTION] of the card unless [artEndWidth] says how much of the right edge the art
  * really covers, in which case it runs up to the art, never narrower than the default.
+ * [bodyStats], when given, takes the place of [body] as a [JarnStatLine] joined by
+ * [bodySeparator], so short stats stack instead of wrapping mid-phrase.
  */
 @Composable
 fun JarnHeroPanel(
@@ -49,6 +53,8 @@ fun JarnHeroPanel(
     artEndWidth: Dp? = null,
     titleStyle: TextStyle = JarnTheme.type.display,
     bodyStyle: TextStyle = JarnTheme.type.body,
+    bodyStats: List<String>? = null,
+    bodySeparator: String = JARN_STAT_SEPARATOR,
     art: @Composable BoxScope.() -> Unit,
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -77,17 +83,24 @@ fun JarnHeroPanel(
                 color = JarnTheme.colors.textHigh,
                 modifier = Modifier.weight(1f, fill = false),
             )
-            body?.let {
-                JarnText(
-                    text = it,
-                    style = rememberThemedStyle(it, bodyStyle, JarnTheme.baseType.body),
-                    color = JarnTheme.colors.textMid,
-                    maxLines = HERO_BODY_MAX_LINES,
-                )
+            if (!bodyStats.isNullOrEmpty()) {
+                JarnStatLine(bodyStats, bodyStyle, JarnTheme.colors.textMid, separator = bodySeparator, fallback = JarnTheme.baseType.body)
+            } else {
+                body?.let { JarnHeroBody(it, bodyStyle) }
             }
             footer()
         }
     }
+}
+
+@Composable
+private fun JarnHeroBody(text: String, style: TextStyle) {
+    JarnText(
+        text = text,
+        style = rememberThemedStyle(text, style, JarnTheme.baseType.body),
+        color = JarnTheme.colors.textMid,
+        maxLines = HERO_BODY_MAX_LINES,
+    )
 }
 
 internal fun heroTextWidth(panelWidth: Dp, artEndWidth: Dp?): Dp {

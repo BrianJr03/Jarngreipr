@@ -98,14 +98,22 @@ internal fun LibrarySelection.focusKey(): String? = when (this) {
     is LibrarySelection.Game -> if (resume) "resume:${game.id}" else "game:${game.id}"
 }
 
+/** Joins play stats into one sentence-like line, as the shelf caption and Continue playing card show them. */
+internal const val PLAY_SUMMARY_SEPARATOR = ". "
+
+/** Play time and last played, each its own short stat. */
 @Composable
-internal fun playSummary(metadata: JarnGameMetadata): String? {
+internal fun playStats(metadata: JarnGameMetadata): List<String> {
     val playtime = metadata.playtimeMinutes?.takeIf { it > 0 }?.let { playtimeText(it) }
     val lastPlayed = metadata.lastPlayedAtMs?.let {
         stringResource(R.string.jarnfe_library_last_played, formatDate(it))
     }
-    return listOfNotNull(playtime, lastPlayed).joinToString(". ").ifEmpty { null }
+    return listOfNotNull(playtime, lastPlayed)
 }
+
+@Composable
+internal fun playSummary(metadata: JarnGameMetadata): String? =
+    playStats(metadata).joinToString(PLAY_SUMMARY_SEPARATOR).ifEmpty { null }
 
 @Composable
 private fun playtimeText(minutes: Long): String = if (minutes >= MINUTES_PER_HOUR) {

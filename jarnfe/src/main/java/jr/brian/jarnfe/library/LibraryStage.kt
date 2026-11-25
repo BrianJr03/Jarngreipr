@@ -270,7 +270,9 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
     JarnHeroPanel(
         eyebrow = stringResource(R.string.jarnfe_library_continue_playing),
         title = heroTitle(game.title),
-        body = if (missing) stringResource(R.string.jarnfe_resume_file_missing) else playSummary(game.metadata),
+        body = if (missing) stringResource(R.string.jarnfe_resume_file_missing) else null,
+        bodyStats = if (missing) null else playStats(game.metadata),
+        bodySeparator = PLAY_SUMMARY_SEPARATOR,
         modifier = Modifier
             .focusRequester(focus)
             .onFocusChanged { onFocusChange(it.isFocused) }
