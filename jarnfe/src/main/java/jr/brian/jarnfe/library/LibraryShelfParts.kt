@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.theme.JarnTheme
@@ -34,6 +35,9 @@ import kotlinx.coroutines.delay
 private const val SHELF_WASH_ALPHA = 0.22f
 private val ShelfWashBlur = 48.dp
 private const val SHELF_BADGE_SURFACE_ALPHA = 0.82f
+
+/** Above every shelf slot, whose z-index tops out at [SHELF_COMPOSED_REACH] for the centered card. */
+internal const val SHELF_BADGE_Z = SHELF_COMPOSED_REACH + 1f
 
 /**
  * A card so logos never float bare, with the grid's scale, float and focus border. The card itself
@@ -97,7 +101,7 @@ internal fun <T> BoxScope.LibraryShelfCaption(item: T, content: LibraryShelfCont
     }
 }
 
-/** Shows the centered item's letter while a direction is held, and fades out once it settles. */
+/** Shows the centered item's letter while a direction is held, above the cards, and fades out once it settles. */
 @Composable
 internal fun BoxScope.LibraryShelfBadge(title: String, tick: Int, fast: Boolean) {
     var visible by remember { mutableStateOf(false) }
@@ -114,7 +118,7 @@ internal fun BoxScope.LibraryShelfBadge(title: String, tick: Int, fast: Boolean)
         visible = visible,
         enter = fadeIn(motion.small.spec()),
         exit = fadeOut(motion.small.spec()),
-        modifier = Modifier.align(Alignment.Center),
+        modifier = Modifier.align(Alignment.Center).zIndex(SHELF_BADGE_Z),
     ) {
         JarnText(
             text = shelfBadgeLetter(title),
