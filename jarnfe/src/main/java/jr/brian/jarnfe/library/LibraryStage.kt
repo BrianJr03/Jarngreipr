@@ -277,6 +277,7 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
             .height(HeroHeight),
         onClick = { resumeGame(game, status, screen) }.takeIf { canPlay },
         artEndWidth = coverWidth,
+        bodyStyle = resumeStatsStyle(),
         art = {
             Box(Modifier.matchParentSize().alpha(missingArtAlpha(status))) {
                 LibraryCoverArt(game, Alignment.CenterEnd, onAspectRatio = { coverWidth = heroCoverWidth(it) })

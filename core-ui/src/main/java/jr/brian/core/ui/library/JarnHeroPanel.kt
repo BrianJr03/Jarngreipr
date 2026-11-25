@@ -48,6 +48,7 @@ fun JarnHeroPanel(
     onClick: (() -> Unit)? = null,
     artEndWidth: Dp? = null,
     titleStyle: TextStyle = JarnTheme.type.display,
+    bodyStyle: TextStyle = JarnTheme.type.body,
     art: @Composable BoxScope.() -> Unit,
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -79,7 +80,7 @@ fun JarnHeroPanel(
             body?.let {
                 JarnText(
                     text = it,
-                    style = JarnTheme.type.body,
+                    style = rememberThemedStyle(it, bodyStyle, JarnTheme.baseType.body),
                     color = JarnTheme.colors.textMid,
                     maxLines = HERO_BODY_MAX_LINES,
                 )

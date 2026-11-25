@@ -253,7 +253,7 @@ internal fun ResumeMissingDialog() {
 
 /** The look's label font when it has one, otherwise its display font, at the label size. */
 @Composable
-private fun resumeStatsStyle(): TextStyle {
+internal fun resumeStatsStyle(): TextStyle {
     val base = JarnTheme.baseType.label
     val label = JarnTheme.type.label
     if (label.fontFamily != base.fontFamily) return label
