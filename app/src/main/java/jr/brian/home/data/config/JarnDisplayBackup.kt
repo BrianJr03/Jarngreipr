@@ -30,6 +30,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     systemBackgroundVisible = systemBackgroundVisible,
     playingScreenVisible = playingScreenVisible,
     playingDim = playingDim.id,
+    playingScreenOff = playingScreenOff,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -54,4 +55,5 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     systemBackgroundVisible = systemBackgroundVisible ?: current.systemBackgroundVisible,
     playingScreenVisible = playingScreenVisible ?: current.playingScreenVisible,
     playingDim = JarnPlayingDim.fromId(playingDim) ?: current.playingDim,
+    playingScreenOff = playingScreenOff ?: current.playingScreenOff,
 )

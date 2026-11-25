@@ -17,7 +17,8 @@ import jr.brian.jarnfe.deck.nowPlayingDimLabel
 internal fun PlayingScreenGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
     SettingsGroup(R.string.jarnfe_settings_playing_title) {
         PlayingScreenRow(store, display.playingScreenVisible)
-        PlayingDimRow(store, display.playingDim, enabled = display.playingScreenVisible)
+        PlayingScreenOffRow(store, display.playingScreenOff)
+        PlayingDimRow(store, display.playingDim, enabled = playingDimApplies(display))
     }
 }
 
@@ -29,6 +30,21 @@ private fun PlayingScreenRow(store: JarnLookStore, visible: Boolean) {
         onCheckedChange = { show -> store.updateDisplay { it.copy(playingScreenVisible = show) } },
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_settings_playing_show_hint),
+    )
+}
+
+/** The delay dims Now Playing, and sends a screen set to turn off back to black. */
+internal fun playingDimApplies(display: JarnDisplayPrefs): Boolean =
+    display.playingScreenVisible || display.playingScreenOff
+
+@Composable
+private fun PlayingScreenOffRow(store: JarnLookStore, off: Boolean) {
+    JarnToggleRow(
+        label = stringResource(R.string.jarnfe_settings_playing_off),
+        checked = off,
+        onCheckedChange = { turnOff -> store.updateDisplay { it.copy(playingScreenOff = turnOff) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_settings_playing_off_hint),
     )
 }
 

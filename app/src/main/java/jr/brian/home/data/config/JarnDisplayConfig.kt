@@ -26,4 +26,5 @@ data class JarnDisplayConfig(
     val systemBackgroundVisible: Boolean? = null,
     val playingScreenVisible: Boolean? = null,
     val playingDim: String? = null,
+    val playingScreenOff: Boolean? = null,
 )

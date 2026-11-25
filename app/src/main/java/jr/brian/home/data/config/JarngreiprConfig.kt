@@ -232,6 +232,7 @@ data class JarngreiprConfig(
         // v66: added SystemConfig.hiddenGames, games hidden one by one. Null on older blobs keeps them.
         // v67: added FeatureConfig.jarnSystemSorts, each system's game order. Null on older blobs keeps them.
         // v68: added JarnDisplayConfig.playingScreenVisible and playingDim, Jarn FE Now Playing.
-        const val CONFIG_VERSION = 68
+        // v69: added JarnDisplayConfig.playingScreenOff, Jarn FE's black bottom screen during a game.
+        const val CONFIG_VERSION = 69
     }
 }
