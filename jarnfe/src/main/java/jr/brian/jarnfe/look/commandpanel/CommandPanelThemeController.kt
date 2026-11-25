@@ -17,7 +17,7 @@ internal class CommandPanelThemeController(
     private val port: CommandPanelThemePort,
     private val store: CommandPanelPaletteStore,
     lane: CoroutineDispatcher,
-) {
+) : CommandPanelLifecycleTarget {
     private val mutablePalette = MutableStateFlow<CommandPanelPalette?>(null)
     val palette: StateFlow<CommandPanelPalette?> = mutablePalette.asStateFlow()
 
@@ -40,7 +40,7 @@ internal class CommandPanelThemeController(
         if (mutablePalette.value == null) mutablePalette.value = stored
     }
 
-    fun start() {
+    override fun start() {
         holders += 1
         if (holders == 1) {
             port.listen(::refresh)
@@ -55,11 +55,11 @@ internal class CommandPanelThemeController(
         refresh()
     }
 
-    fun refresh() {
+    override fun refresh() {
         if (holders > 0) requests.trySend(Unit)
     }
 
-    fun stop() {
+    override fun stop() {
         if (holders == 0) return
         holders -= 1
         if (holders > 0) return

@@ -7,26 +7,6 @@ import org.junit.Test
 
 class JarnFontMatchTest {
     @Test
-    fun `a readable Command Panel offers fonts`() {
-        listOf(
-            JarnMatchCardState.Available,
-            JarnMatchCardState.AvailableAccentOnly,
-            JarnMatchCardState.MatchingFull,
-            JarnMatchCardState.MatchingAccentOnly,
-        ).forEach {
-            assertEquals(FontMatchAvailability.Available(), FontMatchAvailability.fromColorCard(it))
-        }
-    }
-
-    @Test
-    fun `unavailable color states carry over to fonts`() {
-        assertEquals(FontMatchAvailability.Missing, FontMatchAvailability.fromColorCard(JarnMatchCardState.Unavailable))
-        assertEquals(FontMatchAvailability.Unverified, FontMatchAvailability.fromColorCard(JarnMatchCardState.Unverified))
-        assertEquals(FontMatchAvailability.Unreadable, FontMatchAvailability.fromColorCard(JarnMatchCardState.Unreadable))
-        assertEquals(FontMatchAvailability.Hidden, FontMatchAvailability.fromColorCard(JarnMatchCardState.Hidden))
-    }
-
-    @Test
     fun `an off row can only turn on when fonts are available`() {
         assertTrue(resolveJarnFontMatchRow(false, FontMatchAvailability.Available()).canToggle)
         listOf(

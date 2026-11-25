@@ -84,9 +84,7 @@ internal class AndroidCommandPanelThemePort(private val context: Context) : Comm
     }
 
     private fun readAuthenticated(): CommandPanelRead {
-        if (context.getSystemService(UserManager::class.java)?.isUserUnlocked != true) {
-            return CommandPanelRead.Locked
-        }
+        if (!context.isUserUnlocked()) return CommandPanelRead.Locked
         when (decideCommandPanelTrust(resolveIdentity())) {
             CommandPanelTrust.Untrusted -> return CommandPanelRead.Untrusted
             CommandPanelTrust.Stopped -> return CommandPanelRead.Stopped
@@ -110,30 +108,7 @@ internal class AndroidCommandPanelThemePort(private val context: Context) : Comm
         }
     }
 
-    private fun resolveIdentity(): CommandPanelProviderIdentity? {
-        val packageManager = context.packageManager
-        val provider = packageManager.resolveContentProvider(
-            CommandPanelThemeContract.AUTHORITY,
-            PackageManager.ComponentInfoFlags.of(0),
-        ) ?: return null
-        if (provider.packageName != CommandPanelThemeContract.PACKAGE) {
-            return CommandPanelProviderIdentity(provider.packageName, emptyList(), isStopped = true)
-        }
-        val info = packageManager.getPackageInfo(
-            provider.packageName,
-            PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong()),
-        )
-        val flags = info.applicationInfo?.flags
-        return CommandPanelProviderIdentity(
-            packageName = provider.packageName,
-            signerDigests = info.signingInfo?.apkContentsSigners.orEmpty().map(::sha256),
-            isStopped = flags == null || flags and ApplicationInfo.FLAG_STOPPED != 0,
-        )
-    }
-
-    private fun sha256(signature: Signature): String =
-        MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
-            .joinToString("") { "%02x".format(it) }
+    private fun resolveIdentity(): CommandPanelProviderIdentity? = context.commandPanelIdentity()
 
     /** Registering throws when the provider is missing, so a failure just stays unregistered until the next read. */
     override fun setObserving(observing: Boolean) {
@@ -166,7 +141,34 @@ internal class AndroidCommandPanelThemePort(private val context: Context) : Comm
     }
 }
 
-private fun commandPanelPackageFilter() = IntentFilter().apply {
+/** Who answers Command Panel's authority, for [decideCommandPanelTrust]. Shared by the palette and fonts ports. */
+internal fun Context.commandPanelIdentity(): CommandPanelProviderIdentity? {
+    val provider = packageManager.resolveContentProvider(
+        CommandPanelThemeContract.AUTHORITY,
+        PackageManager.ComponentInfoFlags.of(0),
+    ) ?: return null
+    if (provider.packageName != CommandPanelThemeContract.PACKAGE) {
+        return CommandPanelProviderIdentity(provider.packageName, emptyList(), isStopped = true)
+    }
+    val info = packageManager.getPackageInfo(
+        provider.packageName,
+        PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong()),
+    )
+    val flags = info.applicationInfo?.flags
+    return CommandPanelProviderIdentity(
+        packageName = provider.packageName,
+        signerDigests = info.signingInfo?.apkContentsSigners.orEmpty().map(::signerSha256),
+        isStopped = flags == null || flags and ApplicationInfo.FLAG_STOPPED != 0,
+    )
+}
+
+private fun signerSha256(signature: Signature): String =
+    MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
+        .joinToString("") { "%02x".format(it) }
+
+internal fun Context.isUserUnlocked(): Boolean = getSystemService(UserManager::class.java)?.isUserUnlocked == true
+
+internal fun commandPanelPackageFilter() = IntentFilter().apply {
     addAction(Intent.ACTION_PACKAGE_ADDED)
     addAction(Intent.ACTION_PACKAGE_REPLACED)
     addAction(Intent.ACTION_PACKAGE_CHANGED)
