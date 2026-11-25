@@ -42,12 +42,14 @@ class SourcesSyncService @Inject constructor(
     private val legacyPrefs: EsdeLegacyPrefs,
     private val sourceDao: SourceDao,
     private val repository: LibraryRepository,
+    private val duplicateCleanup: LibraryDuplicateCleanup,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
 
     private val reconcileLock = Mutex()
 
     fun start() {
+        scope.launch { duplicateCleanup.run() }
         scope.launch {
             esdePrefs.state
                 .map { state ->

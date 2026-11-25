@@ -6,6 +6,7 @@ import android.provider.DocumentsContract
 import android.util.Log
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.frontend.library.setup.documentStoragePath
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.Dispatchers
@@ -203,7 +204,7 @@ class SafTreeScanner @Inject constructor(
         return ScannedRom(
             systemId = systemId,
             relativePath = segments.joinToString("/"),
-            absolutePath = null,
+            absolutePath = documentStoragePath(treeUri.authority, child.documentId),
             documentUri = docUri.toString(),
             isDirectoryAsFile = isDirectoryAsFile,
             fileSizeBytes = child.sizeBytes,

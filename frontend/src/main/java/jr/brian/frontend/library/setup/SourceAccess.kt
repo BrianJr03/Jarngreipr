@@ -81,9 +81,14 @@ internal fun canReadFolder(path: String): Boolean =
 internal fun sourceLocation(uri: String): String? {
     if (!uri.startsWith(CONTENT_SCHEME)) return uri.trimEnd('/')
     val parsed = uri.toUri()
-    if (parsed.authority != EXTERNAL_STORAGE_AUTHORITY) return null
     val documentId = runCatching { DocumentsContract.getTreeDocumentId(parsed) }.getOrNull()
         ?: return null
+    return documentStoragePath(parsed.authority, documentId)
+}
+
+/** The storage path of an external storage document, or null for other providers. */
+internal fun documentStoragePath(authority: String?, documentId: String): String? {
+    if (authority != EXTERNAL_STORAGE_AUTHORITY) return null
     val volume = documentId.substringBefore(':', "")
     if (volume.isEmpty()) return null
     val base = if (volume == PRIMARY_VOLUME) PRIMARY_PATH else "$STORAGE_PATH/$volume"
