@@ -161,6 +161,32 @@ class JarnLibraryComponentsTest {
     }
 
     @Test
+    @Config(qualifiers = "w1000dp-h600dp")
+    fun `hero title runs up to the art instead of stopping mid card`() {
+        val title = "The Legend of Zelda Ocarina of Time Master Quest"
+        setScaledContent {
+            JarnHeroPanel(
+                eyebrow = "eyebrow",
+                title = title,
+                body = "body",
+                modifier = Modifier.size(900.dp, 160.dp).testTag("h"),
+                artEndWidth = 112.dp,
+                art = { Box(Modifier.fillMaxSize()) },
+            )
+        }
+        val layout = rule.onNodeWithContentDescription(title).textLayout()
+        assertTrue("title is ellipsized", (0 until layout.lineCount).none(layout::isLineEllipsized))
+        assertInside(rule.onNodeWithContentDescription(title), rule.onNodeWithTag("h"))
+    }
+
+    @Test
+    fun `hero text keeps its default width when the art is wide or unknown`() {
+        assertEquals(550.dp, heroTextWidth(1000.dp, null))
+        assertEquals(550.dp, heroTextWidth(1000.dp, 700.dp))
+        assertEquals(880.dp, heroTextWidth(1000.dp, 120.dp))
+    }
+
+    @Test
     fun `metadata plate renders odd entries and truncates long values`() {
         setScaledContent(fontScale = 1.3f) {
             JarnMetadataPlate(
