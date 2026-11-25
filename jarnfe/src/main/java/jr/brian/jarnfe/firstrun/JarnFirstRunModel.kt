@@ -19,13 +19,18 @@ internal fun JarnSessionState.practiceTabsStepOn(role: JarnScreen): JarnFirstRun
     else -> JarnFirstRunStep.PressOtherTabs
 }
 
-/** [needsTwoScreens] steps teach a button that has nothing to act on with a single display. */
+/**
+ * [needsTwoScreens] steps teach a button that has nothing to act on with a single display.
+ * [needsEsde] steps only show when ES-DE was found and the library has games.
+ */
 internal enum class JarnFirstRunStep(
     val gesture: JarnFirstRunGesture? = null,
     val needsTwoScreens: Boolean = false,
+    val needsEsde: Boolean = false,
 ) {
     Welcome,
     Library,
+    Esde(needsEsde = true),
     Media,
     Look,
     SwitchCue(needsTwoScreens = true),
@@ -47,8 +52,12 @@ internal enum class JarnFirstRunStep(
         fun fromName(name: String?): JarnFirstRunStep =
             entries.firstOrNull { it.name == name } ?: Welcome
 
-        fun available(twoScreens: Boolean, path: JarnFirstRunPath = JarnFirstRunPath.Full): List<JarnFirstRunStep> =
-            path.steps().filter { twoScreens || !it.needsTwoScreens }
+        fun available(
+            twoScreens: Boolean,
+            path: JarnFirstRunPath = JarnFirstRunPath.Full,
+            offersEsde: Boolean = false,
+        ): List<JarnFirstRunStep> =
+            path.steps().filter { (twoScreens || !it.needsTwoScreens) && (offersEsde || !it.needsEsde) }
 
         private val Lessons = listOf(SwitchCue, PressA, PressB, PressX, PressSelect, PressTabs, PressOtherTabs)
 
@@ -78,10 +87,15 @@ internal data class JarnFirstRunState(
     val practiced: Boolean = false,
     val practiceTab: Int = 0,
     val path: JarnFirstRunPath = step.restoredPath(),
+    val offersEsde: Boolean = false,
 ) {
-    private fun steps(twoScreens: Boolean) = JarnFirstRunStep.available(twoScreens, path)
+    private fun steps(twoScreens: Boolean) = JarnFirstRunStep.available(twoScreens, path, offersEsde)
 
-    private fun at(step: JarnFirstRunStep) = JarnFirstRunState(step, path = path)
+    private fun at(step: JarnFirstRunStep) = JarnFirstRunState(step, path = path, offersEsde = offersEsde)
+
+    /** ES-DE was found with games here, or no longer is: the ES-DE step comes or goes. */
+    fun withEsdeOffer(offer: Boolean, twoScreens: Boolean): JarnFirstRunState =
+        if (offer == offersEsde) this else copy(offersEsde = offer).settled(twoScreens)
 
     fun position(twoScreens: Boolean): Int = steps(twoScreens).indexOf(settled(twoScreens).step)
 
@@ -115,7 +129,7 @@ internal data class JarnFirstRunState(
         if (path != JarnFirstRunPath.Arrival || step != JarnFirstRunStep.Done) return this
         val lessons = JarnFirstRunStep.available(twoScreens, JarnFirstRunPath.ArrivalLessons)
         val first = lessons[lessons.indexOf(JarnFirstRunStep.Look) + 1]
-        return JarnFirstRunState(first, path = JarnFirstRunPath.ArrivalLessons)
+        return JarnFirstRunState(first, path = JarnFirstRunPath.ArrivalLessons, offersEsde = offersEsde)
     }
 
     /** Done on the short tour offers the lessons as well as finishing. */

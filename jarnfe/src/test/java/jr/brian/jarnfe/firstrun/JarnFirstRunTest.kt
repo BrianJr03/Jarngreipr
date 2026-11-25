@@ -43,10 +43,11 @@ class JarnFirstRunTest {
 
     @Test
     fun `every step can go back and the first asks before leaving`() {
-        JarnFirstRunStep.available(twoScreens = true).drop(1).forEach { step ->
+        val steps = JarnFirstRunStep.available(twoScreens = true)
+        steps.zipWithNext().forEach { (previous, step) ->
             val back = JarnFirstRunState(step).back(twoScreens = true)
             assertFalse(back.confirmingSkip)
-            assertEquals(step.ordinal - 1, back.step.ordinal)
+            assertEquals(previous, back.step)
         }
         val asking = JarnFirstRunState().back(twoScreens = true)
         assertTrue(asking.confirmingSkip)

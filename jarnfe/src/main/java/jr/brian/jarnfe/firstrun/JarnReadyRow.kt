@@ -86,6 +86,7 @@ internal fun readyLeadRow(rows: List<JarnReadyRow>): JarnReadyRow? =
 internal fun rememberReadyRows(card: JarnReadyCard): List<JarnReadyRow> {
     val builtIn = listOfNotNull(
         libraryRow(card),
+        esdeImportReadyRow(card),
         artRow(),
         favoritesRow(),
         canvasRow(),

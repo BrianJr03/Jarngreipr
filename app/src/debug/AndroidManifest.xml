@@ -22,5 +22,13 @@
                 <action android:name="jr.brian.home.debug.JARN_WALLPAPER" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name="jr.brian.home.debug.EsdeAltEmulatorDebugReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="jr.brian.home.debug.ESDE_ALT_EMULATORS" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

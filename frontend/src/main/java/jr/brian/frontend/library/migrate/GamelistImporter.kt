@@ -57,8 +57,8 @@ class GamelistImporter @Inject constructor(
 
     /**
      * Parse [file] as a gamelist.xml and update every matching
-     * GameEntity under [sourceId] / [systemId]. Returns the count of
-     * rows updated, or null when the file can't be read or parsed.
+     * GameEntity under [sourceId] / [systemId]. Returns what changed,
+     * or null when the file can't be read or parsed.
      *
      * @param seenFavorites paths whose gamelist favorite was already
      *   applied by an earlier import. Those aren't applied again, so a
@@ -70,7 +70,7 @@ class GamelistImporter @Inject constructor(
         sourceId: Long,
         systemId: String,
         seenFavorites: MutableSet<String>? = null,
-    ): Int? = withContext(Dispatchers.IO) {
+    ): GamelistFileCounts? = withContext(Dispatchers.IO) {
         if (!file.exists() || !file.isFile) return@withContext null
         try {
             file.inputStream().use { input ->
@@ -87,14 +87,14 @@ class GamelistImporter @Inject constructor(
         sourceId: Long,
         systemId: String,
         seenFavorites: MutableSet<String>? = null,
-    ): Int = importStreamOrNull(input, sourceId, systemId, seenFavorites) ?: 0
+    ): Int = importStreamOrNull(input, sourceId, systemId, seenFavorites)?.gamesUpdated ?: 0
 
-    private suspend fun importStreamOrNull(
+    internal suspend fun importStreamOrNull(
         input: InputStream,
         sourceId: Long,
         systemId: String,
         seenFavorites: MutableSet<String>?,
-    ): Int? {
+    ): GamelistFileCounts? {
         val entries = try {
             parseEntries(input)
         } catch (e: Exception) {
@@ -102,7 +102,7 @@ class GamelistImporter @Inject constructor(
             return null
         }
         val romExtensions = catalog.extensionsFor(systemId)
-        var updated = 0
+        var counts = GamelistFileCounts()
         val matchedFavorites = HashSet<String>()
         for (entry in entries) {
             val existing = gameDao.findByTriple(sourceId, systemId, entry.relativePath)
@@ -132,15 +132,29 @@ class GamelistImporter @Inject constructor(
             )
             if (merged != existing) {
                 gameDao.update(merged)
-                updated++
+                counts += changeCounts(existing, merged)
             }
         }
         seenFavorites?.apply {
             clear()
             addAll(matchedFavorites)
         }
-        return updated
+        return counts
     }
+
+    private fun changeCounts(before: GameEntity, after: GameEntity) = GamelistFileCounts(
+        gamesUpdated = 1,
+        favoritesAdded = if (after.isFavorite && !before.isFavorite) 1 else 0,
+        playStatsUpdated = if (
+            after.playCount != before.playCount ||
+            after.playTimeMinutes != before.playTimeMinutes ||
+            after.lastPlayed != before.lastPlayed
+        ) {
+            1
+        } else {
+            0
+        },
+    )
 
     private fun parseEntries(input: InputStream): List<GamelistEntry> {
         val entries = mutableListOf<GamelistEntry>()

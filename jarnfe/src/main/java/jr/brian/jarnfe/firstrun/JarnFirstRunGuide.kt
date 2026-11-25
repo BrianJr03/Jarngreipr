@@ -28,6 +28,7 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.settings.JarnEsdeImport
 
 @Composable
 internal fun FirstRunGuide(
@@ -56,6 +57,7 @@ internal fun FirstRunGuide(
             FirstRunProgress(run, twoScreens)
             FirstRunGuideContent(run, twoScreens, actions, Modifier.weight(1f).fillMaxWidth())
             FirstRunButtons(run, actions, primaryFocus)
+            if (run.step == JarnFirstRunStep.Esde && !run.confirmingSkip) FirstRunEsdeNotNow(actions)
         }
     }
 }
@@ -147,11 +149,15 @@ private fun FirstRunButtons(
         if (run.offersLessons) {
             FirstRunSecondaryButton(R.string.jarnfe_ready_show_buttons, actions::showLessons)
         }
-        JarnButton(
-            label = stringResource(primaryLabelRes(run)),
-            onClick = actions::primary,
-            modifier = Modifier.weight(1f).focusRequester(primaryFocus),
-        )
+        if (run.step == JarnFirstRunStep.Esde && !run.confirmingSkip) {
+            FirstRunEsdePrimaryButton(actions, primaryFocus, Modifier.weight(1f))
+        } else {
+            JarnButton(
+                label = stringResource(primaryLabelRes(run)),
+                onClick = actions::primary,
+                modifier = Modifier.weight(1f).focusRequester(primaryFocus),
+            )
+        }
     }
 }
 
@@ -169,6 +175,7 @@ internal fun primaryLabelRes(run: JarnFirstRunState): Int = when {
     run.confirmingSkip -> R.string.jarnfe_first_run_keep_going
     run.step == JarnFirstRunStep.Welcome -> R.string.jarnfe_first_run_start
     run.step == JarnFirstRunStep.Done -> R.string.jarnfe_first_run_finish
+    run.step == JarnFirstRunStep.Esde -> esdePrimaryLabelRes(JarnEsdeImport.importer?.state)
     run.step.gesture != null && !run.practiced -> R.string.jarnfe_first_run_do_it
     else -> R.string.jarnfe_first_run_next
 }

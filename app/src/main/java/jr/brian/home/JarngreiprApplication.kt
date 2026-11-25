@@ -103,6 +103,7 @@ class JarngreiprApplication :
     JarnUtilitiesProvider,
     JarnRssDataProvider,
     JarnLauncherSettingsProvider,
+    jr.brian.jarnfe.settings.JarnGamelistSettingProvider,
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
     JarnArtDetectorProvider,
     JarnEsdeRomsProvider,
@@ -258,6 +259,12 @@ class JarngreiprApplication :
     override val jarnLauncherSettings: JarnLauncherSettings
         get() = jarnLauncherSettingsProvider.get()
 
+    @Inject
+    lateinit var jarnGamelistSettingProvider: Provider<jr.brian.home.jarn.AppJarnGamelistSetting>
+
+    override val jarnGamelistSetting: jr.brian.jarnfe.settings.JarnGamelistSetting
+        get() = jarnGamelistSettingProvider.get()
+
     /** A [Provider] so Classic never builds Jarn FE's RSS bridge. */
     @Inject
     lateinit var jarnRssDataProvider: Provider<AppJarnRssData>
@@ -354,6 +361,7 @@ class JarngreiprApplication :
     private fun prewarmSingletons() {
         Thread({
             runCatching { esdePreferencesManagerProvider.get() }
+            runCatching { jr.brian.home.esde.util.BundledEsdeSystems.prewarm(this) }
         }, "jarngreipr-prewarm").apply {
             isDaemon = true
             priority = Thread.NORM_PRIORITY - 1

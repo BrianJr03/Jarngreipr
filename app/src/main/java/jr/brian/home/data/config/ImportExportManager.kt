@@ -304,6 +304,7 @@ class ImportExportManager @Inject constructor(
             jarnMatchCommandPanel = jarnLookStore.matchCommandPanel,
             jarnMatchCommandPanelFonts = jarnLookStore.matchCommandPanelFonts,
             jarnFontsPromptShown = jarnLookStore.fontsPromptShown,
+            jarnEsdeImportNoticeShown = jarnLookStore.esdeImportNoticeShown,
             jarnWallpaperScreens = jarnLookStore.wallpaperScreensBackup(),
             jarnPreview = jarnPreviewStore.previewBackup(),
             romSearch = RomSearchConfig(
@@ -726,6 +727,7 @@ class ImportExportManager @Inject constructor(
         config.jarnMatchCommandPanel?.let(jarnLookStore::setMatchCommandPanel)
         config.jarnMatchCommandPanelFonts?.let(jarnLookStore::setMatchCommandPanelFonts)
         if (config.jarnFontsPromptShown == true) jarnLookStore.markFontsPromptShown()
+        if (config.jarnEsdeImportNoticeShown == true) jarnLookStore.markEsdeImportNoticeShown()
         jarnLookStore.restoreWallpaperScreens(config.jarnWallpaperScreens)
         jarnPreviewStore.restorePreview(config.jarnPreview)
     }

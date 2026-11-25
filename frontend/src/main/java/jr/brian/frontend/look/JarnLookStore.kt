@@ -58,6 +58,16 @@ class JarnLookStore @Inject constructor(
         prefs.edit { putBoolean(KEY_FONTS_PROMPT_SHOWN, true) }
     }
 
+    private val _esdeImportNoticeShown = MutableStateFlow(prefs.getBoolean(KEY_ESDE_IMPORT_NOTICE_SHOWN, false))
+
+    /** The one-time "ES-DE found" notice after skipping the tour was shown. Never turns back off. */
+    val esdeImportNoticeShown: Boolean get() = _esdeImportNoticeShown.value
+
+    fun markEsdeImportNoticeShown() {
+        _esdeImportNoticeShown.value = true
+        prefs.edit { putBoolean(KEY_ESDE_IMPORT_NOTICE_SHOWN, true) }
+    }
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -198,6 +208,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_MATCH_COMMAND_PANEL_FONTS = "match_command_panel_fonts"
         const val KEY_FONTS_PROMPT_SHOWN = "fonts_prompt_shown"
+        const val KEY_ESDE_IMPORT_NOTICE_SHOWN = "esde_import_notice_shown"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
         const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"

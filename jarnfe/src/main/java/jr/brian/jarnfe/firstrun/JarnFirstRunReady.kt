@@ -82,6 +82,7 @@ internal fun FirstRunReadyStep(twoScreens: Boolean, actions: JarnFirstRunActions
             }
         }
     }
+    FirstRunReadyEsdeSummary()
     FirstRunSwitchBackNote()
 }
 

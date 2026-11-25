@@ -1,0 +1,681 @@
+<?xml version="1.0"?>
+<!-- This is the ES-DE Frontend find rules configuration file for Android -->
+<ruleList>
+    <emulator name="RETROARCH">
+        <rule type="androidpackage">
+            <!-- 64-bit and 32-bit releases from the retroarch.com website -->
+            <entry>com.retroarch.aarch64/com.retroarch.browser.retroactivity.RetroActivityFuture</entry>
+            <entry>com.retroarch.ra32/com.retroarch.browser.retroactivity.RetroActivityFuture</entry>
+            <!-- All other releases -->
+            <entry>com.retroarch/com.retroarch.browser.retroactivity.RetroActivityFuture</entry>
+        </rule>
+    </emulator>
+    <emulator name="2600-EMU">
+        <!-- Atari 2600 emulator 2600.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.A2600Emu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="APS3E">
+        <!-- Sony PlayStation 3 emulator aPS3e -->
+        <rule type="androidpackage">
+            <entry>aenu.aps3e.premium/aenu.aps3e.EmulatorActivity</entry>
+            <entry>aenu.aps3e/aenu.aps3e.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="ARMSX1">
+        <!-- Sony PlayStation 1 emulator ARMSX1 -->
+        <rule type="androidpackage">
+            <entry>com.nanodata.armsx/com.armsx2.Main</entry>
+        </rule>
+    </emulator>
+    <emulator name="ARMSX2">
+        <!-- Sony PlayStation 2 emulator ARMSX2 -->
+        <rule type="androidpackage">
+            <entry>come.nanodata.armsx2/com.armsx2.MainActivity</entry>
+            <entry>com.armsx2/.MainActivity</entry>
+            <entry>com.armsx2.nightly/com.armsx2.MainActivity</entry>
+            <entry>come.nanodata.armsx2/kr.co.iefriends.pcsx2.MainActivity</entry>
+            <entry>come.nanodata.armsx2.debug/kr.co.iefriends.pcsx2.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="ARMSX3">
+        <!-- Sony PlayStation 3 emulator ARMSX3-->
+        <rule type="androidpackage">
+            <entry>com.armsx3/com.armsx2.Main</entry>
+        </rule>
+    </emulator>
+    <emulator name="AX360E">
+        <!-- Microsoft Xbox 360 emulator aX360e -->
+        <rule type="androidpackage">
+            <entry>aenu.ax360e/aenu.ax360e.EmulatorActivity</entry>
+            <entry>aenu.ax360e.free/aenu.ax360e.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="AZAHAR">
+        <!-- Nintendo 3DS emulator Azahar -->
+        <rule type="androidpackage">
+            <entry>org.azahar_emu.azahar/org.citra.citra_emu.activities.EmulationActivity</entry>
+            <entry>io.github.lime3ds.android/org.citra.citra_emu.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="AZAHARPLUS">
+        <!-- Nintendo 3DS emulator AzaharPlus -->
+        <rule type="androidpackage">
+            <entry>io.github.azaharplus.android/org.citra.citra_emu.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="BACHATAS4">
+        <!-- Sony PlayStation 4 emulator BachataS4 -->
+        <rule type="androidpackage">
+            <entry>com.bachatas4.android/.DirectLaunchActivity</entry>
+            <entry>com.bachatas4.android.github/com.bachatas4.android.DirectLaunchActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="C64-EMU">
+        <!-- Commodore 8-bit computer emulator C64.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.C64Emu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="CEMU">
+        <!-- Nintendo Wii U emulator Cemu -->
+        <rule type="androidpackage">
+            <entry>info.cemu.cemu/info.cemu.cemu.emulation.EmulationActivity</entry>
+            <entry>info.cemu.Cemu/info.cemu.Cemu.emulation.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="CITRA">
+        <!-- Nintendo 3DS emulator Citra -->
+        <rule type="androidpackage">
+            <entry>org.citra.citra_emu/.activities.EmulationActivity</entry>
+            <entry>org.citra.citra_emu/.ui.main.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="CITRA-CANARY">
+        <!-- Nintendo 3DS emulator Citra Canary -->
+        <rule type="androidpackage">
+            <entry>org.citra.citra_emu.canary/org.citra.citra_emu.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="CITRA-MMJ">
+        <!-- Nintendo 3DS emulator Citra MMJ -->
+        <rule type="androidpackage">
+            <entry>org.citra.emu/.ui.EmulationActivity</entry>
+            <entry>com.antutu.ABenchMark/org.citra.emu.ui.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="COLEM">
+        <!-- Coleco ColecoVision and Adam emulator ColEm -->
+        <rule type="androidpackage">
+            <entry>com.fms.colem.deluxe/com.fms.emulib.TVActivity</entry>
+            <entry>com.fms.colem/com.fms.emulib.TVActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DOLPHIN">
+        <!-- Nintendo GameCube and Wii emulator Dolphin -->
+        <rule type="androidpackage">
+            <entry>org.dolphinemu.dolphinemu/.ui.main.TvMainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DOLPHIN-MMJR">
+        <!-- Dolphin MMJR, fork of Nintendo GameCube and Wii emulator Dolphin -->
+        <rule type="androidpackage">
+            <entry>org.mm.jr/org.dolphinemu.dolphinemu.ui.main.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DOLPHIN-MMJR2">
+        <!-- Dolphin MMJR2, fork of Nintendo GameCube and Wii emulator Dolphin -->
+        <rule type="androidpackage">
+            <entry>org.dolphinemu.mmjr/org.dolphinemu.dolphinemu.ui.main.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DROIDARCADIA">
+        <!-- Emerson Arcadia 2001 emulator DroidArcadia -->
+        <rule type="androidpackage">
+            <entry>com.amigan.droidarcadia/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DRASTIC">
+        <!-- Nintendo DS emulator DraStic -->
+        <rule type="androidpackage">
+            <entry>com.dsemu.drastic/.DraSticActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DSMILE">
+        <!-- VTech V.Smile emulator D.Smile -->
+        <rule type="androidpackage">
+            <entry>com.dsmile.emulator/.ui.EmuActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="DUCKSTATION">
+        <!-- Sony PlayStation 1 emulator DuckStation -->
+        <rule type="androidpackage">
+            <entry>com.github.stenzek.duckstation/.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="EDEN">
+        <!-- Nintendo Switch emulator Eden -->
+        <rule type="androidpackage">
+            <entry>dev.eden.eden_emulator/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+            <entry>dev.legacy.eden_emulator/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+            <entry>com.miHoYo.Yuanshen/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="EDEN-NIGHTLY">
+        <!-- Nintendo Switch emulator Eden -->
+        <rule type="androidpackage">
+            <entry>dev.eden.eden_emulator.nightly/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+            <entry>dev.legacy.eden_emulator.nightly/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+            <entry>com.miHoYo.Yuanshen.nightly/org.yuzu.yuzu_emu.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="EKA2L1">
+        <!-- Symbian and Nokia N-Gage emulator EKA2L1 -->
+        <rule type="androidpackage">
+            <entry>com.github.eka2l1/.emu.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="EMUCOREC">
+        <!-- Sony PlayStation 3 emulator EmuCoreC -->
+        <rule type="androidpackage">
+            <entry>com.sbro.emucorec/.core.ps3.Emulator</entry>
+        </rule>
+    </emulator>
+    <emulator name="EMUCOREV">
+        <!-- Sony PlayStation Vita emulator EmuCoreV -->
+        <rule type="androidpackage">
+            <entry>com.sbro.emucorev/.core.vita.Emulator</entry>
+        </rule>
+    </emulator>
+    <emulator name="EMUCOREX">
+        <!-- Sony PlayStation 2 emulator EmuCoreX -->
+        <rule type="androidpackage">
+            <entry>com.sbro.emucorex/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="EPSXE">
+        <!-- Sony PlayStation 1 emulator ePSXe -->
+        <rule type="androidpackage">
+            <entry>com.epsxe.ePSXe/.ePSXe</entry>
+        </rule>
+    </emulator>
+    <emulator name="FLYCAST">
+        <!-- Sega Dreamcast emulator Flycast -->
+        <rule type="androidpackage">
+            <entry>com.flycast.emulator/com.flycast.emulator.MainActivity</entry>
+            <entry>com.flycast.emulator/com.reicast.emulator.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="FMSX">
+        <!-- MSX home computer emulator fMSX -->
+        <rule type="androidpackage">
+            <entry>com.fms.fmsx.deluxe/com.fms.emulib.TVActivity</entry>
+            <entry>com.fms.fmsx/com.fms.emulib.TVActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="FPSE">
+        <!-- Sony PlayStation 1 emulator FPse -->
+        <rule type="androidpackage">
+            <entry>com.emulator.fpse/.Main</entry>
+        </rule>
+    </emulator>
+    <emulator name="FPSE-NG">
+        <!-- Sony PlayStation 1 emulator FPseNG -->
+        <rule type="androidpackage">
+            <entry>com.emulator.fpse64/.Main</entry>
+        </rule>
+    </emulator>
+    <emulator name="GAMEHUB-LITE">
+        <!-- Steam client GameHub Lite -->
+        <rule type="androidpackage">
+            <entry>emuready.gamehub.lite/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+            <entry>gamehub.lite/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+            <entry>com.antutu.ABenchMark/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+            <entry>com.tencent.ig/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+            <entry>com.ludashi.aibench/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+            <entry>com.antutu.benchmark.full/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="GAMENATIVE">
+        <!-- Steam client GameNative -->
+        <rule type="androidpackage">
+            <entry>app.gamenative/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="GBA-EMU">
+        <!-- Nintendo Game Boy Advance emulator GBA.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.GbaEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="GBC-EMU">
+        <!-- Nintendo Game Boy and Game Boy Color emulator GBC.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.GbcEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="HAKUX">
+        <!-- Microsoft Xbox emulator hakuX -->
+        <rule type="androidpackage">
+            <entry>com.rfandango.haku_x/.LauncherActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="IDTECH4A++">
+        <!-- idTech game engine collection idTech4A++ -->
+        <rule type="androidpackage">
+            <entry>com.karin.idTech4Amm/com.n0n3m4.q3e.Q3EMain</entry>
+        </rule>
+    </emulator>
+    <emulator name="INES">
+        <!-- Nintendo NES and Famicom emulator iNES -->
+        <rule type="androidpackage">
+            <entry>com.fms.ines.free/com.fms.emulib.TVActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="INFINITY">
+        <!-- PICO-8 Fantasy Console game engine Infinity -->
+        <rule type="androidpackage">
+            <entry>me.dt2dev.infinity/.SchemeActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="IRATAJAGUAR">
+        <!-- Atari Jaguar emulator IrataJaguar -->
+        <rule type="androidpackage">
+            <entry>ru.vastness.altmer.iratajaguar/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="J2ME-LOADER">
+        <!-- Java 2 Micro Edition emulator J2ME Loader -->
+        <rule type="androidpackage">
+            <entry>ru.playsoftware.j2meloader/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="JL-MOD">
+        <!-- Java 2 Micro Edition emulator JL-Mod -->
+        <rule type="androidpackage">
+            <entry>ru.woesss.j2meloader/ru.playsoftware.j2meloader.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="KENJI-NX">
+        <!-- Nintendo Switch emulator Kenji-NX -->
+        <rule type="androidpackage">
+            <entry>org.kenjinx.android/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="LIME3DS">
+        <!-- Nintendo 3DS emulator Lime3DS -->
+        <rule type="androidpackage">
+            <entry>io.github.lime3ds.android/.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="LINKBOY">
+        <!-- Nintendo Game Boy, Game Boy Color and Game Boy Advance emulator Linkboy -->
+        <rule type="androidpackage">
+            <entry>com.pixelrespawn.linkboy/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="LYNX-EMU">
+        <!-- Atari Lynx emulator Lynx.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.LynxEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="M64PLUS-FZ">
+        <!-- Nintendo 64 emulator M64Plus FZ -->
+        <rule type="androidpackage">
+            <entry>org.mupen64plusae.v3.fzurita.amazon/paulscode.android.mupen64plusae.SplashActivity</entry>
+            <entry>org.mupen64plusae.v3.fzurita.pro/paulscode.android.mupen64plusae.SplashActivity</entry>
+            <entry>org.mupen64plusae.v3.fzurita/paulscode.android.mupen64plusae.SplashActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MAME4DROID-CURRENT">
+        <!-- Arcade emulator MAME4droid Current -->
+        <rule type="androidpackage">
+            <entry>com.seleuco.mame4d2024/com.seleuco.mame4droid.MAME4droid</entry>
+        </rule>
+    </emulator>
+    <emulator name="MAME4DROID">
+        <!-- Arcade emulator MAME4droid -->
+        <rule type="androidpackage">
+            <entry>com.seleuco.mame4droid/.MAME4droid</entry>
+        </rule>
+    </emulator>
+    <emulator name="MAME4DROID-2024">
+        <!-- Arcade emulator MAME4droid 2024 -->
+        <rule type="androidpackage">
+            <entry>com.seleuco.mame4d2024/com.seleuco.mame4droid.MAME4droid</entry>
+        </rule>
+    </emulator>
+    <emulator name="MANDARINE">
+        <!-- Nintendo 3DS emulator Mandarine -->
+        <rule type="androidpackage">
+            <entry>io.github.mandarine3ds.mandarine/.activities.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MASTERGEAR">
+        <!-- Sega Game Gear, Master System and SG-1000 emulator MasterGear -->
+        <rule type="androidpackage">
+            <entry>com.fms.mg/com.fms.emulib.TVActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MD-EMU">
+        <!-- Sega Mega Drive/Genesis emulator MD.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.MdEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MELONDS">
+        <!-- Nintendo DS and DSi emulator melonDS -->
+        <rule type="androidpackage">
+            <entry>me.magnum.melonds/.ui.emulator.EmulatorActivity</entry>
+            <entry>me.magnum.melondualds/me.magnum.melonds.ui.emulator.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MELONDS-NIGHTLY">
+        <!-- Nintendo DS and DSi emulator melonDS (Nightly build) -->
+        <rule type="androidpackage">
+            <entry>me.magnum.melonds.nightly/me.magnum.melonds.ui.emulator.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MSX-EMU">
+        <!-- MSX home computer and ColecoVision emulator MSX.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.MsxEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MUPEN64PLUS-AE">
+        <!-- Nintendo 64 emulator Mupen64Plus AE -->
+        <rule type="androidpackage">
+            <entry>org.mupen64plusae.v3.alpha/paulscode.android.mupen64plusae.SplashActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MY-BOY">
+        <!-- Nintendo Game Boy Advance emulator My Boy! -->
+        <rule type="androidpackage">
+            <entry>com.fastemulator.gba/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="MY-OLDBOY">
+        <!-- Nintendo Game Boy and Game Boy Color emulator My OldBoy! -->
+        <rule type="androidpackage">
+            <entry>com.fastemulator.gbc/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NEO-EMU">
+        <!-- SNK Neo Geo emulator NEO.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.NeoEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NES-EMU">
+        <!-- Nintendo NES and Famicom emulator NES.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.NesEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NESOID">
+        <!-- Nintendo NES and Famicom emulator Nesoid -->
+        <rule type="androidpackage">
+            <entry>com.androidemu.nes/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NETHERSX2">
+        <!-- Sony PlayStation 2 emulator NetherSX2 (AetherSX2) -->
+        <rule type="androidpackage">
+            <entry>xyz.aethersx2.android/.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NETHERSX2-TURNIP">
+        <!-- Sony PlayStation 2 emulator NetherSX2-Turnip -->
+        <rule type="androidpackage">
+            <entry>xyz.aethersx2.tturnip/xyz.aethersx2.android.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NETHERSX2-TURNIP-CLASSIC">
+        <!-- Sony PlayStation 2 emulator NetherSX2-Turnip Classic -->
+        <rule type="androidpackage">
+            <entry>xyz.aethersx2.cturnip/xyz.aethersx2.android.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NGP-EMU">
+        <!-- SNK Neo Geo Pocket emulator NGP.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.NgpEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="NOODS">
+        <!-- Nintendo DS and Game Boy Advance emulator NooDS -->
+        <rule type="androidpackage">
+            <entry>com.hydra.noods/.FileBrowser</entry>
+        </rule>
+    </emulator>
+    <emulator name="OPENBOR">
+        <!-- OpenBOR game engine -->
+        <rule type="androidpackage">
+            <entry>org.openbor.engine/.GameActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PANDA3DS">
+        <!-- Nintendo 3DS emulator Panda3DS -->
+        <rule type="androidpackage">
+            <entry>com.panda3ds.pandroid/.app.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PCE-EMU">
+        <!-- NEC PC Engine/TurboGrafx-16 emulator PCE.emu -->
+        <rule type="androidpackage">
+            <entry>com.PceEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PICO-8">
+        <!-- PICO-8 Fantasy Console (game engine) -->
+        <rule type="androidpackage">
+            <entry>io.wip.pico8/com.godot.game.GodotAppLauncher</entry>
+        </rule>
+    </emulator>
+    <emulator name="PIZZA-BOY-GBA">
+        <!-- Nintendo Game Boy Advance emulator Pizza Boy GBA -->
+        <rule type="androidpackage">
+            <entry>it.dbtecno.pizzaboygbapro/it.dbtecno.pizzaboygbapro.MainActivity</entry>
+            <entry>it.dbtecno.pizzaboygba/it.dbtecno.pizzaboygba.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PIZZA-BOY-GBC">
+        <!-- Nintendo Game Boy and Game Boy Color emulator Pizza Boy GBC -->
+        <rule type="androidpackage">
+            <entry>it.dbtecno.pizzaboypro/it.dbtecno.pizzaboypro.MainActivity</entry>
+            <entry>it.dbtecno.pizzaboy/it.dbtecno.pizzaboy.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PIZZA-BOY-SC">
+        <!-- Sega multi-system emulator Pizza Boy SC -->
+        <rule type="androidpackage">
+            <entry>it.dbtecno.pizzaboyscpro/.MainActivity</entry>
+            <entry>it.dbtecno.pizzaboyscbasic/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PLAY!">
+        <!-- Sony PlayStation 2 emulator Play! -->
+        <rule type="androidpackage">
+            <entry>com.virtualapplications.play/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="PPSSPP">
+        <!-- Sony PlayStation Portable emulator PPSSPP -->
+        <rule type="androidpackage">
+            <entry>org.ppsspp.ppssppgold/org.ppsspp.ppsspp.PpssppActivity</entry>
+            <entry>org.ppsspp.ppsspp/.PpssppActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="REAL3DOPLAYER">
+        <!-- 3DO Interactive Multiplayer emulator Real3DOPlayer -->
+        <rule type="androidpackage">
+            <entry>ru.vastness.altmer.real3doplayer/.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="REDREAM">
+        <!-- Sega Dreamcast emulator Redream -->
+        <rule type="androidpackage">
+            <entry>io.recompiled.redream/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="RUFFLE">
+        <!-- Adobe Flash player Ruffle -->
+        <rule type="androidpackage">
+            <entry>rs.ruffle/.PlayerActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SATURN-EMU">
+        <!-- Sega Saturn emulator Saturn.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.SaturnEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SCUMMVM">
+        <!-- ScummVM game engine -->
+        <rule type="androidpackage">
+            <entry>org.scummvm.scummvm.debug/org.scummvm.scummvm.SplashActivity</entry>
+            <entry>org.scummvm.scummvm/org.scummvm.scummvm.SplashActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SEEDLESSDS">
+        <!-- Nintendo DS and DSi emulator SeedlessDS -->
+        <rule type="androidpackage">
+            <entry>com.seedlessds.app/.LaunchGame</entry>
+        </rule>
+    </emulator>
+    <emulator name="SKYEMU">
+        <!-- Nintendo Game Boy, Game Boy Color, Game Boy Advance and DS emulator SkyEmu -->
+        <rule type="androidpackage">
+            <entry>com.sky.SkyEmu/.EnhancedNativeActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SKYLINE">
+        <!-- Nintendo Switch emulator Skyline -->
+        <rule type="androidpackage">
+            <entry>skyline.emu/emu.skyline.EmulationActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SNES9X-EXPLUS">
+        <!-- Super Nintendo emulator Snes9x EX+ -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.Snes9xPlus/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SPECCY">
+        <!-- Sinclair ZX Spectrum emulator Speccy -->
+        <rule type="androidpackage">
+            <entry>com.fms.speccy.deluxe/com.fms.emulib.TVActivity</entry>
+            <entry>com.fms.speccy/com.fms.emulib.TVActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="STARBOARD">
+        <!-- PortMaster compatibility layer Starboard -->
+        <rule type="androidpackage">
+            <entry>org.force9.starboard/.ui.game.GameActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SUPER3">
+        <!-- Sega Model 3 emulator SUPER3 -->
+        <rule type="androidpackage">
+            <entry>com.izzy2lost.super3/com.izzy2lost.super3.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SWAN-EMU">
+        <!-- Bandai WonderSwan emulator Swan.emu -->
+        <rule type="androidpackage">
+            <entry>com.explusalpha.SwanEmu/com.imagine.BaseActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="SWF-PLAYER">
+        <!-- Adobe Flash player SWF Player -->
+        <rule type="androidpackage">
+            <entry>com.issess.flashplayerpro/com.issess.flashplayer.player.FlashPlayerActivity</entry>
+            <entry>com.issess.flashplayer/.player.FlashPlayerActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="VIRTUAL-VIRTUAL-BOY">
+        <!-- Nintendo Virtual Boy emulator Virtual Virtual Boy -->
+        <rule type="androidpackage">
+            <entry>com.simongellis.vvb/.MainActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="VISUAL-PINBALL">
+        <!-- Pinball simulator Visual Pinball -->
+        <rule type="androidpackage">
+            <entry>org.vpinball.vpinball_bgfx/org.vpinball.app.VPinballActivity</entry>
+            <entry>org.vpinball.app/.VpxLauncherActivity</entry>
+            <entry>org.vpinball.app.gl/org.vpinball.app.VPinballActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="VITA3K">
+        <!-- Sony PlayStation Vita emulator Vita3K -->
+        <rule type="androidpackage">
+            <entry>org.vita3k.emulator/.Emulator</entry>
+            <entry>org.vita3k.emulator.ikhoeyZX/org.vita3k.emulator.Emulator</entry>
+        </rule>
+    </emulator>
+    <emulator name="WATERMELONDS">
+        <!-- Nintendo DS and DSi emulator WatermelonDS -->
+        <rule type="androidpackage">
+            <entry>me.magnum.melondualds/me.magnum.melonds.ui.emulator.EmulatorActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="WINLATOR-CMOD">
+        <!-- Microsoft Windows emulator Winlator Cmod -->
+        <rule type="androidpackage">
+            <entry>com.winlator.cmod/.XServerDisplayActivity</entry>
+            <entry>com.winlator.vanilla/com.winlator.cmod.XServerDisplayActivity</entry>
+            <entry>com.ludashi.benchmark/com.winlator.cmod.XServerDisplayActivity</entry>
+            <entry>com.tencent.ig/com.winlator.cmod.XServerDisplayActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="WINLATOR-GLIBC">
+        <!-- Microsoft Windows emulator Winlator Cmod Glibc -->
+        <rule type="androidpackage">
+            <entry>com.winlator/.XServerDisplayActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="WINLATOR-PROOT">
+        <!-- Microsoft Windows emulator Winlator Cmod PRoot -->
+        <rule type="androidpackage">
+            <entry>com.cmodded.winlator/com.winlator.XServerDisplayActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="WINNATIVE">
+        <!-- Microsoft Windows emulator WinNative -->
+        <rule type="androidpackage">
+            <entry>com.winnative.cmod/com.winlator.cmod.runtime.display.XServerDisplayActivity</entry>
+            <entry>com.antutu.ABenchMark/com.winlator.cmod.runtime.display.XServerDisplayActivity</entry>
+            <entry>com.ludashi.benchmark/com.winlator.cmod.runtime.display.XServerDisplayActivity</entry>
+            <entry>com.tencent.ig/com.winlator.cmod.runtime.display.XServerDisplayActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="X1-BOX">
+        <!-- Microsoft Xbox emulator X1 BOX -->
+        <rule type="androidpackage">
+            <entry>com.izzy2lost.x1box/.LauncherActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="XENDROID">
+        <!-- Microsoft Xbox 360 emulator XenDroid -->
+        <rule type="androidpackage">
+            <entry>xendroid.compose/.EmulatorHostActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="XENRA">
+        <!-- Microsoft Xbox and Xbox 360 emulator Xenra -->
+        <rule type="androidpackage">
+            <entry>Ali.Xanite.green/Ali.Xanite.LauncherActivity</entry>
+            <entry>Ali.Xanite/Ali.Xanite.LauncherActivity</entry>
+        </rule>
+    </emulator>
+    <emulator name="YABASANSHIRO-2">
+        <!-- Sega Saturn emulator Yaba Sanshiro 2 -->
+        <rule type="androidpackage">
+            <entry>org.devmiyax.yabasanshioro2.pro/org.uoyabause.android.Yabause</entry>
+            <entry>org.devmiyax.yabasanshioro2/org.uoyabause.android.Yabause</entry>
+        </rule>
+    </emulator>
+</ruleList>

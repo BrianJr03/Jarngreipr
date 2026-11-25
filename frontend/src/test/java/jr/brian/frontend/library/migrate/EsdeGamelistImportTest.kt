@@ -46,6 +46,7 @@ class EsdeGamelistImportTest {
 
     private val catalog = StubSystemCatalog(
         SystemDef(id = "nes", displayName = "Nintendo", extensions = setOf("nes")),
+        SystemDef(id = "snes", displayName = "Super Nintendo", extensions = setOf("sfc")),
     )
 
     private lateinit var db: LibraryDatabase
@@ -226,6 +227,52 @@ class EsdeGamelistImportTest {
 
         migration.reimportGamelists(force = false)
         assertEquals(12, game(sourceId, "Mario.nes").playCount)
+    }
+
+    @Test
+    fun `the result counts what the run did`() = runBlocking {
+        val sourceId = addSource(SAF_TREE)
+        addGame(sourceId, "Mario.nes")
+        addGame(sourceId, "Zelda.nes", playCount = 99, lastPlayed = parseEsdeDate("20300101T000000"))
+        addGame(sourceId, "Metroid.nes")
+        writeEsdeGamelist(
+            game("Mario.nes", name = "Mario", playCount = 3),
+            game("Zelda.nes", name = "Zelda", playCount = 1),
+            "<game><path>./Metroid.nes</path><genre>Action</genre></game>",
+        )
+        writeGamelist(File(volume, "ES-DE/gamelists/snes"), game("Mario World.sfc", name = "World", playCount = 1))
+        writeGamelist(File(volume, "ES-DE/gamelists/mystery"), game("x.bin", name = "X", playCount = 1))
+
+        val result = migration.reimportGamelists(force = true)
+
+        assertEquals(1, result.gamelistsFound)
+        assertEquals(0, result.skippedUnchanged)
+        assertEquals(0, result.unreadable)
+        assertEquals(1, result.systemsMatched)
+        assertEquals(listOf("mystery"), result.unrecognisedSystems)
+        assertEquals(3, result.gamesUpdated)
+        // Mario and Zelda become favorites; only Mario's stats rise.
+        assertEquals(2, result.favoritesAdded)
+        assertEquals(1, result.playStatsUpdated)
+        assertEquals(null, migration.gamelistProgress.value)
+    }
+
+    @Test
+    fun `skipped and unreadable gamelists are counted`() = runBlocking {
+        val sourceId = addSource(SAF_TREE)
+        addGame(sourceId, "Mario.nes")
+        writeEsdeGamelist(game("Mario.nes", name = "Mario", playCount = 3))
+        migration.reimportGamelists(force = false)
+
+        val unchanged = migration.reimportGamelists(force = false)
+        assertEquals(1, unchanged.skippedUnchanged)
+        assertEquals(0, unchanged.gamesUpdated)
+
+        esdeGamelist().writeText("<gameList><game><path>./Mario.nes</path")
+        esdeGamelist().setLastModified(esdeGamelist().lastModified() + 10_000)
+        val broken = migration.reimportGamelists(force = false)
+        assertEquals(1, broken.unreadable)
+        assertEquals(0, broken.skippedUnchanged)
     }
 
     private suspend fun addSource(treeUri: String): Long =
