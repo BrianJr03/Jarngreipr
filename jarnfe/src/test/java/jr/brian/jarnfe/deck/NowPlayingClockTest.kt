@@ -108,10 +108,10 @@ class NowPlayingClockTest {
     }
 
     @Test
-    fun `the dimmed readout keeps its tone, then fades after a long dim`() {
+    fun `the dimmed readout starts at 90 percent, then fades further after a long dim`() {
         assertEquals(1f, NowPlayingTone.Awake.readoutAlpha(), 0f)
-        assertEquals(1f, NowPlayingTone.Dimmed.readoutAlpha(), 0f)
-        assertEquals(NOW_PLAYING_LONG_DIM_ALPHA, NowPlayingTone.LongDimmed.readoutAlpha(), 0f)
-        assertTrue(NOW_PLAYING_LONG_DIM_ALPHA < 1f)
+        assertEquals(0.9f, NowPlayingTone.Dimmed.readoutAlpha(), 0.001f)
+        assertEquals(0.54f, NowPlayingTone.LongDimmed.readoutAlpha(), 0.001f)
+        assertTrue(NowPlayingTone.LongDimmed.readoutAlpha() < NowPlayingTone.Dimmed.readoutAlpha())
     }
 }

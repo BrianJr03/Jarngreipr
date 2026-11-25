@@ -61,9 +61,15 @@ internal enum class NowPlayingTone { Awake, Dimmed, LongDimmed }
 /** After a long dim the readout keeps this much of the lowest text tone. */
 internal const val NOW_PLAYING_LONG_DIM_ALPHA = 0.6f
 
-/** How much of the readout colour shows: all of it until a long dim. */
-internal fun NowPlayingTone.readoutAlpha(): Float =
-    if (this == NowPlayingTone.LongDimmed) NOW_PLAYING_LONG_DIM_ALPHA else 1f
+/** The dimmed readout starts at this much of the lowest text tone. */
+internal const val NOW_PLAYING_DIM_ALPHA_START = 0.9f
+
+/** How much of the readout colour shows: all of it awake, 90% dimmed, then 60% of that after a long dim. */
+internal fun NowPlayingTone.readoutAlpha(): Float = when (this) {
+    NowPlayingTone.Awake -> 1f
+    NowPlayingTone.Dimmed -> NOW_PLAYING_DIM_ALPHA_START
+    NowPlayingTone.LongDimmed -> NOW_PLAYING_DIM_ALPHA_START * NOW_PLAYING_LONG_DIM_ALPHA
+}
 
 /** Awake keeps the given colour. Dimmed drops to the lowest text tone at once, then fades further. */
 @Composable
