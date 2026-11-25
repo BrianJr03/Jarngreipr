@@ -241,7 +241,8 @@ data class JarngreiprConfig(
         //      notice after skipping the tour was shown. Null on older blobs keeps it. Import only sets it.
         // v66: added SystemConfig.hiddenGames, games hidden one by one. Null on older blobs keeps them.
         // v67: added FeatureConfig.jarnSystemSorts, each system's game order. Null on older blobs keeps them.
-        const val CONFIG_VERSION = 67
+        // v68: added JarnDisplayConfig.playingScreenVisible and playingDim, Jarn FE Now Playing.
+        const val CONFIG_VERSION = 68
     }
 }
 
@@ -483,6 +484,8 @@ data class JarnDisplayConfig(
     val lastPlayedTextVisible: Boolean? = null,
     val gameRowVisible: Boolean? = null,
     val systemBackgroundVisible: Boolean? = null,
+    val playingScreenVisible: Boolean? = null,
+    val playingDim: String? = null,
 )
 
 @Serializable

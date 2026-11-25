@@ -143,7 +143,7 @@ class AppJarnGameLauncherTest {
         install(EMULATOR)
         prefs.setGameEmulator(KEY, EMULATOR)
 
-        assertEquals(JarnLaunchResult.Launched(EMULATOR), launch())
+        assertEquals(JarnLaunchResult.Launched(EMULATOR, displayId = PRIMARY_DISPLAY_ID), launch())
 
         assertEquals(EMULATOR to PRIMARY_DISPLAY_ID, host.starts.single())
         assertEquals(1, recents.entries.value.size)
@@ -188,7 +188,7 @@ class AppJarnGameLauncherTest {
 
         val result = launch(choice = JarnEmulatorChoice(EMULATOR, corePath = "/core.so"))
 
-        assertEquals(JarnLaunchResult.Launched(EMULATOR), result)
+        assertEquals(JarnLaunchResult.Launched(EMULATOR, displayId = PRIMARY_DISPLAY_ID), result)
         assertEquals(EMULATOR, prefs.getGameEmulator(KEY))
         assertEquals("/core.so", prefs.getGameCore(KEY))
         assertEquals(null, prefs.getGameLaunchCommand(KEY))
@@ -254,7 +254,7 @@ class AppJarnGameLauncherTest {
         prefs.addGameCompanion(KEY, "com.example.two")
 
         assertEquals(
-            JarnLaunchResult.Launched(EMULATOR, listOf("com.example.one", "com.example.two")),
+            JarnLaunchResult.Launched(EMULATOR, listOf("com.example.one", "com.example.two"), PRIMARY_DISPLAY_ID),
             launch(),
         )
     }
@@ -269,7 +269,7 @@ class AppJarnGameLauncherTest {
         )
 
         assertEquals(
-            JarnLaunchResult.Launched("com.example.game"),
+            JarnLaunchResult.Launched("com.example.game", displayId = 7),
             launch(target = JarnLaunchTarget.Display(7), ref = androidGame),
         )
         assertEquals("com.example.game" to 7, host.starts.single())
@@ -286,7 +286,7 @@ class AppJarnGameLauncherTest {
         prefs.setGameEmulator(KEY, RETROARCH)
         prefs.setGameCore(KEY, "/core.so")
 
-        assertEquals(JarnLaunchResult.Launched(RETROARCH), launch())
+        assertEquals(JarnLaunchResult.Launched(RETROARCH, displayId = PRIMARY_DISPLAY_ID), launch())
     }
 
     @Test

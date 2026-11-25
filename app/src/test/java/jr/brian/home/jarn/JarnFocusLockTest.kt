@@ -180,7 +180,7 @@ class JarnFocusLockTest {
         installLaunchable(EMULATOR)
         prefs.setGameEmulator(KEY, EMULATOR)
 
-        assertEquals(JarnLaunchResult.Launched(EMULATOR), launch())
+        assertEquals(JarnLaunchResult.Launched(EMULATOR, displayId = TARGET_DISPLAY), launch())
 
         assertSyncedToTarget()
     }
@@ -191,7 +191,7 @@ class JarnFocusLockTest {
         prefs.setGameEmulator(KEY, EMULATOR)
         prefs.setGameLaunchCommand(KEY, "%EMULATOR_RETROARCH%")
 
-        assertEquals(JarnLaunchResult.Launched(RETROARCH), launch())
+        assertEquals(JarnLaunchResult.Launched(RETROARCH, displayId = TARGET_DISPLAY), launch())
 
         assertSyncedToTarget()
     }
@@ -205,7 +205,7 @@ class JarnFocusLockTest {
             absolutePath = null,
         )
 
-        assertEquals(JarnLaunchResult.Launched(ANDROID_GAME), launch(androidGame))
+        assertEquals(JarnLaunchResult.Launched(ANDROID_GAME, displayId = TARGET_DISPLAY), launch(androidGame))
 
         assertSyncedToTarget()
     }

@@ -22,17 +22,27 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import java.util.Date
 
-private data class JarnDeviceStatus(val time: String, val batteryPercent: Int?)
+/** At or below this the battery reads as low. */
+internal const val LOW_BATTERY_PERCENT = 15
+
+internal data class JarnDeviceStatus(val time: String, val batteryPercent: Int?, val isCharging: Boolean = false)
+
+internal val JarnDeviceStatus.isBatteryLow: Boolean
+    get() = !isCharging && batteryPercent != null && batteryPercent <= LOW_BATTERY_PERCENT
 
 private fun readDeviceStatus(context: Context): JarnDeviceStatus {
-    val battery = context.getSystemService(BatteryManager::class.java)
-        ?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        ?.takeIf { it in 0..100 }
-    return JarnDeviceStatus(DateFormat.getTimeFormat(context).format(Date()), battery)
+    val manager = context.getSystemService(BatteryManager::class.java)
+    val battery = manager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it in 0..100 }
+    return JarnDeviceStatus(
+        time = DateFormat.getTimeFormat(context).format(Date()),
+        batteryPercent = battery,
+        isCharging = manager?.isCharging == true,
+    )
 }
 
+/** The clock ticks once a minute and the battery on its own broadcasts, so nothing polls. */
 @Composable
-private fun rememberDeviceStatus(): JarnDeviceStatus {
+internal fun rememberDeviceStatus(): JarnDeviceStatus {
     val context = LocalContext.current
     var status by remember(context) { mutableStateOf(readDeviceStatus(context)) }
     DisposableEffect(context) {

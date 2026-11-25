@@ -38,6 +38,7 @@ import jr.brian.jarnfe.session.JarnOsFocusPull
 import jr.brian.jarnfe.session.onScreenTapped
 import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
+import jr.brian.jarnfe.deck.JarnNowPlaying
 import jr.brian.jarnfe.launch.jarnPlaySessionsOrNull
 import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 
@@ -129,6 +130,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         JarnHomeEntry.onWindowResumed(screen)
+        JarnNowPlaying.onWindowResumed(screen)
         jarnPlaySessionsOrNull()?.onWindowResumed(screen.name)
     }
 
@@ -138,6 +140,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
         JarnSession.update { onWindowCovered() }
         if (!isChangingConfigurations && !isFinishing && display?.state == Display.STATE_ON) {
             JarnHomeEntry.onWindowCovered(screen)
+            JarnNowPlaying.onWindowStopped(screen)
         }
         if (!isChangingConfigurations) jarnPlaySessionsOrNull()?.onWindowStopped(screen.name)
     }

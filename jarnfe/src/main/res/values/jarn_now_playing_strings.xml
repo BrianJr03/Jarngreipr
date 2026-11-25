@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_now_playing_title">Now playing</string>
+    <string name="jarnfe_now_playing_session">This session %1$s</string>
+    <string name="jarnfe_now_playing_show_deck">Show Deck</string>
+    <string name="jarnfe_now_playing_companion">Companion</string>
+    <string name="jarnfe_now_playing_pill">Playing %1$s</string>
+    <string name="jarnfe_now_playing_charging">Charging</string>
+    <string name="jarnfe_now_playing_battery_low">Battery low</string>
+    <string name="jarnfe_settings_playing_title">Bottom screen while playing</string>
+    <string name="jarnfe_settings_playing_show">Show Now Playing</string>
+    <string name="jarnfe_settings_playing_show_hint">Cover, session time, clock and battery</string>
+    <string name="jarnfe_settings_playing_dim">Dim after</string>
+    <plurals name="jarnfe_dim_seconds">
+        <item quantity="one">%1$d s</item>
+        <item quantity="other">%1$d s</item>
+    </plurals>
+    <plurals name="jarnfe_dim_minutes">
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <string name="jarnfe_dim_never">Never</string>
+</resources>

@@ -63,7 +63,7 @@ class JarnSystemSortsConfigImportTest {
 
     @Test
     fun `schema version covers game sorts`() {
-        assertEquals(67, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(68, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

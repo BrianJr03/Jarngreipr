@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
+import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.core.model.Experience
 import jr.brian.home.canvas.model.CanvasItem
@@ -230,6 +231,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             lastPlayedTextVisible = it.lastPlayedTextVisible ?: shown?.lastPlayedTextVisible,
             gameRowVisible = it.gameRowVisible ?: shown?.gameRowVisible,
             systemBackgroundVisible = it.systemBackgroundVisible ?: shown?.systemBackgroundVisible,
+            playingScreenVisible = it.playingScreenVisible ?: shown?.playingScreenVisible,
+            playingDim = it.playingDim?.takeIf { id -> JarnPlayingDim.fromId(id) != null } ?: shown?.playingDim,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

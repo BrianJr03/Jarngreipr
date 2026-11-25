@@ -49,9 +49,10 @@ internal fun romFileStatus(missing: Boolean, canSeeAllFiles: Boolean): JarnGameF
     else -> JarnGameFileStatus.Unknown
 }
 
-internal fun RomLaunchOutcome.toJarnResult(companionChoices: List<String>): JarnLaunchResult =
+/** [gameDisplayId] is where the engine sent the game, so Jarn knows which of its windows it covers. */
+internal fun RomLaunchOutcome.toJarnResult(companionChoices: List<String>, gameDisplayId: Int? = null): JarnLaunchResult =
     when (this) {
-        is RomLaunchOutcome.Launched -> JarnLaunchResult.Launched(packageName, companionChoices)
+        is RomLaunchOutcome.Launched -> JarnLaunchResult.Launched(packageName, companionChoices, gameDisplayId)
         is RomLaunchOutcome.AppNotInstalled ->
             JarnLaunchResult.Failed(JarnLaunchFailure.AppNotInstalled, packageName)
         RomLaunchOutcome.RomPathNotFound -> JarnLaunchResult.MissingRom
@@ -91,6 +92,7 @@ class AppJarnGameLauncher @Inject constructor(
         }
 
         val companionChoices = mutableListOf<String>()
+        LastGameDisplay.id = null
         val outcome = engine.launchGame(
             host = launchHost(host, companionChoices),
             game = game,
@@ -104,7 +106,7 @@ class AppJarnGameLauncher @Inject constructor(
                 fallbackSafTreeUri = request.game.sourceTreeUri,
             ),
         )
-        return outcome.toJarnResult(companionChoices)
+        return outcome.toJarnResult(companionChoices, LastGameDisplay.id)
     }
 
     override fun grantFileAccess(host: Activity, game: JarnGameRef, treeUri: String): Boolean =

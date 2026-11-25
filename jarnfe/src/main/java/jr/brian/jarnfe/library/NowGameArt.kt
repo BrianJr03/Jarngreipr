@@ -34,12 +34,14 @@ internal fun nowGameArt(slots: Map<MediaKind, String>, wideArtPath: String?): No
     )
 }
 
-/** Pass a settled game. The result never holds another game's art. */
+/**
+ * Pass a settled game. The result never holds another game's art. [canLoad] is true for a page
+ * meant to show beside a running game, which the usual gate would keep empty.
+ */
 @Composable
-internal fun rememberNowGameArt(game: JarnLibraryGame): NowGameArt {
+internal fun rememberNowGameArt(game: JarnLibraryGame, canLoad: Boolean = rememberJarnArtCanLoad()): NowGameArt {
     val context = LocalContext.current
     val library = remember(context) { context.jarnLibraryDataOrNull() }
-    val canLoad = rememberJarnArtCanLoad()
     val wideArt = rememberGameWideArt(game, canLoad)
     val loaded by produceState<Pair<String, Map<MediaKind, String>>?>(null, library, game.id, canLoad) {
         when {

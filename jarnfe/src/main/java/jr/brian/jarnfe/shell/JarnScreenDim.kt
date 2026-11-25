@@ -19,8 +19,8 @@ import jr.brian.core.ui.theme.JarnTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val SCREEN_DIM_ALPHA = 0.14f
-private const val DIM_LIFT_MILLIS = 240
+internal const val SCREEN_DIM_ALPHA = 0.14f
+internal const val DIM_LIFT_MILLIS = 240
 private const val DIM_SETTLE_MILLIS = 320
 private const val DIM_DIRECTION_GAP_MILLIS = 170L
 
@@ -51,7 +51,7 @@ internal class JarnDimGate(private var shown: Float, private val gapMillis: Long
     }
 }
 
-private fun dimSpec(target: Float, motion: JarnMotion): AnimationSpec<Float> = when {
+internal fun jarnScreenDimSpec(target: Float, motion: JarnMotion): AnimationSpec<Float> = when {
     motion.reduced -> motion.panel.spec()
     target > 0f -> tween(DIM_SETTLE_MILLIS, easing = JarnEasingStandard)
     else -> tween(DIM_LIFT_MILLIS, easing = JarnEasingStandard)
@@ -59,7 +59,10 @@ private fun dimSpec(target: Float, motion: JarnMotion): AnimationSpec<Float> = w
 
 /** Separate from screen activation, which snaps to 0 the moment a screen loses control. */
 @Composable
-internal fun rememberJarnScreenDim(target: Float): State<Float> {
+internal fun rememberJarnScreenDim(
+    target: Float,
+    spec: (target: Float, motion: JarnMotion) -> AnimationSpec<Float> = ::jarnScreenDimSpec,
+): State<Float> {
     val motion = JarnTheme.motion
     val dim = remember { Animatable(target) }
     val gate = remember { JarnDimGate(target) }
@@ -67,13 +70,14 @@ internal fun rememberJarnScreenDim(target: Float): State<Float> {
     LaunchedEffect(target) {
         delay(gate.waitMillis(target, SystemClock.uptimeMillis()))
         gate.commit(target, SystemClock.uptimeMillis())
-        scope.launch { dim.animateTo(target, dimSpec(target, motion)) }
+        scope.launch { dim.animateTo(target, spec(target, motion)) }
     }
     return remember(dim) { dim.asState() }
 }
 
-internal fun Modifier.jarnScreenDim(dim: State<Float>): Modifier = drawWithContent {
+/** [alpha] is the black at full dim. A screen handing off control uses the light default. */
+internal fun Modifier.jarnScreenDim(dim: State<Float>, alpha: Float = SCREEN_DIM_ALPHA): Modifier = drawWithContent {
     drawContent()
     val amount = dim.value
-    if (amount > 0f) drawRect(Color.Black, alpha = amount * SCREEN_DIM_ALPHA)
+    if (amount > 0f) drawRect(Color.Black, alpha = amount * alpha)
 }
