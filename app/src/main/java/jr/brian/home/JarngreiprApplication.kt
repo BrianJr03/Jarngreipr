@@ -354,6 +354,7 @@ class JarngreiprApplication :
     private fun prewarmSingletons() {
         Thread({
             runCatching { esdePreferencesManagerProvider.get() }
+            runCatching { jr.brian.home.esde.util.BundledEsdeSystems.prewarm(this) }
         }, "jarngreipr-prewarm").apply {
             isDaemon = true
             priority = Thread.NORM_PRIORITY - 1

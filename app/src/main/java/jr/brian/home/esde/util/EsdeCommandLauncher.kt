@@ -11,6 +11,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
+import java.io.InputStream
 
 data class EmulatorOption(
     val packageName: String,
@@ -295,35 +296,40 @@ object EsdeCommandLauncher {
 
     fun parseCustomRules(findRulesFile: File): Map<String, List<String>> {
         if (!findRulesFile.exists()) return emptyMap()
+        return runCatching { findRulesFile.inputStream().use(::parseRules) }
+            .onFailure { Log.e(TAG, "Error reading es_find_rules.xml", it) }
+            .getOrDefault(emptyMap())
+    }
+
+    /** Emulator name to its "package/activity" entries. A broken file keeps what was read before the error. */
+    fun parseRules(input: InputStream): Map<String, List<String>> {
         val rules = mutableMapOf<String, MutableList<String>>()
         try {
             val parser = Xml.newPullParser()
-            findRulesFile.inputStream().use { input ->
-                parser.setInput(input, "UTF-8")
-                var emulatorName: String? = null
-                var eventType = parser.eventType
-                val textBuffer = StringBuilder()
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-                    when (eventType) {
-                        XmlPullParser.START_TAG -> {
-                            textBuffer.clear()
-                            if (parser.name == "emulator") {
-                                emulatorName = parser.getAttributeValue(null, "name")
-                                if (emulatorName != null) rules[emulatorName] = mutableListOf()
-                            }
-                        }
-
-                        XmlPullParser.TEXT -> textBuffer.append(parser.text)
-                        XmlPullParser.END_TAG -> {
-                            if (parser.name == "entry" && emulatorName != null) {
-                                val entry = textBuffer.toString().trim()
-                                if (entry.isNotEmpty()) rules[emulatorName]?.add(entry)
-                            }
-                            textBuffer.clear()
+            parser.setInput(input, "UTF-8")
+            var emulatorName: String? = null
+            var eventType = parser.eventType
+            val textBuffer = StringBuilder()
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                when (eventType) {
+                    XmlPullParser.START_TAG -> {
+                        textBuffer.clear()
+                        if (parser.name == "emulator") {
+                            emulatorName = parser.getAttributeValue(null, "name")
+                            if (emulatorName != null) rules[emulatorName] = mutableListOf()
                         }
                     }
-                    eventType = parser.next()
+
+                    XmlPullParser.TEXT -> textBuffer.append(parser.text)
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "entry" && emulatorName != null) {
+                            val entry = textBuffer.toString().trim()
+                            if (entry.isNotEmpty()) rules[emulatorName]?.add(entry)
+                        }
+                        textBuffer.clear()
+                    }
                 }
+                eventType = parser.next()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing es_find_rules.xml", e)
@@ -342,8 +348,9 @@ object EsdeCommandLauncher {
         val emulatorMatch = emulatorRegex.find(launchCommand) ?: return null
         val emulatorName = emulatorMatch.groupValues[1]
 
-        val allEntries = (customRules[emulatorName] ?: emptyList()) + (EsdeBuiltinCommands.RULES[emulatorName]
-            ?: emptyList())
+        val allEntries = (customRules[emulatorName] ?: emptyList()) +
+            (EsdeBuiltinCommands.RULES[emulatorName] ?: emptyList()) +
+            BundledEsdeSystems.rules(context)[emulatorName].orEmpty()
         if (allEntries.isEmpty()) {
             Log.w(TAG, "No find rules for emulator: $emulatorName")
             return null
