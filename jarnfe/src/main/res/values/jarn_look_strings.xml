@@ -13,4 +13,12 @@
     <string name="jarnfe_look_match_cp_unavailable">Unavailable. Install or update Command Panel.</string>
     <string name="jarnfe_look_match_cp_unverified">Unavailable. This copy of Command Panel couldn\'t be verified.</string>
     <string name="jarnfe_look_match_cp_unreadable">Unavailable. Command Panel\'s colors couldn\'t be read.</string>
+    <string name="jarnfe_look_match_cp_fonts">Match Command Panel fonts</string>
+    <string name="jarnfe_look_match_cp_fonts_available">Turn on to use Command Panel\'s fonts.</string>
+    <string name="jarnfe_look_match_cp_fonts_available_named">Command Panel is on %1$s. Turn on to use its fonts.</string>
+    <string name="jarnfe_look_match_cp_fonts_on">Using Command Panel\'s fonts.</string>
+    <string name="jarnfe_look_match_cp_fonts_on_named">Using %1$s\'s fonts.</string>
+    <string name="jarnfe_look_match_cp_fonts_none">This Command Panel look uses the standard font.</string>
+    <string name="jarnfe_look_match_cp_fonts_none_named">%1$s uses the standard font.</string>
+    <string name="jarnfe_look_match_cp_fonts_unreadable">Unavailable. Command Panel\'s fonts couldn\'t be read.</string>
 </resources>

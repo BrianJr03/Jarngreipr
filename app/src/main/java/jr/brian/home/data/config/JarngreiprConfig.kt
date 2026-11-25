@@ -231,7 +231,9 @@ data class JarngreiprConfig(
         // v60: added JarnDisplayConfig.gameRowVisible, Jarn FE "Show game row" on Now. Null keeps it.
         // v61: added JarnDisplayConfig.systemBackgroundVisible, Jarn FE "System background" on Now.
         //      Null on older blobs, and import keeps the current value.
-        const val CONFIG_VERSION = 61
+        // v62: added FeatureConfig.jarnMatchCommandPanelFonts, whether Jarn FE uses Command Panel's
+        //      fonts. Separate from jarnMatchCommandPanel. Null on older blobs keeps the current value.
+        const val CONFIG_VERSION = 62
     }
 }
 
@@ -421,6 +423,8 @@ data class FeatureConfig(
     val jarnFirstRunDone: Boolean? = null,
     /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
     val jarnMatchCommandPanel: Boolean? = null,
+    /** v62: Jarn FE uses Command Panel's fonts. Null on pre-v62 exports, and import keeps the current value. */
+    val jarnMatchCommandPanelFonts: Boolean? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
