@@ -229,7 +229,9 @@ data class JarngreiprConfig(
         // v59: added JarnDisplayConfig.systemLogoVisible, gameCountVisible and lastPlayedTextVisible,
         //      the optional parts of Jarn FE Now's system view. Null on older blobs keeps them.
         // v60: added JarnDisplayConfig.gameRowVisible, Jarn FE "Show game row" on Now. Null keeps it.
-        const val CONFIG_VERSION = 60
+        // v61: added JarnDisplayConfig.systemBackgroundVisible, Jarn FE "System background" on Now.
+        //      Null on older blobs, and import keeps the current value.
+        const val CONFIG_VERSION = 61
     }
 }
 
@@ -462,6 +464,7 @@ data class JarnDisplayConfig(
     val gameCountVisible: Boolean? = null,
     val lastPlayedTextVisible: Boolean? = null,
     val gameRowVisible: Boolean? = null,
+    val systemBackgroundVisible: Boolean? = null,
 )
 
 @Serializable

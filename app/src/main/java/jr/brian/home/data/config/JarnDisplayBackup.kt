@@ -26,6 +26,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     gameCountVisible = gameCountVisible,
     lastPlayedTextVisible = lastPlayedTextVisible,
     gameRowVisible = gameRowVisible,
+    systemBackgroundVisible = systemBackgroundVisible,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -47,4 +48,5 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     gameCountVisible = gameCountVisible ?: current.gameCountVisible,
     lastPlayedTextVisible = lastPlayedTextVisible ?: current.lastPlayedTextVisible,
     gameRowVisible = gameRowVisible ?: current.gameRowVisible,
+    systemBackgroundVisible = systemBackgroundVisible ?: current.systemBackgroundVisible,
 )

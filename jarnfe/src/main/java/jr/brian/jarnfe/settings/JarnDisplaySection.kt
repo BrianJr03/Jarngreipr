@@ -75,6 +75,11 @@ private fun NowPageGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
         NowPartRow(R.string.jarnfe_settings_show_game_row, R.string.jarnfe_settings_show_game_row_hint, display.gameRowVisible) { show ->
             store.updateDisplay { it.copy(gameRowVisible = show) }
         }
+        NowPartRow(
+            R.string.jarnfe_settings_system_background,
+            R.string.jarnfe_settings_system_background_hint,
+            display.systemBackgroundVisible,
+        ) { show -> store.updateDisplay { it.copy(systemBackgroundVisible = show) } }
     }
 }
 

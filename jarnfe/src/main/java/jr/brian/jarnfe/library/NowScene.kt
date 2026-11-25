@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.look.rememberJarnDisplay
 
 private const val SHADE_START = 0.38f
 private const val SHADE_MIDDLE = 0.62f
@@ -54,17 +55,25 @@ internal fun NowScene(
 
 @Composable
 private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?) {
+    val showsBackground = rememberJarnDisplay().systemBackgroundVisible
     val target = when (selection) {
         LibrarySelection.None -> emptyList()
-        is LibrarySelection.System -> nowSystemPaths(selection.system, systemNow)
+        is LibrarySelection.System -> if (showsBackground) nowSystemPaths(selection.system, systemNow) else emptyList()
         is LibrarySelection.Game -> nowGamePaths(selection.game, rememberNowSceneArt(selection.game))
     }
     NowRevealWhen(target != null)
     val paths = rememberHeldPaths(target)
-    val wall = rememberHeldWall(systemNow).takeIf { selection != LibrarySelection.None }
+    val wall = rememberHeldWall(systemNow).takeIf { nowShowsWall(selection, showsBackground) }
     LibraryHeldArt(paths) {
         wall?.let { LibraryCoverWall(it.systemId, it.covers, Modifier.matchParentSize()) }
     }
+}
+
+/** The cover wall stands in for system art, so hiding the system background hides it on a system too. */
+internal fun nowShowsWall(selection: LibrarySelection, showsSystemBackground: Boolean): Boolean = when (selection) {
+    LibrarySelection.None -> false
+    is LibrarySelection.System -> showsSystemBackground
+    is LibrarySelection.Game -> true
 }
 
 @Composable

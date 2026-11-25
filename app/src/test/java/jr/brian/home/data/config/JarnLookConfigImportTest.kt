@@ -615,8 +615,29 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `the system background choice survives a backup, and an older backup leaves it alone`() = runTest {
+        store.updateDisplay { it.copy(systemBackgroundVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemBackgroundVisible = true) }
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(json.toByteArray())).isSuccess)
+        assertFalse(JarnLookStore(ApplicationProvider.getApplicationContext()).display.systemBackgroundVisible)
+
+        val v60 = """{ "version": 60, "feature": { "jarnDisplay": { "gameRowVisible": false } } }"""
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(v60.toByteArray())).isSuccess)
+        assertFalse(store.display.systemBackgroundVisible)
+        assertFalse(store.display.gameRowVisible)
+    }
+
+    @Test
+    fun `the system background shows by default`() {
+        assertTrue(store.display.systemBackgroundVisible)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(60, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(61, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {
