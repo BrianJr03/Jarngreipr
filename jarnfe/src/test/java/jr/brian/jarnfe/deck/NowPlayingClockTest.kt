@@ -5,6 +5,7 @@ import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.settings.next
 import jr.brian.jarnfe.shell.JarnDeviceStatus
 import jr.brian.jarnfe.shell.isBatteryLow
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -80,5 +81,37 @@ class NowPlayingClockTest {
         assertEquals(0.3f, 1f - nowPlayingCoverShade(1f), 0.001f)
         assertEquals(0f, nowPlayingCoverShade(0f), 0f)
         assertEquals(nowPlayingCoverShade(1f), nowPlayingCoverShade(2f), 0f)
+    }
+
+    @Test
+    fun `a GameCube or 4 by 5 cover keeps the full height and its own width`() {
+        val gameCube = nowPlayingCoverSize(5f / 7f, 280.dp, 280.dp)
+        assertEquals(280f, gameCube.height.value, 0.01f)
+        assertEquals(200f, gameCube.width.value, 0.01f)
+        assertEquals(224f, nowPlayingCoverSize(0.8f, 280.dp, 280.dp).width.value, 0.01f)
+    }
+
+    @Test
+    fun `a square cover fills the cap and a wide one narrows to it, keeping its shape`() {
+        val square = nowPlayingCoverSize(1f, 280.dp, 280.dp)
+        assertEquals(280f, square.width.value, 0.01f)
+        assertEquals(280f, square.height.value, 0.01f)
+        val wide = nowPlayingCoverSize(1.6f, 280.dp, 280.dp)
+        assertEquals(280f, wide.width.value, 0.01f)
+        assertEquals(175f, wide.height.value, 0.01f)
+    }
+
+    @Test
+    fun `an unreadable shape falls back to 4 by 5`() {
+        assertEquals(224f, nowPlayingCoverSize(Float.NaN, 280.dp, 280.dp).width.value, 0.01f)
+        assertEquals(224f, nowPlayingCoverSize(0f, 280.dp, 280.dp).width.value, 0.01f)
+    }
+
+    @Test
+    fun `the dimmed readout keeps its tone, then fades after a long dim`() {
+        assertEquals(1f, NowPlayingTone.Awake.readoutAlpha(), 0f)
+        assertEquals(1f, NowPlayingTone.Dimmed.readoutAlpha(), 0f)
+        assertEquals(NOW_PLAYING_LONG_DIM_ALPHA, NowPlayingTone.LongDimmed.readoutAlpha(), 0f)
+        assertTrue(NOW_PLAYING_LONG_DIM_ALPHA < 1f)
     }
 }

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -28,6 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnStatLine
 import jr.brian.core.ui.components.JarnText
@@ -41,6 +41,7 @@ import jr.brian.jarnfe.library.LibraryHeldArt
 import jr.brian.jarnfe.library.NowGameArt
 import jr.brian.jarnfe.library.NowPill
 import jr.brian.jarnfe.library.nowCoverAspect
+import jr.brian.jarnfe.library.rememberNowArtBounds
 import jr.brian.jarnfe.library.nowLastPlayedText
 import jr.brian.jarnfe.library.nowPlaytimeText
 import jr.brian.jarnfe.library.resumeStatsStyle
@@ -48,17 +49,27 @@ import jr.brian.jarnfe.shell.JarnDeviceStatus
 import jr.brian.jarnfe.shell.isBatteryLow
 
 internal val NowPlayingCoverHeight = 280.dp
+
+/** A square cover at full height. Wider art narrows to this, so the text column keeps its room. */
+internal val NowPlayingCoverMaxWidth = 280.dp
 private val NowPlayingBackdropBlur = 24.dp
 private val StatusIconSize = 20.dp
 
 /** How readable one part of the page is: awake, freshly dimmed, or dimmed for a long time. */
 internal enum class NowPlayingTone { Awake, Dimmed, LongDimmed }
 
+/** After a long dim the readout keeps this much of the lowest text tone. */
+internal const val NOW_PLAYING_LONG_DIM_ALPHA = 0.6f
+
+/** How much of the readout colour shows: all of it until a long dim. */
+internal fun NowPlayingTone.readoutAlpha(): Float =
+    if (this == NowPlayingTone.LongDimmed) NOW_PLAYING_LONG_DIM_ALPHA else 1f
+
+/** Awake keeps the given colour. Dimmed drops to the lowest text tone at once, then fades further. */
 @Composable
 private fun NowPlayingTone.readoutColor(awake: Color): Color = when (this) {
     NowPlayingTone.Awake -> awake
-    NowPlayingTone.Dimmed -> JarnTheme.colors.textMid
-    NowPlayingTone.LongDimmed -> JarnTheme.colors.textLow
+    else -> JarnTheme.colors.textLow.let { it.copy(alpha = it.alpha * readoutAlpha()) }
 }
 
 /** The game's fanart, blurred under a scrim. With none, the still wallpaper behind shows through. */
@@ -72,14 +83,30 @@ internal fun BoxScope.NowPlayingBackdrop(fanartPath: String?) {
     Box(Modifier.matchParentSize().background(JarnTheme.colors.artScrim))
 }
 
-/** [dim] shades the cover itself, so at full dim it reads at 30% whatever sits behind it. */
+/**
+ * The cover box for an image of [aspect] (width over height): [maxHeight] tall unless that would
+ * pass [maxWidth], when it narrows to [maxWidth] and keeps the shape, so the art is never cut.
+ */
+internal fun nowPlayingCoverSize(aspect: Float, maxHeight: Dp, maxWidth: Dp): DpSize {
+    val safe = aspect.takeIf { it.isFinite() && it > 0f } ?: return DpSize(maxHeight * DEFAULT_PLAYING_ASPECT, maxHeight)
+    val width = maxHeight * safe
+    return if (width <= maxWidth) DpSize(width, maxHeight) else DpSize(maxWidth, maxWidth / safe)
+}
+
+private const val DEFAULT_PLAYING_ASPECT = 0.8f
+
+/**
+ * The whole cover, sized from the image's own shape. [dim] shades the cover itself, so at full
+ * dim it reads at 30% whatever sits behind it.
+ */
 @Composable
 internal fun NowPlayingCover(game: JarnLibraryGame, art: NowGameArt, dim: Float, modifier: Modifier = Modifier) {
     val shape = JarnTheme.tileShape
+    val bounds = rememberNowArtBounds(art.coverPath, canLoad = true)
+    val size = nowPlayingCoverSize(nowCoverAspect(bounds), NowPlayingCoverHeight, NowPlayingCoverMaxWidth)
     Box(
         modifier
-            .height(NowPlayingCoverHeight)
-            .aspectRatio(nowCoverAspect(null))
+            .size(size)
             .clearAndSetSemantics {}
             .clip(shape)
             .background(JarnTheme.colors.raised, shape)
@@ -95,7 +122,7 @@ internal fun NowPlayingCover(game: JarnLibraryGame, art: NowGameArt, dim: Float,
             cover == null -> JarnArtPlaceholder(game.title, Modifier.matchParentSize())
             else -> {
                 val paths = remember(cover) { listOf(cover) }
-                LibraryHeldArt(paths, ContentScale.Crop, canLoad = true) {
+                LibraryHeldArt(paths, ContentScale.Fit, canLoad = true) {
                     JarnArtPlaceholder(game.title, Modifier.matchParentSize())
                 }
             }
