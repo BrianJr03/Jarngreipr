@@ -20,6 +20,7 @@ import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnScrim
@@ -28,6 +29,7 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.core.ui.theme.rememberThemedStyle
 
 private const val HERO_TEXT_FRACTION = 0.55f
 private const val HERO_BODY_MAX_LINES = 3
@@ -45,6 +47,7 @@ fun JarnHeroPanel(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     artEndWidth: Dp? = null,
+    titleStyle: TextStyle = JarnTheme.type.display,
     art: @Composable BoxScope.() -> Unit,
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -69,7 +72,7 @@ fun JarnHeroPanel(
             eyebrow?.let { JarnHeroEyebrow(it) }
             JarnBalancedTitle(
                 title = title,
-                style = JarnTheme.type.display,
+                style = rememberThemedStyle(title, titleStyle, JarnTheme.baseType.display),
                 color = JarnTheme.colors.textHigh,
                 modifier = Modifier.weight(1f, fill = false),
             )
@@ -103,6 +106,11 @@ private fun JarnHeroEyebrow(text: String) {
                 .size(width = JarnTheme.space.lg, height = JarnTheme.space.activeBarHeight)
                 .background(JarnTheme.colors.accent, RoundedCornerShape(2.dp)),
         )
-        JarnText(text, JarnTheme.type.captionStrong, JarnTheme.colors.textHigh, maxLines = 1)
+        JarnText(
+            text,
+            rememberThemedStyle(text, JarnTheme.type.labelStrong, JarnTheme.baseType.labelStrong),
+            JarnTheme.colors.textHigh,
+            maxLines = 1,
+        )
     }
 }

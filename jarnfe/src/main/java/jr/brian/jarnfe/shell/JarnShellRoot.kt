@@ -18,6 +18,7 @@ import jr.brian.jarnfe.library.JarnEsdeRomsNoticeHost
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.jarnfe.look.JarnSwitchCuePreview
+import jr.brian.jarnfe.look.fontprompt.JarnFontPromptHost
 import jr.brian.jarnfe.look.rememberJarnAppearance
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnInput
@@ -40,6 +41,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
         reducedMotion = appearance.reducedMotion,
         screenActive = state.isLit(screen),
         switchCue = switchCue,
+        type = appearance.type,
     ) {
         CompositionLocalProvider(
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),
@@ -56,6 +58,9 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                         else -> DeckScreen(state)
                     }
                     JarnEsdeRomsNoticeHost(screen)
+                    if (screen == JarnScreen.Deck && firstRun?.coversShell(state.stageRoute) != true) {
+                        JarnFontPromptHost()
+                    }
                 }
             }
         }

@@ -59,7 +59,7 @@ internal fun JarnDrawableIcon(icon: Drawable?, modifier: Modifier = Modifier) {
 
 @Composable
 internal fun JarnAppNameLabel(label: String, labelSize: Int, modifier: Modifier = Modifier) {
-    val base = JarnTheme.type.label
+    val base = JarnTheme.baseType.label
     val scale = jarnAppLabelScale(labelSize)
     val style = base.copy(
         fontSize = if (base.fontSize.isSp) base.fontSize * scale else base.fontSize,

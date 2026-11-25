@@ -58,7 +58,7 @@ internal fun rememberCommandPanelProbe(): State<CommandPanelProbe> {
     return probe
 }
 
-private fun Context.hasCommandPanelProvider(): Boolean = runCatching {
+internal fun Context.hasCommandPanelProvider(): Boolean = runCatching {
     packageManager.resolveContentProvider(
         CommandPanelThemeContract.AUTHORITY,
         PackageManager.ComponentInfoFlags.of(0),

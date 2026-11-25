@@ -11,6 +11,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 import jr.brian.jarnfe.transition.jarnMarkHandoff
 import jr.brian.jarnfe.transition.jarnMarkSlot
+import jr.brian.core.ui.theme.rememberThemedStyle
 
 /**
  * The header label on either screen, in a slot that also holds the [gap] after it, so the rest
@@ -23,9 +24,10 @@ internal fun JarnWordmark(modifier: Modifier = Modifier, gap: Dp = JarnTheme.spa
     val density = LocalDensity.current
     val travelPx = with(density) { JarnTheme.motion.markTravel.toPx() }
     val gapPx = with(density) { gap.roundToPx() }
+    val word = stringResource(R.string.jarnfe_wordmark)
     JarnText(
-        text = stringResource(R.string.jarnfe_wordmark),
-        style = JarnTheme.type.heading,
+        text = word,
+        style = rememberThemedStyle(word, JarnTheme.type.heading, JarnTheme.baseType.heading),
         color = JarnTheme.colors.textHigh,
         modifier = Modifier
             .jarnMarkSlot(handoff, gapPx)

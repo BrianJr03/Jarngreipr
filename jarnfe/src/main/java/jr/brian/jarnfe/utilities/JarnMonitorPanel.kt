@@ -167,7 +167,7 @@ private fun MonitorMeter(item: MonitorMeterItem, modifier: Modifier = Modifier) 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             JarnText(item.label, JarnTheme.type.label, JarnTheme.colors.textMid, modifier = Modifier.weight(1f))
-            JarnText(item.value, JarnTheme.type.heading, JarnTheme.colors.textHigh, maxLines = 1)
+            JarnText(item.value, JarnTheme.baseType.heading, JarnTheme.colors.textHigh, maxLines = 1)
         }
         item.supporting?.let { UtilityNote(it) }
         item.fraction?.let { MonitorBar(it) }

@@ -56,8 +56,15 @@ internal fun rememberCommandPanelPalette(enabled: Boolean): State<CommandPanelPa
     return key(controller) { (controller?.palette ?: NoCommandPanelPalette).collectAsState() }
 }
 
+/** A shared reader that starts while a screen is started and re-reads on resume. */
+internal interface CommandPanelLifecycleTarget {
+    fun start()
+    fun refresh()
+    fun stop()
+}
+
 internal class CommandPanelLifecycleBinding(
-    private val controller: CommandPanelThemeController,
+    private val controller: CommandPanelLifecycleTarget,
 ) : LifecycleEventObserver {
     private var isStarted = false
 

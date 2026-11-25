@@ -32,7 +32,9 @@ import kotlinx.coroutines.launch
 
 val LocalJarnLook = staticCompositionLocalOf { JarnLooks.Default }
 val LocalJarnColors = staticCompositionLocalOf { JarnLooks.Default.resolvedColors }
-val LocalJarnType = staticCompositionLocalOf { JarnType() }
+private val JarnDefaultType = JarnType()
+
+val LocalJarnType = staticCompositionLocalOf { JarnDefaultType }
 val LocalJarnSpacing = staticCompositionLocalOf { JarnSpacing() }
 val LocalJarnRadius = staticCompositionLocalOf { JarnRadius() }
 val LocalJarnMotion = staticCompositionLocalOf { JarnMotion() }
@@ -50,6 +52,9 @@ object JarnTheme {
     val look: JarnLook @Composable get() = LocalJarnLook.current
     val colors: JarnColors @Composable get() = LocalJarnColors.current
     val type: JarnType @Composable get() = LocalJarnType.current
+
+    /** Jarn's own type, unaffected by font overrides. For captions, numbers, settings and game names. */
+    val baseType: JarnType get() = JarnDefaultType
     val space: JarnSpacing @Composable get() = LocalJarnSpacing.current
     val radius: JarnRadius @Composable get() = LocalJarnRadius.current
     val motion: JarnMotion @Composable get() = LocalJarnMotion.current
@@ -64,6 +69,7 @@ fun JarnTheme(
     reducedMotion: Boolean = false,
     screenActive: Boolean = true,
     switchCue: JarnSwitchCue = JarnSwitchCue.Pulse,
+    type: JarnType? = null,
     content: @Composable () -> Unit,
 ) {
     val animatorScale = rememberAnimatorDurationScale()
@@ -111,6 +117,7 @@ fun JarnTheme(
     CompositionLocalProvider(
         LocalJarnLook provides look,
         LocalJarnColors provides colors,
+        LocalJarnType provides (type ?: JarnDefaultType),
         LocalJarnMotion provides motion,
         LocalJarnScreenActive provides screenActive,
         LocalJarnScreenActivation provides activationState,

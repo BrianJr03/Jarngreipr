@@ -186,7 +186,7 @@ private fun RssArticleBody(
             .padding(horizontal = JarnTheme.space.stageMargin, vertical = JarnTheme.space.md),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
     ) {
-        JarnText(item.title, JarnTheme.type.title, JarnTheme.colors.textHigh)
+        JarnText(item.title, JarnTheme.baseType.title, JarnTheme.colors.textHigh)
         if (item.dateLabel.isNotEmpty()) {
             JarnText(item.dateLabel, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 1)
         }
@@ -202,7 +202,7 @@ private fun RssArticleBody(
                     .clip(JarnTheme.radius.mdShape),
             )
         }
-        JarnText(body, JarnTheme.type.body, JarnTheme.colors.textHigh)
+        JarnText(body, JarnTheme.baseType.body, JarnTheme.colors.textHigh)
     }
 }
 

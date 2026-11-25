@@ -32,7 +32,7 @@ fun JarnArtPlaceholder(title: String, modifier: Modifier = Modifier) {
         if (showTitle) {
             JarnText(
                 text = title,
-                style = JarnTheme.type.labelStrong,
+                style = JarnTheme.baseType.labelStrong,
                 color = JarnTheme.colors.textHigh,
                 maxLines = PLACEHOLDER_TITLE_MAX_LINES,
                 textAlign = TextAlign.Center,

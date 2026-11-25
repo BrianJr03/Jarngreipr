@@ -74,7 +74,7 @@ internal fun CanvasMusicSheet(data: JarnCanvasData, music: JarnCanvasMusic?, onC
     CanvasModalSheet(stringResource(R.string.jarnfe_canvas_music_title), first, onClose) {
         JarnText(
             text = music?.title ?: stringResource(R.string.jarnfe_canvas_music_idle),
-            style = JarnTheme.type.labelStrong,
+            style = JarnTheme.baseType.labelStrong,
             color = JarnTheme.colors.textHigh,
             maxLines = 2,
         )
