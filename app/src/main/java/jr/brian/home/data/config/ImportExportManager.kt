@@ -368,6 +368,7 @@ class ImportExportManager @Inject constructor(
         badgesVisible = managers.system.notificationManager.badgesVisible,
         shadeTabPage = managers.system.notificationManager.shadeTabPage,
         hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList(),
+        hiddenGames = managers.feature.esdePreferencesManager.state.value.hiddenGames.sorted(),
         systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings,
         rcNotificationsEnabled = managers.system.appUpdateManager.rcNotificationsEnabled
     )
@@ -743,6 +744,7 @@ class ImportExportManager @Inject constructor(
         }
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
         managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
+        managers.feature.esdePreferencesManager.restoreHiddenGames(config.hiddenGames)
         managers.feature.esdePreferencesManager.setAllSystemFolderMappings(config.systemFolderMappings)
         sys.appUpdateManager.setRcNotificationsEnabled(config.rcNotificationsEnabled)
     }

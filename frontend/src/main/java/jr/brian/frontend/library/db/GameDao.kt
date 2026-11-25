@@ -128,6 +128,18 @@ interface GameDao {
     )
     fun observePlayRows(): Flow<List<GamePlayRow>>
 
+    /**
+     * The system of each listed game whose hidden-game key (`system/path`) is in [keys], one row per
+     * game. Keys with no game left are skipped. Callers keep [keys] under SQLite's variable limit.
+     */
+    @Query(
+        """
+        SELECT systemId FROM games
+        WHERE isHidden = 0 AND (systemId || '/' || COALESCE(absolutePath, relativePath)) IN (:keys)
+        """
+    )
+    fun observeSystemsOfHiddenKeys(keys: List<String>): Flow<List<String>>
+
     @Query("SELECT sourceId, systemId, COUNT(*) AS gameCount FROM games GROUP BY sourceId, systemId")
     fun observeSourceCounts(): Flow<List<SourceGameCount>>
 

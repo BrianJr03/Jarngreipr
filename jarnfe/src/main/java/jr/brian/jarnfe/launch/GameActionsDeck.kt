@@ -143,6 +143,16 @@ internal fun GameSetupRows(game: JarnLibraryGame, controller: JarnGameActionsCon
         onClick = { controller.openEdit(game) },
     )
     if (setup?.usesRetroArch == true) CoreRow(setup, controller)
+    HideGameRow(game, controller)
+}
+
+@Composable
+private fun HideGameRow(game: JarnLibraryGame, controller: JarnGameActionsController) {
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_game_hide),
+        supporting = stringResource(R.string.jarnfe_game_hide_hint),
+        onClick = { controller.hideGame(game) },
+    )
 }
 
 @Composable

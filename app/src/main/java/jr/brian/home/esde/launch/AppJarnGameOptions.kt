@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.frontend.library.art.libraryHiddenGameKey
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.SourceDao
@@ -19,11 +20,13 @@ import jr.brian.home.esde.data.getGameCompanions
 import jr.brian.home.esde.data.getGameCore
 import jr.brian.home.esde.data.getGameEmulator
 import jr.brian.home.esde.data.getSystemEmulator
+import jr.brian.home.esde.data.hideGame
 import jr.brian.home.esde.data.setGameCore
 import jr.brian.home.esde.data.setGameEmulator
 import jr.brian.home.esde.data.setGameLaunchCommand
 import jr.brian.home.esde.data.setGameLaunchMaps
 import jr.brian.home.esde.data.setSystemEmulator
+import jr.brian.home.esde.data.unhideGame
 import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.esde.util.compatibleEmulators
 import jr.brian.home.esde.util.documentIdToStoragePath
@@ -224,6 +227,14 @@ class AppJarnGameOptions @Inject constructor(
         withContext(Dispatchers.IO) {
             val entity = findEntity(libraryKey) ?: return@withContext false
             gameDao.setFavorite(entity.id, favorite)
+            true
+        }
+
+    override suspend fun setHidden(libraryKey: String, hidden: Boolean): Boolean =
+        withContext(Dispatchers.IO) {
+            val entity = findEntity(libraryKey) ?: return@withContext false
+            val key = libraryHiddenGameKey(entity.systemId, entity.absolutePath, entity.relativePath)
+            if (hidden) esdePrefs.hideGame(key) else esdePrefs.unhideGame(key)
             true
         }
 

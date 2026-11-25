@@ -53,6 +53,7 @@
     <string name="jarnfe_backup_area_pins">Pinned apps</string>
     <string name="jarnfe_backup_area_game_folders">Game folders</string>
     <string name="jarnfe_backup_area_hidden_systems">Hidden systems</string>
+    <string name="jarnfe_backup_area_hidden_games">Hidden games</string>
     <string name="jarnfe_backup_area_art">Art choices</string>
     <string name="jarnfe_backup_area_recent">Recently played</string>
     <string name="jarnfe_backup_area_look">Look and display</string>

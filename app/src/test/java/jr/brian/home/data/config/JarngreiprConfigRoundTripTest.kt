@@ -287,4 +287,29 @@ class JarngreiprConfigRoundTripTest {
         assertNull(romSearch.gameCommandMap)
         assertNull(romSearch.gameCoreMap)
     }
+
+    @Test
+    fun `hidden games round-trip through the config`() {
+        val original = JarngreiprConfig(system = SystemConfig(hiddenGames = listOf("gba/a.gba", "snes/b.sfc")))
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(json.encodeToString(original))
+
+        assertEquals(listOf("gba/a.gba", "snes/b.sfc"), decoded.system.hiddenGames)
+    }
+
+    @Test
+    fun `pre-v66 config decodes with no hidden games so import keeps them`() {
+        val preV66 = """
+            {
+              "version": 65,
+              "system": {
+                "hiddenSystems": ["ps2"]
+              }
+            }
+        """.trimIndent()
+
+        val system = json.decodeFromString<JarngreiprConfig>(preV66).system
+        assertNull(system.hiddenGames)
+        assertEquals(listOf("ps2"), system.hiddenSystems)
+    }
 }

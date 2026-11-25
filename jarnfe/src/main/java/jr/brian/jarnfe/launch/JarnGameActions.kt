@@ -12,6 +12,8 @@ import jr.brian.frontend.library.art.GameArtChoices
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.media.MediaKind
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.shell.JarnNotices
@@ -142,6 +144,9 @@ internal class JarnGameActionsController(
     private var loadJob: Job? = null
     private var panelOpenBeforeOffer = false
 
+    /** Set by a hide, so the game that takes its place opens on Play. */
+    private var focusNextGame = false
+
     val artChoices: StateFlow<GameArtChoices> = data.artChoices
 
     /** An open companion offer outlives a switch of game, since Now can move on while a game starts. */
@@ -159,6 +164,10 @@ internal class JarnGameActionsController(
         state.setup = null
         state.artKinds = null
         state.clearPending()
+        if (focusNextGame) {
+            focusNextGame = false
+            state.focusActions()
+        }
         reload(game)
     }
 
@@ -261,6 +270,22 @@ internal class JarnGameActionsController(
             } else if (!saved) {
                 JarnNotices.show(R.string.jarnfe_game_favorite_failed)
             }
+        }
+    }
+
+    /**
+     * The game leaves every Jarn list at once, so control goes back to the Stage on its neighbour,
+     * and the Deck opens that game on Play, as one press of B would leave it.
+     */
+    fun hideGame(game: JarnLibraryGame) {
+        activity.lifecycleScope.launch {
+            val saved = runCatching { options.setHidden(game.id, true) }.getOrDefault(false)
+            if (!saved) return@launch JarnNotices.show(R.string.jarnfe_game_hide_failed)
+            JarnLibrary.update { focusAfterHiding(game.id) }
+            focusNextGame = true
+            JarnSession.update { activate(JarnScreen.Stage).withDeckPanel(false) }
+            JarnLibrary.requestStageRefocus()
+            JarnNotices.show(R.string.jarnfe_game_hidden)
         }
     }
 

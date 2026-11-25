@@ -7,7 +7,9 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.library.art.ArtSourceDetector
+import jr.brian.frontend.library.art.libraryHiddenGameKey
 import jr.brian.frontend.library.db.GameDao
+import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.SystemDao
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.home.esde.data.ESDEPreferencesManager
@@ -21,6 +23,7 @@ import jr.brian.home.esde.data.setHiddenSystems
 import jr.brian.home.esde.data.setSafTreeUri
 import jr.brian.home.esde.data.setSystemCustomization
 import jr.brian.home.esde.data.setSystemEmulator
+import jr.brian.home.esde.data.unhideAllGames
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.compatibleEmulators
@@ -31,16 +34,21 @@ import jr.brian.jarnfe.launch.JarnEmulatorOption
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.systems.JarnAddedFolder
 import jr.brian.jarnfe.systems.JarnFolderCheck
+import jr.brian.jarnfe.systems.JarnHiddenGame
 import jr.brian.jarnfe.systems.JarnManagedSystem
 import jr.brian.jarnfe.systems.JarnSystemAppearance
 import jr.brian.jarnfe.systems.JarnSystemChoice
 import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.systemStorageKeys
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -52,6 +60,19 @@ import javax.inject.Singleton
 
 private const val ANDROID_APPS_SYSTEM = "androidapps"
 private const val MAX_FOLDER_DEPTH = 6
+private const val HIDDEN_KEY_CHUNK = 500
+
+internal fun countBySystem(systemIds: List<String>): Map<String, Int> = systemIds.groupingBy { it }.eachCount()
+
+/** The games in [games] that [hidden] hides, by title. */
+internal fun hiddenGamesIn(games: List<GameEntity>, hidden: Set<String>): List<JarnHiddenGame> {
+    if (hidden.isEmpty()) return emptyList()
+    return games.mapNotNull { game ->
+        libraryHiddenGameKey(game.systemId, game.absolutePath, game.relativePath)
+            .takeIf { it in hidden }
+            ?.let { JarnHiddenGame(it, game.displayName) }
+    }.sortedBy { it.title.lowercase() }
+}
 
 /** Reads and writes Classic's system settings. Never starts a library scan itself. */
 @Singleton
@@ -73,7 +94,8 @@ class AppJarnSystemManager @Inject constructor(
         gameDao.observeSourceCounts(),
         esdePrefs.state,
         folderRevision,
-    ) { systems, counts, prefs, _ ->
+        hiddenGameCounts(),
+    ) { systems, counts, prefs, _, hiddenCounts ->
         val bySystem = counts.groupBy { it.systemId }.mapValues { (_, rows) -> rows.sumOf { it.gameCount } }
         systems.filter { it.id != ANDROID_APPS_SYSTEM && (bySystem[it.id] ?: 0) > 0 }.map { system ->
             val keys = keysFor(system.id)
@@ -90,9 +112,22 @@ class AppJarnSystemManager @Inject constructor(
                 folderPath = mapping?.displayPath
                     ?: keys.firstNotNullOfOrNull { esdePrefs.getSafTreeUri(it) }?.let(::readablePath),
                 folderIsAdded = mapping != null,
+                hiddenGameCount = hiddenCounts[system.id] ?: 0,
             )
         }
     }.flowOn(Dispatchers.IO)
+
+    /** Counts only keys that still match a game, the same set [hiddenGames] lists. Stale keys stay saved. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun hiddenGameCounts(): Flow<Map<String, Int>> =
+        esdePrefs.state.map { it.hiddenGames }.distinctUntilChanged().flatMapLatest { keys ->
+            if (keys.isEmpty()) {
+                flowOf(emptyMap())
+            } else {
+                val chunks = keys.toList().chunked(HIDDEN_KEY_CHUNK).map(gameDao::observeSystemsOfHiddenKeys)
+                combine(chunks) { parts -> countBySystem(parts.flatMap { it }) }
+            }
+        }
 
     override val addedFolders: Flow<List<JarnAddedFolder>> = esdePrefs.state.map { state ->
         state.systemFolderMappings.map { JarnAddedFolder(it.systemName, it.treeUri, it.displayPath) }
@@ -123,6 +158,15 @@ class AppJarnSystemManager @Inject constructor(
 
     override fun resetAppearance(systemId: String) {
         keysFor(systemId).forEach { esdePrefs.clearSystemCustomization(it) }
+    }
+
+    override fun hiddenGames(systemId: String): Flow<List<JarnHiddenGame>> = combine(
+        gameDao.observeBySystem(systemId),
+        esdePrefs.state.map { it.hiddenGames }.distinctUntilChanged(),
+    ) { games, hidden -> hiddenGamesIn(games, hidden) }.flowOn(Dispatchers.Default)
+
+    override fun showGames(keys: Collection<String>) {
+        esdePrefs.unhideAllGames(keys)
     }
 
     override suspend fun emulators(systemId: String): List<JarnEmulatorOption>? =

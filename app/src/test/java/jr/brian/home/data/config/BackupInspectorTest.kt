@@ -340,4 +340,31 @@ class BackupInspectorTest {
         val items = buildBackupPreview(backup, now).items.associateBy { it.area }
         assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.OtherSettings).change)
     }
+
+    private fun withHiddenGames(games: List<String>?) = JarngreiprConfig(system = SystemConfig(hiddenGames = games))
+
+    @Test
+    fun `a backup without hidden games leaves them alone`() {
+        val now = withHiddenGames(listOf("gba/a.gba"))
+        val items = buildBackupPreview(withHiddenGames(null), now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.NotIncluded, items.getValue(JarnBackupArea.HiddenGames).change)
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+    }
+
+    @Test
+    fun `a backup with other hidden games replaces them`() {
+        val now = withHiddenGames(listOf("gba/a.gba"))
+        val item = buildBackupPreview(withHiddenGames(listOf("gba/a.gba", "snes/b.sfc")), now)
+            .items.first { it.area == JarnBackupArea.HiddenGames }
+        assertEquals(JarnBackupChange.Replaces, item.change)
+        assertEquals(2, item.backupCount)
+        assertEquals(1, item.currentCount)
+    }
+
+    @Test
+    fun `hidden games in another order are the same`() {
+        val item = buildBackupPreview(withHiddenGames(listOf("b", "a")), withHiddenGames(listOf("a", "b")))
+            .items.first { it.area == JarnBackupArea.HiddenGames }
+        assertEquals(JarnBackupChange.Same, item.change)
+    }
 }

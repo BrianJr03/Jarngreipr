@@ -207,6 +207,19 @@ class JarnLibraryDataTest {
     }
 
     @Test
+    fun `a game hidden under its shared key leaves the system list and recent`() = runBlocking {
+        val hidden = insert("gba", "Hidden.gba", lastPlayed = 90L)
+        insert("gba", "Shown.gba", lastPlayed = 10L)
+        val key = libraryHiddenGameKey(hidden.systemId, hidden.absolutePath, hidden.relativePath)
+        visibility.value = LibraryVisibility(hiddenGames = setOf(key))
+
+        val games = library.games("gba").first()
+        assertEquals(listOf("Shown"), games.items.map { it.title })
+        assertEquals(1, games.hiddenCount)
+        assertEquals(listOf("Shown"), library.recent().first().items.map { it.title })
+    }
+
+    @Test
     fun `system last played includes launches`() = runBlocking {
         val game = insert("gba", "A.gba", lastPlayed = 10L)
         launches.value = listOf(RecentLaunch("gba", game.relativePath, 500L))

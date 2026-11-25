@@ -119,6 +119,11 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             current.system.hiddenSystems.size,
             backup.system.hiddenSystems.toSet() == current.system.hiddenSystems.toSet(),
         ),
+        optional(
+            JarnBackupArea.HiddenGames,
+            backup.system.hiddenGames?.toSet(),
+            current.system.hiddenGames?.toSet(),
+        ) { it.size },
         optional(JarnBackupArea.ArtChoices, b.jarnArtChoices, c.jarnArtChoices) { it.count() },
         replaced(
             JarnBackupArea.RecentlyPlayed,
@@ -290,7 +295,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
             repos = mergeJingleRepos(current.feature.jingles.repos.orEmpty(), feature.jingles.repos).sorted(),
         ),
     ),
-    system = system.copy(hiddenSystems = emptyList()),
+    system = system.copy(hiddenSystems = emptyList(), hiddenGames = null),
 )
 
 /** A pre-v64 backup has no launch choices, so restoring it keeps the current ones. */

@@ -161,6 +161,19 @@ fun ESDEPreferencesManager.unhideAllGames(gameKeys: Collection<String>) {
     }
 }
 
+/** Restores hidden games from a backup. Null means the backup had none saved, so the current ones stay. */
+fun ESDEPreferencesManager.restoreHiddenGames(gameKeys: Collection<String>?) {
+    val restored = gameKeys?.toSet() ?: return
+    _state.update { it.copy(hiddenGames = restored) }
+    prefs.edit {
+        if (restored.isEmpty()) {
+            remove(KEY_HIDDEN_GAMES)
+        } else {
+            putString(KEY_HIDDEN_GAMES, JSONArray(restored.toList()).toString())
+        }
+    }
+}
+
 /** Replaces all three per-game launch maps in one write. */
 fun ESDEPreferencesManager.setGameLaunchMaps(
     emulators: Map<String, String>,
