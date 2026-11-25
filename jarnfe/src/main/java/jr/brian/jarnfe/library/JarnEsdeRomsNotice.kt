@@ -13,11 +13,17 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import jr.brian.core.ui.components.JarnDialog
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.input.JarnAction
+import jr.brian.jarnfe.input.JarnInputLayer
+import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Hosts the ES-DE notice on [screen], and picks the flow back up after the file access screen. */
+/**
+ * Hosts the ES-DE notice on [screen], and picks the flow back up after the file access screen.
+ * The modal input layer keeps B on the notice, so it cancels instead of reaching the screen below.
+ */
 @Composable
 internal fun JarnEsdeRomsNoticeHost(screen: JarnScreen) {
     val activity = LocalActivity.current
@@ -29,15 +35,24 @@ internal fun JarnEsdeRomsNoticeHost(screen: JarnScreen) {
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
-    JarnDialog(
-        visible = JarnEsdeRoms.noticeOn == screen,
-        title = stringResource(R.string.jarnfe_esde_roms_notice_title),
-        message = stringResource(R.string.jarnfe_esde_roms_notice_message),
-        confirmLabel = stringResource(R.string.jarnfe_esde_roms_notice_continue),
-        dismissLabel = stringResource(R.string.jarnfe_esde_roms_notice_cancel),
-        onConfirm = { JarnEsdeRoms.proceed(activity) },
-        onDismiss = JarnEsdeRoms::cancel,
-    )
+    if (JarnEsdeRoms.noticeOn != screen) return
+    JarnInputLayer(
+        mode = JarnLayerMode.Modal,
+        bindings = {
+            hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
+            on(JarnAction.Back, R.string.jarnfe_hint_back, onPress = JarnEsdeRoms::cancel)
+        },
+    ) {
+        JarnDialog(
+            visible = true,
+            title = stringResource(R.string.jarnfe_esde_roms_notice_title),
+            message = stringResource(R.string.jarnfe_esde_roms_notice_message),
+            confirmLabel = stringResource(R.string.jarnfe_esde_roms_notice_continue),
+            dismissLabel = stringResource(R.string.jarnfe_esde_roms_notice_cancel),
+            onConfirm = { JarnEsdeRoms.proceed(activity) },
+            onDismiss = JarnEsdeRoms::cancel,
+        )
+    }
 }
 
 /** Null while checking. ES-DE is only named to players who have it. */
