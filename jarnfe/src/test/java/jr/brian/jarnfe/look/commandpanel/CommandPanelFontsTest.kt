@@ -19,11 +19,12 @@ private val COLUMNS = CommandPanelFontsContract.COLUMNS.toTypedArray()
 private fun row(
     version: Any? = 2,
     lookId: Any? = "TERMINAL",
+    lookName: Any? = "Terminal",
     display: Any? = "bundled:mono",
     displaySha: Any? = null,
     label: Any? = "user:$FONT_ID",
     labelSha: Any? = SHA,
-) = listOf(version, lookId, display, displaySha, label, labelSha)
+) = listOf(version, lookId, lookName, display, displaySha, label, labelSha)
 
 private fun cursorOf(vararg rows: List<Any?>, columns: Array<String> = COLUMNS) =
     MatrixCursor(columns).apply { rows.forEach { addRow(it.toTypedArray()) } }
@@ -35,7 +36,9 @@ class CommandPanelFontsTest {
     fun `a valid row parses every role by name`() {
         val fonts = parseCommandPanelFontsRow(cursorOf(row().reversed(), columns = COLUMNS.reversedArray()))
         assertEquals(
-            CommandPanelFonts("TERMINAL", CommandPanelFont.Bundled("mono"), CommandPanelFont.Imported(FONT_ID, SHA)),
+            CommandPanelFonts(
+                "TERMINAL", CommandPanelFont.Bundled("mono"), CommandPanelFont.Imported(FONT_ID, SHA), "Terminal",
+            ),
             fonts,
         )
     }
@@ -56,6 +59,7 @@ class CommandPanelFontsTest {
         assertNull(parseCommandPanelFontsRow(cursorOf(row(version = "2"))))
         assertNull(parseCommandPanelFontsRow(cursorOf(row(lookId = null))))
         assertNull(parseCommandPanelFontsRow(cursorOf(row(display = 7))))
+        assertNull(parseCommandPanelFontsRow(cursorOf(row(lookName = 3))))
         assertNull(parseCommandPanelFontsRow(cursorOf(row(labelSha = null))))
         assertNull(parseCommandPanelFontsRow(cursorOf(row(labelSha = "nothex"))))
         assertNull(parseCommandPanelFontsRow(cursorOf(row(label = "user:../../secret"))))
@@ -86,28 +90,29 @@ class CommandPanelFontsTest {
     }
 
     @Test
-    fun `availability follows the row and names built-in looks`() {
-        val name = { id: String -> if (id == "TERMINAL") "Terminal" else null }
-        val fresh = { fonts: CommandPanelFonts -> fontMatchAvailability(CommandPanelFontsRead.Fresh(fonts), true, name) }
-        assertEquals(
-            FontMatchAvailability.Available("Terminal"),
-            fresh(CommandPanelFonts("TERMINAL", CommandPanelFont.Bundled("mono"), null)),
-        )
-        assertEquals(FontMatchAvailability.NoFonts(null), fresh(CommandPanelFonts("custom:abc", null, null)))
-        assertEquals(FontMatchAvailability.Checking, fontMatchAvailability(null, true, name))
-        assertEquals(FontMatchAvailability.Waiting, fontMatchAvailability(CommandPanelFontsRead.Locked, true, name))
-        assertEquals(FontMatchAvailability.Waiting, fontMatchAvailability(CommandPanelFontsRead.Stopped, true, name))
-        assertEquals(FontMatchAvailability.Unverified, fontMatchAvailability(CommandPanelFontsRead.Untrusted, true, name))
-        assertEquals(FontMatchAvailability.Hidden, fontMatchAvailability(CommandPanelFontsRead.Untrusted, false, name))
-        assertEquals(FontMatchAvailability.Missing, fontMatchAvailability(CommandPanelFontsRead.Unsupported, true, name))
-        assertEquals(FontMatchAvailability.Unreadable, fontMatchAvailability(CommandPanelFontsRead.Rejected, true, name))
+    fun `a blank look name is no name`() {
+        assertNull(requireNotNull(parseCommandPanelFontsRow(cursorOf(row(lookName = "  ")))).lookName)
+        assertNull(requireNotNull(parseCommandPanelFontsRow(cursorOf(row(lookName = null)))).lookName)
     }
 
     @Test
-    fun `built-in look ids have names, saved looks don't`() {
-        assertTrue(commandPanelLookNameRes("E_INK") != null)
-        assertNull(commandPanelLookNameRes("custom:abc"))
-        assertNull(commandPanelLookNameRes("SOMETHING_NEW"))
+    fun `availability follows the row and carries its look name`() {
+        val fresh = { fonts: CommandPanelFonts -> fontMatchAvailability(CommandPanelFontsRead.Fresh(fonts), true) }
+        assertEquals(
+            FontMatchAvailability.Available("Terminal"),
+            fresh(CommandPanelFonts("TERMINAL", CommandPanelFont.Bundled("mono"), null, "Terminal")),
+        )
+        assertEquals(
+            FontMatchAvailability.NoFonts("My look"),
+            fresh(CommandPanelFonts("custom:abc", null, null, "My look")),
+        )
+        assertEquals(FontMatchAvailability.Checking, fontMatchAvailability(null, true))
+        assertEquals(FontMatchAvailability.Waiting, fontMatchAvailability(CommandPanelFontsRead.Locked, true))
+        assertEquals(FontMatchAvailability.Waiting, fontMatchAvailability(CommandPanelFontsRead.Stopped, true))
+        assertEquals(FontMatchAvailability.Unverified, fontMatchAvailability(CommandPanelFontsRead.Untrusted, true))
+        assertEquals(FontMatchAvailability.Hidden, fontMatchAvailability(CommandPanelFontsRead.Untrusted, false))
+        assertEquals(FontMatchAvailability.Missing, fontMatchAvailability(CommandPanelFontsRead.Unsupported, true))
+        assertEquals(FontMatchAvailability.Unreadable, fontMatchAvailability(CommandPanelFontsRead.Rejected, true))
     }
 
     @Test

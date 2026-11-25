@@ -13,6 +13,7 @@ internal object CommandPanelFontsContract {
 
     const val COLUMN_VERSION = "version"
     const val COLUMN_LOOK_ID = "look_id"
+    const val COLUMN_LOOK_NAME = "look_name"
     const val COLUMN_DISPLAY_FONT = "display_font"
     const val COLUMN_DISPLAY_FONT_SHA256 = "display_font_sha256"
     const val COLUMN_LABEL_FONT = "label_font"
@@ -20,10 +21,9 @@ internal object CommandPanelFontsContract {
 
     const val PREFIX_BUNDLED = "bundled:"
     const val PREFIX_USER = "user:"
-    const val CUSTOM_LOOK_PREFIX = "custom:"
 
     val COLUMNS = listOf(
-        COLUMN_VERSION, COLUMN_LOOK_ID,
+        COLUMN_VERSION, COLUMN_LOOK_ID, COLUMN_LOOK_NAME,
         COLUMN_DISPLAY_FONT, COLUMN_DISPLAY_FONT_SHA256,
         COLUMN_LABEL_FONT, COLUMN_LABEL_FONT_SHA256,
     )
@@ -44,6 +44,8 @@ internal data class CommandPanelFonts(
     val lookId: String,
     val display: CommandPanelFont?,
     val label: CommandPanelFont?,
+    /** The look's name as the user sees it in Command Panel; null when blank. */
+    val lookName: String? = null,
 ) {
     val imported: List<CommandPanelFont.Imported>
         get() = listOfNotNull(display, label).filterIsInstance<CommandPanelFont.Imported>().distinct()
@@ -81,6 +83,7 @@ private fun fontOf(value: String?, sha256: String?): Result<CommandPanelFont?> =
 internal fun commandPanelFontsOf(
     version: Long?,
     lookId: String?,
+    lookName: String?,
     display: String?,
     displaySha256: String?,
     label: String?,
@@ -90,7 +93,7 @@ internal fun commandPanelFontsOf(
     if (lookId.isNullOrBlank()) return null
     val displayFont = fontOf(display, displaySha256).getOrElse { return null }
     val labelFont = fontOf(label, labelSha256).getOrElse { return null }
-    return CommandPanelFonts(lookId, displayFont, labelFont)
+    return CommandPanelFonts(lookId, displayFont, labelFont, lookName?.trim()?.takeIf { it.isNotEmpty() })
 }
 
 /** Returns null unless the cursor holds exactly one valid version 2 row. Columns are read by name. */
@@ -107,7 +110,9 @@ internal fun parseCommandPanelFontsRow(cursor: Cursor): CommandPanelFonts? {
             else -> return null
         }
     }
-    return commandPanelFontsOf(cursor.getLong(versionIndex), strings[0], strings[1], strings[2], strings[3], strings[4])
+    return commandPanelFontsOf(
+        cursor.getLong(versionIndex), strings[0], strings[1], strings[2], strings[3], strings[4], strings[5],
+    )
 }
 
 private fun CommandPanelFont?.encodeValue(): String? = when (this) {
@@ -119,6 +124,7 @@ private fun CommandPanelFont?.encodeValue(): String? = when (this) {
 internal fun encodeCommandPanelFonts(fonts: CommandPanelFonts): String = JSONObject().apply {
     put(CommandPanelFontsContract.COLUMN_VERSION, CommandPanelFontsContract.VERSION)
     put(CommandPanelFontsContract.COLUMN_LOOK_ID, fonts.lookId)
+    putOpt(CommandPanelFontsContract.COLUMN_LOOK_NAME, fonts.lookName)
     putOpt(CommandPanelFontsContract.COLUMN_DISPLAY_FONT, fonts.display.encodeValue())
     putOpt(CommandPanelFontsContract.COLUMN_DISPLAY_FONT_SHA256, (fonts.display as? CommandPanelFont.Imported)?.sha256)
     putOpt(CommandPanelFontsContract.COLUMN_LABEL_FONT, fonts.label.encodeValue())
@@ -131,6 +137,7 @@ internal fun decodeCommandPanelFonts(text: String): CommandPanelFonts? = runCatc
     commandPanelFontsOf(
         json.getLong(CommandPanelFontsContract.COLUMN_VERSION),
         string(CommandPanelFontsContract.COLUMN_LOOK_ID),
+        string(CommandPanelFontsContract.COLUMN_LOOK_NAME),
         string(CommandPanelFontsContract.COLUMN_DISPLAY_FONT),
         string(CommandPanelFontsContract.COLUMN_DISPLAY_FONT_SHA256),
         string(CommandPanelFontsContract.COLUMN_LABEL_FONT),

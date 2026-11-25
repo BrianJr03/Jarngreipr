@@ -1,7 +1,6 @@
 package jr.brian.jarnfe.look.commandpanel
 
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.DisposableEffect
@@ -16,7 +15,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import jr.brian.core.ui.theme.JarnType
-import jr.brian.jarnfe.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,9 +94,7 @@ internal fun rememberCommandPanelFontOffer(): State<CommandPanelFontOffer> {
         owner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             offer.value = withContext(Dispatchers.IO) {
                 val read = port.read()
-                commandPanelFontOffer(read, appContext.hasCommandPanelProvider(), cache) { id ->
-                    commandPanelLookNameRes(id)?.let(appContext::getString)
-                }
+                commandPanelFontOffer(read, appContext.hasCommandPanelProvider(), cache)
             }
         }
     }
@@ -109,35 +105,10 @@ internal fun commandPanelFontOffer(
     read: CommandPanelFontsRead,
     providerExists: Boolean,
     cache: CommandPanelFontCache,
-    lookName: (String) -> String?,
 ): CommandPanelFontOffer {
-    val availability = fontMatchAvailability(read, providerExists, lookName)
+    val availability = fontMatchAvailability(read, providerExists)
     val sample = (read as? CommandPanelFontsRead.Fresh)?.fonts
         ?.takeIf { availability is FontMatchAvailability.Available }
         ?.let { fonts -> buildCommandPanelFontMatch(fonts) { cache.family(it.sha256, open = null) }.type }
     return CommandPanelFontOffer(availability, sample)
-}
-
-/** Command Panel's name for a built-in `look_id`. A saved look (`custom:<id>`) or an unknown id has none. */
-@StringRes
-internal fun commandPanelLookNameRes(lookId: String): Int? = when (lookId) {
-    "AUTO" -> R.string.jarnfe_cp_look_auto
-    "AURORA_GLASS" -> R.string.jarnfe_cp_look_aurora_glass
-    "AURORA_BLUR" -> R.string.jarnfe_cp_look_aurora_blur
-    "CARTRIDGE" -> R.string.jarnfe_cp_look_cartridge
-    "TACTICAL_HUD" -> R.string.jarnfe_cp_look_tactical_hud
-    "SOFT_CONSOLE" -> R.string.jarnfe_cp_look_soft_console
-    "SOFT_CONSOLE_OLED" -> R.string.jarnfe_cp_look_soft_console_oled
-    "SEGMENT_LCD" -> R.string.jarnfe_cp_look_segment_lcd
-    "BLOOM" -> R.string.jarnfe_cp_look_bloom
-    "NEON_ARCADE" -> R.string.jarnfe_cp_look_neon_arcade
-    "TERMINAL" -> R.string.jarnfe_cp_look_terminal
-    "COCKPIT" -> R.string.jarnfe_cp_look_cockpit
-    "STICKER_BOOK" -> R.string.jarnfe_cp_look_sticker_book
-    "INDUSTRIAL" -> R.string.jarnfe_cp_look_industrial
-    "JELLY" -> R.string.jarnfe_cp_look_jelly
-    "COMIC_PANEL" -> R.string.jarnfe_cp_look_comic_panel
-    "Y2K_CHROME" -> R.string.jarnfe_cp_look_y2k_chrome
-    "E_INK" -> R.string.jarnfe_cp_look_e_ink
-    else -> null
 }

@@ -133,7 +133,7 @@ read_row() {
   ROW="$(sh_dev content query --uri "content://$CP_AUTHORITY/fonts")"
   echo "  info  $ROW"
   [ "$(row_col "$ROW" version)" = 2 ] || { fail "no version 2 fonts row on $CP_AUTHORITY"; return 1; }
-  pass "fonts row version 2, look_id=$(row_col "$ROW" look_id)"
+  pass "fonts row version 2, look_id=$(row_col "$ROW" look_id), look_name=$(row_col "$ROW" look_name)"
   SHAS="$(for role in display label; do
     [[ "$(row_col "$ROW" "${role}_font")" == user:* ]] && row_col "$ROW" "${role}_font_sha256"
   done | sort -u)"

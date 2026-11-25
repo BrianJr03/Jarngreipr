@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 
 /**
  * Whether the active Command Panel look can lend Jarn its fonts, from the `/fonts` row ([fontMatchAvailability]).
- * [Available] and [NoFonts] carry the look's name when it's a built-in look; a saved look has no name in the row.
+ * [Available] and [NoFonts] carry the look's name from the row.
  */
 @Immutable
 internal sealed interface FontMatchAvailability {
@@ -20,16 +20,15 @@ internal sealed interface FontMatchAvailability {
 
 /**
  * [read] null means not read yet. A provider that doesn't resolve hides the row, like the colors card; one too old to
- * share fonts asks for an update. [lookName] names a `look_id`, or null for a saved look.
+ * share fonts asks for an update.
  */
 internal fun fontMatchAvailability(
     read: CommandPanelFontsRead?,
     providerExists: Boolean,
-    lookName: (String) -> String?,
 ): FontMatchAvailability = when (read) {
     null -> FontMatchAvailability.Checking
     is CommandPanelFontsRead.Fresh -> {
-        val name = lookName(read.fonts.lookId)
+        val name = read.fonts.lookName
         if (read.fonts.hasUsableFont) FontMatchAvailability.Available(name) else FontMatchAvailability.NoFonts(name)
     }
     CommandPanelFontsRead.Locked,

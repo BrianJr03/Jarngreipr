@@ -115,7 +115,7 @@ class CommandPanelFontCacheTest {
     }
 
     private fun importedRow(bytes: ByteArray, id: String = "aa-1") = CommandPanelFonts(
-        "custom:mine", CommandPanelFont.Bundled("mono"), CommandPanelFont.Imported(id, sha(bytes)),
+        "custom:mine", CommandPanelFont.Bundled("mono"), CommandPanelFont.Imported(id, sha(bytes)), "Mine",
     )
 
     @Test
@@ -188,12 +188,12 @@ class CommandPanelFontCacheTest {
     @Test
     fun `the offer samples only verified copies`() {
         val fresh = CommandPanelFontsRead.Fresh(importedRow(GOOD))
-        val empty = commandPanelFontOffer(fresh, true, cache()) { null }
-        assertEquals(FontMatchAvailability.Available(null), empty.availability)
+        val empty = commandPanelFontOffer(fresh, true, cache())
+        assertEquals(FontMatchAvailability.Available("Mine"), empty.availability)
         assertTrue(empty.sample?.label?.fontFamily != FontFamily.Monospace)
         cache().family(sha(GOOD)) { ByteArrayInputStream(GOOD) }
-        val cached = commandPanelFontOffer(fresh, true, cache()) { null }
+        val cached = commandPanelFontOffer(fresh, true, cache())
         assertEquals(FontFamily.Monospace, cached.sample?.label?.fontFamily)
-        assertNull(commandPanelFontOffer(CommandPanelFontsRead.Rejected, true, cache()) { null }.sample)
+        assertNull(commandPanelFontOffer(CommandPanelFontsRead.Rejected, true, cache()).sample)
     }
 }
