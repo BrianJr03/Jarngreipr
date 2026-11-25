@@ -1,6 +1,8 @@
 package jr.brian.jarnfe.firstrun
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.LocalJarnScreen
@@ -21,6 +23,7 @@ internal fun esdeImportReadyRow(card: JarnReadyCard): JarnReadyRow? {
     WatchJarnEsdeImport(importer)
     val state = importer.state
     val screen = LocalJarnScreen.current
+    val focus = remember { FocusRequester() }
     return JarnReadyRow(
         key = READY_ROW_ESDE_IMPORT,
         text = stringResource(
@@ -32,8 +35,9 @@ internal fun esdeImportReadyRow(card: JarnReadyCard): JarnReadyRow? {
         ),
         isDone = state is JarnEsdeImportState.Done,
         actionLabel = esdeImportProgressText(state) ?: stringResource(esdePrimaryLabelRes(state)),
-        onAction = { importer.request(screen) },
+        onAction = { importer.request(screen, returnFocus = focus) },
         order = 15,
+        focus = focus,
     )
 }
 

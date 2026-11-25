@@ -130,6 +130,7 @@ class LibrarySetup @Inject constructor(
             .onFailure { Log.w(TAG, "ES-DE emulator import failed", it) }
             .getOrDefault(EsdeAltEmulatorResult())
         val summary = gamelistSummary.withEmulators(emulators)
+        Log.i(TAG, summary.emulatorLogLine())
         esdeHistory.save(summary)
         return summary
     }

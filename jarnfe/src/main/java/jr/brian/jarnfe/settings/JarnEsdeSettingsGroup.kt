@@ -38,7 +38,7 @@ private fun EsdeReimportRow(importer: JarnEsdeImporter) {
     RefocusAfterFileAccess(importer, focus)
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_esde_import_reimport),
-        onClick = { importer.request(screen) },
+        onClick = { importer.request(screen, returnFocus = focus) },
         modifier = Modifier.fillMaxWidth().focusRequester(focus),
         supporting = esdeReimportHint(importer),
     )

@@ -9,6 +9,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -31,6 +32,7 @@ internal const val READY_ROW_CANVAS = "canvas"
  * One line on the Ready card: a check when [isDone], otherwise a button that does [onAction].
  * A row with the same [key] as a built-in one replaces it. [leads] sorts first and takes first
  * focus while it still needs a tap. [linkLabel] is a small text link under the row.
+ * [focus] lets a row's own button take focus back, for example after a dialog it opened.
  */
 @Immutable
 data class JarnReadyRow(
@@ -43,6 +45,7 @@ data class JarnReadyRow(
     val onLink: (() -> Unit)? = null,
     val leads: Boolean = false,
     val order: Int = 0,
+    val focus: FocusRequester? = null,
 ) {
     val needsTap: Boolean get() = !isDone && actionLabel != null && onAction != null
 }

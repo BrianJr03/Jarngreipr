@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
 import jr.brian.frontend.library.migrate.EsdeImportProgress
 import jr.brian.frontend.library.migrate.EsdeImportSummary
 import jr.brian.frontend.library.setup.EsdeDetection
@@ -71,6 +72,13 @@ internal class JarnEsdeImporter(
     var consentOn by mutableStateOf<JarnScreen?>(null)
         private set
 
+    /**
+     * What opened the consent dialog: the Re-import row, the first-run button or the Ready row.
+     * Kept after the dialog closes, so the dialog can hand focus back to it.
+     */
+    var consentReturnFocus by mutableStateOf<FocusRequester?>(null)
+        private set
+
     /** Null until [refreshDetection] has run once. */
     var detection by mutableStateOf<EsdeDetection?>(null)
         private set
@@ -87,10 +95,18 @@ internal class JarnEsdeImporter(
 
     val isRunning: Boolean get() = state is JarnEsdeImportState.Running
 
-    /** "Bring them over", "Re-import" or "Try again": imports, or asks for file access first. */
-    fun request(screen: JarnScreen) {
+    /**
+     * "Bring them over", "Re-import" or "Try again": imports, or asks for file access first.
+     * [returnFocus] takes focus back when the dialog closes.
+     */
+    fun request(screen: JarnScreen, returnFocus: FocusRequester? = null) {
         if (isRunning) return
-        if (backend.hasFileAccess()) start() else consentOn = screen
+        if (backend.hasFileAccess()) {
+            start()
+        } else {
+            consentReturnFocus = returnFocus
+            consentOn = screen
+        }
     }
 
     fun cancelConsent() {

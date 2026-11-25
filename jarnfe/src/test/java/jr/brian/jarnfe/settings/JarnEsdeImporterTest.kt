@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.settings
 
+import androidx.compose.ui.focus.FocusRequester
 import jr.brian.frontend.library.migrate.EsdeImportProgress
 import jr.brian.frontend.library.migrate.EsdeImportSummary
 import jr.brian.frontend.library.setup.EsdeDetection
@@ -14,6 +15,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -57,6 +59,38 @@ class JarnEsdeImporterTest {
         assertEquals(JarnScreen.Stage, importer.consentOn)
         assertEquals(JarnEsdeImportState.Idle, importer.state)
         assertEquals(0, backend.imports)
+    }
+
+    @Test
+    fun `the dialog remembers what opened it and keeps it after closing`() {
+        backend.access = false
+        val row = FocusRequester()
+
+        importer.request(JarnScreen.Deck, returnFocus = row)
+        assertSame(row, importer.consentReturnFocus)
+
+        importer.cancelConsent()
+        assertNull(importer.consentOn)
+        assertSame(row, importer.consentReturnFocus)
+    }
+
+    @Test
+    fun `each request replaces what the dialog returns to`() {
+        backend.access = false
+        importer.request(JarnScreen.Deck, returnFocus = FocusRequester())
+        importer.cancelConsent()
+        val button = FocusRequester()
+
+        importer.request(JarnScreen.Deck, returnFocus = button)
+
+        assertSame(button, importer.consentReturnFocus)
+    }
+
+    @Test
+    fun `with access nothing is kept to return to`() {
+        importer.request(JarnScreen.Deck, returnFocus = FocusRequester())
+
+        assertNull(importer.consentReturnFocus)
     }
 
     @Test
