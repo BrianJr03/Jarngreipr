@@ -92,7 +92,6 @@ import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import jr.brian.home.util.launchApp
-import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -279,14 +278,7 @@ fun MainContent(
                 onAppSelected = { app ->
                     val pref = managers.ui.appDisplayPreferenceManager
                         .getAppDisplayPreference(app.packageName)
-                    val dm = context.getSystemService(android.content.Context.DISPLAY_SERVICE)
-                        as? android.hardware.display.DisplayManager
-                    val hasExternalDisplay = (dm?.displays?.size ?: 1) > 1
-                    if (hasExternalDisplay) {
-                        launchAppOnOppositeDisplay(context, app.packageName, pref)
-                    } else {
-                        launchApp(context, app.packageName, pref)
-                    }
+                    jr.brian.home.esde.launch.launchCompanion(context, app.packageName, pref)
                     companionLaunchChoices = emptyList()
                 },
                 onDismiss = { companionLaunchChoices = emptyList() },

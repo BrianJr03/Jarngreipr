@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.display.DisplayManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -36,7 +35,6 @@ import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.util.sdCardVolumeId
 import jr.brian.home.util.launchApp
-import jr.brian.home.util.launchAppOnOppositeDisplay
 import java.io.File
 import javax.inject.Inject
 
@@ -102,7 +100,9 @@ class RomLaunchEngine @Inject constructor(
     private val recentlyPlayedManager: RecentlyPlayedManager,
 ) {
 
-    private fun maybeLaunchCompanion(host: RomLaunchHost, game: GameInfo, context: Context) {
+    /** [gameDisplayId] is where the game is about to open, so the companion can open beside it. */
+    private fun maybeLaunchCompanion(host: RomLaunchHost, game: GameInfo, context: Context, gameDisplayId: Int) {
+        LastGameDisplay.id = gameDisplayId
         val installed = esdePrefs.getGameCompanions(gameKey(game))
             .filter {
                 runCatching {
@@ -111,22 +111,14 @@ class RomLaunchEngine @Inject constructor(
             }
         when (installed.size) {
             0 -> return
-            1 -> launchCompanionPkg(installed[0], context)
+            1 -> launchCompanionPkg(installed[0], context, gameDisplayId)
             else -> host.onCompanionChoice(installed)
         }
     }
 
-    fun launchCompanionPkg(pkg: String, context: Context) {
-        val pref = appDisplayPreferenceManager.getAppDisplayPreference(pkg)
-        val hasExternalDisplay = runCatching {
-            val dm = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
-            (dm?.displays?.size ?: 1) > 1
-        }.getOrDefault(false)
-        if (hasExternalDisplay) {
-            launchAppOnOppositeDisplay(context, pkg, pref)
-        } else {
-            launchApp(context, pkg, pref)
-        }
+    /** Opens [pkg] on the screen the game isn't on. See [launchCompanion]. */
+    fun launchCompanionPkg(pkg: String, context: Context, gameDisplayId: Int? = LastGameDisplay.id) {
+        launchCompanion(context, pkg, appDisplayPreferenceManager.getAppDisplayPreference(pkg), gameDisplayId)
     }
 
     private fun resolveAndroidAppByLabel(activity: Activity, label: String): Intent? {
@@ -249,7 +241,7 @@ class RomLaunchEngine @Inject constructor(
         val intent = host.activity.packageManager.getLaunchIntentForPackage(key)
             ?: resolveAndroidAppByLabel(host.activity, key)
             ?: return RomLaunchOutcome.AppNotInstalled(key)
-        maybeLaunchCompanion(host, game, context)
+        maybeLaunchCompanion(host, game, context, androidGameDisplay(context, displayPreference, options))
         recentlyPlayedManager.record(game)
         host.onGameLaunching()
         if (options.strictAppStart) {
@@ -263,6 +255,16 @@ class RomLaunchEngine @Inject constructor(
         host.onLaunchStarted()
         return RomLaunchOutcome.Launched(intent.`package` ?: intent.component?.packageName ?: key)
     }
+
+    /** Where an Android game opens: the same rule [startResolvedApp] and [launchApp] use. */
+    private fun androidGameDisplay(
+        context: Context,
+        displayPreference: DisplayPreference,
+        options: RomLaunchOptions,
+    ): Int = options.displayOverride?.takeIf { options.strictAppStart }
+        ?: PRIMARY_DISPLAY_ID.takeIf { displayPreference == DisplayPreference.PRIMARY_DISPLAY }
+        ?: runCatching { context.display?.displayId }.getOrNull()
+        ?: PRIMARY_DISPLAY_ID
 
     private fun startResolvedApp(
         context: Context,
@@ -365,7 +367,7 @@ class RomLaunchEngine @Inject constructor(
         if (useSavedCommand) {
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
             if (savedCommand != null) {
-                maybeLaunchCompanion(host, game, context)
+                maybeLaunchCompanion(host, game, context, displayId)
                 return launchWithSavedCommand(
                     host, game, context, pkg, savedCommand, romPath, effectiveContentUri, displayId
                 )
@@ -385,7 +387,7 @@ class RomLaunchEngine @Inject constructor(
             } else null
         if (autoCommand != null) {
             Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
-            maybeLaunchCompanion(host, game, context)
+            maybeLaunchCompanion(host, game, context, displayId)
             return launchWithSavedCommand(
                 host, game, context, pkg, autoCommand, romPath, effectiveContentUri, displayId
             )
@@ -401,7 +403,7 @@ class RomLaunchEngine @Inject constructor(
                 pkg, romPath, effectiveContentUri, context, corePath, withComponent = false
             ),
         )
-        maybeLaunchCompanion(host, game, context)
+        maybeLaunchCompanion(host, game, context, displayId)
         recentlyPlayedManager.record(game)
         host.onGameLaunching()
         val failure = startFirstThatOpens(host.activity, candidates, pkg, displayId)
