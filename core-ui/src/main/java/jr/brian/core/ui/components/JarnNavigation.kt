@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -87,6 +89,10 @@ fun JarnTabs(
         true
     }
     val requesters = remember(labels.size) { List(labels.size) { FocusRequester() } }
+    val viewRequesters = remember(labels.size) { List(labels.size) { BringIntoViewRequester() } }
+    LaunchedEffect(selectedIndex, viewRequesters) {
+        runCatching { viewRequesters.getOrNull(selectedIndex)?.bringIntoView() }
+    }
     val tabsFocus = LocalJarnTabsFocus.current
     val group = remember { Any() }
     var groupFocused by remember { mutableStateOf(false) }
@@ -110,7 +116,7 @@ fun JarnTabs(
                 .horizontalScroll(rememberScrollState())
                 .padding(ringPadding),
             horizontalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier, showsSwitchMark) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, Modifier, showsSwitchMark) }
 
         JarnTabsStyle.Rail -> Column(
             modifier = focusModifier
@@ -118,7 +124,9 @@ fun JarnTabs(
                 .verticalScroll(rememberScrollState())
                 .padding(ringPadding),
             verticalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, onSelect, Modifier.fillMaxWidth(), showsSwitchMark) }
+        ) {
+            JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, Modifier.fillMaxWidth(), showsSwitchMark)
+        }
     }
 }
 
@@ -127,13 +135,21 @@ private fun JarnTabItems(
     labels: List<String>,
     selectedIndex: Int,
     requesters: List<FocusRequester>,
+    viewRequesters: List<BringIntoViewRequester>,
     onSelect: (Int) -> Unit,
     itemModifier: Modifier,
     showsSwitchMark: Boolean,
 ) {
     labels.forEachIndexed { index, label ->
         val selected = index == selectedIndex
-        JarnTab(label, selected, requesters[index], { onSelect(index) }, itemModifier, showsSwitchMark && selected)
+        JarnTab(
+            label,
+            selected,
+            requesters[index],
+            { onSelect(index) },
+            itemModifier.bringIntoViewRequester(viewRequesters[index]),
+            showsSwitchMark && selected,
+        )
     }
 }
 
