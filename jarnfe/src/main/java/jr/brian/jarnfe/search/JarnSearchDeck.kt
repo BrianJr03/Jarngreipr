@@ -64,7 +64,7 @@ private fun SearchQueryField(query: String) {
         Box(Modifier.padding(horizontal = JarnTheme.space.lg, vertical = JarnTheme.space.md)) {
             JarnText(
                 text = query.ifEmpty { stringResource(R.string.jarnfe_search_placeholder) },
-                style = JarnTheme.type.body,
+                style = JarnTheme.baseType.body,
                 color = if (query.isEmpty()) colors.textMid else colors.textHigh,
                 maxLines = 1,
             )

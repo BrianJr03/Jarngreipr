@@ -125,16 +125,26 @@ internal fun Modifier.jarnSplashMark(): Modifier = this
     .onGloballyPositioned { JarnSplash.markBounds = it.boundsInRoot() }
     .graphicsLayer { alpha = if (JarnSplash.isIntro) 0f else 1f }
 
+/**
+ * How far the splash word shrinks to land on the header wordmark. Measured, not a font-size ratio,
+ * because theme fonts scale and track display and heading differently.
+ */
+internal fun jarnSplashDockScale(splashWidthPx: Int, wordmarkWidthPx: Int): Float =
+    if (splashWidthPx <= 0) 1f else wordmarkWidthPx.toFloat() / splashWidthPx
+
 @Composable
 internal fun JarnStageSplash() {
     if (!JarnSplash.isIntro) return
     val colors = JarnTheme.colors
     val display = JarnTheme.type.display.copy(color = colors.textHigh)
-    val dockScale = JarnTheme.type.heading.fontSize.value / display.fontSize.value
+    val heading = JarnTheme.type.heading
     val word = stringResource(R.string.jarnfe_wordmark)
     val suffix = stringResource(R.string.jarnfe_wordmark_suffix)
     val measurer = rememberTextMeasurer()
     val wordLayout = remember(measurer, word, display) { measurer.measure(word, display) }
+    val dockScale = remember(measurer, word, heading, wordLayout) {
+        jarnSplashDockScale(wordLayout.size.width, measurer.measure(word, heading, maxLines = 1).size.width)
+    }
     val suffixLayout = remember(measurer, suffix, display) { measurer.measure(suffix, display) }
     Canvas(Modifier.fillMaxSize().background(Color.Black)) {
         val elapsed = JarnSplash.elapsedMs

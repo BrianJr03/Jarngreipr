@@ -38,9 +38,11 @@ import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.settings.JarnSettingsControls
 import jr.brian.jarnfe.settings.JarnSettingsScraperHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
+import jr.brian.jarnfe.shell.JarnWordmark
 import jr.brian.jarnfe.shell.deckBindings
 import jr.brian.jarnfe.splash.JarnDeckSplash
 import jr.brian.jarnfe.splash.jarnSplashFade
+import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 import jr.brian.jarnfe.wallpaper.JarnWallpaperBackdrop
 import jr.brian.jarnfe.wallpaper.LocalJarnDisabledBacking
 
@@ -60,7 +62,7 @@ internal fun DeckScreen(state: JarnSessionState) {
             }
             CompositionLocalProvider(LocalJarnDisabledBacking provides JarnTheme.colors.bg) {
                 JarnScreenFrame(
-                    header = { if (deckShowsTabs(state)) DeckTabStrip(state.deckTab) },
+                    header = { DeckHeader(state) },
                     background = Color.Transparent,
                 ) { DeckBody(state) }
             }
@@ -78,6 +80,19 @@ private fun deckShowsSettings(state: JarnSessionState) =
 
 private fun deckShowsTabs(state: JarnSessionState) =
     !deckShowsSearch(state) && !deckShowsSettings(state)
+
+/**
+ * The label only lives in the tab strip, so Search and Settings leave the Deck without one.
+ * The shell keeps its presence, so the slot shows the current handoff when the tabs return.
+ */
+internal fun deckShowsMark(state: JarnSessionState, follows: Boolean): Boolean =
+    follows && deckShowsTabs(state)
+
+@Composable
+private fun DeckHeader(state: JarnSessionState) {
+    if (!deckShowsTabs(state)) return
+    DeckTabStrip(state.deckTab, deckShowsMark(state, LocalJarnMarkHandoff.current.follows))
+}
 
 @Composable
 private fun DeckBody(state: JarnSessionState) {
@@ -99,7 +114,7 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
         if (deckShowsSearch(state)) {
             JarnSearchDeck()
         } else {
-            DeckTabStrip(state.deckTab)
+            DeckTabStrip(state.deckTab, showsMark = false)
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 DeckTabContent(state)
             }
@@ -111,13 +126,14 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
 internal fun DeckTab.showsNowShortcuts(): Boolean = this == DeckTab.Now
 
 @Composable
-private fun DeckTabStrip(selected: DeckTab) {
+private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean) {
     val tabs = DeckTab.entries
     Box(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (showsMark) JarnWordmark()
             JarnTabs(
                 labels = tabs.map { stringResource(it.labelRes()) },
                 selectedIndex = tabs.indexOf(selected),

@@ -10,10 +10,15 @@ import jr.brian.frontend.library.art.SystemShelfGroup
 import jr.brian.frontend.library.art.VisibleList
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.library.setup.LibrarySetupState
+import jr.brian.jarnfe.systems.JarnManagedSystem
+import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystems
 import jr.brian.jarnfe.systems.jarnSystemManagerOrNull
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import java.text.NumberFormat
@@ -42,13 +47,15 @@ fun Context.jarnLibrarySetupOrNull(): LibrarySetup? =
 internal class JarnLibraryDataSource(
     private val data: JarnLibraryData,
     private val setup: LibrarySetup,
+    private val systems: JarnSystemManager? = null,
 ) : JarnLibrarySource {
     override fun observeSystems(): Flow<JarnLibraryFeed<JarnLibrarySystem>> =
         combine(
             data.systemsWithArt,
             setup.state,
             data.systemActivity.onStart { emit(emptyMap()) },
-        ) { list, setupState, activity ->
+            nowBackgrounds(systems),
+        ) { list, setupState, activity, backgrounds ->
             JarnLibraryFeed(
                 items = list.items.map { (system, art) ->
                     val played = activity[system.id] ?: SystemActivity()
@@ -61,6 +68,7 @@ internal class JarnLibraryDataSource(
                         lastPlayedAtMs = played.lastPlayedAt,
                         favoriteCount = played.favoriteCount,
                         playtimeMinutes = played.playTimeMinutes.toLong(),
+                        nowBackgroundPath = backgrounds[system.id],
                     )
                 },
                 status = setupState.toFeedStatus(),
@@ -96,6 +104,19 @@ internal class JarnLibraryDataSource(
             JarnLibraryFeed.ready(list.items.map { it.toJarnGame() }, list.hiddenCount)
         }
 }
+
+/** Each system's picked Now background. A failing manager only drops the picks, never the library. */
+internal fun nowBackgrounds(manager: JarnSystemManager?): Flow<Map<String, String>> =
+    manager?.systems
+        ?.map(::nowBackgroundsById)
+        ?.catch { emit(emptyMap()) }
+        ?.distinctUntilChanged()
+        ?: flowOf(emptyMap())
+
+internal fun nowBackgroundsById(systems: List<JarnManagedSystem>): Map<String, String> =
+    systems.mapNotNull { system ->
+        system.appearance.focusBackgroundUri?.takeIf(String::isNotBlank)?.let { system.id to it }
+    }.toMap()
 
 private fun SystemShelfGroup.toJarnGroup(): JarnShelfGroup = when (this) {
     SystemShelfGroup.Recent -> JarnShelfGroup.Recent
@@ -144,6 +165,6 @@ internal fun connectJarnLibrary(context: Context) {
     if (JarnLibrary.source is JarnLibraryDataSource) return
     val data = context.jarnLibraryDataOrNull() ?: return
     val setup = context.jarnLibrarySetupOrNull() ?: return
-    JarnLibrary.connect(JarnLibraryDataSource(data, setup))
+    JarnLibrary.connect(JarnLibraryDataSource(data, setup, JarnSystems.manager))
     setup.start()
 }

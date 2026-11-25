@@ -76,7 +76,7 @@ internal fun NowFactsPlate(facts: NowGameFacts, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
         if (summary.isNotEmpty()) {
-            JarnText(summary.joinToString(FACT_SEPARATOR), JarnTheme.type.label, colors.textHigh, maxLines = 1)
+            JarnText(summary.joinToString(FACT_SEPARATOR), JarnTheme.baseType.label, colors.textHigh, maxLines = 1)
         }
         if (stats.isNotEmpty()) {
             JarnText(stats.joinToString(STAT_SEPARATOR), JarnTheme.type.caption, colors.textMid, maxLines = 1)

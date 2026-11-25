@@ -74,7 +74,7 @@ internal fun jarnSliderValueAt(fraction: Float, range: ClosedFloatingPointRange<
 @Composable
 private fun JarnRowLabels(label: String, supporting: String?, modifier: Modifier = Modifier) {
     Column(modifier) {
-        JarnText(label, JarnTheme.type.label, JarnTheme.colors.textHigh)
+        JarnText(label, JarnTheme.baseType.label, JarnTheme.colors.textHigh)
         supporting?.let { JarnText(it, JarnTheme.type.caption, JarnTheme.colors.textMid) }
     }
 }
@@ -133,7 +133,7 @@ fun JarnValueRow(
 ) {
     JarnRowFrame(onClick, enabled, focusableWhenDisabled, Role.Button, modifier, interactionSource) {
         JarnRowLabels(label, supporting, Modifier.weight(1f))
-        JarnText(value, JarnTheme.type.label, JarnTheme.colors.textMid, maxLines = 1)
+        JarnText(value, JarnTheme.baseType.label, JarnTheme.colors.textMid, maxLines = 1)
         JarnChevronGlyph(JarnTheme.colors.textMid)
     }
 }
@@ -268,7 +268,7 @@ fun JarnSliderRow(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             JarnRowLabels(label, null, Modifier.weight(1f))
-            JarnText(valueText, JarnTheme.type.labelStrong, JarnTheme.colors.textMid, maxLines = 1)
+            JarnText(valueText, JarnTheme.baseType.labelStrong, JarnTheme.colors.textMid, maxLines = 1)
         }
         JarnSliderTrack(value, valueRange, steps, enabled, rtl) { latestChange(it) }
     }

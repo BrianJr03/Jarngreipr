@@ -186,6 +186,15 @@ class NowSystemViewTest {
     }
 
     @Test
+    fun `hiding the system background hides the cover wall on a system but not on a game`() {
+        val snes = LibrarySelection.System(system)
+        assertTrue(nowShowsWall(snes, showsSystemBackground = true))
+        assertFalse(nowShowsWall(snes, showsSystemBackground = false))
+        assertTrue(nowShowsWall(LibrarySelection.Game(games[0]), showsSystemBackground = false))
+        assertFalse(nowShowsWall(LibrarySelection.None, showsSystemBackground = true))
+    }
+
+    @Test
     fun `everything shows by default`() {
         showPlate(NowSystemParts())
         rule.onNodeWithText("SNES").assertExists()

@@ -170,6 +170,18 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `follow no tap round trips through a backup`() = runTest {
+        store.updateDisplay { it.copy(tapControl = JarnTapControl.FollowNoTap) }
+        val json = importExport.encodeToJson(JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())))
+        store.updateDisplay { it.copy(tapControl = JarnTapControl.AlwaysTop) }
+
+        importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertEquals(JarnTapControl.FollowNoTap, store.display.tapControl)
+        assertEquals("follow_no_tap", store.display.toConfig().tapControl)
+    }
+
+    @Test
     fun `a null or unknown controller after tap keeps the current choice`() = runTest {
         store.updateDisplay { it.copy(tapControl = JarnTapControl.AlwaysTop) }
         listOf("null", "\"sideways\"").forEach { value ->
@@ -353,6 +365,21 @@ class JarnLookConfigImportTest {
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
         assertEquals(JarnSwitchCue.TabMark, store.display.switchCue)
+    }
+
+    @Test
+    fun `the jarn label cue survives a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.JarnLabel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Pulse) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(json.contains("\"jarn_label\""))
+        assertEquals(JarnSwitchCue.JarnLabel, JarnLookStore(ApplicationProvider.getApplicationContext()).display.switchCue)
     }
 
     @Test
@@ -600,8 +627,29 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `the system background choice survives a backup, and an older backup leaves it alone`() = runTest {
+        store.updateDisplay { it.copy(systemBackgroundVisible = false) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(systemBackgroundVisible = true) }
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(json.toByteArray())).isSuccess)
+        assertFalse(JarnLookStore(ApplicationProvider.getApplicationContext()).display.systemBackgroundVisible)
+
+        val v60 = """{ "version": 60, "feature": { "jarnDisplay": { "gameRowVisible": false } } }"""
+        assertTrue(importExport.importFromStream(ByteArrayInputStream(v60.toByteArray())).isSuccess)
+        assertFalse(store.display.systemBackgroundVisible)
+        assertFalse(store.display.gameRowVisible)
+    }
+
+    @Test
+    fun `the system background shows by default`() {
+        assertTrue(store.display.systemBackgroundVisible)
+    }
+
+    @Test
     fun `schema version covers app names`() {
-        assertEquals(60, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(63, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

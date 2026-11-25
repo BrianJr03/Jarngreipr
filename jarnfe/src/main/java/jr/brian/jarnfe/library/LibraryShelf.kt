@@ -252,7 +252,7 @@ private fun ShelfReportsFocus(centerKey: String, fast: Boolean, spinning: Boolea
     }
 }
 
-/** Leaves a user on the tab row where they are, as the grid does, except right after a tab switch. */
+/** Leaves a user on the tab row where they are, as the grid does, except right after a tab switch or launch. */
 @Composable
 private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, spinning: Boolean, requester: () -> FocusRequester) {
     val tabsFocus = LocalJarnTabsFocus.current
@@ -260,7 +260,10 @@ private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, spinning: Boo
     LaunchedEffect(centerKey, refocusSignal, spinning) {
         if (spinning) return@LaunchedEffect
         withFrameNanos { }
-        gate.whenOpen { (gate.forcing || !tabsFocus.hasFocus) && requester().requestFocus() }
+        gate.whenOpen {
+            libraryContentTakesFocus(gate.forcing, tabsFocus.hasFocus, LibraryLaunchFocus.isPending) &&
+                LibraryLaunchFocus.settle { requester().requestFocus() }
+        }
     }
 }
 

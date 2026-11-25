@@ -41,6 +41,23 @@ class JarnLookStore @Inject constructor(
     val matchCommandPanelState: StateFlow<Boolean> = _matchCommandPanel.asStateFlow()
     val matchCommandPanel: Boolean get() = _matchCommandPanel.value
 
+    private val _matchCommandPanelFonts = MutableStateFlow(prefs.getBoolean(KEY_MATCH_COMMAND_PANEL_FONTS, false))
+
+    /** Independent of [matchCommandPanelState], so fonts and colors can be matched one at a time. */
+    val matchCommandPanelFontsState: StateFlow<Boolean> = _matchCommandPanelFonts.asStateFlow()
+    val matchCommandPanelFonts: Boolean get() = _matchCommandPanelFonts.value
+
+    private val _fontsPromptShown = MutableStateFlow(prefs.getBoolean(KEY_FONTS_PROMPT_SHOWN, false))
+
+    /** The one-time "use Command Panel fonts" prompt was answered. Never turns back off. */
+    val fontsPromptShownState: StateFlow<Boolean> = _fontsPromptShown.asStateFlow()
+    val fontsPromptShown: Boolean get() = _fontsPromptShown.value
+
+    fun markFontsPromptShown() {
+        _fontsPromptShown.value = true
+        prefs.edit { putBoolean(KEY_FONTS_PROMPT_SHOWN, true) }
+    }
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -87,6 +104,7 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_GAME_COUNT_VISIBLE, next.gameCountVisible)
             putBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, next.lastPlayedTextVisible)
             putBoolean(KEY_GAME_ROW_VISIBLE, next.gameRowVisible)
+            putBoolean(KEY_SYSTEM_BACKGROUND_VISIBLE, next.systemBackgroundVisible)
         }
     }
 
@@ -128,6 +146,7 @@ class JarnLookStore @Inject constructor(
         gameCountVisible = prefs.getBoolean(KEY_GAME_COUNT_VISIBLE, true),
         lastPlayedTextVisible = prefs.getBoolean(KEY_LAST_PLAYED_TEXT_VISIBLE, true),
         gameRowVisible = prefs.getBoolean(KEY_GAME_ROW_VISIBLE, true),
+        systemBackgroundVisible = prefs.getBoolean(KEY_SYSTEM_BACKGROUND_VISIBLE, true),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -143,6 +162,11 @@ class JarnLookStore @Inject constructor(
     fun setMatchCommandPanel(enabled: Boolean) {
         _matchCommandPanel.value = enabled
         prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL, enabled) }
+    }
+
+    fun setMatchCommandPanelFonts(enabled: Boolean) {
+        _matchCommandPanelFonts.value = enabled
+        prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL_FONTS, enabled) }
     }
 
     fun setLiveWallpaperId(id: String?) {
@@ -172,6 +196,8 @@ class JarnLookStore @Inject constructor(
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
+        const val KEY_MATCH_COMMAND_PANEL_FONTS = "match_command_panel_fonts"
+        const val KEY_FONTS_PROMPT_SHOWN = "fonts_prompt_shown"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
         const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"
@@ -193,6 +219,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_GAME_COUNT_VISIBLE = "now_game_count_visible"
         const val KEY_LAST_PLAYED_TEXT_VISIBLE = "now_last_played_text_visible"
         const val KEY_GAME_ROW_VISIBLE = "now_game_row_visible"
+        const val KEY_SYSTEM_BACKGROUND_VISIBLE = "now_system_background_visible"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

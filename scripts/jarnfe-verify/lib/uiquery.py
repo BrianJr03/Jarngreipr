@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Reads a uiautomator XML dump. Usage: uiquery.py FILE role|has TEXT|selected LABEL...|focused"""
+"""Reads a uiautomator XML dump. Usage: uiquery.py FILE role|has TEXT|selected LABEL...|focused|checked"""
 import sys
 import xml.etree.ElementTree as ET
 
 WORDMARK = "JARN"
+# Each window tags its root with its role, so the role reads the same whichever cue is chosen.
+ROLE_TAGS = {"jarn_stage": "stage", "jarn_deck": "deck"}
 DECK_TABS = {"Now", "Apps", "Canvas"}
 SETTINGS_TABS = {"Library", "Art", "Look", "Display", "Apps", "General", "Data"}
 
@@ -16,7 +18,19 @@ def labels_in(node):
     return [text for text in (label(item) for item in node.iter("node")) if text]
 
 
+def tagged_role(root):
+    for node in root.iter("node"):
+        resource = (node.get("resource-id") or "").rsplit("/", 1)[-1]
+        if resource in ROLE_TAGS:
+            return ROLE_TAGS[resource]
+    return ""
+
+
 def role(root):
+    tagged = tagged_role(root)
+    if tagged:
+        return tagged
+    # Builds before the role tags only ever showed the wordmark on Stage.
     found = set(labels_in(root))
     if WORDMARK in found:
         return "stage"
@@ -42,6 +56,18 @@ def focused(root):
     return ""
 
 
+def checked(root):
+    """The focused row's switch: "true" or "false", or "" when it has none."""
+    for node in root.iter("node"):
+        if node.get("focused") != "true":
+            continue
+        for item in node.iter("node"):
+            if item.get("checkable") == "true":
+                return item.get("checked") or "false"
+        return ""
+    return ""
+
+
 def main(argv):
     if len(argv) < 3:
         return 2
@@ -58,6 +84,8 @@ def main(argv):
         print(selected(root, set(args)))
     elif command == "focused":
         print(focused(root))
+    elif command == "checked":
+        print(checked(root))
     else:
         return 2
     return 0

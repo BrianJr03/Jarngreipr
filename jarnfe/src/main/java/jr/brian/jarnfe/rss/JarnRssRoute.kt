@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +56,7 @@ import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 private const val AUTO_REFRESH_TICK_MS = 60_000L
@@ -72,12 +75,20 @@ private fun JarnRssFilter.focusKey(): String = when (this) {
 private fun JarnRssItem.focusKey() = "item:$key"
 
 @Stable
-private class RssBrowserState {
-    var focusKey by mutableStateOf<String?>(null)
+internal class RssBrowserState(private val memory: JarnRssMemory) {
+    var focusKey by mutableStateOf(memory.focusKey)
     var focusFirstArticle by mutableStateOf(false)
-    val railList = LazyListState()
-    val articleList = LazyListState()
+    val railList = LazyListState(memory.rail.index, memory.rail.offset)
+    val articleList = LazyListState(memory.articles.index, memory.articles.offset)
     private val requesters = mutableMapOf<String, FocusRequester>()
+
+    fun save() {
+        memory.focusKey = focusKey
+        memory.rail = railList.scroll()
+        memory.articles = articleList.scroll()
+    }
+
+    private fun LazyListState.scroll() = JarnRssScroll(firstVisibleItemIndex, firstVisibleItemScrollOffset)
 
     fun requester(key: String): FocusRequester = requesters.getOrPut(key) { FocusRequester() }
 
@@ -113,12 +124,18 @@ internal fun JarnRssRoute(
         )
         return
     }
-    val feeds by remember(data) { data.feeds }.collectAsState(initial = null)
-    val items by remember(data) { data.items }.collectAsState(initial = null)
-    val history by remember(data) { data.historyIds }.collectAsState(initial = emptyList())
+    val memory = JarnRss.memory
+    val feeds by remember(data) { data.feeds }.collectRemembered(memory.feeds) { memory.feeds = it }
+    val items by remember(data) { data.items }.collectRemembered(memory.items) { memory.items = it }
+    val history by remember(data) { data.historyIds }.collectRemembered(memory.history) { memory.history = it }
     val playback by remember(data) { data.playback }.collectAsState(initial = null)
-    val browser = remember { RssBrowserState() }
-    DisposableEffect(Unit) { onDispose { JarnRss.close() } }
+    val browser = remember(memory) { RssBrowserState(memory) }
+    DisposableEffect(browser) {
+        onDispose {
+            browser.save()
+            JarnRss.close()
+        }
+    }
     RssAutoRefresh(data, feeds.orEmpty())
 
     val loadedFeeds = feeds
@@ -135,6 +152,15 @@ internal fun JarnRssRoute(
             data, browser, loadedFeeds, loadedItems, history, playback, blocked, sheetSlot, onPageOptions,
         )
     }
+}
+
+/** Starts from what the page showed last time and keeps that copy current. */
+@Composable
+private fun <T> Flow<T>.collectRemembered(last: T, onValue: (T) -> Unit): State<T> {
+    val state = collectAsState(initial = last)
+    val value = state.value
+    SideEffect { onValue(value) }
+    return state
 }
 
 @Composable
@@ -441,7 +467,7 @@ private fun RssArticleRow(
             )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
-            JarnText(item.title, JarnTheme.type.labelStrong, colors.textHigh, maxLines = 2)
+            JarnText(item.title, JarnTheme.baseType.labelStrong, colors.textHigh, maxLines = 2)
             JarnText(rssArticleMeta(item, feedTitle), JarnTheme.type.caption, colors.textMid, maxLines = 1)
         }
     }

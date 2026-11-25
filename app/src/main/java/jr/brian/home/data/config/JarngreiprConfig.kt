@@ -206,8 +206,8 @@ data class JarngreiprConfig(
         //      Panel's colors. Null on older blobs, and import keeps the current value.
         //      The palette itself is never backed up.
         // v51: added JarnDisplayConfig.switchCue, how Jarn FE shows a screen switch (pulse, dim
-        //      or tab_mark). Null on older blobs, and import keeps the current value. An
-        //      unknown id falls back to pulse.
+        //      or tab_mark, later also jarn_label). Null on older blobs, and import keeps the
+        //      current value. An unknown id falls back to pulse.
         // v52: added UiConfig.appearance (theme, custom themes, OLED, icon shape, tab animation),
         //      FeatureConfig.rssFeeds, JinglesConfig.enabled and repos, and
         //      PageConfig.widgetProviders. All null on older blobs, and import keeps current values.
@@ -229,7 +229,13 @@ data class JarngreiprConfig(
         // v59: added JarnDisplayConfig.systemLogoVisible, gameCountVisible and lastPlayedTextVisible,
         //      the optional parts of Jarn FE Now's system view. Null on older blobs keeps them.
         // v60: added JarnDisplayConfig.gameRowVisible, Jarn FE "Show game row" on Now. Null keeps it.
-        const val CONFIG_VERSION = 60
+        // v61: added JarnDisplayConfig.systemBackgroundVisible, Jarn FE "System background" on Now.
+        //      Null on older blobs, and import keeps the current value.
+        // v62: added FeatureConfig.jarnMatchCommandPanelFonts, whether Jarn FE uses Command Panel's
+        //      fonts. Separate from jarnMatchCommandPanel. Null on older blobs keeps the current value.
+        // v63: added FeatureConfig.jarnFontsPromptShown, whether Jarn FE's one-time Command Panel fonts
+        //      prompt was answered. Null on older blobs keeps the current value. Import only sets it.
+        const val CONFIG_VERSION = 63
     }
 }
 
@@ -419,6 +425,10 @@ data class FeatureConfig(
     val jarnFirstRunDone: Boolean? = null,
     /** v50: Jarn FE follows Command Panel's colors. Null on pre-v50 exports, and import keeps the current value. */
     val jarnMatchCommandPanel: Boolean? = null,
+    /** v62: Jarn FE uses Command Panel's fonts. Null on pre-v62 exports, and import keeps the current value. */
+    val jarnMatchCommandPanelFonts: Boolean? = null,
+    /** v63: Jarn FE fonts prompt answered. Null on pre-v63 exports. Import never turns it back off. */
+    val jarnFontsPromptShown: Boolean? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
@@ -462,6 +472,7 @@ data class JarnDisplayConfig(
     val gameCountVisible: Boolean? = null,
     val lastPlayedTextVisible: Boolean? = null,
     val gameRowVisible: Boolean? = null,
+    val systemBackgroundVisible: Boolean? = null,
 )
 
 @Serializable

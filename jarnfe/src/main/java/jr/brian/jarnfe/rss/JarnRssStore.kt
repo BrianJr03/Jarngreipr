@@ -31,9 +31,23 @@ internal class JarnRssSheetSlot {
     }
 }
 
+@Immutable
+internal data class JarnRssScroll(val index: Int = 0, val offset: Int = 0)
+
+/** What the RSS page last showed, so coming back to it skips the loading state and keeps its place. */
+internal class JarnRssMemory {
+    var feeds: List<JarnRssFeed>? = null
+    var items: List<JarnRssItem>? = null
+    var history: List<String> = emptyList()
+    var focusKey: String? = null
+    var rail = JarnRssScroll()
+    var articles = JarnRssScroll()
+}
+
 /** Shared by both windows, so the Deck list can open an article on the Stage. */
 internal object JarnRss {
     var filter by mutableStateOf<JarnRssFilter>(JarnRssFilter.All)
+    val memory = JarnRssMemory()
     var reader by mutableStateOf<JarnRssReader?>(null)
         private set
 

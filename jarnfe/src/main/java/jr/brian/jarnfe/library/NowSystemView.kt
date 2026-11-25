@@ -244,7 +244,7 @@ private fun NowSystemMark(system: JarnLibrarySystem) {
     if (logo == null) {
         JarnText(
             text = system.title.uppercase(Locale.getDefault()),
-            style = JarnTheme.type.heading.copy(letterSpacing = NowNameSpacing),
+            style = JarnTheme.baseType.heading.copy(letterSpacing = NowNameSpacing),
             color = JarnTheme.colors.textHigh,
             maxLines = 1,
         )
@@ -300,7 +300,7 @@ private fun NowStat(value: String, label: String) {
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        JarnText(value, JarnTheme.type.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
+        JarnText(value, JarnTheme.baseType.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
         JarnText(label, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 1)
     }
 }

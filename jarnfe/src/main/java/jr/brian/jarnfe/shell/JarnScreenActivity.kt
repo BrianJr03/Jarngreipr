@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.Display
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -25,6 +26,7 @@ import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.audio.JarnAudio
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryLaunchFocus
 import jr.brian.jarnfe.library.connectJarnLibrary
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.search.JarnSearch
@@ -32,6 +34,7 @@ import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.rememberedDeckTab
+import jr.brian.jarnfe.session.JarnOsFocusPull
 import jr.brian.jarnfe.session.onScreenTapped
 import jr.brian.jarnfe.session.onWindowCovered
 import jr.brian.jarnfe.splash.JarnSplash
@@ -116,7 +119,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
         super.onTopResumedActivityChanged(isTopResumedActivity)
+        val before = JarnSession.state.activeScreen
         JarnSession.update { onTopResumed(screen, isTopResumedActivity) }
+        osFocusPull.record(before, JarnSession.state.activeScreen, SystemClock.uptimeMillis())
         JarnWallpaperGate.onTopResumedChanged(this, isTopResumedActivity)
         JarnAudio.onTopResumed(this, isTopResumedActivity)
     }
@@ -154,6 +159,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
             return true
         }
+        if (event.action == KeyEvent.ACTION_DOWN) LibraryLaunchFocus.release()
         if (JarnDeckWatch.consumeSwitchScreen(event)) return true
         JarnInput.onButtonPressed = buttonHaptic
         JarnInput.onDirectionPressed = JarnHaptics::armNavigation
@@ -206,6 +212,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     }
 
     private fun onTouchDown() {
+        LibraryLaunchFocus.release()
         if (JarnHomeEntry.reclaim(screen)) {
             window.setFocusable(true)
             bringToFront()
@@ -214,7 +221,8 @@ abstract class JarnScreenActivity : ComponentActivity() {
         val bothVisible = JarnScreen.entries.all { role ->
             liveWindows.any { it.screen == role && it.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) }
         }
-        JarnSession.update { onScreenTapped(screen, choice, bothVisible, JarnInput::hasModalLayer) }
+        val before = osFocusPull.take(SystemClock.uptimeMillis())
+        JarnSession.update { onScreenTapped(screen, choice, bothVisible, before, JarnInput::hasModalLayer) }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -241,6 +249,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
         private const val KEY_SESSION = "jarnfe_session"
         private const val KEY_OPEN_SYSTEM = "jarnfe_open_system"
         private val liveWindows = LinkedHashSet<JarnScreenActivity>()
+        private val osFocusPull = JarnOsFocusPull()
 
         fun finishAllWindows() {
             JarnDeckWatch.onLeavingJarn()

@@ -68,7 +68,7 @@ internal fun JarnKeyboardGrid(
             runCatching { requesters[clamped]?.requestFocus() }
         }
     }
-    val textStyle = if (size == JarnKeyboardSize.Roomy) JarnTheme.type.labelStrong else JarnTheme.type.label
+    val textStyle = if (size == JarnKeyboardSize.Roomy) JarnTheme.baseType.labelStrong else JarnTheme.baseType.label
     Column(modifier, verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
         rows.forEachIndexed { rowIndex, row ->
             KeyboardRow {

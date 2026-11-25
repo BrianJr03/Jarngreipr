@@ -84,7 +84,7 @@ private fun KeyboardEntry(label: String, text: String, masked: Boolean) {
         JarnText(label, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 1)
         JarnText(
             text = shown.takeLast(VISIBLE_ENTRY_CHARS).ifEmpty { " " },
-            style = JarnTheme.type.label,
+            style = JarnTheme.baseType.label,
             color = JarnTheme.colors.textHigh,
             maxLines = 1,
         )

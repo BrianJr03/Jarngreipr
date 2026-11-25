@@ -166,11 +166,14 @@ private suspend fun LazyGridState.restoreFocus(
     gate: LibraryRevealGate,
 ) {
     snapshotFlow { layoutInfo.totalItemsCount }.first { it > index }
-    if (tabsFocus.hasFocus && !gate.willForce) return
+    if (!libraryContentTakesFocus(gate.willForce, tabsFocus.hasFocus, LibraryLaunchFocus.isPending)) return
     if (layoutInfo.visibleItemsInfo.none { it.index == index }) scrollToItem(index)
     snapshotFlow { layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
     withFrameNanos { }
-    gate.whenOpen { (gate.forcing || !tabsFocus.hasFocus) && requester.requestFocus() }
+    gate.whenOpen {
+        libraryContentTakesFocus(gate.forcing, tabsFocus.hasFocus, LibraryLaunchFocus.isPending) &&
+            LibraryLaunchFocus.settle { requester.requestFocus() }
+    }
 }
 
 @Composable
