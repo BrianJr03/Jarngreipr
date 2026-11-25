@@ -81,23 +81,17 @@ private fun deckShowsSettings(state: JarnSessionState) =
 private fun deckShowsTabs(state: JarnSessionState) =
     !deckShowsSearch(state) && !deckShowsSettings(state)
 
-/** Search and Settings hide the tabs, so the Jarn label gets a row of its own there. */
-@Composable
-private fun DeckHeader(state: JarnSessionState) {
-    val showsMark = LocalJarnMarkHandoff.current.follows
-    when {
-        deckShowsTabs(state) -> DeckTabStrip(state.deckTab, showsMark)
-        showsMark -> DeckMarkRow()
-    }
-}
+/**
+ * The label only lives in the tab strip, so Search and Settings leave the Deck without one.
+ * The shell keeps its presence, so the slot shows the current handoff when the tabs return.
+ */
+internal fun deckShowsMark(state: JarnSessionState, follows: Boolean): Boolean =
+    follows && deckShowsTabs(state)
 
 @Composable
-private fun DeckMarkRow() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JarnTheme.space.deckMargin, vertical = JarnTheme.space.md),
-    ) { JarnWordmark() }
+private fun DeckHeader(state: JarnSessionState) {
+    if (!deckShowsTabs(state)) return
+    DeckTabStrip(state.deckTab, deckShowsMark(state, LocalJarnMarkHandoff.current.follows))
 }
 
 @Composable

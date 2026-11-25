@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Jarn label handoff check for #434 on the AYN Thor (debug build).
 #
-#   scripts/verify/434-jarn-label-handoff.sh [options]
+#   scripts/jarnfe-verify/verify-434-jarn-label.sh [options]
 #
 #   --apk PATH              adb install -r this APK first (never uninstalls).
 #   --out DIR               Where dumps and screenshots go (default: build/verify-434/<timestamp>).
@@ -15,24 +15,27 @@
 #   2. presses X and checks the label left Stage and arrived on the Deck,
 #   3. presses X again and checks it came back,
 #   4. presses X twice in one burst (an interrupted handoff) and checks it settles on Stage,
-#   5. checks logcat for crashes or ANRs, the process stayed alive, and screen_focus_lock.
+#   5. opens Settings with Start and checks no screen shows the label while the Deck has hidden
+#      its tabs, then leaves with B and checks the label is back on Stage,
+#   6. checks logcat for crashes or ANRs, the process stayed alive, and screen_focus_lock.
 # Both screens are captured mid-animation and after it settles, for a human look at the motion.
 #
-# Safety: never uninstalls or clears data. Keys are X only, and only while Jarn FE holds focus.
+# Safety: never uninstalls or clears data. Keys are X, Start (only on Library) and B, and only
+# while Jarn FE holds focus.
 # On exit the old switch cue is written back and Jarn FE is restarted, unless --keep-cue.
 #
 # Exit codes: 0 no failures, 1 at least one failure, 2 could not run.
 set -uo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-LIB_DIR="$REPO_ROOT/scripts/jarnfe-verify/lib"
-HELPER="$SCRIPT_DIR/434_label.py"
-# shellcheck source=../jarnfe-verify/lib/parse.sh
+SUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$SUITE_DIR/lib"
+REPO_ROOT="$(cd "$SUITE_DIR/../.." && pwd)"
+HELPER="$LIB_DIR/labelquery.py"
+# shellcheck source=lib/parse.sh
 source "$LIB_DIR/parse.sh"
-# shellcheck source=../jarnfe-verify/lib/common.sh
+# shellcheck source=lib/common.sh
 source "$LIB_DIR/common.sh"
-# shellcheck source=../jarnfe-verify/lib/checks.sh
+# shellcheck source=lib/checks.sh
 source "$LIB_DIR/checks.sh"
 
 PKG="${JARNFE_PKG:-jr.brian.home.debug}"
@@ -55,7 +58,7 @@ STAGE_DISPLAY=$TOP_DISPLAY DECK_DISPLAY=$BOTTOM_DISPLAY
 STAGE_PHYSICAL=$TOP_PHYSICAL DECK_PHYSICAL=$BOTTOM_PHYSICAL
 STAGE_BOX="" DECK_BOX=""
 
-usage() { sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,28p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 parse_args() {
   while [ $# -gt 0 ]; do
@@ -177,28 +180,15 @@ preflight() {
   echo "  info  output in $OUT_DIR"
 }
 
-# Dumps until the window on screen is the wanted one: Stage has no Deck tabs, the Deck has them.
-dump_until() {
-  local want="$1" i
-  for i in 1 2 3 4 5 6; do
-    if ui_dump; then
-      if [ "$want" = deck ] && ui_has Now; then return 0; fi
-      if [ "$want" = stage ] && ui_has "$WORDMARK" && ! ui_has Now; then return 0; fi
-    fi
-    pause 0.7
-  done
-  return 1
-}
-
 find_boxes() {
   section "Label slots"
-  if dump_until stage; then
+  if ui_wait_role stage; then
     cp "$UI_XML" "$OUT_DIR/stage.xml"
     STAGE_BOX="$(python3 -I "$HELPER" bounds "$UI_XML" "$WORDMARK")"
   fi
   [ -n "$STAGE_BOX" ] && pass "Stage label at [$STAGE_BOX]" || fail "no $WORDMARK node on Stage"
   key "$KEY_X" || return 1
-  if dump_until deck; then
+  if ui_wait_role deck; then
     cp "$UI_XML" "$OUT_DIR/deck.xml"
     DECK_BOX="$(python3 -I "$HELPER" bounds "$UI_XML" "$WORDMARK")"
   fi
@@ -281,6 +271,30 @@ check_handoff() {
   expect_label_on burst stage
 }
 
+check_hidden_tabs() {
+  section "Settings on the Deck hides the label"
+  settings_start_is_safe || { skip "Stage is not on Library, so Start is not pressed"; return 0; }
+  key "$KEY_START" || return 1
+  if ! ui_wait_role deck || [ -z "$(ui_selected "${SETTINGS_TABS[@]}")" ]; then
+    skip "Settings did not open on the Deck"
+    key "$KEY_B"
+    return 0
+  fi
+  cp "$UI_XML" "$OUT_DIR/settings-deck.xml"
+  if ui_has "$WORDMARK"; then fail "the Deck shows a label slot in Settings"; else pass "no label slot on the Deck in Settings"; fi
+  pause 0.6
+  shots settings
+  local stage
+  stage="$(ink settings stage)"
+  echo "  info  settings ink: stage $stage (rest $(ink rest stage))"
+  if more_than "$(ink rest stage)" "$stage"; then pass "settings: label left Stage"; else fail "settings: label still on Stage"; fi
+  key "$KEY_B" || return 1
+  wait_top_display "$STAGE_DISPLAY"
+  pause 1.2
+  shots after-settings
+  expect_label_on after-settings stage
+}
+
 main() {
   parse_args "$@"
   select_device
@@ -289,7 +303,7 @@ main() {
   UI_XML="$OUT_DIR/ui.xml"
   trap restore EXIT
   preflight || exit 2
-  find_boxes && check_handoff
+  find_boxes && check_handoff && check_hidden_tabs
   check_no_crashes
   check_lock_unchanged
   section "For a human"

@@ -214,6 +214,21 @@ test_stale_ui_window() {
   expect "stuck dump restores Stage" 0 "$(state_field active)"
 }
 
+# With the Jarn label cue both windows show the wordmark, so only the role tags tell them apart.
+test_jarn_label_cue() {
+  local dump="$WORK/tagged.xml"
+  printf '%s' '<hierarchy><node resource-id="jarn_deck" /><node text="JARN" /><node text="Now" /></hierarchy>' >"$dump"
+  expect "deck tag beats the wordmark" deck "$(python3 -I "$TEST_DIR/../lib/uiquery.py" "$dump" role)"
+  printf '%s' '<hierarchy><node resource-id="jr.brian.home.debug:id/jarn_stage" /><node text="Now" /></hierarchy>' >"$dump"
+  expect "stage tag with a package prefix" stage "$(python3 -I "$TEST_DIR/../lib/uiquery.py" "$dump" role)"
+  scenario jarnlabel FAKE_MODE=Top FAKE_ROLE_TAGS=1 FAKE_JARN_LABEL=1 --
+  expect "jarn label run exits 0" 0 "$CODE"
+  has "jarn label run summary" "FAIL 0"
+  has "jarn label tab focus checked" "focusing a tab selects it: Favorites"
+  has "jarn label settings checked" "R2 opens section: Display"
+  assert_safe "jarnlabel"
+}
+
 test_swapped_screens() {
   scenario swapped FAKE_ASSIGNMENT=FRONTEND_ON_BOTTOM -- --only displays,focus-lock
   has "swap read" "Stage on display 4, Deck on display 0"
@@ -303,6 +318,7 @@ test_long_dumps_do_not_break_pipes
 test_deck_follows_stage
 test_stale_ui_window
 test_swapped_screens
+test_jarn_label_cue
 test_shoulders_377
 test_device_selection
 test_static_and_args

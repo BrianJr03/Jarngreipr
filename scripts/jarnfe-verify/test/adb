@@ -141,7 +141,12 @@ def ui_body(state):
     if state["active"] == 4 and env("DECK_UNREADABLE"):
         return '<?xml version="1.0"?><hierarchy rotation="0"><node text="" /></hierarchy>'
     parts = []
-    if role_on(state, state["active"]) == "stage":
+    role = role_on(state, state["active"])
+    if env("ROLE_TAGS"):
+        parts.append(f'<node text="" resource-id="jarn_{role}" bounds="[0,0][10,10]" />')
+    if env("JARN_LABEL") and role == "deck" and state["route"] != "settings":
+        parts.append(node("JARN"))
+    if role == "stage":
         parts.append(node("JARN"))
         if state["route"] == "library":
             for index, name in enumerate(LIBRARY):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Helpers for verify 434-jarn-label-handoff.sh.
+"""Helpers for verify-434-jarn-label.sh.
 
-  434_label.py bounds DUMP.xml TEXT       -> "x1 y1 x2 y2" of the first node showing TEXT
-  434_label.py ink SHOT.png x1 y1 x2 y2   -> share of near-white pixels in the box (0..1)
-  434_label.py diff A.png B.png x1 y1 x2 y2 -> mean per-pixel difference in the box (0..255)
+  labelquery.py bounds DUMP.xml TEXT       -> "x1 y1 x2 y2" of the first node showing TEXT
+  labelquery.py ink SHOT.png x1 y1 x2 y2   -> share of near-white pixels in the box (0..1)
+  labelquery.py diff A.png B.png x1 y1 x2 y2 -> mean per-pixel difference in the box (0..255)
 
 The box is padded by 32px on each side, so a label sitting 24dp off its rest spot still counts.
 """
