@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.components.JarnStatLine
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.jarnClickable
 import jr.brian.core.ui.focus.jarnFocus
@@ -49,7 +50,6 @@ import jr.brian.jarnfe.shell.isBatteryLow
 internal val NowPlayingCoverHeight = 280.dp
 private val NowPlayingBackdropBlur = 24.dp
 private val StatusIconSize = 20.dp
-private const val STAT_SEPARATOR = "  ·  "
 
 /** How readable one part of the page is: awake, freshly dimmed, or dimmed for a long time. */
 internal enum class NowPlayingTone { Awake, Dimmed, LongDimmed }
@@ -130,7 +130,7 @@ internal fun NowPlayingSessionTime(text: String, tone: NowPlayingTone) {
     )
 }
 
-/** Last played and total play time, as on Continue playing. */
+/** Last played and total play time, as on Continue playing, stacking when they don't fit one line. */
 @Composable
 internal fun NowPlayingStats(game: JarnLibraryGame) {
     val metadata = game.metadata
@@ -140,8 +140,7 @@ internal fun NowPlayingStats(game: JarnLibraryGame) {
         },
         metadata.playtimeMinutes?.takeIf { it > 0 }?.let { nowPlaytimeText(it) },
     )
-    if (stats.isEmpty()) return
-    JarnText(stats.joinToString(STAT_SEPARATOR), resumeStatsStyle(), JarnTheme.colors.textMid, maxLines = 1)
+    JarnStatLine(stats, resumeStatsStyle(), JarnTheme.colors.textMid, fallback = JarnTheme.baseType.label)
 }
 
 @Composable

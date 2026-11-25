@@ -27,9 +27,9 @@ import androidx.core.net.toUri
 import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnDialog
+import jr.brian.core.ui.components.JarnStatLine
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
-import jr.brian.core.ui.theme.rememberThemedStyle
 import jr.brian.frontend.library.setup.LibrarySetupState
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnScreen
@@ -43,7 +43,6 @@ import java.util.Calendar
 import java.util.TimeZone
 
 private const val MISSING_ART_ALPHA = 0.4f
-private const val STAT_SEPARATOR = "  ·  "
 private const val RELATIVE_DAY_LIMIT = 7
 private const val MISSING_CHECK_SPAN = ALSO_RECENT_COUNT * 2
 private const val DAY_MS = 86_400_000L
@@ -168,8 +167,7 @@ internal fun NowResumeFacts(game: JarnLibraryGame, status: JarnGameFileStatus?) 
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
         if (stats.isNotEmpty()) {
-            val text = stats.joinToString(STAT_SEPARATOR)
-            JarnText(text, rememberThemedStyle(text, resumeStatsStyle(), JarnTheme.baseType.label), colors.textHigh, maxLines = 1)
+            JarnStatLine(stats, resumeStatsStyle(), colors.textHigh, fallback = JarnTheme.baseType.label)
         }
         emulator?.let {
             JarnText(stringResource(R.string.jarnfe_resume_opens_in, it), JarnTheme.type.caption, colors.textMid, maxLines = 1)

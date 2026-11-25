@@ -10,6 +10,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import jr.brian.core.ui.components.JarnStatLine
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
@@ -18,7 +19,6 @@ import java.util.Date
 
 private const val MINUTES_PER_HOUR = 60L
 private const val FACT_SEPARATOR = ", "
-private const val STAT_SEPARATOR = "  ·  "
 private val ReleaseYear = Regex("(?<!\\d)(19|20)\\d{2}")
 private val PlayerCount = Regex("\\d+(\\s*[-+]\\s*\\d*)?")
 
@@ -79,7 +79,7 @@ internal fun NowFactsPlate(facts: NowGameFacts, modifier: Modifier = Modifier) {
             JarnText(summary.joinToString(FACT_SEPARATOR), JarnTheme.baseType.label, colors.textHigh, maxLines = 1)
         }
         if (stats.isNotEmpty()) {
-            JarnText(stats.joinToString(STAT_SEPARATOR), JarnTheme.type.caption, colors.textMid, maxLines = 1)
+            JarnStatLine(stats, JarnTheme.type.caption, colors.textMid)
         }
     }
 }
