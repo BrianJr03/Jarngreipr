@@ -75,6 +75,13 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
 
     private val openSystemId = MutableStateFlow<String?>(null)
     private val retries = MutableStateFlow(0)
+
+    /** All games loads the first time its tab shows, then stays live, so startup never pays for it. */
+    private val allGamesWanted = MutableStateFlow(false)
+
+    fun wantAllGames() {
+        allGamesWanted.value = true
+    }
     private var restoreConsumed = false
 
     fun connect(newSource: JarnLibrarySource) {
@@ -85,6 +92,7 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
             focusedSystemId = state.focusedSystemId,
             focusedFavoriteId = state.focusedFavoriteId,
             focusedRecentId = state.focusedRecentId,
+            focusedAllGameId = state.focusedAllGameId,
             focusedGameBySystem = state.focusedGameBySystem,
         )
     }
@@ -117,6 +125,11 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         launch { from.observeSystems().keepLast({ systems }) { copy(systems = it) } }
         launch { from.observeFavorites().keepLast({ favorites }) { copy(favorites = it) } }
         launch { from.observeRecent().keepLast({ recent }) { copy(recent = it) } }
+        launch {
+            allGamesWanted.collectLatest { wanted ->
+                if (wanted) from.observeAllGames().keepLast({ allGames }) { copy(allGames = it) }
+            }
+        }
         launch {
             openSystemId.collectLatest { systemId ->
                 if (systemId != null) from.observeSystemGames(systemId)

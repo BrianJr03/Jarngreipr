@@ -4,7 +4,8 @@ import jr.brian.jarnfe.input.JarnScreen
 
 enum class StageRoute { Library, GameList, Settings, Search, Systems }
 
-enum class LibrarySection { Systems, Favorites, Recent }
+/** Saved by name, so adding a section never changes what an older session restores. */
+enum class LibrarySection { Systems, AllGames, Favorites, Recent }
 
 enum class DeckTab { Now, Apps, Canvas }
 

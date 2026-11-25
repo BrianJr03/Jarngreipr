@@ -105,6 +105,10 @@ class JarnLibraryData @Inject constructor(
     fun games(systemId: String): Flow<VisibleList<LibraryGame>> =
         visible(combine(gameDao.observeBySystem(systemId), recentLaunches.launches(), ::withLaunches))
 
+    /** Every visible game in every system, after the user's hide rules. The caller picks the order. */
+    fun allGames(): Flow<VisibleList<LibraryGame>> =
+        visible(combine(gameDao.observeAllVisible(), recentLaunches.launches(), ::withLaunches))
+
     /** Newest first, merging Jarngreipr launches with imported play dates. */
     fun recent(limit: Int = DEFAULT_RECENT_LIMIT): Flow<VisibleList<LibraryGame>> = combine(
         recentLaunches.launches(),

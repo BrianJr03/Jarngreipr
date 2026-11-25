@@ -77,8 +77,8 @@ data class JarnLibraryFeed<out T>(
     val sort: JarnGameSort? = null,
 ) {
     companion object {
-        fun <T> ready(items: List<T>, hiddenCount: Int = 0) =
-            JarnLibraryFeed(items, JarnLibraryStatus.Ready, hiddenCount)
+        fun <T> ready(items: List<T>, hiddenCount: Int = 0, sort: JarnGameSort? = null) =
+            JarnLibraryFeed(items, JarnLibraryStatus.Ready, hiddenCount, sort)
     }
 }
 
@@ -91,6 +91,10 @@ interface JarnLibrarySource {
     fun observeGames(systemId: String): Flow<JarnLibraryFeed<JarnLibraryGame>>
     fun observeFavorites(): Flow<JarnLibraryFeed<JarnLibraryGame>>
     fun observeRecent(): Flow<JarnLibraryFeed<JarnLibraryGame>>
+
+    /** Every visible game across systems, in name order, so letter jump works there too. */
+    fun observeAllGames(): Flow<JarnLibraryFeed<JarnLibraryGame>> =
+        flowOf(JarnLibraryFeed.ready(emptyList<JarnLibraryGame>(), sort = JarnGameSort.Name))
     fun observeSystemNow(systemId: String): Flow<JarnSystemNow> =
         flowOf(JarnSystemNow(systemId, isLoaded = true))
     fun observeWideArt(gameId: String): Flow<String?> = flowOf(null)
