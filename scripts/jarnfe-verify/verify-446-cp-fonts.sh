@@ -30,6 +30,8 @@ set -uo pipefail
 VERIFY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=run.sh
 source "$VERIFY_DIR/run.sh"
+# shellcheck source=lib/prefs.sh
+source "$VERIFY_DIR/lib/prefs.sh"
 
 KEY_A=96
 LOOK_PREFS=jarnfe_look_prefs
@@ -62,32 +64,6 @@ install_if_asked() {
   [ -f "$INSTALL_APK" ] || { echo "no such APK: $INSTALL_APK" >&2; exit 2; }
   echo "Installing $INSTALL_APK"
   adb install -r "$INSTALL_APK" || { echo "adb install failed (signature mismatch? not uninstalling)" >&2; exit 2; }
-}
-
-look_pref() { read_prefs "$LOOK_PREFS" | parse_pref "$1"; }
-
-# Writes boolean pref $1 as $2 (true or false), or removes it when $2 is empty, with the app stopped.
-write_bool() {
-  local name="$1" value="$2" script
-  sh_dev am force-stop "$PKG" >/dev/null
-  script="$(python3 -I -c '
-import sys
-import xml.etree.ElementTree as ET
-raw, key, value = sys.stdin.read(), sys.argv[1], sys.argv[2]
-try:
-    root = ET.fromstring(raw) if raw.strip() else ET.Element("map")
-except ET.ParseError:
-    root = ET.Element("map")
-for item in list(root):
-    if item.get("name") == key:
-        root.remove(item)
-if value:
-    ET.SubElement(root, "boolean", name=key, value=value)
-print("<?xml version=\x271.0\x27 encoding=\x27utf-8\x27 standalone=\x27yes\x27 ?>")
-print(ET.tostring(root, encoding="unicode"))
-' "$name" "$value" <<<"$(read_prefs "$LOOK_PREFS")")" || return 1
-  printf '%s\n' "$script" | adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cat > shared_prefs/$LOOK_PREFS.xml'" || return 1
-  [ "$(look_pref "$name")" = "$value" ]
 }
 
 write_fonts() { write_bool "$FONTS_KEY" "$1"; }
