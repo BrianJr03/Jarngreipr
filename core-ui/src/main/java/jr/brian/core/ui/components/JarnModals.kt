@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.dialog
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.theme.JarnBaseTypeScope
 import jr.brian.core.ui.theme.JarnTheme
 
 @Composable
@@ -82,7 +83,9 @@ private fun JarnModal(
             enter = motion.panelEnter(offsetPx),
             exit = motion.panelExit(offsetPx),
         ) {
-            JarnModalPanel(initialFocus, shape, panelModifier, { latestDismiss() }, content)
+            JarnBaseTypeScope {
+                JarnModalPanel(initialFocus, shape, panelModifier, { latestDismiss() }, content)
+            }
         }
     }
 }

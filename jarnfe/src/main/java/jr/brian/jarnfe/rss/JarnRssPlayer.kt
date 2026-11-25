@@ -62,7 +62,7 @@ private fun JarnRssPlayerTitle(playback: JarnRssPlayback) {
     ) {
         JarnText(
             text = playback.title,
-            style = JarnTheme.type.labelStrong,
+            style = JarnTheme.baseType.labelStrong,
             color = JarnTheme.colors.textHigh,
             modifier = Modifier.weight(1f),
             maxLines = 1,

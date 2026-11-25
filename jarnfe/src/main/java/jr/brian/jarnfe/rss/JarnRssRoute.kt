@@ -467,7 +467,7 @@ private fun RssArticleRow(
             )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
-            JarnText(item.title, JarnTheme.type.labelStrong, colors.textHigh, maxLines = 2)
+            JarnText(item.title, JarnTheme.baseType.labelStrong, colors.textHigh, maxLines = 2)
             JarnText(rssArticleMeta(item, feedTitle), JarnTheme.type.caption, colors.textMid, maxLines = 1)
         }
     }

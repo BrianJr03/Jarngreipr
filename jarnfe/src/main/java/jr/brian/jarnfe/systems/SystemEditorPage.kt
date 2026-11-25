@@ -74,8 +74,8 @@ private fun SystemEditorHeader(
 ) {
     val sections = SystemSection.entries
     val count = pluralStringResource(R.plurals.jarnfe_systems_game_count, system.gameCount, system.gameCount)
-    JarnText(system.title, JarnTheme.type.heading, JarnTheme.colors.textHigh, maxLines = 1)
-    JarnText(count, JarnTheme.type.label, JarnTheme.colors.textMid, maxLines = 1)
+    JarnText(system.title, JarnTheme.baseType.heading, JarnTheme.colors.textHigh, maxLines = 1)
+    JarnText(count, JarnTheme.baseType.label, JarnTheme.colors.textMid, maxLines = 1)
     JarnTabs(
         labels = sections.map { stringResource(it.labelRes) },
         selectedIndex = sections.indexOf(section),

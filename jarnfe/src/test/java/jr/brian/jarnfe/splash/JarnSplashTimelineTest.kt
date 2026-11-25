@@ -36,4 +36,15 @@ class JarnSplashTimelineTest {
             assertEquals(1f, JarnSplashTimeline.tile(END, order), 0f)
         }
     }
+
+    @Test
+    fun `dock scale lands the splash word on the wordmark's measured width`() {
+        assertEquals(0.5f, jarnSplashDockScale(400, 200), 0f)
+        assertEquals(0.43f, jarnSplashDockScale(1000, 430), 0.0001f)
+    }
+
+    @Test
+    fun `dock scale stays put when nothing was measured`() {
+        assertEquals(1f, jarnSplashDockScale(0, 120), 0f)
+    }
 }

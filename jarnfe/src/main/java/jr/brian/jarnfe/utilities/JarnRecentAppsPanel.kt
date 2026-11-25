@@ -166,7 +166,7 @@ private fun RecentAppRow(app: JarnRecentApp, onClick: () -> Unit, modifier: Modi
         JarnDrawableIcon(app.icon, Modifier.size(RecentIconSize))
         JarnText(
             text = app.label,
-            style = JarnTheme.type.label,
+            style = JarnTheme.baseType.label,
             color = JarnTheme.colors.textHigh,
             maxLines = 1,
             modifier = Modifier.weight(1f),

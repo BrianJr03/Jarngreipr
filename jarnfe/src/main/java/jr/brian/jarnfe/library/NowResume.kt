@@ -166,7 +166,7 @@ internal fun NowResumeFacts(game: JarnLibraryGame, status: JarnGameFileStatus?) 
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
         if (stats.isNotEmpty()) {
-            JarnText(stats.joinToString(STAT_SEPARATOR), JarnTheme.type.label, colors.textHigh, maxLines = 1)
+            JarnText(stats.joinToString(STAT_SEPARATOR), JarnTheme.baseType.label, colors.textHigh, maxLines = 1)
         }
         emulator?.let {
             JarnText(stringResource(R.string.jarnfe_resume_opens_in, it), JarnTheme.type.caption, colors.textMid, maxLines = 1)
