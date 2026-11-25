@@ -25,6 +25,7 @@ import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.audio.JarnAudio
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryLaunchFocus
 import jr.brian.jarnfe.library.connectJarnLibrary
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.search.JarnSearch
@@ -154,6 +155,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             if (event.action == KeyEvent.ACTION_DOWN) JarnSplash.finish()
             return true
         }
+        if (event.action == KeyEvent.ACTION_DOWN) LibraryLaunchFocus.release()
         if (JarnDeckWatch.consumeSwitchScreen(event)) return true
         JarnInput.onButtonPressed = buttonHaptic
         JarnInput.onDirectionPressed = JarnHaptics::armNavigation
@@ -206,6 +208,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     }
 
     private fun onTouchDown() {
+        LibraryLaunchFocus.release()
         if (JarnHomeEntry.reclaim(screen)) {
             window.setFocusable(true)
             bringToFront()
