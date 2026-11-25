@@ -73,6 +73,8 @@ data class JarnLibraryFeed<out T>(
     val items: List<T> = emptyList(),
     val status: JarnLibraryStatus = JarnLibraryStatus.Loading(),
     val hiddenCount: Int = 0,
+    /** The order [items] are in. Null for lists the user can't sort, like Favorites and Recent. */
+    val sort: JarnGameSort? = null,
 ) {
     companion object {
         fun <T> ready(items: List<T>, hiddenCount: Int = 0) =

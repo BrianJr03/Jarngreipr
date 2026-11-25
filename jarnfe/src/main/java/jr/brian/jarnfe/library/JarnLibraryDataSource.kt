@@ -76,7 +76,10 @@ internal class JarnLibraryDataSource(
             )
         }
 
-    override fun observeGames(systemId: String) = data.games(systemId).asFeed()
+    override fun observeGames(systemId: String): Flow<JarnLibraryFeed<JarnLibraryGame>> =
+        combine(data.games(systemId).asFeed(), gameSort(systems, systemId)) { feed, sort ->
+            feed.copy(items = feed.items.sortedFor(sort), sort = sort)
+        }
 
     override fun observeFavorites() = data.favorites.asFeed()
 
@@ -104,6 +107,14 @@ internal class JarnLibraryDataSource(
             JarnLibraryFeed.ready(list.items.map { it.toJarnGame() }, list.hiddenCount)
         }
 }
+
+/** The system's picked order. A failing manager falls back to name order, never the library. */
+internal fun gameSort(manager: JarnSystemManager?, systemId: String): Flow<JarnGameSort> =
+    manager?.gameSorts
+        ?.map { it[systemId] ?: JarnGameSort.Default }
+        ?.catch { emit(JarnGameSort.Default) }
+        ?.distinctUntilChanged()
+        ?: flowOf(JarnGameSort.Default)
 
 /** Each system's picked Now background. A failing manager only drops the picks, never the library. */
 internal fun nowBackgrounds(manager: JarnSystemManager?): Flow<Map<String, String>> =

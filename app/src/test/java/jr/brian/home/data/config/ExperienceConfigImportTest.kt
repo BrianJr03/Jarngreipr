@@ -68,7 +68,7 @@ class ExperienceConfigImportTest {
 
     @Test
     fun `schema version includes the experience field`() {
-        assertEquals(66, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(67, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

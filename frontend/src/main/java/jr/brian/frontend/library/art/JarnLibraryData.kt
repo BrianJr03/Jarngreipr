@@ -101,8 +101,9 @@ class JarnLibraryData @Inject constructor(
         return ids.mapNotNull { found[it]?.toLibraryGame() }
     }
 
+    /** Last played includes Jarngreipr launches, so a sort by it matches the Recent tab. */
     fun games(systemId: String): Flow<VisibleList<LibraryGame>> =
-        visible(gameDao.observeBySystem(systemId))
+        visible(combine(gameDao.observeBySystem(systemId), recentLaunches.launches(), ::withLaunches))
 
     /** Newest first, merging Jarngreipr launches with imported play dates. */
     fun recent(limit: Int = DEFAULT_RECENT_LIMIT): Flow<VisibleList<LibraryGame>> = combine(
@@ -306,3 +307,21 @@ class JarnLibraryData @Inject constructor(
 
 internal fun LibraryVisibility.hides(game: GameEntity): Boolean =
     hides(game.systemId, game.absolutePath, game.relativePath)
+
+/** [games] with each one's last played moved up to its newest launch from [launches]. */
+internal fun withLaunches(games: List<GameEntity>, launches: List<RecentLaunch>): List<GameEntity> {
+    if (launches.isEmpty()) return games
+    val newest = HashMap<Pair<String, String>, Long>()
+    launches.forEach { launch ->
+        val key = launch.systemId to launch.path
+        if (launch.launchedAt > (newest[key] ?: Long.MIN_VALUE)) newest[key] = launch.launchedAt
+    }
+    return games.map { game ->
+        val launched = listOfNotNull(
+            game.absolutePath?.let { newest[game.systemId to it] },
+            newest[game.systemId to game.relativePath],
+        ).maxOrNull()
+        val newer = launched != null && launched > (game.lastPlayed ?: Long.MIN_VALUE)
+        if (newer) game.copy(lastPlayed = launched) else game
+    }
+}

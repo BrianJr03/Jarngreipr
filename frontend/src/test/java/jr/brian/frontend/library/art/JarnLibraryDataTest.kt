@@ -13,6 +13,7 @@ import jr.brian.core.model.ArtSource
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.LibraryDatabase
 import jr.brian.frontend.library.db.MediaEntity
+import jr.brian.frontend.library.db.PlayHistoryEntity
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SystemEntity
 import jr.brian.frontend.library.scan.StubSystemCatalog
@@ -217,6 +218,38 @@ class JarnLibraryDataTest {
         assertEquals(listOf("Shown"), games.items.map { it.title })
         assertEquals(1, games.hiddenCount)
         assertEquals(listOf("Shown"), library.recent().first().items.map { it.title })
+    }
+
+    @Test
+    fun `a system's games carry their newest launch as last played`() = runBlocking {
+        val played = insert("gba", "Played.gba", lastPlayed = 10L)
+        insert("gba", "Untouched.gba", lastPlayed = 50L)
+        launches.value = listOf(RecentLaunch("gba", played.relativePath, 500L), RecentLaunch("gba", "x.gba", 900L))
+
+        val byTitle = library.games("gba").first().items.associate { it.title to it.lastPlayed }
+        assertEquals(500L, byTitle["Played"])
+        assertEquals(50L, byTitle["Untouched"])
+    }
+
+    @Test
+    fun `play count adds Jarn's recorded plays to the imported count, once each`() = runBlocking {
+        val imported = insert("gba", "Imported.gba", playCount = 4)
+        insert("gba", "Other.gba", playCount = 5)
+        repeat(2) { session ->
+            val id = db.playHistoryDao().insert(PlayHistoryEntity(gameId = imported.id, startedAt = 100L + session))
+            db.playHistoryDao().settleSession(id, seconds = 300)
+            db.playHistoryDao().settleSession(id, seconds = 300)
+        }
+
+        val counts = library.games("gba").first().items.associate { it.title to it.playCount }
+        assertEquals(6, counts["Imported"])
+        assertEquals(5, counts["Other"])
+    }
+
+    @Test
+    fun `an older launch never moves last played back`() {
+        val game = GameEntity(sourceId = 1, systemId = "gba", relativePath = "a.gba", displayName = "A", lastPlayed = 80L)
+        assertEquals(80L, withLaunches(listOf(game), listOf(RecentLaunch("gba", "a.gba", 20L))).single().lastPlayed)
     }
 
     @Test

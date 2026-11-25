@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.library.art.ArtSourceDetector
+import jr.brian.frontend.library.art.GameSortStore
 import jr.brian.frontend.library.art.libraryHiddenGameKey
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
@@ -32,6 +33,7 @@ import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.jarnfe.launch.JarnAppOption
 import jr.brian.jarnfe.launch.JarnEmulatorOption
 import jr.brian.jarnfe.launch.JarnGameOptions
+import jr.brian.jarnfe.library.JarnGameSort
 import jr.brian.jarnfe.systems.JarnAddedFolder
 import jr.brian.jarnfe.systems.JarnFolderCheck
 import jr.brian.jarnfe.systems.JarnHiddenGame
@@ -84,6 +86,7 @@ class AppJarnSystemManager @Inject constructor(
     private val catalog: SystemCatalog,
     private val gameOptions: Provider<JarnGameOptions>,
     private val artDetector: Provider<ArtSourceDetector>,
+    private val sortStore: GameSortStore,
 ) : JarnSystemManager {
 
     /** Folder choices live outside the observable prefs state. */
@@ -168,6 +171,11 @@ class AppJarnSystemManager @Inject constructor(
     override fun showGames(keys: Collection<String>) {
         esdePrefs.unhideAllGames(keys)
     }
+
+    override val gameSorts: Flow<Map<String, JarnGameSort>> =
+        sortStore.state.map { stored -> stored.mapValues { JarnGameSort.fromId(it.value) } }
+
+    override fun setGameSort(systemId: String, sort: JarnGameSort) = sortStore.set(systemId, sort.name)
 
     override suspend fun emulators(systemId: String): List<JarnEmulatorOption>? =
         withContext(Dispatchers.IO) {

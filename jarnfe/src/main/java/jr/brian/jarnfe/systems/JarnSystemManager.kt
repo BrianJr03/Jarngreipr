@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import jr.brian.jarnfe.launch.JarnAppOption
 import jr.brian.jarnfe.launch.JarnEmulatorOption
+import jr.brian.jarnfe.library.JarnGameSort
 import kotlinx.coroutines.flow.Flow
 
 @Immutable
@@ -60,6 +61,10 @@ interface JarnSystemManager {
     /** Games hidden in Jarn or Classic, by title. */
     fun hiddenGames(systemId: String): Flow<List<JarnHiddenGame>>
     fun showGames(keys: Collection<String>)
+
+    /** Each system's picked game order. A system that never picked one is missing. */
+    val gameSorts: Flow<Map<String, JarnGameSort>>
+    fun setGameSort(systemId: String, sort: JarnGameSort)
 
     /** Null when the system has no game to match emulators against. */
     suspend fun emulators(systemId: String): List<JarnEmulatorOption>?
