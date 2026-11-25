@@ -1,14 +1,13 @@
 package jr.brian.jarnfe.look.fontprompt
 
 import androidx.compose.runtime.Composable
-import jr.brian.jarnfe.look.commandpanel.FontMatchAvailability
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import jr.brian.jarnfe.look.commandpanel.rememberCommandPanelFontOffer
 
-private val NoFontsDetected = JarnFontPromptInput(FontMatchAvailability.Hidden)
-
-/**
- * The trigger seam for the one-time fonts prompt. Until the Command Panel fonts reader (#449)
- * lands, Jarn detects no font look, so the prompt never shows. The reader replaces this body
- * with `Available(lookName)` and `jarnTypeWithFonts(...)` for that look.
- */
+/** The trigger for the one-time fonts prompt: the active Command Panel look and its sample type. */
 @Composable
-internal fun rememberJarnFontPromptInput(): JarnFontPromptInput = NoFontsDetected
+internal fun rememberJarnFontPromptInput(): JarnFontPromptInput {
+    val offer by rememberCommandPanelFontOffer()
+    return remember(offer) { JarnFontPromptInput(offer.availability, offer.sample) }
+}
