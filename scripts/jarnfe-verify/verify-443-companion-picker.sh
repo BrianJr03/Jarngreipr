@@ -5,6 +5,9 @@
 #   scripts/jarnfe-verify/verify-443-companion-picker.sh --launch-game [options]
 #
 #   --launch-game           Required. The check starts a real game (one press of A), see Safety.
+#   --system-row R          Rows down from the first system (default 0).
+#   --system-steps N        Systems right within that row (default 0). Together they pick a system
+#                           whose emulator is set and installed.
 #   --companions A,B        The two companion packages to give the game. Default: two installed
 #                           apps with a launcher entry (Settings first). They are never opened.
 #   --install APK           adb install -r this APK first (never uninstalls).
@@ -42,13 +45,17 @@ source "$LIB_DIR/companions.sh"
 TICKET=443
 LAUNCH_FROM="the system view"
 DB_NAME=jarngreipr_library
+SYSTEM_STEPS=0
+SYSTEM_ROWS=0
 
-usage_443() { sed -n '2,31p' "$VERIFY_DIR/verify-443-companion-picker.sh" | sed 's/^# \{0,1\}//'; }
+usage_443() { sed -n '2,34p' "$VERIFY_DIR/verify-443-companion-picker.sh" | sed 's/^# \{0,1\}//'; }
 
 parse_443_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
       --launch-game) CONSENT=1 ;;
+      --system-row) SYSTEM_ROWS="${2:?--system-row needs a number}"; shift ;;
+      --system-steps) SYSTEM_STEPS="${2:?--system-steps needs a number}"; shift ;;
       --companions) COMPANIONS="${2:?--companions needs two packages}"; shift ;;
       --install) INSTALL_APK="${2:?--install needs a path}"; shift ;;
       --allow-app-focus-sync) ALLOW_SYNC=1 ;;
@@ -83,10 +90,17 @@ for exact in (True, False):
 
 # Systems on Stage, Now on the Deck, a system focused, then control on the Deck's game row.
 walk_to_cover() {
-  ui_wait_role stage || return 1
+  # Not a UI dump: animated system art keeps Stage from going idle, so uiautomator times out there.
+  wait_top_display "$STAGE_DISPLAY" || return 1
   step_to_tab 0 "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY" || return 1
   step_to_tab 0 "${#DECK_TABS[@]}" "$DECK_DISPLAY" || return 1
-  key "$KEY_RIGHT" && key "$KEY_LEFT" || return 1
+  # A cold start focuses the first system, so rows down and steps right always reach the same one.
+  press_times "$KEY_DOWN" "$SYSTEM_ROWS" || return 1
+  if [ "$SYSTEM_STEPS" -gt 0 ]; then
+    press_times "$KEY_RIGHT" "$SYSTEM_STEPS" || return 1
+  else
+    key "$KEY_RIGHT" && key "$KEY_LEFT" || return 1
+  fi
   pause 2
   activate_display "$DECK_DISPLAY" || return 1
   ui_wait_role deck || return 1
@@ -105,6 +119,7 @@ walk_to_cover() {
 }
 
 restart_on_cover() {
+  sh_dev am force-stop "$PKG"
   start_stage || { fail "could not bring Stage to the front"; return 1; }
   FOCUSED_COVER="" FOCUSED_ROW=""
   walk_to_cover || { fail "could not focus a game on the system view's row"; return 1; }

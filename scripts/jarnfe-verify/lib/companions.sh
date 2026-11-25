@@ -133,6 +133,10 @@ check_offer() {
     && echo "  info  "Tap to choose" hint before the Deck has control: $OUT_DIR/$TICKET-tap-hint.png"
   tap_sheet_edge || { fail "could not read the Deck display size for the tap"; return 1; }
   if ! ui_wait_role deck; then
+    if [ "$(focus_lock_value)" = 1 ]; then
+      skip "Focus Lock keeps the controller on the top screen, so the Deck can't be read after a tap; see the screenshots"
+      return 1
+    fi
     fail "the Deck did not take the controller after the tap"
     return 1
   fi

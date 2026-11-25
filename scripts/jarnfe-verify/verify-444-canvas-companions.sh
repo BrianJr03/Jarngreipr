@@ -97,16 +97,24 @@ rom_row_for_label() {
   return 1
 }
 
+# Game art tiles carry no label, so with one pinned ROM an unlabelled focused tile is taken as it.
 focused_rom() {
-  local focused row
-  ui_dump && focused="$(ui_focused)"
+  local focused row name system path
+  ui_dump || return 1
+  focused="$(ui_focused)"
+  if [ -z "$focused" ] && [ "$(grep -c . <<<"$PINNED_ROMS")" = 1 ] && text_has "$(cat "$UI_XML")" 'focused="true"'; then
+    IFS=$'\t' read -r name system path <<<"$PINNED_ROMS"
+    FOCUSED_COVER="$name" FOCUSED_ROW="$(printf '%s\t%s\t' "$system" "$path")"
+    return 0
+  fi
   row="$(rom_row_for_label "$focused")" || return 1
   FOCUSED_COVER="$focused" FOCUSED_ROW="$row"
 }
 
 # Rows left to right, then down. The same walk after a restart lands on the same tile.
 walk_to_rom_tile() {
-  ui_wait_role stage || return 1
+  # Not a UI dump: animated system art keeps Stage from going idle, so uiautomator times out there.
+  wait_top_display "$STAGE_DISPLAY" || return 1
   step_to_tab "$CANVAS_TAB" "${#DECK_TABS[@]}" "$DECK_DISPLAY" || return 1
   activate_display "$DECK_DISPLAY" || return 1
   ui_wait_role deck || return 1
