@@ -51,8 +51,9 @@ internal val LibraryGridColumnSpacing = 12.dp
 
 /**
  * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
- * the focused item disappears in a refresh. Right after a Library tab switch it focuses its first
- * item instead, once the tab has slid open. With [itemTitle] and [letterJumpEnabled], holding Up
+ * the focused item disappears in a refresh. After a Library tab switch it focuses that remembered
+ * item once the tab has slid open, or its first item when the remembered one is gone (see
+ * [rememberedOrFirst]). With [itemTitle] and [letterJumpEnabled], holding Up
  * or Down jumps by letter (see [gridLetterJumpKeys]) and shows the letter badge.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -81,7 +82,7 @@ internal fun <T : Any> LibraryFocusGrid(
     val focusLost = lastFocused?.let { it !in keys } ?: false
     val gate = LocalLibraryRevealGate.current
     val target = remember(items.isEmpty(), focusLost, refocusSignal) {
-        focusedKey.takeUnless { gate.preferFirst && lastFocused == null } ?: items.firstOrNull()?.let(itemKey)
+        rememberedOrFirst(focusedKey, keys, items.firstOrNull()?.let(itemKey))
     }
     val headerCount = if (header != null) 1 else 0
     var headerHeight by remember { mutableIntStateOf(0) }
@@ -173,6 +174,10 @@ private fun GridLetterJumpLands(state: LazyGridState, jump: GridLetterJump, item
         jump.requester.requestFocus()
     }
 }
+
+/** The remembered [focusedKey] while it is still among [keys], otherwise [first]. */
+internal fun rememberedOrFirst(focusedKey: String?, keys: Set<String>, first: String?): String? =
+    focusedKey?.takeIf { it in keys } ?: first
 
 /**
  * The header can't take focus, so a focused tile in the row below it scrolls far enough to show
