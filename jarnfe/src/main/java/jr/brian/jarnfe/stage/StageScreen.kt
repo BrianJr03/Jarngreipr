@@ -60,6 +60,7 @@ import jr.brian.jarnfe.settings.JarnSettingsSingleScreen
 import jr.brian.jarnfe.shell.JarnNoticeHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.JarnStatusReadout
+import jr.brian.jarnfe.shell.JarnWordmark
 import jr.brian.jarnfe.shell.deckPanelBindings
 import jr.brian.jarnfe.shell.stageBindings
 import jr.brian.jarnfe.splash.JarnSplash
@@ -111,23 +112,15 @@ internal fun StageScreen(state: JarnSessionState) {
 
 @Composable
 private fun StageHeader(state: JarnSessionState) {
-    val colors = JarnTheme.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = JarnTheme.space.stageMargin),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        JarnText(
-            text = stringResource(R.string.jarnfe_wordmark),
-            style = JarnTheme.type.heading,
-            color = colors.textHigh,
-            modifier = Modifier.jarnSplashMark(),
-            maxLines = 1,
-        )
+        JarnWordmark(Modifier.jarnSplashMark())
         Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
-        Box(Modifier.jarnSplashFade()) { JarnStatusReadout() }
+        Box(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade()) { JarnStatusReadout() }
     }
 }
 

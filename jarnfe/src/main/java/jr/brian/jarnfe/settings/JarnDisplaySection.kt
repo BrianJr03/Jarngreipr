@@ -75,6 +75,11 @@ private fun NowPageGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
         NowPartRow(R.string.jarnfe_settings_show_game_row, R.string.jarnfe_settings_show_game_row_hint, display.gameRowVisible) { show ->
             store.updateDisplay { it.copy(gameRowVisible = show) }
         }
+        NowPartRow(
+            R.string.jarnfe_settings_system_background,
+            R.string.jarnfe_settings_system_background_hint,
+            display.systemBackgroundVisible,
+        ) { show -> store.updateDisplay { it.copy(systemBackgroundVisible = show) } }
     }
 }
 
@@ -222,6 +227,7 @@ internal val JarnSwitchCue.cueLabelRes: Int
         JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse
         JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim
         JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark
+        JarnSwitchCue.JarnLabel -> R.string.jarnfe_switch_cue_jarn_label
     }
 
 @get:StringRes
@@ -230,6 +236,7 @@ internal val JarnSwitchCue.cueHintRes: Int
         JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse_hint
         JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim_hint
         JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark_hint
+        JarnSwitchCue.JarnLabel -> R.string.jarnfe_switch_cue_jarn_label_hint
     }
 
 private fun JarnSwitchCue.nextCue(): JarnSwitchCue =
@@ -250,6 +257,7 @@ private fun TapControlRow(store: JarnLookStore, choice: JarnTapControl) {
 private val JarnTapControl.labelRes: Int
     get() = when (this) {
         JarnTapControl.FollowTap -> R.string.jarnfe_settings_tap_control_follow
+        JarnTapControl.FollowNoTap -> R.string.jarnfe_settings_tap_control_follow_no_tap
         JarnTapControl.AlwaysTop -> R.string.jarnfe_settings_tap_control_top
         JarnTapControl.AlwaysBottom -> R.string.jarnfe_settings_tap_control_bottom
     }

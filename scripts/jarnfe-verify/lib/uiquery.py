@@ -4,6 +4,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 WORDMARK = "JARN"
+# Each window tags its root with its role, so the role reads the same whichever cue is chosen.
+ROLE_TAGS = {"jarn_stage": "stage", "jarn_deck": "deck"}
 DECK_TABS = {"Now", "Apps", "Canvas"}
 SETTINGS_TABS = {"Library", "Art", "Look", "Display", "Apps", "General", "Data"}
 
@@ -16,7 +18,19 @@ def labels_in(node):
     return [text for text in (label(item) for item in node.iter("node")) if text]
 
 
+def tagged_role(root):
+    for node in root.iter("node"):
+        resource = (node.get("resource-id") or "").rsplit("/", 1)[-1]
+        if resource in ROLE_TAGS:
+            return ROLE_TAGS[resource]
+    return ""
+
+
 def role(root):
+    tagged = tagged_role(root)
+    if tagged:
+        return tagged
+    # Builds before the role tags only ever showed the wordmark on Stage.
     found = set(labels_in(root))
     if WORDMARK in found:
         return "stage"

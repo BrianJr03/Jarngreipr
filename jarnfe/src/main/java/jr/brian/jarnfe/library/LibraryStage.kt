@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -255,6 +258,7 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
     val screen = LocalJarnScreen.current
     val missing = status == JarnGameFileStatus.Missing
     val focus = remember { FocusRequester() }
+    var coverWidth by remember(game.artPath) { mutableStateOf(HeroHeight) }
     LaunchedEffect(JarnLibrary.heroFocusPending) {
         if (!JarnLibrary.heroFocusPending) return@LaunchedEffect
         withFrameNanos { }
@@ -271,13 +275,17 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
             .fillMaxWidth()
             .height(HeroHeight),
         onClick = { resumeGame(game, status, screen) }.takeIf { canPlay },
+        artEndWidth = coverWidth,
         art = {
             Box(Modifier.matchParentSize().alpha(missingArtAlpha(status))) {
-                LibraryCoverArt(game, Alignment.CenterEnd)
+                LibraryCoverArt(game, Alignment.CenterEnd, onAspectRatio = { coverWidth = heroCoverWidth(it) })
             }
         },
     )
 }
+
+/** How much of the card's right edge a cover of [aspectRatio] takes at the card's height. */
+private fun heroCoverWidth(aspectRatio: Float?): Dp = aspectRatio?.let { HeroHeight * it } ?: 0.dp
 
 /** ROM names carry tags like "(USA) (Rev 1)" that don't belong in a headline. */
 internal fun heroTitle(title: String): String =
