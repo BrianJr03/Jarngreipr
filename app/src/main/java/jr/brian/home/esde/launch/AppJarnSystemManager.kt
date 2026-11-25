@@ -200,7 +200,7 @@ class AppJarnSystemManager @Inject constructor(
         val folder = folderName(treeUri)
         val storedName = keys.firstOrNull { it.equals(folder, ignoreCase = true) } ?: systemId
         val saved = runCatching {
-            persistSafTreeForSystem(context, esdePrefs, storedName, treeUri)
+            persistSafTreeForSystem(context, esdePrefs, storedName, treeUri, registerParentRoot = false)
         }.isSuccess
         if (!saved) return null
         keys.filter { it != storedName }.forEach { esdePrefs.setSafTreeUri(it, treeUri.toString()) }

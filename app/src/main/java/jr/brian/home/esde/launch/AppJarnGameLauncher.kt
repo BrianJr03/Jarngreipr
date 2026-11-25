@@ -109,7 +109,13 @@ class AppJarnGameLauncher @Inject constructor(
 
     override fun grantFileAccess(host: Activity, game: JarnGameRef, treeUri: String): Boolean =
         runCatching {
-            persistSafTreeForSystem(host, esdePrefs, game.systemName, treeUri.toUri())
+            persistSafTreeForSystem(
+                host,
+                esdePrefs,
+                game.systemName,
+                treeUri.toUri(),
+                registerParentRoot = false,
+            )
         }.onFailure { Log.w(TAG, "Could not save the folder grant", it) }.isSuccess
 
     override fun fileStatus(game: JarnGameRef): JarnGameFileStatus {

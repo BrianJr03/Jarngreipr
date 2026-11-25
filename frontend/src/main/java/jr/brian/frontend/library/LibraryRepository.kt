@@ -240,11 +240,13 @@ class LibraryRepository @Inject constructor(
 
         var totalSystems = 0
         var done = 0
-        for (source in sources) {
+        for (source in innermostFirst(sources)) {
             if (!source.hasPersistedGrant) continue
+            val filter = withoutCoveredSystems(source, sources, systemsFilter, catalogSystems.keys)
+            if (filter?.isEmpty() == true) continue
             // No results is never treated as "everything was deleted":
             // an unmounted card or lost grant looks the same.
-            val report = scanner.scanWithReport(source, systems = systemsFilter)
+            val report = scanner.scanWithReport(source, systems = filter)
             if (report.roms.isEmpty()) continue
 
             val bySystem = report.roms.groupBy { it.systemId }
@@ -270,7 +272,40 @@ class LibraryRepository @Inject constructor(
                 sourceDao.markScanned(source.id, System.currentTimeMillis())
             }
         }
+        mergeOverlappingGames()
     }
+
+    /**
+     * Drops the systems a folder inside [source] already holds, so a library
+     * root and a system folder within it never both list the same games.
+     * Returns [systemsFilter] unchanged when nothing is covered.
+     */
+    private suspend fun withoutCoveredSystems(
+        source: SourceEntity,
+        sources: List<SourceEntity>,
+        systemsFilter: Set<String>?,
+        catalogIds: Set<String>,
+    ): Set<String>? {
+        val covered = systemsCoveredInside(source, sources, gameDao.getSourceCounts())
+            .mapTo(HashSet()) { it.lowercase() }
+        if (covered.isEmpty()) return systemsFilter
+        val wanted = systemsFilter?.mapTo(HashSet()) { it.lowercase() } ?: catalogIds
+        return wanted - covered
+    }
+
+    /** Folds copies of one game seen through overlapping folders into one row. Safe to repeat. */
+    suspend fun mergeOverlappingGames() {
+        val duplicates = gameDao.getSharedPathGames()
+        if (duplicates.isEmpty()) return
+        val merges = planOverlapMerges(duplicates, sourceDao.getAll())
+        if (merges.isNotEmpty()) gameDao.mergeDuplicates(merges)
+    }
+
+    /** Scanned sources left empty because system folders inside them hold all their games. */
+    suspend fun redundantParentSources(): List<SourceEntity> =
+        findRedundantParents(sourceDao.getAll(), gameDao.getSourceCounts())
+
+    suspend fun removeSource(id: Long) = sourceDao.deleteById(id)
 
     /**
      * Scans only [targets], for Jarn FE's folder setup. [scanAll] and its
@@ -314,6 +349,7 @@ class LibraryRepository @Inject constructor(
                 sourceDao.markScanned(target.source.id, System.currentTimeMillis())
             }
         }
+        mergeOverlappingGames()
     }
 
     private suspend fun scanTarget(

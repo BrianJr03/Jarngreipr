@@ -185,12 +185,16 @@ fun deriveRomsRoot(pickedDir: String, systemName: String?): String {
  * partial behaviour (e.g. deliberate picker in settings, no launch to chain
  * off) still use the whole function — the persisted grant and the derived
  * root should not drift.
+ *
+ * Jarn FE passes [registerParentRoot] false: its system folder is already a
+ * library source, so saving the parent too would list the games twice (#459).
  */
 fun persistSafTreeForSystem(
     context: Context,
     esdePrefs: ESDEPreferencesManager,
     systemName: String?,
     treeUri: Uri,
+    registerParentRoot: Boolean = true,
 ) {
     context.contentResolver.takePersistableUriPermission(
         treeUri,
@@ -198,12 +202,17 @@ fun persistSafTreeForSystem(
     )
     val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
     val pickedDir = treeDocId?.let(::documentIdToStoragePath)
-    if (pickedDir != null) {
-        esdePrefs.addRomsPath(deriveRomsRoot(pickedDir, systemName))
-    }
+    val romsRoot = pickedDir?.let { romsRootToRegister(it, systemName, registerParentRoot) }
+    if (romsRoot != null) esdePrefs.addRomsPath(romsRoot)
     if (systemName != null) {
         esdePrefs.setSafTreeUri(systemName, treeUri.toString())
     }
+}
+
+/** The ROMs root a pick adds, or null when it would only be the picked folder's parent. */
+fun romsRootToRegister(pickedDir: String, systemName: String?, registerParentRoot: Boolean): String? {
+    val root = deriveRomsRoot(pickedDir, systemName)
+    return root.takeIf { registerParentRoot || it == pickedDir }
 }
 
 fun sdCardVolumeId(absolutePath: String): String? {

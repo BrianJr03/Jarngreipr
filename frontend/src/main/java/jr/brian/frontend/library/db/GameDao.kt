@@ -131,6 +131,43 @@ interface GameDao {
     @Query("SELECT sourceId, systemId, COUNT(*) AS gameCount FROM games GROUP BY sourceId, systemId")
     fun observeSourceCounts(): Flow<List<SourceGameCount>>
 
+    @Query("SELECT sourceId, systemId, COUNT(*) AS gameCount FROM games GROUP BY sourceId, systemId")
+    suspend fun getSourceCounts(): List<SourceGameCount>
+
+    @Query(
+        """
+        SELECT g.* FROM games g
+        JOIN (
+            SELECT systemId, relativePath FROM games
+            GROUP BY systemId, relativePath HAVING COUNT(*) > 1
+        ) d ON g.systemId = d.systemId AND g.relativePath = d.relativePath
+        """
+    )
+    suspend fun getSharedPathGames(): List<GameEntity>
+
+    @Query("UPDATE play_history SET gameId = :keepId WHERE gameId IN (:dropIds)")
+    suspend fun movePlayHistory(keepId: Long, dropIds: List<Long>)
+
+    @Query("SELECT gameId FROM media WHERE gameId IN (:gameIds)")
+    suspend fun gamesWithMedia(gameIds: List<Long>): List<Long>
+
+    @Query("UPDATE media SET gameId = :keepId WHERE gameId = :dropId")
+    suspend fun moveMedia(keepId: Long, dropId: Long)
+
+    /** Folds each duplicate into its kept copy, moving play history and art before the delete. */
+    @Transaction
+    suspend fun mergeDuplicates(merges: List<GameMerge>) {
+        for (merge in merges) {
+            update(merge.keep)
+            movePlayHistory(merge.keep.id, merge.dropIds)
+            val withMedia = gamesWithMedia(merge.dropIds + merge.keep.id)
+            if (merge.keep.id !in withMedia) {
+                merge.dropIds.firstOrNull { it in withMedia }?.let { moveMedia(merge.keep.id, it) }
+            }
+            deleteByIds(merge.dropIds)
+        }
+    }
+
     @Query("SELECT systemId, absolutePath, relativePath FROM games WHERE isHidden = 0")
     fun observeVisibleKeys(): Flow<List<GameKeyRow>>
 
