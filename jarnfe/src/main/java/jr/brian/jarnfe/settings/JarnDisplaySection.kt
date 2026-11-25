@@ -222,6 +222,7 @@ internal val JarnSwitchCue.cueLabelRes: Int
         JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse
         JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim
         JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark
+        JarnSwitchCue.JarnLabel -> R.string.jarnfe_switch_cue_jarn_label
     }
 
 @get:StringRes
@@ -230,6 +231,7 @@ internal val JarnSwitchCue.cueHintRes: Int
         JarnSwitchCue.Pulse -> R.string.jarnfe_switch_cue_pulse_hint
         JarnSwitchCue.Dim -> R.string.jarnfe_switch_cue_dim_hint
         JarnSwitchCue.TabMark -> R.string.jarnfe_switch_cue_tab_mark_hint
+        JarnSwitchCue.JarnLabel -> R.string.jarnfe_switch_cue_jarn_label_hint
     }
 
 private fun JarnSwitchCue.nextCue(): JarnSwitchCue =

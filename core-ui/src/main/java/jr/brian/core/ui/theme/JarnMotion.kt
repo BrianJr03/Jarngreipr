@@ -73,6 +73,24 @@ data class JarnMotion(
     /** A short beat after [tabReveal] before focus lands, so it never arrives mid-slide. */
     val tabFocusSettleMillis: Long = if (reduced) 0L else 13L
 
+    /** The Jarn label leaving the screen that lost control. Instant swaps it at once. */
+    val markLeave = when {
+        instant -> Instant
+        reduced -> ReducedFade
+        else -> JarnMotionToken(160, JarnEasingExit)
+    }
+
+    /** The Jarn label settling on the screen that took control, [markArriveDelayMillis] after it leaves. */
+    val markArrive = when {
+        instant -> Instant
+        reduced -> ReducedFade
+        else -> JarnMotionToken(240, JarnEasingEmphasized)
+    }
+    val markArriveDelayMillis: Int = if (reduced) 0 else 100
+
+    /** Reduced motion crossfades the label in place. */
+    val markTravel: Dp = if (reduced) 0.dp else 24.dp
+
     val pressScale: Float = when {
         reduced -> 1f
         tilePress -> 0.96f

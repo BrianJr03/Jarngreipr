@@ -356,6 +356,21 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `the jarn label cue survives a backup and a restart`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.JarnLabel) }
+        val json = importExport.encodeToJson(
+            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
+        )
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Pulse) }
+
+        val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertTrue(json.contains("\"jarn_label\""))
+        assertEquals(JarnSwitchCue.JarnLabel, JarnLookStore(ApplicationProvider.getApplicationContext()).display.switchCue)
+    }
+
+    @Test
     fun `an older backup leaves the switch cue alone`() = runTest {
         store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
 

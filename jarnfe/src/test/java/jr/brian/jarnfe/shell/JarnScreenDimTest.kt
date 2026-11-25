@@ -26,6 +26,13 @@ class JarnScreenDimTest {
     }
 
     @Test
+    fun `the jarn label only moves with two screens`() {
+        assertEquals(JarnSwitchCue.JarnLabel, jarnShownCue(JarnSwitchCue.JarnLabel, twoScreens = true))
+        assertEquals(JarnSwitchCue.Pulse, jarnShownCue(JarnSwitchCue.JarnLabel, twoScreens = false))
+        assertEquals(0f, jarnDimTarget(JarnSwitchCue.JarnLabel, isLit = false, twoScreens = true))
+    }
+
+    @Test
     fun `the first change is immediate and the next waits out the gap`() {
         val gate = JarnDimGate(shown = 0f)
         assertEquals(0L, gate.waitMillis(1f, 1_000L))

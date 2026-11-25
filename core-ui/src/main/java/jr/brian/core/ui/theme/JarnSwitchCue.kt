@@ -20,6 +20,7 @@ enum class JarnSwitchCue(val id: String) {
     Pulse("pulse"),
     Dim("dim"),
     TabMark("tab_mark"),
+    JarnLabel("jarn_label"),
     ;
 
     companion object {

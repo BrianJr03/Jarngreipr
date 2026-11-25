@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
@@ -16,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -36,6 +38,8 @@ import jr.brian.jarnfe.look.JarnSwitchCuePreview
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.settings.cueHintRes
 import jr.brian.jarnfe.settings.cueLabelRes
+import jr.brian.jarnfe.shell.JarnWordmark
+import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 
 internal fun nextPreviewCue(current: JarnSwitchCue?, cue: JarnSwitchCue, isFocused: Boolean): JarnSwitchCue? = when {
     isFocused -> cue
@@ -82,7 +86,7 @@ private fun FirstRunCueOption(cue: JarnSwitchCue, chosen: Boolean, onChoose: () 
     )
 }
 
-/** Gives each screen something real to pulse and mark, since the tour hides the normal tabs. */
+/** Gives each screen something real to pulse, mark and label, since the tour hides the normal headers. */
 @Composable
 internal fun FirstRunCueSample(takesFocus: Boolean = true) {
     val source = remember { MutableInteractionSource() }
@@ -102,14 +106,20 @@ internal fun FirstRunCueSample(takesFocus: Boolean = true) {
     } else {
         Modifier
     }
-    Box(focus.background(JarnTheme.colors.raised, shape)) {
-        JarnText(
-            text = stringResource(R.string.jarnfe_section_systems),
-            modifier = Modifier.padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.xs),
-            style = JarnTheme.type.labelStrong,
-            color = JarnTheme.colors.textHigh,
-            maxLines = 1,
-        )
-        JarnSwitchMarkLine()
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (LocalJarnMarkHandoff.current.follows) JarnWordmark()
+        Box(focus.background(JarnTheme.colors.raised, shape)) {
+            JarnText(
+                text = stringResource(R.string.jarnfe_section_systems),
+                modifier = Modifier.padding(horizontal = JarnTheme.space.md, vertical = JarnTheme.space.xs),
+                style = JarnTheme.type.labelStrong,
+                color = JarnTheme.colors.textHigh,
+                maxLines = 1,
+            )
+            JarnSwitchMarkLine()
+        }
     }
 }
