@@ -91,6 +91,23 @@ internal object JarnGameActions {
     var pendingArt by mutableStateOf<ArtChoice?>(null)
     var pendingFocus by mutableStateOf(false)
         private set
+    var pageBeforeOffer = GameActionsPage.Actions
+
+    /** Puts [choices] up as the companion offer. The page under it comes back once it closes. */
+    fun offer(choices: List<JarnAppOption>) {
+        if (page != GameActionsPage.CompanionLaunch) pageBeforeOffer = page
+        companionChoices = choices
+        page = GameActionsPage.CompanionLaunch
+    }
+
+    /** False when nothing was offered. */
+    fun endOffer(): Boolean {
+        if (page != GameActionsPage.CompanionLaunch) return false
+        companionChoices = emptyList()
+        page = pageBeforeOffer
+        pageBeforeOffer = GameActionsPage.Actions
+        return true
+    }
 
     fun clearPending() {
         pendingEmulator = null
@@ -123,6 +140,7 @@ internal class JarnGameActionsController(
 ) {
     private val state = JarnGameActions
     private var loadJob: Job? = null
+    private var panelOpenBeforeOffer = false
 
     val artChoices: StateFlow<GameArtChoices> = data.artChoices
 
@@ -133,6 +151,7 @@ internal class JarnGameActionsController(
             return
         }
         state.gameId = game.id
+        state.pageBeforeOffer = GameActionsPage.Actions
         if (state.page != GameActionsPage.CompanionLaunch) {
             state.page = GameActionsPage.Actions
             state.companionChoices = emptyList()
@@ -169,20 +188,29 @@ internal class JarnGameActionsController(
         JarnSession.update { openDeckNow() }
     }
 
-    /** Never takes focus, because the game that just started owns the controller. */
     fun offerCompanions(game: JarnLibraryGame, packages: List<String>) {
         show(game)
-        state.companionChoices = options.appOptions(packages)
-        state.page = GameActionsPage.CompanionLaunch
+        offerCompanions(packages)
+    }
+
+    /**
+     * Never takes focus, because the game that just started owns the controller. Needs no Library
+     * game, so a launch from anywhere, such as a Canvas tile, can offer its companions.
+     */
+    fun offerCompanions(packages: List<String>) {
+        if (state.page != GameActionsPage.CompanionLaunch) panelOpenBeforeOffer = JarnSession.state.deckPanelOpen
+        state.offer(options.appOptions(packages))
         JarnSession.update { withDeckPanel(true) }
     }
 
-    /** Leaves focus where it is, since no game page drew the offer. */
+    /** Leaves focus where it is, and the one-screen Deck panel as it was, so a Canvas launch stays on Canvas. */
     fun dismissCompanions() {
-        if (state.page != GameActionsPage.CompanionLaunch) return
-        state.companionChoices = emptyList()
-        state.page = GameActionsPage.Actions
-        JarnSession.update { withDeckPanel(false) }
+        if (state.endOffer()) JarnSession.update { withDeckPanel(panelOpenBeforeOffer) }
+    }
+
+    /** A new launch replaces any open offer: with its own companions, or with none. */
+    fun followLaunch(companions: List<String>) {
+        if (companions.isEmpty()) dismissCompanions() else offerCompanions(companions)
     }
 
     fun openPage(page: GameActionsPage) {
