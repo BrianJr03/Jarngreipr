@@ -221,7 +221,9 @@ test_jarn_label_cue() {
   expect "deck tag beats the wordmark" deck "$(python3 -I "$TEST_DIR/../lib/uiquery.py" "$dump" role)"
   printf '%s' '<hierarchy><node resource-id="jr.brian.home.debug:id/jarn_stage" /><node text="Now" /></hierarchy>' >"$dump"
   expect "stage tag with a package prefix" stage "$(python3 -I "$TEST_DIR/../lib/uiquery.py" "$dump" role)"
-  scenario jarnlabel FAKE_MODE=Top FAKE_ROLE_TAGS=1 FAKE_JARN_LABEL=1 --
+  # Every on-device check that reads which screen it is on. The release check reads the tree.
+  scenario jarnlabel FAKE_MODE=Top FAKE_ROLE_TAGS=1 FAKE_JARN_LABEL=1 -- \
+    --only displays,activities,focus-lock,switching,dpad,hints,tabs,settings,crashes
   expect "jarn label run exits 0" 0 "$CODE"
   has "jarn label run summary" "FAIL 0"
   has "jarn label tab focus checked" "focusing a tab selects it: Favorites"
