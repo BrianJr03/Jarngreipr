@@ -89,6 +89,9 @@ class EsdeRomsFolderFinder internal constructor(
 
     override fun hasEsde(): Boolean = esdeDirs().any(isDirectory)
 
+    /** Every ES-DE folder that is there, the one beside the media folder first. Touches the disk. */
+    fun esdeFolders(): List<File> = esdeDirs().filter(isDirectory)
+
     override fun find(): EsdeRomsFolder? {
         fromSettings()?.let { return EsdeRomsFolder(it, fromSettings = true) }
         val fallback = File(INTERNAL_STORAGE, DEFAULT_ROMS_DIR)

@@ -314,7 +314,7 @@ class LibraryRescanTest {
 
     private suspend fun importGamelist(xml: String, seen: MutableSet<String>? = null) {
         val sourceId = db.sourceDao().getAll().single().id
-        GamelistImporter(db.gameDao()).importStream(xml.byteInputStream(), sourceId, "nes", seen)
+        GamelistImporter(db.gameDao(), catalog).importStream(xml.byteInputStream(), sourceId, "nes", seen)
     }
 
     private fun GameEntity.withUserData() = copy(

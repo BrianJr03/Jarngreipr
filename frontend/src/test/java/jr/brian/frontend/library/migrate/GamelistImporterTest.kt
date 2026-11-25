@@ -6,6 +6,8 @@ import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.LibraryDatabase
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SystemEntity
+import jr.brian.frontend.library.scan.StubSystemCatalog
+import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -39,7 +41,10 @@ class GamelistImporterTest {
         db = Room.inMemoryDatabaseBuilder(app, LibraryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        importer = GamelistImporter(db.gameDao())
+        importer = GamelistImporter(
+            db.gameDao(),
+            StubSystemCatalog(SystemDef(id = "nes", displayName = "Nintendo", extensions = setOf("nes"))),
+        )
     }
 
     @After
@@ -148,7 +153,7 @@ class GamelistImporterTest {
 
     @Test
     fun `missing XML fields leave the existing GameEntity values untouched`() = runBlocking {
-        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario Original")
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
 
         val xml = """
             <gameList>
@@ -165,6 +170,59 @@ class GamelistImporterTest {
         assertNull(mario.description) // was null before, still null
         assertNull(mario.releaseDate)
         assertEquals(false, mario.isFavorite)
+    }
+
+    @Test
+    fun `a name and description set here survive a re-import`() = runBlocking {
+        val (sourceId, gameId) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        db.gameDao().update(
+            db.gameDao().findById(gameId)!!.copy(displayName = "My Mario", description = "Scraped here"),
+        )
+        val xml = """
+            <gameList><game>
+              <path>./Mario.nes</path>
+              <name>Super Mario Bros</name>
+              <desc>From ES-DE</desc>
+              <genre>Platformer</genre>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        val mario = db.gameDao().observeAll().first().single()
+        assertEquals("My Mario", mario.displayName)
+        assertEquals("Scraped here", mario.description)
+        assertEquals("Platformer", mario.genre)
+    }
+
+    @Test
+    fun `a filename title is replaced and an empty description filled`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "sub/Zelda (USA).nes", displayName = "Zelda (USA)")
+        val xml = """
+            <gameList><game>
+              <path>./sub/Zelda (USA).nes</path>
+              <name>The Legend of Zelda</name>
+              <desc>Adventure</desc>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        val zelda = db.gameDao().observeAll().first().single()
+        assertEquals("The Legend of Zelda", zelda.displayName)
+        assertEquals("Adventure", zelda.description)
+    }
+
+    @Test
+    fun `a blank description is filled`() = runBlocking {
+        val (sourceId, gameId) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        db.gameDao().update(db.gameDao().findById(gameId)!!.copy(description = "  "))
+        val xml = "<gameList><game><path>./Mario.nes</path><desc>Classic</desc></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals("Classic", db.gameDao().observeAll().first().single().description)
     }
 
     @Test

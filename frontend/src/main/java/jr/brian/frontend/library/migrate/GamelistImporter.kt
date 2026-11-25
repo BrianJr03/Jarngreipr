@@ -4,6 +4,8 @@ import android.util.Log
 import android.util.Xml
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
+import jr.brian.frontend.library.scan.scannedTitle
+import jr.brian.frontend.library.systems.SystemCatalog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
@@ -25,6 +27,14 @@ import javax.inject.Singleton
  * convention. Prevents a stale gamelist from resurrecting games the
  * user already deleted.
  *
+ * ### What it fills
+ *
+ * Metadata only fills gaps: a field is written when it is empty here,
+ * and the name also when it is still the title a scan gives the file.
+ * A name or description scraped or edited here always survives. The
+ * same rule applies on every run. Favorites and play stats can only be
+ * added or raised, never undone.
+ *
  * ### Join key
  *
  * Match is on `(sourceId, systemId, relativePath)` after normalising
@@ -42,12 +52,13 @@ import javax.inject.Singleton
 @Singleton
 class GamelistImporter @Inject constructor(
     private val gameDao: GameDao,
+    private val catalog: SystemCatalog,
 ) {
 
     /**
      * Parse [file] as a gamelist.xml and update every matching
      * GameEntity under [sourceId] / [systemId]. Returns the count of
-     * rows updated.
+     * rows updated, or null when the file can't be read or parsed.
      *
      * @param seenFavorites paths whose gamelist favorite was already
      *   applied by an earlier import. Those aren't applied again, so a
@@ -59,15 +70,15 @@ class GamelistImporter @Inject constructor(
         sourceId: Long,
         systemId: String,
         seenFavorites: MutableSet<String>? = null,
-    ): Int = withContext(Dispatchers.IO) {
-        if (!file.exists() || !file.isFile) return@withContext 0
+    ): Int? = withContext(Dispatchers.IO) {
+        if (!file.exists() || !file.isFile) return@withContext null
         try {
             file.inputStream().use { input ->
-                importStream(input, sourceId, systemId, seenFavorites)
+                importStreamOrNull(input, sourceId, systemId, seenFavorites)
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse gamelist ${file.absolutePath}", e)
-            0
+            Log.w(TAG, "Failed to read gamelist ${file.absolutePath}", e)
+            null
         }
     }
 
@@ -76,13 +87,21 @@ class GamelistImporter @Inject constructor(
         sourceId: Long,
         systemId: String,
         seenFavorites: MutableSet<String>? = null,
-    ): Int {
+    ): Int = importStreamOrNull(input, sourceId, systemId, seenFavorites) ?: 0
+
+    private suspend fun importStreamOrNull(
+        input: InputStream,
+        sourceId: Long,
+        systemId: String,
+        seenFavorites: MutableSet<String>?,
+    ): Int? {
         val entries = try {
             parseEntries(input)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse gamelist stream", e)
-            return 0
+            return null
         }
+        val romExtensions = catalog.extensionsFor(systemId)
         var updated = 0
         val matchedFavorites = HashSet<String>()
         for (entry in entries) {
@@ -91,15 +110,19 @@ class GamelistImporter @Inject constructor(
             val xmlFavorite = entry.favorite == true
             if (xmlFavorite) matchedFavorites += entry.relativePath
             val isNewFavorite = xmlFavorite && seenFavorites?.contains(entry.relativePath) != true
+            val scanTitle = scannedTitle(existing.relativePath, romExtensions)
             val merged = existing.copy(
-                displayName = entry.name ?: existing.displayName,
-                description = entry.description ?: existing.description,
-                rating = entry.rating?.takeIf { it > 0f } ?: existing.rating,
-                releaseDate = entry.releaseDate ?: existing.releaseDate,
-                developer = entry.developer ?: existing.developer,
-                publisher = entry.publisher ?: existing.publisher,
-                genre = entry.genre ?: existing.genre,
-                players = entry.players ?: existing.players,
+                displayName = existing.displayName
+                    .takeUnless { it.isBlank() || it == scanTitle }
+                    ?: entry.name
+                    ?: existing.displayName,
+                description = existing.description.orGap(entry.description),
+                rating = existing.rating?.takeIf { it > 0f } ?: entry.rating?.takeIf { it > 0f } ?: existing.rating,
+                releaseDate = existing.releaseDate.orGap(entry.releaseDate),
+                developer = existing.developer.orGap(entry.developer),
+                publisher = existing.publisher.orGap(entry.publisher),
+                genre = existing.genre.orGap(entry.genre),
+                players = existing.players.orGap(entry.players),
                 // The XML can be older than this app's state, so it can
                 // add a favorite or raise a stat but never undo either.
                 isFavorite = existing.isFavorite || isNewFavorite,
@@ -230,6 +253,9 @@ class GamelistImporter @Inject constructor(
 
     private companion object {
         const val TAG = "GamelistImporter"
+
+        /** This value when it is set, otherwise the gamelist's. */
+        fun String?.orGap(fromGamelist: String?): String? = takeUnless { it.isNullOrBlank() } ?: fromGamelist ?: this
 
         fun parseEsdeDateOrNull(text: String): Long? =
             try { parseEsdeDate(text) } catch (_: Exception) { null }
