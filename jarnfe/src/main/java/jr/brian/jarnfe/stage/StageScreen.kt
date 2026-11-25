@@ -40,6 +40,8 @@ import jr.brian.jarnfe.deck.DeckContent
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.launch.JarnCompanionPanelContent
+import jr.brian.jarnfe.launch.offeredCompanionController
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryGameList
 import jr.brian.jarnfe.library.LibraryGameListTitle
@@ -292,6 +294,10 @@ private fun DeckPanelFocusReturn(panelOpen: Boolean) {
     }
 }
 
+@StringRes
+private fun deckPanelTitle(offersCompanions: Boolean): Int =
+    if (offersCompanions) R.string.jarnfe_game_open_companion else R.string.jarnfe_deck_title
+
 @Composable
 private fun SingleScreenDeckPanel(state: JarnSessionState) {
     DeckPanelFocusReturn(state.deckPanelOpen)
@@ -300,12 +306,17 @@ private fun SingleScreenDeckPanel(state: JarnSessionState) {
         enabled = state.deckPanelOpen,
         bindings = { deckPanelBindings(JarnSession) },
     ) {
+        val offered = offeredCompanionController()
         JarnSheet(
             visible = state.deckPanelOpen,
-            onDismiss = { JarnSession.update { withDeckPanel(false) } },
-            title = stringResource(R.string.jarnfe_deck_title),
+            onDismiss = { offered?.dismissCompanions() ?: JarnSession.update { withDeckPanel(false) } },
+            title = stringResource(deckPanelTitle(offered != null)),
         ) {
-            DeckContent(state, Modifier.fillMaxWidth().weight(1f, fill = false))
+            if (offered != null) {
+                JarnCompanionPanelContent(offered)
+            } else {
+                DeckContent(state, Modifier.fillMaxWidth().weight(1f, fill = false))
+            }
         }
     }
 }

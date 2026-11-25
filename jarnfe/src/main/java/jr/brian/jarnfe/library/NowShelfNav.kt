@@ -11,6 +11,7 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.GameActionsPage
 import jr.brian.jarnfe.launch.JarnGameActions
+import jr.brian.jarnfe.launch.showsOnGamePage
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
@@ -87,10 +88,10 @@ internal class JarnNowShelfStore(
         session.update { openDeckNow() }
     }
 
-    /** A launch from a cover can need a picker or offer companions, which live on the game's page. */
+    /** A launch from a cover can need a picker, which lives on the game's page. */
     fun followLaunchedCover() {
         val game = launched ?: return
-        if (JarnGameActions.gameId != game.id || JarnGameActions.page == GameActionsPage.Actions) return
+        if (JarnGameActions.gameId != game.id || !JarnGameActions.page.showsOnGamePage()) return
         showGame(game)
     }
 

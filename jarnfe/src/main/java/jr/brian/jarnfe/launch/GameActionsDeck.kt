@@ -57,10 +57,10 @@ internal fun GameActionsHost(
     LaunchedEffect(game.id, controller) { controller.show(game) }
     PendingFocusEffect(firstFocus, pageIsReady(state.page))
     JarnInputLayer(
-        enabled = state.page != GameActionsPage.Actions,
+        enabled = state.page.showsOnGamePage(),
         bindings = { on(JarnAction.Back, R.string.jarnfe_hint_back) { controller.back() } },
     ) {
-        if (state.page == GameActionsPage.Actions) {
+        if (!state.page.showsOnGamePage()) {
             actionsPage(firstFocus)
         } else {
             GameActionPicker(game, controller, firstFocus)
@@ -162,7 +162,7 @@ private fun GameActionPicker(
     firstFocus: FocusRequester,
 ) {
     when (JarnGameActions.page) {
-        GameActionsPage.Actions -> Unit
+        GameActionsPage.Actions, GameActionsPage.CompanionLaunch -> Unit
         GameActionsPage.Emulators -> PickerList(
             titleRes = R.string.jarnfe_game_choose_emulator,
             rows = emulatorRows(game, controller),
@@ -195,16 +195,6 @@ private fun GameActionPicker(
             controller = controller,
             firstFocus = firstFocus,
             supporting = stringResource(R.string.jarnfe_game_companion_limit),
-        )
-        GameActionsPage.CompanionLaunch -> PickerList(
-            titleRes = R.string.jarnfe_game_open_companion,
-            rows = JarnGameActions.companionChoices.map { app ->
-                PickerRow(app.packageName, app.label) { controller.openCompanion(app.packageName) }
-            },
-            emptyRes = R.string.jarnfe_game_no_apps,
-            loading = false,
-            controller = controller,
-            firstFocus = firstFocus,
         )
         GameActionsPage.EmulatorScope,
         GameActionsPage.EmulatorConfirm,
@@ -310,9 +300,9 @@ internal fun PickerList(
 }
 
 @Composable
-private fun PickerRows(rows: List<PickerRow>, firstFocus: FocusRequester) {
+internal fun PickerRows(rows: List<PickerRow>, firstFocus: FocusRequester, modifier: Modifier = Modifier) {
     val focusIndex = rows.indexOfFirst { it.enabled }
-    Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
         rows.forEachIndexed { index, row ->
             JarnNavigateRow(
                 label = row.label,

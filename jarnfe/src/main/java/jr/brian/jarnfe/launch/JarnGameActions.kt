@@ -55,6 +55,17 @@ internal fun pageBefore(
     else -> GameActionsPage.Actions
 }
 
+/** The companion offer is a sheet of its own, so a game page keeps its actions under it. */
+internal fun GameActionsPage.showsOnGamePage(): Boolean =
+    this != GameActionsPage.Actions && this != GameActionsPage.CompanionLaunch
+
+/** Shown wherever the Deck is, since a launch can start from any part of Jarn. */
+internal fun companionPickerShown(
+    page: GameActionsPage,
+    choices: List<JarnAppOption>,
+    hasController: Boolean,
+): Boolean = hasController && page == GameActionsPage.CompanionLaunch && choices.isNotEmpty()
+
 internal fun isArtAvailable(choice: ArtChoice, kinds: Set<MediaKind>): Boolean =
     choice.kind == null || choice.kind in kinds
 
@@ -115,15 +126,18 @@ internal class JarnGameActionsController(
 
     val artChoices: StateFlow<GameArtChoices> = data.artChoices
 
+    /** An open companion offer outlives a switch of game, since Now can move on while a game starts. */
     fun show(game: JarnLibraryGame) {
         if (state.gameId == game.id) {
             if (state.setup == null) reload(game)
             return
         }
         state.gameId = game.id
-        state.page = GameActionsPage.Actions
+        if (state.page != GameActionsPage.CompanionLaunch) {
+            state.page = GameActionsPage.Actions
+            state.companionChoices = emptyList()
+        }
         state.setup = null
-        state.companionChoices = emptyList()
         state.artKinds = null
         state.clearPending()
         reload(game)
@@ -161,6 +175,14 @@ internal class JarnGameActionsController(
         state.companionChoices = options.appOptions(packages)
         state.page = GameActionsPage.CompanionLaunch
         JarnSession.update { withDeckPanel(true) }
+    }
+
+    /** Leaves focus where it is, since no game page drew the offer. */
+    fun dismissCompanions() {
+        if (state.page != GameActionsPage.CompanionLaunch) return
+        state.companionChoices = emptyList()
+        state.page = GameActionsPage.Actions
+        JarnSession.update { withDeckPanel(false) }
     }
 
     fun openPage(page: GameActionsPage) {
@@ -338,7 +360,7 @@ internal class JarnGameActionsController(
     fun openCompanion(packageName: String) {
         runCatching { options.openCompanion(activity, packageName) }
             .onFailure { JarnNotices.show(R.string.jarnfe_launch_app_missing) }
-        closePage()
+        dismissCompanions()
     }
 
     private fun afterChoice(game: JarnLibraryGame, next: GameActionsPage) {
