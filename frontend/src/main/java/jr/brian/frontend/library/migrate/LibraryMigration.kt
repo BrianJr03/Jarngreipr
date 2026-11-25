@@ -12,6 +12,9 @@ import jr.brian.frontend.library.db.SystemEntity
 import jr.brian.frontend.library.setup.EsdeRomsFolderFinder
 import jr.brian.frontend.library.systems.SystemCatalog
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -62,6 +65,11 @@ class LibraryMigration @Inject constructor(
     // once. One at a time keeps the seen-favorites prefs consistent.
     private val gamelistLock = Mutex()
 
+    private val _gamelistProgress = MutableStateFlow<EsdeImportProgress?>(null)
+
+    /** The run in progress, or null between runs. */
+    val gamelistProgress: StateFlow<EsdeImportProgress?> = _gamelistProgress.asStateFlow()
+
     /**
      * Idempotent: safe to call on every launch. Does nothing when
      * [MIGRATION_VERSION_KEY] already matches [CURRENT_VERSION].
@@ -109,8 +117,9 @@ class LibraryMigration @Inject constructor(
      *   size and modified time match the last successful import is
      *   skipped. Force after a scan, since new games can match an
      *   unchanged file.
+     * @return what the run did, for Jarn's "Import from ES-DE" summary.
      */
-    suspend fun reimportGamelists(force: Boolean = true) = withContext(Dispatchers.IO) {
+    suspend fun reimportGamelists(force: Boolean = true): EsdeImportSummary = withContext(Dispatchers.IO) {
         importGamelists(force)
     }
 
@@ -129,34 +138,54 @@ class LibraryMigration @Inject constructor(
      * each file-path source. See [planGamelistImports] for which file
      * applies where. Missing all-files access just means nothing is found.
      */
-    private suspend fun importGamelists(force: Boolean) = gamelistLock.withLock {
-        val jobs = planGamelistImports(
+    private suspend fun importGamelists(force: Boolean): EsdeImportSummary = gamelistLock.withLock {
+        val plan = planGamelistImports(
             esdeDirs = runCatching { esdeFolders.esdeFolders() }.getOrDefault(emptyList()),
             sources = sourceDao.getAll(),
             counts = gameDao.getSourceCounts(),
             systemFor = { name -> catalog.findByFolderAlias(name)?.id },
         )
-        var updated = 0
+        var counts = GamelistFileCounts()
         var skipped = 0
-        for (job in jobs) {
-            val stamp = gamelistStamp(job.file)
-            val stampKey = "$GAMELIST_STAMP_KEY_PREFIX${job.sourceId}_${job.systemId}"
-            if (!force && migrationPrefs.getString(stampKey, null) == stamp) {
-                skipped++
-                continue
+        var unreadable = 0
+        try {
+            plan.jobs.forEachIndexed { index, job ->
+                _gamelistProgress.value = EsdeImportProgress(index, plan.jobs.size, systemLabel(job.systemId))
+                val stamp = gamelistStamp(job.file)
+                val stampKey = "$GAMELIST_STAMP_KEY_PREFIX${job.sourceId}_${job.systemId}"
+                if (!force && migrationPrefs.getString(stampKey, null) == stamp) {
+                    skipped++
+                    return@forEachIndexed
+                }
+                val fileCounts = importGamelist(job.file, job.sourceId, job.systemId)
+                if (fileCounts == null) {
+                    unreadable++
+                    return@forEachIndexed
+                }
+                counts += fileCounts
+                migrationPrefs.edit().putString(stampKey, stamp).apply()
             }
-            val result = importGamelist(job.file, job.sourceId, job.systemId) ?: continue
-            updated += result
-            migrationPrefs.edit().putString(stampKey, stamp).apply()
+        } finally {
+            _gamelistProgress.value = null
         }
-        Log.i(
-            TAG,
-            "Gamelist import: ${jobs.size} gamelists, $skipped skipped as unchanged, $updated games updated",
+        val summary = EsdeImportSummary(
+            gamelistsFound = plan.jobs.size,
+            systemsMatched = plan.jobs.mapTo(HashSet()) { it.systemId }.size,
+            unrecognisedSystems = plan.notRecognised,
+            gamesUpdated = counts.gamesUpdated,
+            favoritesAdded = counts.favoritesAdded,
+            playStatsUpdated = counts.playStatsUpdated,
+            unreadable = unreadable,
+            skippedUnchanged = skipped,
         )
+        Log.i(TAG, summary.logLine())
+        summary
     }
 
+    private fun systemLabel(systemId: String): String = catalog.findById(systemId)?.displayName ?: systemId
+
     /** Null when the file can't be read or parsed, so it is tried again next time. */
-    private suspend fun importGamelist(file: java.io.File, sourceId: Long, systemId: String): Int? {
+    private suspend fun importGamelist(file: java.io.File, sourceId: Long, systemId: String): GamelistFileCounts? {
         val key = "$SEEN_FAVORITES_KEY_PREFIX${sourceId}_$systemId"
         val before = migrationPrefs.getStringSet(key, null).orEmpty().toSet()
         val seenFavorites = before.toMutableSet()

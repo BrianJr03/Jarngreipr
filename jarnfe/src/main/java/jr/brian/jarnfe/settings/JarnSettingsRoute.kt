@@ -207,6 +207,7 @@ private fun SettingsSectionContent(
 @Composable
 private fun LibrarySettings(setup: LibrarySetup) {
     GameFoldersSection(setup)
+    JarnEsdeSettingsGroup()
     JarnSystemsSection(onOpen = ::openSystemManager)
 }
 

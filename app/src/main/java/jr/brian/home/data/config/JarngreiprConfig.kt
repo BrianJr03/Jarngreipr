@@ -237,7 +237,9 @@ data class JarngreiprConfig(
         //      prompt was answered. Null on older blobs keeps the current value. Import only sets it.
         // v64: added RomSearchConfig.gameEmulatorMap, systemEmulatorMap, gameCommandMap and
         //      gameCoreMap, the emulator, core and command choices. Null on older blobs keeps them.
-        const val CONFIG_VERSION = 64
+        // v65: added FeatureConfig.jarnEsdeImportNoticeShown, whether Jarn FE's one-time "ES-DE found"
+        //      notice after skipping the tour was shown. Null on older blobs keeps it. Import only sets it.
+        const val CONFIG_VERSION = 65
     }
 }
 
@@ -431,6 +433,8 @@ data class FeatureConfig(
     val jarnMatchCommandPanelFonts: Boolean? = null,
     /** v63: Jarn FE fonts prompt answered. Null on pre-v63 exports. Import never turns it back off. */
     val jarnFontsPromptShown: Boolean? = null,
+    /** v65: Jarn FE "ES-DE found" notice shown. Null on pre-v65 exports. Import never turns it back off. */
+    val jarnEsdeImportNoticeShown: Boolean? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */

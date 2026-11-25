@@ -15,6 +15,8 @@ import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.SourceDao
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SourceGameCount
+import jr.brian.frontend.library.migrate.EsdeImportProgress
+import jr.brian.frontend.library.migrate.EsdeImportSummary
 import jr.brian.frontend.library.migrate.LibraryMigration
 import jr.brian.frontend.library.systems.SystemCatalog
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +64,8 @@ class LibrarySetup @Inject constructor(
     private val catalog: SystemCatalog,
     private val preparer: LibraryScanPreparer,
     private val gamelists: LibraryMigration,
+    private val esdeDetector: EsdeDetector,
+    private val esdeHistory: EsdeImportHistory,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow<LibrarySetupState>(LibrarySetupState.Checking)
@@ -97,6 +101,29 @@ class LibrarySetup @Inject constructor(
         if (_state.value == LibrarySetupState.ScanFailed) attempted.value = emptySet()
         recheck()
         importGamelistsWhenIdle(force = true)
+    }
+
+    /** What ES-DE has, counted without importing. For Jarn's first-run offer. */
+    suspend fun detectEsde(): EsdeDetection = esdeDetector.detect()
+
+    /** How far a gamelist import is, or null between runs. */
+    val esdeImportProgress: StateFlow<EsdeImportProgress?> get() = gamelists.gamelistProgress
+
+    /** The last "Import from ES-DE" summary, kept across restarts. Null before the first. */
+    val lastEsdeImport: StateFlow<EsdeImportSummary?> get() = esdeHistory.last
+
+    /**
+     * "Import from ES-DE": reads every gamelist now, changed or not, once
+     * no scan is running. Fills gaps only, like every import. Without file
+     * access nothing is read, and the summary says so.
+     */
+    suspend fun importFromEsde(): EsdeImportSummary {
+        val esde = esdeDetector.check()
+        if (!esde.hasFileAccess) return EsdeImportSummary(esdeFound = esde.found, accessMissing = true)
+        repository.state.first { it !is LibraryState.Scanning }
+        val summary = gamelists.reimportGamelists(force = true).copy(esdeFound = esde.found)
+        esdeHistory.save(summary)
+        return summary
     }
 
     /** Accepts a folder of systems or one system's folder. Nothing is saved on no match. */

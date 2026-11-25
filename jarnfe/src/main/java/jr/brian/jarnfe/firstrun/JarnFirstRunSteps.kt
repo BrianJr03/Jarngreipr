@@ -43,13 +43,17 @@ import jr.brian.frontend.library.art.ArtSourceStatus
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.library.JarnFolderPicker
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryStatus
 import jr.brian.jarnfe.library.jarnArtDetectorOrNull
 import jr.brian.jarnfe.library.jarnLibraryDataOrNull
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
+import jr.brian.jarnfe.library.label
 import jr.brian.jarnfe.library.librarySetupPrompt
+import jr.brian.jarnfe.library.rememberJarnGamesFolderAction
+import jr.brian.jarnfe.library.rememberJarnHasEsde
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.settings.JarnLookPicker
@@ -70,6 +74,7 @@ internal fun FirstRunStepContent(
         )
         JarnFirstRunStep.Ready -> FirstRunReadyStep(twoScreens, actions)
         JarnFirstRunStep.Library -> FirstRunLibraryStep()
+        JarnFirstRunStep.Esde -> FirstRunEsdeStep()
         JarnFirstRunStep.Media -> FirstRunMediaStep(actions)
         JarnFirstRunStep.Look -> FirstRunLookStep()
         JarnFirstRunStep.SwitchCue -> FirstRunSwitchCueStep(actions)
@@ -101,11 +106,7 @@ private fun FirstRunLibraryStep() {
                 color = JarnTheme.colors.textMid,
             )
             FirstRunNote(R.string.jarnfe_first_run_library_why)
-            JarnButton(
-                label = stringResource(prompt.actionRes),
-                onClick = { JarnFolderPicker.open?.invoke(null) },
-                variant = JarnButtonVariant.Secondary,
-            )
+            FirstRunFolderButton(prompt.actionRes)
         }
         systems.status is JarnLibraryStatus.Loading -> FirstRunHeading(
             R.string.jarnfe_first_run_library_title,
@@ -116,6 +117,19 @@ private fun FirstRunLibraryStep() {
             R.string.jarnfe_first_run_library_later,
         )
     }
+}
+
+/** ES-DE players get "Use your ES-DE ROMs folder"; everyone else the setup's own action. */
+@Composable
+private fun FirstRunFolderButton(@StringRes fallbackRes: Int) {
+    val esde = rememberJarnGamesFolderAction(LocalJarnScreen.current)
+    val useEsde = rememberJarnHasEsde() == true
+    val pickFolder: () -> Unit = { JarnFolderPicker.open?.invoke(null) }
+    JarnButton(
+        label = if (useEsde) esde.label() else stringResource(fallbackRes),
+        onClick = if (useEsde) esde.run else pickFolder,
+        variant = JarnButtonVariant.Secondary,
+    )
 }
 
 @Composable

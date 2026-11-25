@@ -82,6 +82,8 @@ internal class JarnFirstRunController(private val progress: JarnFirstRunProgress
 
     fun showLessons(twoScreens: Boolean) = move { it.withLessons(twoScreens) }
 
+    fun offerEsde(offer: Boolean, twoScreens: Boolean) = move { it.withEsdeOffer(offer, twoScreens) }
+
     fun replay() {
         isReplay = true
         isArtDetour = false
@@ -140,11 +142,14 @@ internal fun JarnSessionState.landedOnLibrary(): JarnSessionState =
 internal class JarnFirstRunActions(
     private val controller: JarnFirstRunController,
     private val session: JarnSessionStore,
+    private val onSkipped: () -> Unit = {},
+    private val esdePrimary: () -> Boolean = { false },
 ) {
     private val twoScreens get() = session.state.settingsOnDeck
 
     fun primary() {
         val run = controller.state ?: return
+        if (run.step == JarnFirstRunStep.Esde && !run.confirmingSkip && esdePrimary()) return
         val gesture = run.step.gesture
         if (!run.confirmingSkip && gesture != null && !run.practiced) {
             perform(gesture, tabDelta = 1)
@@ -174,6 +179,7 @@ internal class JarnFirstRunActions(
 
     fun skip() {
         controller.finish()
+        onSkipped()
         land()
     }
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +58,7 @@ internal fun JarnFirstRunScreen(
 ) {
     val run = controller.state ?: return
     val twoScreens = session.settingsOnDeck
-    val actions = remember(controller) { JarnFirstRunActions(controller, JarnSession) }
+    val actions = rememberJarnFirstRunActions(controller)
     val hasGuide = screen == JarnScreen.Deck || !twoScreens
     if (screen == JarnScreen.Stage) FirstRunStageEffects(run, twoScreens, controller, actions)
     JarnInputLayer(
@@ -84,6 +83,7 @@ private fun FirstRunStageEffects(
     actions: JarnFirstRunActions,
 ) {
     LaunchedEffect(Unit) { JarnSplash.finish() }
+    FirstRunEsdeOfferEffect(controller, twoScreens)
     LaunchedEffect(JarnLibrary.source) { JarnLibrary.observe() }
     LaunchedEffect(twoScreens) {
         if (!twoScreens) {
@@ -238,6 +238,7 @@ private fun stageTitleRes(step: JarnFirstRunStep, practiceStep: JarnFirstRunStep
     JarnFirstRunStep.Welcome -> R.string.jarnfe_first_run_stage_welcome
     JarnFirstRunStep.Ready -> R.string.jarnfe_ready_title
     JarnFirstRunStep.Library -> R.string.jarnfe_first_run_library_title
+    JarnFirstRunStep.Esde -> R.string.jarnfe_esde_import_title
     JarnFirstRunStep.Media -> R.string.jarnfe_first_run_media_title
     JarnFirstRunStep.Look -> R.string.jarnfe_first_run_look_title
     JarnFirstRunStep.SwitchCue -> R.string.jarnfe_first_run_cue_title

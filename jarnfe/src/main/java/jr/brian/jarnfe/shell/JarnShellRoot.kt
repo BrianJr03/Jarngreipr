@@ -15,6 +15,7 @@ import jr.brian.jarnfe.deck.DeckScreen
 import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
 import jr.brian.jarnfe.firstrun.rememberJarnFirstRun
 import jr.brian.jarnfe.library.JarnEsdeRomsNoticeHost
+import jr.brian.jarnfe.settings.JarnEsdeImportNoticeHost
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.jarnfe.look.JarnSwitchCuePreview
@@ -58,6 +59,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                         else -> DeckScreen(state)
                     }
                     JarnEsdeRomsNoticeHost(screen)
+                    JarnEsdeImportNoticeHost(screen)
                     if (screen == JarnScreen.Deck && firstRun?.coversShell(state.stageRoute) != true) {
                         JarnFontPromptHost()
                     }

@@ -68,7 +68,7 @@ class JarnPreviewConfigImportTest {
 
     @Test
     fun `schema version covers the preview`() {
-        assertEquals(64, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(65, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

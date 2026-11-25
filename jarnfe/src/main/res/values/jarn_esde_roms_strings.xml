@@ -7,4 +7,57 @@
     <string name="jarnfe_esde_roms_notice_message">Jarn will read ES-DE\'s settings to find your ROMs folder. This needs file access.</string>
     <string name="jarnfe_esde_roms_notice_continue">Continue</string>
     <string name="jarnfe_esde_roms_notice_cancel">Cancel</string>
+
+    <!-- Import from ES-DE (#467) -->
+    <string name="jarnfe_esde_import_title">Bring over ES-DE</string>
+    <string name="jarnfe_esde_import_found">Found %1$s and %2$s in ES-DE.</string>
+    <string name="jarnfe_esde_import_found_unread">ES-DE is on this device. Jarn can bring over your favorites and play time.</string>
+    <plurals name="jarnfe_esde_import_count_games">
+        <item quantity="one">%d game</item>
+        <item quantity="other">%d games</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_count_favorites">
+        <item quantity="one">%d favorite</item>
+        <item quantity="other">%d favorites</item>
+    </plurals>
+    <string name="jarnfe_esde_import_bring">Bring them over</string>
+    <string name="jarnfe_esde_import_not_now">Not now</string>
+    <string name="jarnfe_esde_import_notice_title">Read your ES-DE files</string>
+    <string name="jarnfe_esde_import_notice_message">Jarn reads ES-DE\'s settings and game lists to find your games, favorites and play time. It never changes your ES-DE files. This needs file access.</string>
+    <string name="jarnfe_esde_import_no_access">Jarn can\'t see ES-DE without file access.</string>
+    <string name="jarnfe_esde_import_retry">Try again</string>
+    <string name="jarnfe_esde_import_failed">Couldn\'t bring over ES-DE. Try again.</string>
+    <plurals name="jarnfe_esde_import_progress">
+        <item quantity="one">Bringing over %1$d of %2$d</item>
+        <item quantity="other">Bringing over %1$d of %2$d</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_systems">
+        <item quantity="one">%1$d system</item>
+        <item quantity="other">%1$d systems</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_games">
+        <item quantity="one">%1$d game updated</item>
+        <item quantity="other">%1$d games updated</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_favorites">
+        <item quantity="one">%1$d favorite added</item>
+        <item quantity="other">%1$d favorites added</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_playtime">
+        <item quantity="one">Play time brought over for %1$d game</item>
+        <item quantity="other">Play time brought over for %1$d games</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_unrecognised">
+        <item quantity="one">%1$d system not recognised: %2$s</item>
+        <item quantity="other">%1$d systems not recognised: %2$s</item>
+    </plurals>
+    <string name="jarnfe_esde_import_list_separator">", "</string>
+    <string name="jarnfe_esde_import_ready_row">Bring over ES-DE favorites and play time</string>
+    <string name="jarnfe_esde_import_skip_notice">ES-DE found. Bring it over in Settings, Library.</string>
+    <string name="jarnfe_esde_import_settings_group">ES-DE</string>
+    <string name="jarnfe_esde_import_reimport">Re-import from ES-DE</string>
+    <string name="jarnfe_esde_import_reimport_hint">Fills in missing details. Never removes anything.</string>
+    <string name="jarnfe_esde_import_last">Last import: %1$s, %2$s</string>
+    <string name="jarnfe_esde_import_read_gamelist">Read gamelist.xml</string>
+    <string name="jarnfe_esde_import_read_gamelist_hint">Use names and details from ES-DE</string>
 </resources>
