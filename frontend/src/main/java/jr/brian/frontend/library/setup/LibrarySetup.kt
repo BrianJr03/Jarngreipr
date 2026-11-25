@@ -3,6 +3,7 @@ package jr.brian.frontend.library.setup
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,6 +15,7 @@ import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.SourceDao
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SourceGameCount
+import jr.brian.frontend.library.migrate.LibraryMigration
 import jr.brian.frontend.library.systems.SystemCatalog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,6 +32,8 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "LibrarySetup"
 
 /** Readies `:app`'s media roots, so a scan never clears art it could not see. */
 fun interface LibraryScanPreparer {
@@ -56,6 +61,7 @@ class LibrarySetup @Inject constructor(
     private val repository: LibraryRepository,
     private val catalog: SystemCatalog,
     private val preparer: LibraryScanPreparer,
+    private val gamelists: LibraryMigration,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow<LibrarySetupState>(LibrarySetupState.Checking)
@@ -81,6 +87,7 @@ class LibrarySetup @Inject constructor(
                 SetupInputs(sources, counts, library, tried)
             }.collectLatest(::evaluate)
         }
+        importGamelistsWhenIdle(force = false)
     }
 
     /** Grants can change while the app is away, so this runs on every return. */
@@ -89,6 +96,7 @@ class LibrarySetup @Inject constructor(
     fun retry() {
         if (_state.value == LibrarySetupState.ScanFailed) attempted.value = emptySet()
         recheck()
+        importGamelistsWhenIdle(force = true)
     }
 
     /** Accepts a folder of systems or one system's folder. Nothing is saved on no match. */
@@ -147,6 +155,22 @@ class LibrarySetup @Inject constructor(
         preparer.prepare()
         if (repository.scanSources(plans)) {
             attempted.update { tried -> tried + targets.map { it.treeUri } }
+            importGamelistsWhenIdle(force = true)
+        }
+    }
+
+    /**
+     * Brings over ES-DE's favorites, play stats and metadata once no scan is
+     * running. It never removes a favorite or lowers a play stat set here.
+     * At start only changed gamelists are read; after a scan or a refresh
+     * every one is, since new games can match an unchanged file.
+     */
+    private fun importGamelistsWhenIdle(force: Boolean) {
+        scope.launch {
+            repository.state.first { it !is LibraryState.Scanning }
+            if (!repository.keepsImportedMetadata) return@launch
+            runCatching { gamelists.reimportGamelists(force) }
+                .onFailure { Log.w(TAG, "Gamelist import failed", it) }
         }
     }
 

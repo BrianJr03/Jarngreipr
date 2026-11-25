@@ -180,7 +180,7 @@ class RomSearchViewModel @Inject constructor(
     private suspend fun maybeReimportGamelists() {
         if (!esdePreferencesManager.state.value.gamelistDecorationEnabled) return
         try {
-            libraryMigration.reimportGamelists()
+            libraryMigration.reimportGamelists(force = true)
         } catch (e: Exception) {
             Log.w(TAG, "Gamelist decoration after scan failed", e)
         }

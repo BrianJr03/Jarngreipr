@@ -9,6 +9,7 @@ import jr.brian.frontend.library.scan.FastWalkScanner
 import jr.brian.frontend.library.scan.SafTreeScanner
 import jr.brian.frontend.library.scan.ScannerDispatcher
 import jr.brian.frontend.library.scan.StubSystemCatalog
+import jr.brian.frontend.library.setup.EsdeRomsFolderFinder
 import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +92,14 @@ class LibraryMigrationTest {
                 mediaDao = db.mediaDao(),
                 catalog = catalog,
             ),
-            gamelistImporter = GamelistImporter(db.gameDao()),
+            gamelistImporter = GamelistImporter(db.gameDao(), catalog),
+            gameDao = db.gameDao(),
+            esdeFolders = EsdeRomsFolderFinder(
+                mediaRoot = { null },
+                volumes = { emptyList() },
+                readText = { null },
+                isDirectory = { false },
+            ),
         )
     }
 

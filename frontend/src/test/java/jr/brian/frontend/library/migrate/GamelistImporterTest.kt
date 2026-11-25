@@ -6,6 +6,8 @@ import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.LibraryDatabase
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SystemEntity
+import jr.brian.frontend.library.scan.StubSystemCatalog
+import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -39,7 +41,10 @@ class GamelistImporterTest {
         db = Room.inMemoryDatabaseBuilder(app, LibraryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        importer = GamelistImporter(db.gameDao())
+        importer = GamelistImporter(
+            db.gameDao(),
+            StubSystemCatalog(SystemDef(id = "nes", displayName = "Nintendo", extensions = setOf("nes"))),
+        )
     }
 
     @After
@@ -67,7 +72,7 @@ class GamelistImporterTest {
                 <favorite>true</favorite>
                 <playcount>42</playcount>
                 <playtime>7200</playtime>
-                <lasttimeplayed>20240115T193000</lasttimeplayed>
+                <lastplayed>20240115T193000</lastplayed>
               </game>
             </gameList>
         """.trimIndent()
@@ -86,6 +91,43 @@ class GamelistImporterTest {
         assertEquals(true, mario.isFavorite)
         assertEquals(42, mario.playCount)
         assertEquals(120, mario.playTimeMinutes) // 7200 seconds / 60
+        assertEquals(parseEsdeDate("20240115T193000"), mario.lastPlayed)
+    }
+
+    @Test
+    fun `lastplayed is read as last played`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = "<gameList><game><path>./Mario.nes</path><lastplayed>20240301T080910</lastplayed></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20240301T080910"), db.gameDao().observeAll().first().single().lastPlayed)
+    }
+
+    @Test
+    fun `lasttimeplayed still works as a fallback`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = "<gameList><game><path>./Mario.nes</path><lasttimeplayed>20230102T030405</lasttimeplayed></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20230102T030405"), db.gameDao().observeAll().first().single().lastPlayed)
+    }
+
+    @Test
+    fun `lastplayed wins over lasttimeplayed`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = """
+            <gameList><game>
+              <path>./Mario.nes</path>
+              <lasttimeplayed>20200101T000000</lasttimeplayed>
+              <lastplayed>20220101T000000</lastplayed>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20220101T000000"), db.gameDao().observeAll().first().single().lastPlayed)
     }
 
     @Test
@@ -111,7 +153,7 @@ class GamelistImporterTest {
 
     @Test
     fun `missing XML fields leave the existing GameEntity values untouched`() = runBlocking {
-        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario Original")
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
 
         val xml = """
             <gameList>
@@ -128,6 +170,59 @@ class GamelistImporterTest {
         assertNull(mario.description) // was null before, still null
         assertNull(mario.releaseDate)
         assertEquals(false, mario.isFavorite)
+    }
+
+    @Test
+    fun `a name and description set here survive a re-import`() = runBlocking {
+        val (sourceId, gameId) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        db.gameDao().update(
+            db.gameDao().findById(gameId)!!.copy(displayName = "My Mario", description = "Scraped here"),
+        )
+        val xml = """
+            <gameList><game>
+              <path>./Mario.nes</path>
+              <name>Super Mario Bros</name>
+              <desc>From ES-DE</desc>
+              <genre>Platformer</genre>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        val mario = db.gameDao().observeAll().first().single()
+        assertEquals("My Mario", mario.displayName)
+        assertEquals("Scraped here", mario.description)
+        assertEquals("Platformer", mario.genre)
+    }
+
+    @Test
+    fun `a filename title is replaced and an empty description filled`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "sub/Zelda (USA).nes", displayName = "Zelda (USA)")
+        val xml = """
+            <gameList><game>
+              <path>./sub/Zelda (USA).nes</path>
+              <name>The Legend of Zelda</name>
+              <desc>Adventure</desc>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        val zelda = db.gameDao().observeAll().first().single()
+        assertEquals("The Legend of Zelda", zelda.displayName)
+        assertEquals("Adventure", zelda.description)
+    }
+
+    @Test
+    fun `a blank description is filled`() = runBlocking {
+        val (sourceId, gameId) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        db.gameDao().update(db.gameDao().findById(gameId)!!.copy(description = "  "))
+        val xml = "<gameList><game><path>./Mario.nes</path><desc>Classic</desc></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals("Classic", db.gameDao().observeAll().first().single().description)
     }
 
     @Test

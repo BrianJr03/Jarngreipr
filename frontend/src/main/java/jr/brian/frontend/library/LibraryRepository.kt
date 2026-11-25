@@ -19,6 +19,7 @@ import jr.brian.frontend.library.media.MediaIndex
 import jr.brian.frontend.library.scan.ScanReport
 import jr.brian.frontend.library.scan.ScannedRom
 import jr.brian.frontend.library.scan.ScannerDispatcher
+import jr.brian.frontend.library.scan.scannedTitle
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.CoroutineScope
@@ -127,6 +128,9 @@ class LibraryRepository @Inject constructor(
     fun setKeepImportedMetadata(keep: Boolean) {
         keepImportedMetadata = keep
     }
+
+    /** Whether the "Read gamelist.xml" setting is on. */
+    val keepsImportedMetadata: Boolean get() = keepImportedMetadata
 
     // ──────────────────────── Sources ────────────────────────
 
@@ -394,11 +398,7 @@ class LibraryRepository @Inject constructor(
                 systemId = def.id,
                 relativePath = rom.relativePath,
                 absolutePath = rom.absolutePath,
-                // A folder game found by its markers keeps its whole name:
-                // "Donkey Kong Bananza v1.0" has no ROM extension to strip.
-                displayName = File(rom.relativePath).let { f ->
-                    if (f.extension.lowercase() in def.extensions) f.nameWithoutExtension else f.name
-                },
+                displayName = scannedTitle(rom.relativePath, def.extensions),
                 fileSizeBytes = rom.fileSizeBytes.takeIf { it >= 0 },
             )
         }

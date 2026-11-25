@@ -289,7 +289,7 @@ class LibraryRescanTest {
               <rating>0</rating>
               <playcount>1</playcount>
               <playtime>60</playtime>
-              <lasttimeplayed>20000101T000000</lasttimeplayed>
+              <lastplayed>20000101T000000</lastplayed>
             </game></gameList>
             """.trimIndent(),
         )
@@ -314,7 +314,7 @@ class LibraryRescanTest {
 
     private suspend fun importGamelist(xml: String, seen: MutableSet<String>? = null) {
         val sourceId = db.sourceDao().getAll().single().id
-        GamelistImporter(db.gameDao()).importStream(xml.byteInputStream(), sourceId, "nes", seen)
+        GamelistImporter(db.gameDao(), catalog).importStream(xml.byteInputStream(), sourceId, "nes", seen)
     }
 
     private fun GameEntity.withUserData() = copy(
