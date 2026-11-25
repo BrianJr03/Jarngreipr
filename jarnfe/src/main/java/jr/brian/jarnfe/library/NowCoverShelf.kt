@@ -86,7 +86,7 @@ internal fun NowPill(text: String, strong: Boolean) {
     val colors = JarnTheme.colors
     JarnText(
         text = text,
-        style = if (strong) JarnTheme.type.captionStrong else JarnTheme.type.caption,
+        style = if (strong) JarnTheme.type.labelStrong else JarnTheme.type.label,
         color = if (strong) colors.textHigh else colors.textMid,
         modifier = Modifier
             .nowPlate()

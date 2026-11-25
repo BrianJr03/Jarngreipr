@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -206,7 +207,8 @@ private fun NowPoster(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
             if (resume.isResume) NowResumeEyebrow()
-            key(game.id) { NowTitleArt(game.title, art, sizes.title, Modifier.alpha(artAlpha)) }
+            val titleStyle = if (resume.isResume) JarnTheme.type.heading else JarnTheme.baseType.heading
+            key(game.id) { NowTitleArt(game.title, titleStyle, art, sizes.title, Modifier.alpha(artAlpha)) }
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = JarnTheme.space.sm),
@@ -238,17 +240,18 @@ private fun NowPoster(
 private data class NowResumeLook(val isResume: Boolean = false, val status: JarnGameFileStatus? = null)
 
 @Composable
-private fun NowTitleArt(title: String, art: NowGameArt, height: Dp, modifier: Modifier = Modifier) {
+/** [style] follows the theme only on the Continue playing card; other game names stay on Jarn type. */
+private fun NowTitleArt(title: String, style: TextStyle, art: NowGameArt, height: Dp, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().height(height)) {
         val marquee = art.marqueePath
         when {
             !art.isLoaded -> Unit
-            marquee == null -> NowTitlePlate(title, Modifier.align(Alignment.CenterStart))
+            marquee == null -> NowTitlePlate(title, style, Modifier.align(Alignment.CenterStart))
             else -> rememberNowArtBounds(marquee)?.let { bounds ->
                 if (nowMarqueeFits(bounds)) {
                     NowMarquee(marquee, title)
                 } else {
-                    NowTitlePlate(title, Modifier.align(Alignment.CenterStart))
+                    NowTitlePlate(title, style, Modifier.align(Alignment.CenterStart))
                 }
             }
         }
@@ -272,17 +275,17 @@ private fun NowMarquee(path: String, title: String) {
         ) {
             val paths = remember(path) { listOf(path) }
             LibraryHeldArt(paths, ContentScale.Fit, Alignment.CenterStart) {
-                NowTitlePlate(title, Modifier.align(Alignment.CenterStart))
+                NowTitlePlate(title, JarnTheme.baseType.heading, Modifier.align(Alignment.CenterStart))
             }
         }
     }
 }
 
 @Composable
-private fun NowTitlePlate(title: String, modifier: Modifier = Modifier) {
+private fun NowTitlePlate(title: String, style: TextStyle, modifier: Modifier = Modifier) {
     JarnText(
         text = title,
-        style = JarnTheme.baseType.heading,
+        style = style,
         color = JarnTheme.colors.textHigh,
         maxLines = TITLE_MAX_LINES,
         modifier = modifier

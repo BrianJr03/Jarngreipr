@@ -105,6 +105,6 @@ private fun JarnHeroEyebrow(text: String) {
                 .size(width = JarnTheme.space.lg, height = JarnTheme.space.activeBarHeight)
                 .background(JarnTheme.colors.accent, RoundedCornerShape(2.dp)),
         )
-        JarnText(text, JarnTheme.type.captionStrong, JarnTheme.colors.textHigh, maxLines = 1)
+        JarnText(text, JarnTheme.type.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
     }
 }
