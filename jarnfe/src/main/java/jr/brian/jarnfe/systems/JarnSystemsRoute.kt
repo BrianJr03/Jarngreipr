@@ -55,7 +55,7 @@ internal fun JarnSystemsRoute(manager: JarnSystemManager, onExit: () -> Unit) {
         Unit
     }
     val current = nav.page
-    val editedId = (current as? SystemsPage.Editor)?.systemId ?: (current as? SystemsPage.Emulators)?.systemId
+    val editedId = current.systemId()
     val edited = editedId?.let { id -> systems?.firstOrNull { it.id == id } }
     LaunchedEffect(editedId, systems) {
         if (editedId != null && systems != null && edited == null) nav = nav.copy(page = SystemsPage.List)
@@ -92,6 +92,7 @@ internal fun JarnSystemsRoute(manager: JarnSystemManager, onExit: () -> Unit) {
                     nav = nav.copy(page = current.copy(allApps = true))
                 }
             }
+            is SystemsPage.HiddenGames -> edited?.let { SystemHiddenGamesPage(it, manager, onBack = goBack) }
             is SystemsPage.AddChoose -> AddSystemChoosePage(
                 treeUri = Uri.parse(current.treeUri),
                 manager = manager,
@@ -110,6 +111,14 @@ internal fun JarnSystemsRoute(manager: JarnSystemManager, onExit: () -> Unit) {
             )
         }
     }
+}
+
+/** The system a page edits, so the flow leaves it when that system goes away. */
+private fun SystemsPage.systemId(): String? = when (this) {
+    is SystemsPage.Editor -> systemId
+    is SystemsPage.Emulators -> systemId
+    is SystemsPage.HiddenGames -> systemId
+    else -> null
 }
 
 private fun JarnBindingsBuilder.systemsBindings(

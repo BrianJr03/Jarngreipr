@@ -239,7 +239,8 @@ data class JarngreiprConfig(
         //      gameCoreMap, the emulator, core and command choices. Null on older blobs keeps them.
         // v65: added FeatureConfig.jarnEsdeImportNoticeShown, whether Jarn FE's one-time "ES-DE found"
         //      notice after skipping the tour was shown. Null on older blobs keeps it. Import only sets it.
-        const val CONFIG_VERSION = 65
+        // v66: added SystemConfig.hiddenGames, games hidden one by one. Null on older blobs keeps them.
+        const val CONFIG_VERSION = 66
     }
 }
 
@@ -685,6 +686,8 @@ data class SystemConfig(
     val badgesVisible: Boolean = true,
     val shadeTabPage: Int = 0,
     val hiddenSystems: List<String> = emptyList(),
+    /** v66: hidden games as `system/path`. Null on pre-v66 exports, and import keeps them. */
+    val hiddenGames: List<String>? = null,
     val systemFolderMappings: List<SystemFolderMapping> = emptyList(),
     val rcNotificationsEnabled: Boolean = false
 )

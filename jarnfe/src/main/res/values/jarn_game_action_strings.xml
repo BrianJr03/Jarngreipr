@@ -22,4 +22,8 @@
     <string name="jarnfe_game_no_apps">No apps found.</string>
     <string name="jarnfe_game_choice_saved">Saved. Press A on Play to start.</string>
     <string name="jarnfe_game_favorite_failed">Couldn\'t update this favorite.</string>
+    <string name="jarnfe_game_hide">Hide game</string>
+    <string name="jarnfe_game_hide_hint">Show it again from Settings, Systems.</string>
+    <string name="jarnfe_game_hidden">Game hidden. Show it again from Settings, Systems.</string>
+    <string name="jarnfe_game_hide_failed">Couldn\'t hide this game.</string>
 </resources>

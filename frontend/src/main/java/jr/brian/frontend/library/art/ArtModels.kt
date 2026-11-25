@@ -132,8 +132,12 @@ data class LibraryVisibility(
     val hiddenGames: Set<String> = emptySet(),
 ) {
     fun hides(systemId: String, absolutePath: String?, relativePath: String): Boolean =
-        systemId in hiddenSystems || "$systemId/${absolutePath ?: relativePath}" in hiddenGames
+        systemId in hiddenSystems || libraryHiddenGameKey(systemId, absolutePath, relativePath) in hiddenGames
 }
+
+/** The key Classic saves a hidden game under, so hiding in either experience hides it in both. */
+fun libraryHiddenGameKey(systemId: String, absolutePath: String?, relativePath: String): String =
+    "$systemId/${absolutePath ?: relativePath}"
 
 /** Hide rules owned by `:app`, read-only here. */
 fun interface LibraryVisibilitySource {

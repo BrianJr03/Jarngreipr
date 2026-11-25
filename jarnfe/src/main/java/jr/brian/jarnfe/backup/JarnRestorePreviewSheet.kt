@@ -128,6 +128,7 @@ private fun JarnBackupArea.labelRes(): Int = when (this) {
     JarnBackupArea.PinnedApps -> R.string.jarnfe_backup_area_pins
     JarnBackupArea.GameFolders -> R.string.jarnfe_backup_area_game_folders
     JarnBackupArea.HiddenSystems -> R.string.jarnfe_backup_area_hidden_systems
+    JarnBackupArea.HiddenGames -> R.string.jarnfe_backup_area_hidden_games
     JarnBackupArea.ArtChoices -> R.string.jarnfe_backup_area_art
     JarnBackupArea.RecentlyPlayed -> R.string.jarnfe_backup_area_recent
     JarnBackupArea.Look -> R.string.jarnfe_backup_area_look

@@ -61,7 +61,9 @@ internal fun SystemEditorPage(
             SystemSection.Emulator -> EmulatorRows(system, manager, first) {
                 onPage(SystemsPage.Emulators(system.id))
             }
-            SystemSection.Actions -> ActionRows(system, manager, first)
+            SystemSection.Actions -> ActionRows(system, manager, first) {
+                onPage(SystemsPage.HiddenGames(system.id))
+            }
         }
     }
 }
@@ -73,14 +75,22 @@ private fun SystemEditorHeader(
     onSection: (SystemSection) -> Unit,
 ) {
     val sections = SystemSection.entries
-    val count = pluralStringResource(R.plurals.jarnfe_systems_game_count, system.gameCount, system.gameCount)
     JarnText(system.title, JarnTheme.baseType.heading, JarnTheme.colors.textHigh, maxLines = 1)
-    JarnText(count, JarnTheme.baseType.label, JarnTheme.colors.textMid, maxLines = 1)
+    JarnText(systemCountText(system), JarnTheme.baseType.label, JarnTheme.colors.textMid, maxLines = 1)
     JarnTabs(
         labels = sections.map { stringResource(it.labelRes) },
         selectedIndex = sections.indexOf(section),
         onSelect = { onSection(sections[it]) },
     )
+}
+
+/** "10 games", or "10 games, 1 hidden" once a game is hidden. */
+@Composable
+private fun systemCountText(system: JarnManagedSystem): String {
+    val total = pluralStringResource(R.plurals.jarnfe_systems_game_count, system.gameCount, system.gameCount)
+    val hidden = system.hiddenGameCount
+    if (hidden <= 0) return total
+    return pluralStringResource(R.plurals.jarnfe_systems_game_count_with_hidden, hidden, total, hidden)
 }
 
 @Composable
@@ -333,7 +343,12 @@ private fun EmulatorRows(
 }
 
 @Composable
-private fun ActionRows(system: JarnManagedSystem, manager: JarnSystemManager, first: Modifier) {
+private fun ActionRows(
+    system: JarnManagedSystem,
+    manager: JarnSystemManager,
+    first: Modifier,
+    onHiddenGames: () -> Unit,
+) {
     var confirmReset by remember { mutableStateOf(false) }
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_systems_reset),
@@ -341,6 +356,7 @@ private fun ActionRows(system: JarnManagedSystem, manager: JarnSystemManager, fi
         onClick = { confirmReset = true },
         modifier = first,
     )
+    HiddenGamesRow(system.hiddenGameCount, onHiddenGames)
     if (confirmReset) {
         SystemConfirmDialog(
             title = stringResource(R.string.jarnfe_systems_reset),

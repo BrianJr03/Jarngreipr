@@ -65,7 +65,7 @@ class JarnEsdeImportNoticeConfigImportTest {
 
     @Test
     fun `schema version covers the ES-DE notice`() {
-        assertEquals(65, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(66, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

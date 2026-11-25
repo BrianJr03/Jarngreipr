@@ -49,6 +49,9 @@ interface JarnGameOptions {
 
     /** Returns false when the game is no longer in the library. */
     suspend fun setFavorite(libraryKey: String, favorite: Boolean): Boolean
+
+    /** Hides the game in Jarn and Classic. Returns false when the game is no longer in the library. */
+    suspend fun setHidden(libraryKey: String, hidden: Boolean): Boolean
 }
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */

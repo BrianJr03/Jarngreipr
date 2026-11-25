@@ -29,6 +29,7 @@ internal sealed interface SystemsPage {
     data object List : SystemsPage
     data class Editor(val systemId: String, val section: SystemSection) : SystemsPage
     data class Emulators(val systemId: String, val allApps: Boolean = false) : SystemsPage
+    data class HiddenGames(val systemId: String) : SystemsPage
     data class AddChoose(val treeUri: String) : SystemsPage
     data class AddNoGames(val treeUri: String, val systemId: String) : SystemsPage
 }
@@ -48,6 +49,7 @@ internal data class SystemsNav(
             } else {
                 copy(page = SystemsPage.Editor(current.systemId, SystemSection.Emulator))
             }
+        is SystemsPage.HiddenGames -> copy(page = SystemsPage.Editor(current.systemId, SystemSection.Actions))
         is SystemsPage.AddChoose -> copy(page = SystemsPage.List)
         is SystemsPage.AddNoGames -> copy(page = SystemsPage.AddChoose(current.treeUri))
     }

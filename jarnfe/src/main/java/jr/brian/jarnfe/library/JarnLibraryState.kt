@@ -132,6 +132,18 @@ data class JarnLibraryState(
     fun focusSearchResult(selection: LibrarySelection): JarnLibraryState =
         copy(searchSelection = selection)
 
+    /**
+     * Moves every list's focus off [gameId] onto the game that takes its place, or the one before it
+     * when it was last, so the shelf keeps a usable focus once the game is hidden.
+     */
+    fun focusAfterHiding(gameId: String): JarnLibraryState = copy(
+        focusedGameBySystem = focusedGameBySystem + gamesBySystem.mapNotNull { (systemId, feed) ->
+            neighbourOf(feed.items.map { it.id }, gameId)?.let { systemId to it }
+        },
+        focusedFavoriteId = neighbourOf(favorites.items.map { it.id }, gameId) ?: focusedFavoriteId,
+        focusedRecentId = neighbourOf(recent.items.map { it.id }, gameId) ?: focusedRecentId,
+    )
+
     fun focusOpenGame(gameId: String): JarnLibraryState {
         val systemId = openSystemId ?: return this
         return copy(focusedGameBySystem = focusedGameBySystem + (systemId to gameId))
@@ -162,4 +174,11 @@ internal fun JarnGameMetadata.textFields(): List<LibraryMetadataField> = listOf(
     R.string.jarnfe_library_meta_rating to rating,
 ).mapNotNull { (labelRes, value) ->
     value?.trim()?.takeIf { it.isNotEmpty() }?.let { LibraryMetadataField(labelRes, it) }
+}
+
+/** The id that takes [removedId]'s place in [ids], or the one before it when it was last. */
+internal fun neighbourOf(ids: List<String>, removedId: String): String? {
+    val index = ids.indexOf(removedId)
+    if (index < 0) return null
+    return ids.getOrNull(index + 1) ?: ids.getOrNull(index - 1)
 }

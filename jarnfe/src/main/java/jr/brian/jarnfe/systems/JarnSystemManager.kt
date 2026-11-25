@@ -28,7 +28,12 @@ data class JarnManagedSystem(
     val emulatorLabel: String? = null,
     val folderPath: String? = null,
     val folderIsAdded: Boolean = false,
+    val hiddenGameCount: Int = 0,
 )
+
+/** A game the user hid. [key] is what [JarnSystemManager.showGames] takes. */
+@Immutable
+data class JarnHiddenGame(val key: String, val title: String)
 
 @Immutable
 data class JarnAddedFolder(val systemName: String, val treeUri: String, val displayPath: String)
@@ -51,6 +56,10 @@ interface JarnSystemManager {
     fun setAllHidden(systemIds: List<String>, hidden: Boolean)
     fun setAppearance(systemId: String, appearance: JarnSystemAppearance)
     fun resetAppearance(systemId: String)
+
+    /** Games hidden in Jarn or Classic, by title. */
+    fun hiddenGames(systemId: String): Flow<List<JarnHiddenGame>>
+    fun showGames(keys: Collection<String>)
 
     /** Null when the system has no game to match emulators against. */
     suspend fun emulators(systemId: String): List<JarnEmulatorOption>?

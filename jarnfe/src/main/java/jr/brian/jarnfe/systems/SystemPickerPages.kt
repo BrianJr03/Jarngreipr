@@ -22,7 +22,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.launch
 
-private data class SystemPickerRow(
+internal data class SystemPickerRow(
     val key: String,
     val label: String,
     val supporting: String? = null,
@@ -98,7 +98,7 @@ private fun installedAppRows(
 }
 
 @Composable
-private fun SystemPickerPage(
+internal fun SystemPickerPage(
     title: String,
     rows: List<SystemPickerRow>?,
     focusKey: Any,

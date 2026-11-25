@@ -88,4 +88,17 @@
     <string name="jarnfe_systems_remove">Remove</string>
     <string name="jarnfe_systems_remove_folder_title">Remove this folder?</string>
     <string name="jarnfe_systems_remove_folder_message">%1$s will no longer be linked to this system. Your games stay on disk.</string>
+    <string name="jarnfe_systems_hidden_games">Hidden games</string>
+    <plurals name="jarnfe_systems_hidden_games_count">
+        <item quantity="one">%1$d game hidden</item>
+        <item quantity="other">%1$d games hidden</item>
+    </plurals>
+    <plurals name="jarnfe_systems_game_count_with_hidden">
+        <item quantity="one">%1$s, %2$d hidden</item>
+        <item quantity="other">%1$s, %2$d hidden</item>
+    </plurals>
+    <string name="jarnfe_systems_hidden_games_title">Hidden in %1$s</string>
+    <string name="jarnfe_systems_hidden_games_hint">Press A on a game to show it again.</string>
+    <string name="jarnfe_systems_show_all_hidden_games">Show all again</string>
+    <string name="jarnfe_systems_no_hidden_games">No hidden games here.</string>
 </resources>
