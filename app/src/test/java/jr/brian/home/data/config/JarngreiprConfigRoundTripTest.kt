@@ -249,4 +249,42 @@ class JarngreiprConfigRoundTripTest {
         assertTrue(decoded.system.systemFolderMappings.isEmpty())
         assertEquals(listOf("ps2"), decoded.system.hiddenSystems)
     }
+
+    @Test
+    fun `emulator, core and command choices round-trip through the config`() {
+        val original = JarngreiprConfig(
+            feature = FeatureConfig(
+                romSearch = RomSearchConfig(
+                    gameEmulatorMap = mapOf("snes/a.sfc" to "com.retroarch"),
+                    systemEmulatorMap = mapOf("psp" to "org.ppsspp.ppsspp"),
+                    gameCommandMap = mapOf("snes/a.sfc" to "%EMULATOR_RETROARCH%"),
+                    gameCoreMap = mapOf("snes/a.sfc" to "snes9x"),
+                )
+            )
+        )
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(json.encodeToString(original))
+
+        assertEquals(original.feature.romSearch, decoded.feature.romSearch)
+    }
+
+    @Test
+    fun `pre-v64 config decodes with no emulator choices so import keeps them`() {
+        val preV64 = """
+            {
+              "version": 63,
+              "feature": {
+                "romSearch": {
+                  "frontendEnabled": true
+                }
+              }
+            }
+        """.trimIndent()
+
+        val romSearch = json.decodeFromString<JarngreiprConfig>(preV64).feature.romSearch
+        assertNull(romSearch.gameEmulatorMap)
+        assertNull(romSearch.systemEmulatorMap)
+        assertNull(romSearch.gameCommandMap)
+        assertNull(romSearch.gameCoreMap)
+    }
 }

@@ -177,6 +177,27 @@ fun ESDEPreferencesManager.setGameLaunchMaps(
     }
 }
 
+/** Restores the launch choices from a backup. A null map wasn't backed up, so it keeps the current one. */
+fun ESDEPreferencesManager.restoreLaunchChoices(
+    gameEmulators: Map<String, String>?,
+    systemEmulators: Map<String, String>?,
+    commands: Map<String, String>?,
+    cores: Map<String, String>?,
+) {
+    val now = _state.value
+    if (gameEmulators != null || commands != null || cores != null) {
+        setGameLaunchMaps(
+            gameEmulators ?: now.gameEmulatorMap,
+            commands ?: now.gameCommandMap,
+            cores ?: now.gameCoreMap,
+        )
+    }
+    systemEmulators?.let { map ->
+        _state.update { it.copy(systemEmulatorMap = map) }
+        prefs.edit { putOrRemoveMap(KEY_SYSTEM_EMULATOR_MAP, map) }
+    }
+}
+
 private fun SharedPreferences.Editor.putOrRemoveMap(key: String, map: Map<String, String>) {
     if (map.isEmpty()) remove(key) else putString(key, JSONObject(map).toString())
 }
