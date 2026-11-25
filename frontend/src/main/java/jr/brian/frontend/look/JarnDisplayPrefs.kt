@@ -3,9 +3,10 @@ package jr.brian.frontend.look
 import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 
-/** Which physical screen keeps the controller after a touch. */
+/** Which physical screen keeps the controller after a touch. [FollowNoTap] leaves it where X put it. */
 enum class JarnTapControl(val id: String) {
     FollowTap("follow"),
+    FollowNoTap("follow_no_tap"),
     AlwaysTop("top"),
     AlwaysBottom("bottom"),
     ;

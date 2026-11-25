@@ -257,6 +257,7 @@ private fun TapControlRow(store: JarnLookStore, choice: JarnTapControl) {
 private val JarnTapControl.labelRes: Int
     get() = when (this) {
         JarnTapControl.FollowTap -> R.string.jarnfe_settings_tap_control_follow
+        JarnTapControl.FollowNoTap -> R.string.jarnfe_settings_tap_control_follow_no_tap
         JarnTapControl.AlwaysTop -> R.string.jarnfe_settings_tap_control_top
         JarnTapControl.AlwaysBottom -> R.string.jarnfe_settings_tap_control_bottom
     }

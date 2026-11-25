@@ -170,6 +170,18 @@ class JarnLookConfigImportTest {
     }
 
     @Test
+    fun `follow no tap round trips through a backup`() = runTest {
+        store.updateDisplay { it.copy(tapControl = JarnTapControl.FollowNoTap) }
+        val json = importExport.encodeToJson(JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())))
+        store.updateDisplay { it.copy(tapControl = JarnTapControl.AlwaysTop) }
+
+        importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
+
+        assertEquals(JarnTapControl.FollowNoTap, store.display.tapControl)
+        assertEquals("follow_no_tap", store.display.toConfig().tapControl)
+    }
+
+    @Test
     fun `a null or unknown controller after tap keeps the current choice`() = runTest {
         store.updateDisplay { it.copy(tapControl = JarnTapControl.AlwaysTop) }
         listOf("null", "\"sideways\"").forEach { value ->

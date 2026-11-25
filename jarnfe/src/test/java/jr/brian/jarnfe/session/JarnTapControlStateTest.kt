@@ -3,6 +3,7 @@ package jr.brian.jarnfe.session
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.frontend.look.JarnTapControl.AlwaysBottom
 import jr.brian.frontend.look.JarnTapControl.AlwaysTop
+import jr.brian.frontend.look.JarnTapControl.FollowNoTap
 import jr.brian.frontend.look.JarnTapControl.FollowTap
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.JarnScreen.Deck
@@ -22,7 +23,8 @@ class JarnTapControlStateTest {
         choice: JarnTapControl,
         visible: Boolean = true,
         modals: Set<JarnScreen> = emptySet(),
-    ) = onScreenTapped(host, choice, visible) { it in modals }
+        before: JarnScreen? = null,
+    ) = onScreenTapped(host, choice, visible, before) { it in modals }
 
     private fun JarnSessionState.osMovesTo(host: JarnScreen) =
         onTopResumed(host.opposite(), false).onTopResumed(host, true)
@@ -38,6 +40,58 @@ class JarnTapControlStateTest {
         assertEquals(Deck, tapped.activeScreen)
         assertNull(tapped.tapHold)
         assertEquals(Deck, tapped.osMovesTo(Deck).activeScreen)
+    }
+
+    @Test
+    fun `follow no tap keeps control where it is, in either event order`() {
+        val onDeck = dual.activate(Deck).osMovesTo(Deck)
+        listOf(dual to Stage, onDeck to Deck).forEach { (start, kept) ->
+            val touched = kept.opposite()
+            val downFirst = start.tap(touched, FollowNoTap).osMovesTo(touched)
+            val focusFirst = start.osMovesTo(touched).tap(touched, FollowNoTap, before = kept)
+            listOf(downFirst, focusFirst).forEach {
+                assertEquals(kept, it.activeScreen)
+                assertEquals(touched, it.osFocusedScreen)
+                it.noHandoff()
+            }
+        }
+    }
+
+    @Test
+    fun `a focus pull only counts right before the touch, and only once`() {
+        val pull = JarnOsFocusPull()
+        pull.record(Stage, Deck, nowMs = 1_000)
+        assertEquals(Stage, pull.take(nowMs = 1_200))
+        assertNull(pull.take(nowMs = 1_210))
+        pull.record(Stage, Deck, nowMs = 2_000)
+        assertNull(pull.take(nowMs = 3_000))
+        pull.record(Deck, Deck, nowMs = 4_000)
+        assertNull(pull.take(nowMs = 4_010))
+    }
+
+    @Test
+    fun `follow no tap on the screen with control needs no hold`() {
+        val tapped = dual.tap(Stage, FollowNoTap)
+        assertEquals(Stage, tapped.activeScreen)
+        assertNull(tapped.tapHold)
+    }
+
+    @Test
+    fun `follow no tap never hands control to a modal the tap opened`() {
+        val held = dual.tap(Deck, FollowNoTap).osMovesTo(Deck)
+        assertEquals(Stage, held.onModalChanged(Deck, true).activeScreen)
+    }
+
+    @Test
+    fun `follow no tap still lets x switch screens`() {
+        val switched = dual.tap(Deck, FollowNoTap).osMovesTo(Deck).switchActiveScreen()
+        assertEquals(Deck, switched.activeScreen)
+        assertNull(switched.tapHold)
+    }
+
+    @Test
+    fun `follow no tap follows the touch while a game covers a window`() {
+        assertEquals(Deck, dual.tap(Deck, FollowNoTap, visible = false).activeScreen)
     }
 
     @Test
