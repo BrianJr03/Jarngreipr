@@ -1,17 +1,10 @@
-**Controls**
-- New Jarn label cue: the Jarn name moves to the screen you switch to, and the tabs slide over to make room
-- New "Follow, no tap" option keeps the controller where it is when you touch a screen, so only X switches
-- "Follow tap" is now called "Follow"
-
-**Library and Browsing**
-- The first system is highlighted as soon as Jarn opens
-- Continue playing titles use the whole card before cutting off
+**Look**
+- New "Match Command Panel fonts" option uses your Command Panel look's fonts in Jarn, including fonts you imported
+- Fonts change right away when you switch looks in Command Panel
+- Jarn asks once if you'd like to use Command Panel's fonts
+- Titles with characters a theme font can't show stay in Jarn's font
 
 **Now**
-- Option to turn off the system background art
-- Pick your own Now background for any system from Manage System
+- The Continue playing card uses Command Panel's fonts when matching is on
 
-**Sound and Extras**
-- RSS feeds show up instantly and keep your place when you come back
-
-4.0.2
+4.0.3
