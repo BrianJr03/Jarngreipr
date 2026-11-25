@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reads a uiautomator XML dump. Usage: uiquery.py FILE role|has TEXT|selected LABEL...|focused"""
+"""Reads a uiautomator XML dump. Usage: uiquery.py FILE role|has TEXT|selected LABEL...|focused|checked"""
 import sys
 import xml.etree.ElementTree as ET
 
@@ -56,6 +56,18 @@ def focused(root):
     return ""
 
 
+def checked(root):
+    """The focused row's switch: "true" or "false", or "" when it has none."""
+    for node in root.iter("node"):
+        if node.get("focused") != "true":
+            continue
+        for item in node.iter("node"):
+            if item.get("checkable") == "true":
+                return item.get("checked") or "false"
+        return ""
+    return ""
+
+
 def main(argv):
     if len(argv) < 3:
         return 2
@@ -72,6 +84,8 @@ def main(argv):
         print(selected(root, set(args)))
     elif command == "focused":
         print(focused(root))
+    elif command == "checked":
+        print(checked(root))
     else:
         return 2
     return 0

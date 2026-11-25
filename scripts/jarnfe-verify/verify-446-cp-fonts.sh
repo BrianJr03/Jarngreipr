@@ -32,17 +32,15 @@ VERIFY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$VERIFY_DIR/run.sh"
 # shellcheck source=lib/prefs.sh
 source "$VERIFY_DIR/lib/prefs.sh"
+# shellcheck source=lib/jarnui.sh
+source "$VERIFY_DIR/lib/jarnui.sh"
 
-KEY_A=96
 LOOK_PREFS=jarnfe_look_prefs
 FONTS_KEY=match_command_panel_fonts
 COLORS_KEY=match_command_panel
 TOUR_KEY=first_run_done
-FONTS_LABEL="Match Command Panel fonts"
 COLORS_LABEL="Match Command Panel colors"
-UNAVAILABLE_PREFIX="Unavailable."
-MAX_ROWS=30
-INSTALL_APK="" ORIG_FONTS="" ORIG_COLORS="" ORIG_TOUR="" PREF_CHANGED=0 BEFORE_FOCUS="" FONTS_FOCUS=""
+INSTALL_APK="" ORIG_FONTS="" ORIG_COLORS="" ORIG_TOUR="" PREF_CHANGED=0
 
 usage_446() { sed -n '2,26p' "$VERIFY_DIR/verify-446-cp-fonts.sh" | sed 's/^# \{0,1\}//'; }
 
@@ -107,47 +105,6 @@ preflight_446() {
   echo "  info  $PKG, fonts was ${ORIG_FONTS:-default (off)}, colors ${ORIG_COLORS:-default (off)}"
   echo "  info  Stage on display $STAGE_DISPLAY, Deck on display $DECK_DISPLAY"
   echo "  info  output in $OUT_DIR"
-}
-
-focused_label() { ui_focused | awk -F' [|] ' '{ print $1 }'; }
-
-open_look_settings() {
-  ui_wait_role stage || return 1
-  step_to_tab 0 "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY" || return 1
-  settings_start_is_safe || { fail "Stage is not on Library, so Start is not pressed"; return 1; }
-  key "$KEY_START" || return 1
-  IN_SETTINGS=1
-  ui_wait_role deck || { fail "Settings did not show on the Deck"; return 1; }
-  tab_keys_for "$DECK_DISPLAY"
-  press_times "$TAB_PREV" "$((${#SETTINGS_TABS[@]} - 1))" &&
-    press_times "$TAB_NEXT" "$(index_of Look "${SETTINGS_TABS[@]}")" || return 1
-  ui_dump
-  [ "$(ui_selected "${SETTINGS_TABS[@]}")" = Look ] || { fail "could not step the Deck to Look"; return 1; }
-}
-
-# Presses Down until the fonts row has focus. Sets BEFORE_FOCUS and FONTS_FOCUS.
-find_fonts_row() {
-  local i last=""
-  for ((i = 0; i < MAX_ROWS; i++)); do
-    key "$KEY_DOWN" || return 1
-    ui_wait_role deck || continue
-    if [ "$(focused_label)" = "$FONTS_LABEL" ]; then
-      BEFORE_FOCUS="$last"
-      FONTS_FOCUS="$(ui_focused)"
-      return 0
-    fi
-    last="$(focused_label)"
-  done
-  return 1
-}
-
-press_a_on_fonts() {
-  ui_wait_role deck || return 1
-  [ "$(focused_label)" = "$FONTS_LABEL" ] || return 1
-  jarn_is_focused || { ABORTED=1; return 1; }
-  sh_dev input -d 0 keyevent "$KEY_A" >/dev/null
-  KEYS_SENT=1
-  pause 1.5
 }
 
 check_order() {

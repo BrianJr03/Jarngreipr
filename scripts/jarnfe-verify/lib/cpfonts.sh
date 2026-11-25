@@ -21,8 +21,43 @@ cp_current_look() { cp_prefs | parse_pref "$CP_LOOK_KEY"; }
 cp_prefs_tool() { cp_prefs | python3 -I "$LIB_DIR/cpprefs.py" "$@"; }
 
 # Writes stdin over Command Panel's prefs file. The caller stops Command Panel first.
+# Refused when CP_READ_ONLY=1 (release mode).
 cp_write_prefs() {
+  [ "${CP_READ_ONLY:-0}" = 0 ] || { echo "  WARN  refused a Command Panel prefs write in release mode" >&2; return 1; }
   adb shell "run-as $CP_PKG sh -c 'cat > $(cp_prefs_path)'" || return 1
+}
+
+CP_FONTS_COLUMNS="version look_id look_name display_font display_font_sha256 label_font label_font_sha256"
+
+# Prints the contract columns missing from row $1, if any.
+cp_missing_columns() {
+  local c
+  for c in $CP_FONTS_COLUMNS; do
+    text_matches "$1" "(^|, | )$c=" || printf '%s ' "$c"
+  done
+}
+
+cp_row_has_user_font() {
+  case "$(cp_col "$1" label_font) $(cp_col "$1" display_font)" in *user:*) return 0 ;; esac
+  return 1
+}
+
+now_ms() { python3 -I -c 'import time; print(int(time.time() * 1000))'; }
+
+# Grabs Stage frames into $1-after.png until one differs from the idle frames $1-idle1..3, for at
+# most $2 ms after $3 (a now_ms start). Prints the elapsed ms on a change, returns 1 without one.
+watch_stage_change() {
+  local prefix="$1" limit="$2" start="$3" now diff
+  while :; do
+    now="$(now_ms)"
+    [ $((now - start)) -le "$limit" ] || return 1
+    shot "$STAGE_PHYSICAL" "$prefix-after.png" || return 1
+    diff="$(frame_changes "$prefix")" || return 1
+    if [ "$(diff_field "$diff" changed)" -gt "$CONTENT_CHANGE_CELLS" ]; then
+      echo "$((now - start)) $diff"
+      return 0
+    fi
+  done
 }
 
 # The debug broadcast is handled by AssistantService, which the companion starts.

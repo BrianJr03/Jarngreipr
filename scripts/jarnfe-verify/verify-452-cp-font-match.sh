@@ -1,34 +1,50 @@
 #!/usr/bin/env bash
-# #452: end-to-end device checks for "Match Command Panel fonts" (debug Jarn and debug Command Panel).
+# #452: end-to-end device checks for "Match Command Panel fonts".
 #
 #   scripts/jarnfe-verify/verify-452-cp-font-match.sh [options]
 #
+#   --release               Release builds: CI-signed hidden Jarn (jr.brian.home) and a release Command
+#                           Panel (jr.brian.commandpannel). See "Release mode" below.
 #   --out DIR               Where screenshots and logs go (default: a new temp folder).
 #   --warm-runs N           Warm starts per timing pass (default 3, median reported).
 #   --no-inject             Never add a saved look to Command Panel's prefs for the imported font check.
-#   --skip-fallback         Leave Command Panel's theme provider alone (step 6 reports SKIP).
+#   --skip-fallback         Leave Command Panel's theme provider alone (step 7 reports SKIP).
 #   --allow-app-focus-sync  Run even if the app's Focus Lock mode could rewrite screen_focus_lock
-#                           when an activity takes a screen. The script never writes it.
+#                           when an activity takes a screen (always needed with --release, where the
+#                           mode can't be read). The script never writes it.
 #
-# Steps:
+# Steps (debug, the default):
 #   1. records the Command Panel look, Jarn's fonts, colors and tour prefs, and screen_focus_lock,
 #   2. turns the fonts toggle on (colors off, tour done) with Jarn stopped,
 #   3. for SEGMENT_LCD, E_INK, TERMINAL and AURORA_GLASS: applies the look through Command Panel's
-#      debug broadcast, checks the /fonts row with content query, resumes Jarn, and captures both
-#      screens. With the reader (#449) installed, Stage must redraw between looks whose fonts differ,
+#      debug broadcast, checks the 7-column /fonts row, resumes Jarn, and captures both screens. With
+#      the reader (#449) installed, Stage must redraw between looks whose fonts differ,
 #   4. picks an imported font (ShareTechMono first), applies a saved look that uses it (adding one
 #      when none does, unless --no-inject), checks user:<id> and its sha256 on the row, resumes Jarn
 #      and checks no_backup/cp_fonts/<sha>.ttf exists with that sha256,
-#   5. times cold and warm Stage starts (am start -W and the logcat "Displayed" line) with the
+#   5. live change: keeps Jarn in front, switches E_INK to SEGMENT_LCD (Command Panel writes its own
+#      prefs and notifies /fonts), and fails when Stage doesn't change within 3 s,
+#   6. times cold and warm Stage starts (am start -W and the logcat "Displayed" line) with the
 #      toggle on and off, and fails when the warm start with cached fonts is over 100 ms slower,
-#   6. stops Command Panel and disables its theme provider, then checks Jarn still starts cleanly,
-#   7. checks for crashes, ANRs and a changed screen_focus_lock, restores everything, sums up.
-# Steps 3 (the Jarn side) and 4 (the cache) SKIP when the installed Jarn has no reader. Detected from
-# the APK; JARNFE_CP_READER=1 or 0 overrides.
+#   7. stops Command Panel and disables its theme provider, then checks Jarn still starts cleanly,
+#   8. checks for crashes, ANRs and a changed screen_focus_lock, restores everything, sums up.
+# Jarn-side checks SKIP when the installed Jarn has no reader. Detected from the APK's dex;
+# JARNFE_CP_READER=1 or 0 overrides.
 #
-# Safety: debug packages only. Never uninstalls, clears data or sends keys. Command Panel's prefs are
-# only written with it stopped, after a backup that is written back on exit. The provider is enabled
-# again and every pref put back by an exit trap, then Jarn FE is restarted on Stage.
+# Release mode: no run-as and no prefs writes on either app, no pm disable, never uninstalls.
+#   - The fonts toggle is read and flipped in Settings > Look with the controller (as in #446), and
+#     turned back off the same way on exit if it started off. The tour must already be done.
+#   - Built-in looks (3) and the live change (5) SKIP: a release Command Panel has no debug look
+#     switch, and its UI isn't scripted. The current /fonts row is still checked.
+#   - Imported font (4): the current Command Panel look must use an imported font (the script asks
+#     you to apply one when run in a terminal). No cache or sha256 checks; instead Stage with the
+#     toggle off (Jarn's own fonts) is diffed against Stage with it on.
+#   - Timing (6) runs, flipping the toggle through the UI. Fallback (7) SKIPs.
+#
+# Safety: debug mode uses debug packages only, and writes Command Panel's prefs only with it stopped,
+# after a backup that is written back on exit. The provider is enabled again and every pref put back
+# by an exit trap, then Jarn FE is restarted on Stage. Debug mode sends no keys. Release mode sends D-pad,
+# Start, shoulders and B, plus A once per flip and only on the focused fonts row.
 #
 # Exit codes: 0 no failures, 1 at least one failure, 2 could not run.
 set -uo pipefail
@@ -40,8 +56,14 @@ source "$VERIFY_DIR/run.sh"
 source "$VERIFY_DIR/lib/prefs.sh"
 # shellcheck source=lib/cpfonts.sh
 source "$VERIFY_DIR/lib/cpfonts.sh"
+# shellcheck source=lib/jarnui.sh
+source "$VERIFY_DIR/lib/jarnui.sh"
+# shellcheck source=lib/fontmatch-release.sh
+source "$VERIFY_DIR/lib/fontmatch-release.sh"
 
 CP_PKG="${JARNFE_CP_PKG:-jr.brian.commandpannel.debug}"
+LIVE_LIMIT_MS=3000
+RELEASE=0 UI_CHANGED=0 ORIG_FONTS_UI="" FALLBACK_SKIP_REASON="--skip-fallback"
 LOOK_PREFS=jarnfe_look_prefs
 FONTS_KEY=match_command_panel_fonts
 COLORS_KEY=match_command_panel
@@ -56,11 +78,12 @@ JARN_CHANGED=0 LOOK_CHANGED=0 CP_PREFS_WRITTEN=0 PROVIDER_DISABLED=0 DONE_RESTOR
 FONT_LOOK="" TIMED_COLD="" TIMED_WARM=""
 TIMING_LINES=()
 
-usage_452() { sed -n '2,33p' "$VERIFY_DIR/verify-452-cp-font-match.sh" | sed 's/^# \{0,1\}//'; }
+usage_452() { sed -n '2,49p' "$VERIFY_DIR/verify-452-cp-font-match.sh" | sed 's/^# \{0,1\}//'; }
 
 parse_452_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
+      --release) RELEASE=1 ;;
       --out) OUT_DIR="${2:?--out needs a path}"; shift ;;
       --warm-runs) WARM_RUNS="${2:?--warm-runs needs a number}"; shift ;;
       --no-inject) NO_INJECT=1 ;;
@@ -72,6 +95,27 @@ parse_452_args() {
     shift
   done
   [[ "$WARM_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo "--warm-runs needs a positive number" >&2; exit 2; }
+  [ "$RELEASE" = 1 ] || return 0
+  PKG="${JARNFE_RELEASE_PKG:-jr.brian.home}"
+  CP_PKG="${JARNFE_CP_RELEASE_PKG:-jr.brian.commandpannel}"
+  CP_READ_ONLY=1 NO_INJECT=1 SKIP_FALLBACK=1
+  FALLBACK_SKIP_REASON="release mode never disables Command Panel's provider"
+}
+
+# Every Jarn prefs write goes through here, so release mode can never make one.
+jarn_write_bool() {
+  [ "$RELEASE" = 0 ] || { fail "refused a prefs write on a release build ($1)"; return 1; }
+  write_bool "$@"
+}
+
+# Debug writes the pref with Jarn stopped; release flips the switch with the controller.
+set_fonts() {
+  if [ "$RELEASE" = 1 ]; then
+    jarn_is_focused || start_stage
+    set_fonts_ui "$1"
+  else
+    jarn_write_bool "$FONTS_KEY" "$1"
+  fi
 }
 
 start_stage() {
@@ -119,6 +163,7 @@ restore_cp() {
 }
 
 restore_jarn() {
+  [ "$RELEASE" = 0 ] || { restore_jarn_release; return; }
   [ "$JARN_CHANGED" = 1 ] || return 0
   local key value ok=1
   for key in "$TOUR_KEY" "$COLORS_KEY" "$FONTS_KEY"; do
@@ -127,7 +172,7 @@ restore_jarn() {
       "$COLORS_KEY") value="$ORIG_COLORS" ;;
       *) value="$ORIG_FONTS" ;;
     esac
-    write_bool "$key" "$value" || { ok=0; echo "  WARN  could not restore $key (was ${value:-default})"; }
+    jarn_write_bool "$key" "$value" || { ok=0; echo "  WARN  could not restore $key (was ${value:-default})"; }
   done
   [ "$ok" = 1 ] && echo "  info  Jarn fonts ${ORIG_FONTS:-default}, colors ${ORIG_COLORS:-default}, tour ${ORIG_TOUR:-default}"
   sh_dev am start --display "$TOP_DISPLAY" -n "$PKG/$STAGE_ACTIVITY" >/dev/null
@@ -143,12 +188,15 @@ restore_452() {
 
 preflight_452() {
   section "Preflight"
-  case "$PKG:$CP_PKG" in
-    *.debug:*.debug) ;;
-    *) echo "debug packages only (got $PKG and $CP_PKG)" >&2; return 1 ;;
+  case "$RELEASE:$PKG:$CP_PKG" in
+    0:*.debug:*.debug) ;;
+    1:*.debug:*|1:*:*.debug) echo "--release needs release packages (got $PKG and $CP_PKG)" >&2; return 1 ;;
+    1:*) ;;
+    *) echo "debug packages only without --release (got $PKG and $CP_PKG)" >&2; return 1 ;;
   esac
   text_matches "$(sh_dev pm path "$PKG")" '^package:' || { echo "$PKG is not installed" >&2; return 1; }
-  read_prefs "$LOOK_PREFS" >/dev/null || { echo "run-as is unavailable for $PKG" >&2; return 1; }
+  if [ "$RELEASE" = 1 ]; then preflight_release; return; fi
+  read_prefs "$LOOK_PREFS" >/dev/null || { echo "run-as is unavailable for $PKG (release build? use --release)" >&2; return 1; }
   read_roles
   read_focus_lock_gate
   [ "$HANDOFF_OK" = 1 ] || { echo "Not running: $HANDOFF_REASON" >&2; return 1; }
@@ -166,20 +214,43 @@ preflight_452() {
   else
     echo "  info  $CP_PKG missing or its prefs unreadable, Command Panel steps will SKIP"
   fi
+  detect_reader
+  echo "  info  Jarn fonts ${ORIG_FONTS:-default (off)}, colors ${ORIG_COLORS:-default (off)}, tour ${ORIG_TOUR:-default}"
+  preflight_footer
+}
+
+detect_reader() {
   if jarn_reader_installed; then READER=1; echo "  info  Jarn has the Command Panel font reader"
   else echo "  info  Jarn has no Command Panel font reader (#449), Jarn-side checks will SKIP"; fi
+}
+
+preflight_footer() {
   LOG_START="$(sh_dev date +%s).000"
-  echo "  info  Jarn fonts ${ORIG_FONTS:-default (off)}, colors ${ORIG_COLORS:-default (off)}, tour ${ORIG_TOUR:-default}"
   echo "  info  screen_focus_lock $START_LOCK, Focus Lock mode ${LOCK_MODE:-unreadable}"
   echo "  info  Stage on display $STAGE_DISPLAY, Deck on display $DECK_DISPLAY, output in $OUT_DIR"
+}
+
+# The current row has all 7 contract columns at version 2.
+step_row() {
+  section "Fonts row"
+  [ "$CP_OK" = 1 ] || { skip "fonts row: Command Panel not available"; return; }
+  local row missing
+  row="$(cp_query_fonts)"
+  printf 'start %s\n' "$row" >>"$OUT_DIR/452-fonts-rows.txt"
+  missing="$(cp_missing_columns "$row")"
+  if [ -z "$missing" ]; then pass "/fonts has all 7 columns"; else fail "/fonts is missing: $missing"; fi
+  if [ "$(cp_col "$row" version)" = 2 ]; then pass "/fonts version 2"
+  else fail "/fonts version is $(cp_col "$row" version)"; fi
+  echo "  info  current look $(cp_col "$row" look_id) ($(cp_col "$row" look_name))"
 }
 
 step_toggle_on() {
   section "Fonts toggle on"
   JARN_CHANGED=1
-  [ "$ORIG_TOUR" = true ] || write_bool "$TOUR_KEY" true || fail "could not mark the tour done"
-  write_bool "$COLORS_KEY" false || fail "could not turn the colors switch off"
-  if write_bool "$FONTS_KEY" true; then pass "match_command_panel_fonts is true"
+  [ "$RELEASE" = 0 ] || { toggle_on_release; return; }
+  [ "$ORIG_TOUR" = true ] || jarn_write_bool "$TOUR_KEY" true || fail "could not mark the tour done"
+  jarn_write_bool "$COLORS_KEY" false || fail "could not turn the colors switch off"
+  if jarn_write_bool "$FONTS_KEY" true; then pass "match_command_panel_fonts is true"
   else fail "could not turn the fonts switch on"; return 1; fi
   [ "$CP_OK" = 0 ] || cp_ensure_service || fail "Command Panel's service did not start"
   start_stage || fail "could not bring Stage to the front"
@@ -214,6 +285,7 @@ compare_stage() {
 
 step_looks() {
   section "Built-in looks"
+  [ "$RELEASE" = 0 ] || { skip "built-in looks: a release Command Panel has no debug look switch"; return; }
   [ "$CP_OK" = 1 ] || { skip "built-in looks: Command Panel not available"; return; }
   local look
   for look in "${LOOKS[@]}"; do
@@ -248,6 +320,7 @@ look_with_font() {
 step_imported() {
   section "Imported font"
   [ "$CP_OK" = 1 ] || { skip "imported font: Command Panel not available"; return; }
+  [ "$RELEASE" = 0 ] || { imported_release; return; }
   local font id name file look row value sha cached
   font="$(cp_prefs_tool font)"
   [ -n "$font" ] || { skip "imported font: none in Command Panel (import ShareTechMono in Theme Studio)"; return; }
@@ -276,6 +349,34 @@ step_imported() {
   else fail "no cp_fonts/$sha.ttf in Jarn (found: $(sh_dev run-as "$PKG" ls no_backup/cp_fonts | tr '\n' ' '))"; fi
 }
 
+# Jarn stays in front while Command Panel changes look; Stage must follow within LIVE_LIMIT_MS.
+step_live() {
+  section "Live font change"
+  [ "$RELEASE" = 0 ] || { skip "live change: a release Command Panel's look only changes through its UI, which isn't scripted"; return; }
+  [ "$CP_OK" = 1 ] || { skip "live change: Command Panel not available"; return; }
+  [ "$READER" = 1 ] || { skip "live change: reader (#449) not installed"; return; }
+  python3 -I -c 'import PIL' 2>/dev/null || { skip "live change: Pillow is not installed"; return; }
+  local from=E_INK to=SEGMENT_LCD prefix="$OUT_DIR/452-live" pid start result
+  [ "$(cp_expected_fonts "$from")" != "$(cp_expected_fonts "$to")" ] || { skip "live change: $from and $to share fonts"; return; }
+  LOOK_CHANGED=1
+  cp_set_look "$from" || { fail "live change: Command Panel did not apply $from"; return; }
+  resume_jarn
+  pause 2
+  jarn_is_focused || { skip "live change: Jarn is not in front"; return; }
+  pid="$(pidof_pkg "$PKG")"
+  shot_idle "$STAGE_PHYSICAL" "$prefix" || { skip "live change: Stage screenshot failed"; return; }
+  start="$(now_ms)"
+  sh_dev am broadcast -a "$CP_DEBUG_ACTION" -p "$CP_PKG" --es look "$to" >/dev/null
+  if result="$(watch_stage_change "$prefix" "$LIVE_LIMIT_MS" "$start")"; then
+    pass "Stage changed ${result%% *} ms after $from to $to with Jarn in front (${result#* })"
+  else
+    fail "Stage did not change within $LIVE_LIMIT_MS ms of $from to $to (last frame $prefix-after.png)"
+  fi
+  [ "$(cp_col "$(cp_query_fonts)" look_id)" = "$to" ] || echo "  info  /fonts did not report $to afterwards"
+  if [ "$(pidof_pkg "$PKG")" = "$pid" ] && jarn_is_focused; then pass "Jarn stayed in front, no restart"
+  else fail "Jarn restarted or lost focus during the live change, so it wasn't live"; fi
+}
+
 # Sets TIMED_COLD and TIMED_WARM (median TotalTime) for the current toggle state, labeled $1.
 time_starts() {
   local label="$1" result cold warm_list="" i
@@ -302,13 +403,15 @@ step_timing() {
   local on_cold on_warm off_cold off_warm line
   [ "$CP_OK" = 0 ] || [ "$LOOK_CHANGED" = 0 ] || cp_set_look "$TIMING_LOOK" ||
     echo "  info  could not re-apply $TIMING_LOOK for timing"
+  [ "$RELEASE" = 0 ] || TIMING_LOOK="$(cp_col "$(cp_query_fonts)" look_id) (left as it was)"
   echo "  info  look while timing: $TIMING_LOOK (state total_ms displayed_ms per start)"
   time_starts "fonts on"
   on_cold="$TIMED_COLD" on_warm="$TIMED_WARM"
-  write_bool "$FONTS_KEY" false || { fail "could not turn the fonts switch off for timing"; return; }
+  set_fonts false || { fail "could not turn the fonts switch off for timing"; return; }
   time_starts "fonts off"
   off_cold="$TIMED_COLD" off_warm="$TIMED_WARM"
-  write_bool "$FONTS_KEY" true || fail "could not turn the fonts switch back on"
+  [ "$RELEASE" = 0 ] || start_stage
+  set_fonts true || fail "could not turn the fonts switch back on"
   start_stage
   for line in "${TIMING_LINES[@]}"; do echo "        $line"; done
   printf '%s\n' "${TIMING_LINES[@]}" >"$OUT_DIR/452-timing.txt"
@@ -326,7 +429,7 @@ step_timing() {
 }
 
 disable_provider() {
-  [ "$CP_OK" = 1 ] || return 1
+  [ "$RELEASE" = 0 ] && [ "$CP_OK" = 1 ] || return 1
   [ "$PROVIDER_START_ENABLED" = 1 ] || { echo "  info  provider was already disabled"; return 0; }
   PROVIDER_DISABLED=1
   sh_dev pm disable "$(cp_provider_component)" >/dev/null
@@ -335,7 +438,7 @@ disable_provider() {
 
 step_fallback() {
   section "Fallback without Command Panel"
-  if [ "$SKIP_FALLBACK" = 1 ]; then skip "fallback: --skip-fallback"; return; fi
+  if [ "$SKIP_FALLBACK" = 1 ]; then skip "fallback: $FALLBACK_SKIP_REASON"; return; fi
   if [ "$CP_OK" = 1 ]; then
     sh_dev am force-stop "$CP_PKG" >/dev/null
     if disable_provider && cp_fonts_unreadable; then pass "Command Panel stopped and /fonts unreadable"
@@ -360,9 +463,11 @@ main_452() {
   trap restore_452 EXIT
   trap 'restore_452; exit 130' INT TERM
   preflight_452 || { DONE_RESTORE=1; echo "Preflight failed, nothing was changed." >&2; exit 2; }
+  step_row
   step_toggle_on && {
     step_looks
     step_imported
+    step_live
     step_timing
     step_fallback
   }
@@ -372,6 +477,8 @@ main_452() {
   section "For a human"
   echo "  look  $OUT_DIR/452-<look>-stage-idle1.png and -deck.png: Jarn text in that look's fonts"
   echo "  look  $OUT_DIR/452-imported-*.png: the imported font on both screens"
+  [ "$RELEASE" = 0 ] || echo "  look  $OUT_DIR/452-default-*.png: Jarn's own fonts, toggle off"
+  [ "$RELEASE" = 1 ] || echo "  look  $OUT_DIR/452-live-*.png: Stage before and after the live change"
   echo "  look  $OUT_DIR/452-fallback-*.png: Jarn's own fonts with Command Panel gone"
   summary
 }
