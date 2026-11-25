@@ -354,6 +354,10 @@ class ImportExportManager @Inject constructor(
                 frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
                 frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
                 gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
+                gameEmulatorMap = f.esdePreferencesManager.state.value.gameEmulatorMap,
+                systemEmulatorMap = f.esdePreferencesManager.state.value.systemEmulatorMap,
+                gameCommandMap = f.esdePreferencesManager.state.value.gameCommandMap,
+                gameCoreMap = f.esdePreferencesManager.state.value.gameCoreMap,
                 scraper = buildScraperConfigForExport(f.esdePreferencesManager.state.value)
             )
         )
@@ -671,6 +675,9 @@ class ImportExportManager @Inject constructor(
         f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
+        config.romSearch.run {
+            f.esdePreferencesManager.restoreLaunchChoices(gameEmulatorMap, systemEmulatorMap, gameCommandMap, gameCoreMap)
+        }
 
         applyScraperConfigImport(config.romSearch.scraper, f.esdePreferencesManager)
 

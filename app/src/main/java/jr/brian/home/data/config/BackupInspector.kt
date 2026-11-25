@@ -281,7 +281,8 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,
         systemArtSource = feature.systemArtSource ?: current.feature.systemArtSource,
-        romSearch = feature.romSearch.copy(scraper = ScraperConfig(), hintsKbVisible = true),
+        romSearch = feature.romSearch.launchChoicesAfterRestore(current.feature.romSearch)
+            .copy(scraper = ScraperConfig(), hintsKbVisible = true),
         rssFeeds = mergeRssFeeds(current.feature.rssFeeds.orEmpty(), feature.rssFeeds),
         jingles = feature.jingles.copy(
             enabled = feature.jingles.enabled ?: current.feature.jingles.enabled,
@@ -289,6 +290,14 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         ),
     ),
     system = system.copy(hiddenSystems = emptyList()),
+)
+
+/** A pre-v64 backup has no launch choices, so restoring it keeps the current ones. */
+private fun RomSearchConfig.launchChoicesAfterRestore(current: RomSearchConfig) = copy(
+    gameEmulatorMap = gameEmulatorMap ?: current.gameEmulatorMap,
+    systemEmulatorMap = systemEmulatorMap ?: current.systemEmulatorMap,
+    gameCommandMap = gameCommandMap ?: current.gameCommandMap,
+    gameCoreMap = gameCoreMap ?: current.gameCoreMap,
 )
 
 private fun JarngreiprConfig.imageReferences(): Set<String> = buildSet {

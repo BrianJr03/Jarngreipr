@@ -235,7 +235,9 @@ data class JarngreiprConfig(
         //      fonts. Separate from jarnMatchCommandPanel. Null on older blobs keeps the current value.
         // v63: added FeatureConfig.jarnFontsPromptShown, whether Jarn FE's one-time Command Panel fonts
         //      prompt was answered. Null on older blobs keeps the current value. Import only sets it.
-        const val CONFIG_VERSION = 63
+        // v64: added RomSearchConfig.gameEmulatorMap, systemEmulatorMap, gameCommandMap and
+        //      gameCoreMap, the emulator, core and command choices. Null on older blobs keeps them.
+        const val CONFIG_VERSION = 64
     }
 }
 
@@ -646,6 +648,11 @@ data class RomSearchConfig(
     val frontendSystemTileScale: Float = 1.0f,
     val frontendGameTileScale: Float = 1.0f,
     val gamelistDecorationEnabled: Boolean = true,
+    /** v64: emulator, core and command choices. Null on pre-v64 exports, and import keeps them. */
+    val gameEmulatorMap: Map<String, String>? = null,
+    val systemEmulatorMap: Map<String, String>? = null,
+    val gameCommandMap: Map<String, String>? = null,
+    val gameCoreMap: Map<String, String>? = null,
     val scraper: ScraperConfig = ScraperConfig(),
     val userMetadata: UserMetadataConfig = UserMetadataConfig()
 )

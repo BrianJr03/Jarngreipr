@@ -321,4 +321,23 @@ class BackupInspectorTest {
         val item = preview.items.first { it.area == JarnBackupArea.Scraper }
         assertEquals("credentials alone are not a visible change", JarnBackupChange.Same, item.change)
     }
+
+    private fun withChoices(emulators: Map<String, String>?) = JarngreiprConfig(
+        feature = FeatureConfig(romSearch = RomSearchConfig(gameEmulatorMap = emulators, systemEmulatorMap = emulators)),
+    )
+
+    @Test
+    fun `a backup without emulator choices keeps the current ones`() {
+        val now = withChoices(mapOf("snes/a.sfc" to "com.retroarch"))
+        val items = buildBackupPreview(withChoices(null), now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+    }
+
+    @Test
+    fun `a backup with different emulator choices shows other settings as replaced`() {
+        val now = withChoices(mapOf("snes/a.sfc" to "com.retroarch"))
+        val backup = withChoices(mapOf("snes/a.sfc" to "com.snes9x"))
+        val items = buildBackupPreview(backup, now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.OtherSettings).change)
+    }
 }
