@@ -40,6 +40,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
         reducedMotion = appearance.reducedMotion,
         screenActive = state.isLit(screen),
         switchCue = switchCue,
+        type = appearance.type,
     ) {
         CompositionLocalProvider(
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),

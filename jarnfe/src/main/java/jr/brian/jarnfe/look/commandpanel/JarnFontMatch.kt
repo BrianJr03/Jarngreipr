@@ -3,9 +3,8 @@ package jr.brian.jarnfe.look.commandpanel
 import androidx.compose.runtime.Immutable
 
 /**
- * Whether the active Command Panel look can lend Jarn its fonts. Until a fonts reader exists,
- * [fromColorCard] derives it from the colors probe and reports [Available] with no look name.
- * The reader replaces that seam with [NoFonts] and real look names.
+ * Whether the active Command Panel look can lend Jarn its fonts, from the `/fonts` row ([fontMatchAvailability]).
+ * [Available] and [NoFonts] carry the look's name when it's a built-in look; a saved look has no name in the row.
  */
 @Immutable
 internal sealed interface FontMatchAvailability {
@@ -17,22 +16,30 @@ internal sealed interface FontMatchAvailability {
     data object Missing : FontMatchAvailability
     data object Unverified : FontMatchAvailability
     data object Unreadable : FontMatchAvailability
+}
 
-    companion object {
-        fun fromColorCard(state: JarnMatchCardState): FontMatchAvailability = when (state) {
-            JarnMatchCardState.Hidden -> Hidden
-            JarnMatchCardState.Checking -> Checking
-            JarnMatchCardState.Waiting -> Waiting
-            JarnMatchCardState.Available,
-            JarnMatchCardState.AvailableAccentOnly,
-            JarnMatchCardState.MatchingFull,
-            JarnMatchCardState.MatchingAccentOnly,
-            -> Available()
-            JarnMatchCardState.Unavailable -> Missing
-            JarnMatchCardState.Unverified -> Unverified
-            JarnMatchCardState.Unreadable -> Unreadable
-        }
+/**
+ * [read] null means not read yet. A provider that doesn't resolve hides the row, like the colors card; one too old to
+ * share fonts asks for an update. [lookName] names a `look_id`, or null for a saved look.
+ */
+internal fun fontMatchAvailability(
+    read: CommandPanelFontsRead?,
+    providerExists: Boolean,
+    lookName: (String) -> String?,
+): FontMatchAvailability = when (read) {
+    null -> FontMatchAvailability.Checking
+    is CommandPanelFontsRead.Fresh -> {
+        val name = lookName(read.fonts.lookId)
+        if (read.fonts.hasUsableFont) FontMatchAvailability.Available(name) else FontMatchAvailability.NoFonts(name)
     }
+    CommandPanelFontsRead.Locked,
+    CommandPanelFontsRead.Stopped,
+    CommandPanelFontsRead.Unavailable,
+    -> FontMatchAvailability.Waiting
+    CommandPanelFontsRead.Untrusted ->
+        if (providerExists) FontMatchAvailability.Unverified else FontMatchAvailability.Hidden
+    CommandPanelFontsRead.Unsupported -> FontMatchAvailability.Missing
+    CommandPanelFontsRead.Rejected -> FontMatchAvailability.Unreadable
 }
 
 @Immutable
@@ -41,6 +48,9 @@ internal data class JarnFontMatchRow(
     val enabled: Boolean,
 ) {
     val isShown: Boolean get() = availability != FontMatchAvailability.Hidden
+
+    /** Only worth previewing while off: when on, both screens already use the fonts. */
+    val canPreview: Boolean get() = !enabled && availability is FontMatchAvailability.Available
 
     /** Always lets a user turn it off, even when Command Panel can no longer lend its fonts. */
     val canToggle: Boolean get() = enabled || availability is FontMatchAvailability.Available

@@ -1,15 +1,20 @@
 package jr.brian.jarnfe.settings
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnToggleRow
+import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.look.JarnFontPreview
 import jr.brian.jarnfe.look.commandpanel.FontMatchAvailability
 import jr.brian.jarnfe.look.commandpanel.JarnFontMatchRow
 import jr.brian.jarnfe.look.commandpanel.resolveJarnFontMatchRow
@@ -23,6 +28,9 @@ internal fun rememberJarnFontMatchRow(store: JarnLookStore, availability: FontMa
 @Composable
 internal fun JarnMatchCommandPanelFontsRow(row: JarnFontMatchRow, onCheckedChange: (Boolean) -> Unit) {
     if (!row.isShown) return
+    val interactions = remember { MutableInteractionSource() }
+    val focused by interactions.collectIsFocusedAsState()
+    LiveFontPreview(focused && row.canPreview)
     JarnToggleRow(
         label = stringResource(R.string.jarnfe_look_match_cp_fonts),
         checked = row.enabled,
@@ -31,7 +39,18 @@ internal fun JarnMatchCommandPanelFontsRow(row: JarnFontMatchRow, onCheckedChang
         supporting = fontMatchStatus(row),
         enabled = row.canToggle,
         focusableWhenDisabled = true,
+        interactionSource = interactions,
     )
+}
+
+/** Both screens show Command Panel's fonts while the row has focus, and go back once it loses focus. */
+@Composable
+private fun LiveFontPreview(focused: Boolean) {
+    val active = focused && LocalJarnScreenActive.current
+    DisposableEffect(active) {
+        JarnFontPreview.active = active
+        onDispose { JarnFontPreview.active = false }
+    }
 }
 
 @Composable
