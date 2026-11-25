@@ -281,6 +281,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnMatchCommandPanelFonts = null,
         jarnFontsPromptShown = null,
         jarnEsdeImportNoticeShown = null,
+        jarnSystemSorts = feature.jarnSystemSorts ?: current.feature.jarnSystemSorts,
         jarnWallpaperScreens = null,
         jarnPreview = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,

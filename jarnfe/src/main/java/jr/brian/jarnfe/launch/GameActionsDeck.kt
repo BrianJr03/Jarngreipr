@@ -143,6 +143,7 @@ internal fun GameSetupRows(game: JarnLibraryGame, controller: JarnGameActionsCon
         onClick = { controller.openEdit(game) },
     )
     if (setup?.usesRetroArch == true) CoreRow(setup, controller)
+    GameSortRow(game)
     HideGameRow(game, controller)
 }
 

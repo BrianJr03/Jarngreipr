@@ -312,4 +312,20 @@ class JarngreiprConfigRoundTripTest {
         assertNull(system.hiddenGames)
         assertEquals(listOf("ps2"), system.hiddenSystems)
     }
+
+    @Test
+    fun `system game sorts round-trip through the config`() {
+        val original = JarngreiprConfig(feature = FeatureConfig(jarnSystemSorts = mapOf("snes" to "MostPlayed")))
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(json.encodeToString(original))
+
+        assertEquals(mapOf("snes" to "MostPlayed"), decoded.feature.jarnSystemSorts)
+    }
+
+    @Test
+    fun `pre-v67 config decodes with no game sorts so import keeps them`() {
+        val preV67 = """{ "version": 66, "feature": { "romSearch": { "frontendEnabled": true } } }"""
+
+        assertNull(json.decodeFromString<JarngreiprConfig>(preV67).feature.jarnSystemSorts)
+    }
 }

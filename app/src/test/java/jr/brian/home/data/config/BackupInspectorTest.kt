@@ -367,4 +367,19 @@ class BackupInspectorTest {
             .items.first { it.area == JarnBackupArea.HiddenGames }
         assertEquals(JarnBackupChange.Same, item.change)
     }
+
+    private fun withSorts(sorts: Map<String, String>?) = JarngreiprConfig(feature = FeatureConfig(jarnSystemSorts = sorts))
+
+    @Test
+    fun `a backup without game sorts keeps the current ones`() {
+        val items = buildBackupPreview(withSorts(null), withSorts(mapOf("snes" to "LastPlayed"))).items
+        assertEquals(JarnBackupChange.Same, items.first { it.area == JarnBackupArea.OtherSettings }.change)
+    }
+
+    @Test
+    fun `a backup with other game sorts shows other settings as replaced`() {
+        val backup = withSorts(mapOf("snes" to "Name"))
+        val items = buildBackupPreview(backup, withSorts(mapOf("snes" to "LastPlayed"))).items
+        assertEquals(JarnBackupChange.Replaces, items.first { it.area == JarnBackupArea.OtherSettings }.change)
+    }
 }

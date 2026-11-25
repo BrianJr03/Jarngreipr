@@ -240,7 +240,8 @@ data class JarngreiprConfig(
         // v65: added FeatureConfig.jarnEsdeImportNoticeShown, whether Jarn FE's one-time "ES-DE found"
         //      notice after skipping the tour was shown. Null on older blobs keeps it. Import only sets it.
         // v66: added SystemConfig.hiddenGames, games hidden one by one. Null on older blobs keeps them.
-        const val CONFIG_VERSION = 66
+        // v67: added FeatureConfig.jarnSystemSorts, each system's game order. Null on older blobs keeps them.
+        const val CONFIG_VERSION = 67
     }
 }
 
@@ -436,6 +437,8 @@ data class FeatureConfig(
     val jarnFontsPromptShown: Boolean? = null,
     /** v65: Jarn FE "ES-DE found" notice shown. Null on pre-v65 exports. Import never turns it back off. */
     val jarnEsdeImportNoticeShown: Boolean? = null,
+    /** v67: Jarn FE game order by system id. Null on pre-v67 exports, and import keeps them. */
+    val jarnSystemSorts: Map<String, String>? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */

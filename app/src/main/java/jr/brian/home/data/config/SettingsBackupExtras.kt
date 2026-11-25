@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.frontend.library.art.GameSortStore
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,6 +22,7 @@ class SettingsBackupExtras @Inject constructor(
     private val appearance: AppearanceBackup,
     private val rssFeeds: RssFeedBackup,
     private val jingles: JingleBackup,
+    private val gameSorts: GameSortStore,
 ) {
     private val widgetManager by lazy { runCatching { AppWidgetManager.getInstance(context) }.getOrNull() }
 
@@ -31,6 +33,7 @@ class SettingsBackupExtras @Inject constructor(
         ),
         feature = config.feature.copy(
             rssFeeds = rssFeeds.export(),
+            jarnSystemSorts = gameSorts.state.value,
             jingles = config.feature.jingles.copy(enabled = jingles.enabled, repos = jingles.repos),
         ),
     )
@@ -50,6 +53,7 @@ class SettingsBackupExtras @Inject constructor(
         appearance.restore(config.ui.appearance)
         rssFeeds.restore(config.feature.rssFeeds)
         jingles.restore(config.feature.jingles.enabled, config.feature.jingles.repos)
+        config.feature.jarnSystemSorts?.let(gameSorts::restore)
     }
 
     private fun providerOf(widgetId: Int): String? =

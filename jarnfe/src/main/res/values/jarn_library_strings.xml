@@ -40,4 +40,10 @@
     <string name="jarnfe_library_hidden_games_message">Hidden games stay safe and can be shown again.</string>
     <string name="jarnfe_library_unavailable_title">Can\'t reach your games folder</string>
     <string name="jarnfe_library_unavailable_message">Check that its storage is available, then try again.</string>
+    <string name="jarnfe_sort_row">Sort this system by</string>
+    <string name="jarnfe_sort_row_hint">Press A to change the order.</string>
+    <string name="jarnfe_sort_name">Name</string>
+    <string name="jarnfe_sort_last_played">Last played</string>
+    <string name="jarnfe_sort_most_played">Most played</string>
+    <string name="jarnfe_sort_release_year">Release year</string>
 </resources>
