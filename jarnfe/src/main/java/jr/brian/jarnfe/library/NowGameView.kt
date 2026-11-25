@@ -67,6 +67,7 @@ import jr.brian.jarnfe.launch.GameSetupRows
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.launch.JarnGameActionsController
 import jr.brian.jarnfe.launch.JarnGameFileStatus
+import jr.brian.core.ui.theme.rememberThemedStyle
 
 private const val MARQUEE_WIDTH_FRACTION = 0.8f
 private const val MEDIA_SIZE_FRACTION = 0.84f
@@ -285,7 +286,7 @@ private fun NowMarquee(path: String, title: String) {
 private fun NowTitlePlate(title: String, style: TextStyle, modifier: Modifier = Modifier) {
     JarnText(
         text = title,
-        style = style,
+        style = rememberThemedStyle(title, style, JarnTheme.baseType.heading),
         color = JarnTheme.colors.textHigh,
         maxLines = TITLE_MAX_LINES,
         modifier = modifier

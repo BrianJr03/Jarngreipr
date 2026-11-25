@@ -33,6 +33,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.wallpaper.JarnWallpaperScreen
 import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperScreen
+import jr.brian.core.ui.theme.rememberThemedStyle
 
 private const val PLATE_ALPHA = 0.86f
 private const val SOLO_COVER_RATIO = 3f / 4f
@@ -82,11 +83,15 @@ private fun JarnShelfGroup.labelRes(): Int = when (this) {
 }
 
 @Composable
-internal fun NowPill(text: String, strong: Boolean) {
+internal fun NowPill(text: String, strong: Boolean, themed: Boolean = false) {
     val colors = JarnTheme.colors
     JarnText(
         text = text,
-        style = if (strong) JarnTheme.type.labelStrong else JarnTheme.type.label,
+        style = when {
+            themed -> rememberThemedStyle(text, JarnTheme.type.labelStrong, JarnTheme.baseType.captionStrong)
+            strong -> JarnTheme.type.captionStrong
+            else -> JarnTheme.type.caption
+        },
         color = if (strong) colors.textHigh else colors.textMid,
         modifier = Modifier
             .nowPlate()

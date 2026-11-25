@@ -16,12 +16,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 private const val HEADER = "In this system"
-private const val COUNT = "12 games"
+private const val EYEBROW = "Continue playing"
+private const val MIXED = "Pok\u00e9mon \u30bc\u30eb\u30c0"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class NowThemedTextTest {
     @get:Rule
     val rule = createComposeRule()
@@ -35,21 +38,25 @@ class NowThemedTextTest {
     }
 
     @Test
-    fun `shelf headers, counts and the wordmark follow the font override`() {
+    fun `wordmark and Continue playing follow the override, shelf labels stay on Jarn`() {
         rule.setContent {
             JarnTheme(type = type) {
                 Column {
                     NowPill(HEADER, strong = true)
-                    NowPill(COUNT, strong = false)
+                    NowPill(EYEBROW, strong = true, themed = true)
+                    NowPill(MIXED, strong = true, themed = true)
                     JarnWordmark()
                 }
             }
         }
         val header = rule.onNodeWithText(HEADER).textLayout().layoutInput.style
-        val count = rule.onNodeWithText(COUNT).textLayout().layoutInput.style
+        val eyebrow = rule.onNodeWithText(EYEBROW).textLayout().layoutInput.style
+        val mixed = rule.onNodeWithText(MIXED).textLayout().layoutInput.style
         val mark = rule.onNodeWithText("JARN").textLayout().layoutInput.style
-        assertEquals(type.labelStrong.fontFamily, header.fontFamily)
-        assertEquals(type.label.fontFamily, count.fontFamily)
+        assertEquals(JarnTheme.baseType.captionStrong.fontFamily, header.fontFamily)
+        assertEquals(type.labelStrong.fontFamily, eyebrow.fontFamily)
+        assertEquals(JarnTheme.baseType.captionStrong.fontFamily, mixed.fontFamily)
+        assertEquals(JarnTheme.baseType.captionStrong.fontSize, mixed.fontSize)
         assertEquals(type.heading.fontFamily, mark.fontFamily)
     }
 }

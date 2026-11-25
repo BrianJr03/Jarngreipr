@@ -124,7 +124,7 @@ internal fun missingArtAlpha(status: JarnGameFileStatus?): Float =
 
 @Composable
 internal fun NowResumeEyebrow() {
-    NowPill(stringResource(R.string.jarnfe_library_continue_playing), strong = true)
+    NowPill(stringResource(R.string.jarnfe_library_continue_playing), strong = true, themed = true)
 }
 
 @Composable
