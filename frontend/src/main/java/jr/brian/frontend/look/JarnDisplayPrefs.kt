@@ -53,6 +53,7 @@ data class JarnDisplayPrefs(
     val systemBackgroundVisible: Boolean = true,
     val playingScreenVisible: Boolean = true,
     val playingDim: JarnPlayingDim = JarnPlayingDim.ThirtySeconds,
+    val playingScreenOff: Boolean = false,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

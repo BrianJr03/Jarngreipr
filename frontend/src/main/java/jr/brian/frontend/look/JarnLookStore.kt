@@ -117,6 +117,7 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_SYSTEM_BACKGROUND_VISIBLE, next.systemBackgroundVisible)
             putBoolean(KEY_PLAYING_SCREEN_VISIBLE, next.playingScreenVisible)
             putString(KEY_PLAYING_DIM, next.playingDim.id)
+            putBoolean(KEY_PLAYING_SCREEN_OFF, next.playingScreenOff)
         }
     }
 
@@ -161,6 +162,7 @@ class JarnLookStore @Inject constructor(
         systemBackgroundVisible = prefs.getBoolean(KEY_SYSTEM_BACKGROUND_VISIBLE, true),
         playingScreenVisible = prefs.getBoolean(KEY_PLAYING_SCREEN_VISIBLE, true),
         playingDim = JarnPlayingDim.fromId(prefs.getString(KEY_PLAYING_DIM, null)) ?: JarnPlayingDim.ThirtySeconds,
+        playingScreenOff = prefs.getBoolean(KEY_PLAYING_SCREEN_OFF, false),
     ).coerced()
 
     fun setLookId(id: String) {
@@ -237,6 +239,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_SYSTEM_BACKGROUND_VISIBLE = "now_system_background_visible"
         const val KEY_PLAYING_SCREEN_VISIBLE = "playing_screen_visible"
         const val KEY_PLAYING_DIM = "playing_dim"
+        const val KEY_PLAYING_SCREEN_OFF = "playing_screen_off"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

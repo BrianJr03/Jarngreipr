@@ -10,6 +10,8 @@
     <string name="jarnfe_settings_playing_title">Bottom screen while playing</string>
     <string name="jarnfe_settings_playing_show">Show Now Playing</string>
     <string name="jarnfe_settings_playing_show_hint">Cover, session time, clock and battery</string>
+    <string name="jarnfe_settings_playing_off">Turn off the bottom screen</string>
+    <string name="jarnfe_settings_playing_off_hint">Goes black while a game runs. Tap to wake.</string>
     <string name="jarnfe_settings_playing_dim">Dim after</string>
     <plurals name="jarnfe_dim_seconds">
         <item quantity="one">%1$d s</item>

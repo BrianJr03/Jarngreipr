@@ -54,4 +54,28 @@ class JarnPlayingConfigTest {
         val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
         assertEquals(JarnBackupChange.Replaces, look.change)
     }
+
+    @Test
+    fun `the bottom screen stays on by default and turning it off round trips`() {
+        assertEquals(false, JarnDisplayPrefs().playingScreenOff)
+        val prefs = JarnDisplayPrefs(playingScreenOff = true)
+        val config = json.decodeFromString<JarnDisplayConfig>(json.encodeToString(prefs.toConfig()))
+        assertEquals(true, config.playingScreenOff)
+        assertEquals(prefs, config.applyTo(JarnDisplayPrefs()))
+    }
+
+    @Test
+    fun `a pre v69 display block keeps the current screen off choice`() {
+        val config = json.decodeFromString<JarnDisplayConfig>("""{"playingDim":"1m"}""")
+        assertNull(config.playingScreenOff)
+        assertEquals(true, config.applyTo(JarnDisplayPrefs(playingScreenOff = true)).playingScreenOff)
+    }
+
+    @Test
+    fun `a different screen off choice shows as a look change`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(playingScreenOff = false)))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnDisplay = JarnDisplayConfig(playingScreenOff = true)))
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Replaces, look.change)
+    }
 }

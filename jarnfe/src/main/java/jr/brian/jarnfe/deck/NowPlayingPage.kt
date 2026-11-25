@@ -51,6 +51,7 @@ import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.JarnCompanionSheetHost
 import jr.brian.jarnfe.launch.JarnGameActions
+import jr.brian.jarnfe.launch.offeredCompanionController
 import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.library.rememberGameWideArt
 import jr.brian.jarnfe.library.rememberNowGameArt
@@ -77,6 +78,16 @@ internal fun rememberNowPlayingPrefs(): JarnDisplayPrefs {
     return display
 }
 
+/** The role whose screen is black right now, if any. The companion offer always shows. */
+internal fun nowPlayingBlackoutRole(state: JarnSessionState, prefs: JarnDisplayPrefs): JarnScreen? = nowPlayingBlackoutRole(
+    session = JarnNowPlaying.session,
+    screenOff = prefs.playingScreenOff,
+    deckDisplayAvailable = state.deckDisplayAvailable,
+    rolesSwapped = state.rolesSwapped,
+    osFocusedScreen = state.osFocusedScreen,
+    offerShowing = offeredCompanionController() != null,
+)
+
 /** The role showing Now Playing right now, if any. */
 internal fun nowPlayingRole(state: JarnSessionState, prefs: JarnDisplayPrefs): JarnScreen? = nowPlayingRole(
     session = JarnNowPlaying.session,
@@ -94,10 +105,12 @@ internal fun nowPlayingRole(state: JarnSessionState, prefs: JarnDisplayPrefs): J
 internal fun NowPlayingSlot(role: JarnScreen, state: JarnSessionState, content: @Composable () -> Unit) {
     val prefs = rememberNowPlayingPrefs()
     val session = JarnNowPlaying.session
-    if (session != null && nowPlayingRole(state, prefs) == role) {
-        NowPlayingPage(session, prefs.playingDim)
-    } else {
-        content()
+    val blackout = rememberNowPlayingBlackout(session?.launchedAtUptimeMs, prefs.playingDim)
+    when {
+        nowPlayingBlackoutRole(state, prefs) == role && blackout.isBlack(prefs.playingDim) ->
+            NowPlayingBlackout(onWake = { blackout.wake() })
+        session != null && nowPlayingRole(state, prefs) == role -> NowPlayingPage(session, prefs.playingDim)
+        else -> content()
     }
     val sheetRole = companionSheetRole(JarnNowPlaying.session, state.deckDisplayAvailable, state.rolesSwapped)
     if (sheetRole == role) JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)

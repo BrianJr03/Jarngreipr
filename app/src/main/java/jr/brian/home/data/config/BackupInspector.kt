@@ -233,6 +233,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             systemBackgroundVisible = it.systemBackgroundVisible ?: shown?.systemBackgroundVisible,
             playingScreenVisible = it.playingScreenVisible ?: shown?.playingScreenVisible,
             playingDim = it.playingDim?.takeIf { id -> JarnPlayingDim.fromId(id) != null } ?: shown?.playingDim,
+            playingScreenOff = it.playingScreenOff ?: shown?.playingScreenOff,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
