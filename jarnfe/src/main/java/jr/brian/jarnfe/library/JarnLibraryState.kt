@@ -26,11 +26,13 @@ data class JarnLibraryState(
     val systems: JarnLibraryFeed<JarnLibrarySystem> = JarnLibraryFeed(),
     val favorites: JarnLibraryFeed<JarnLibraryGame> = JarnLibraryFeed(),
     val recent: JarnLibraryFeed<JarnLibraryGame> = JarnLibraryFeed(),
+    val allGames: JarnLibraryFeed<JarnLibraryGame> = JarnLibraryFeed(),
     val gamesBySystem: Map<String, JarnLibraryFeed<JarnLibraryGame>> = emptyMap(),
     val openSystemId: String? = null,
     val focusedSystemId: String? = null,
     val focusedFavoriteId: String? = null,
     val focusedRecentId: String? = null,
+    val focusedAllGameId: String? = null,
     val focusedGameBySystem: Map<String, String> = emptyMap(),
     val searchSelection: LibrarySelection = LibrarySelection.None,
 ) {
@@ -56,6 +58,9 @@ data class JarnLibraryState(
     val focusedRecent: JarnLibraryGame?
         get() = recent.items.firstOrNull { it.id == focusedRecentId } ?: recent.items.firstOrNull()
 
+    val focusedAllGame: JarnLibraryGame?
+        get() = allGames.items.firstOrNull { it.id == focusedAllGameId } ?: allGames.items.firstOrNull()
+
     val hero: LibraryHero?
         get() = recent.items.firstOrNull()?.let(LibraryHero::ContinuePlaying)
             ?: focusedSystem?.let(LibraryHero::FocusedSystem)
@@ -74,6 +79,7 @@ data class JarnLibraryState(
     fun selection(route: StageRoute, section: LibrarySection): LibrarySelection = when (route) {
         StageRoute.Library -> when (section) {
             LibrarySection.Systems -> focusedSystem.asSelection()
+            LibrarySection.AllGames -> focusedAllGame.asSelection()
             LibrarySection.Favorites -> focusedFavorite.asSelection()
             LibrarySection.Recent -> focusedRecent.asSelection()
         }
@@ -99,6 +105,7 @@ data class JarnLibraryState(
             }
             StageRoute.Library -> when (section) {
                 LibrarySection.Systems -> systems.confirm(LibraryConfirm.Open)
+                LibrarySection.AllGames -> allGames.confirm(play)
                 LibrarySection.Favorites -> favorites.confirm(play)
                 LibrarySection.Recent -> recent.confirm(play)
             }
@@ -129,6 +136,8 @@ data class JarnLibraryState(
 
     fun focusRecent(gameId: String): JarnLibraryState = copy(focusedRecentId = gameId)
 
+    fun focusAllGame(gameId: String): JarnLibraryState = copy(focusedAllGameId = gameId)
+
     fun focusSearchResult(selection: LibrarySelection): JarnLibraryState =
         copy(searchSelection = selection)
 
@@ -142,6 +151,7 @@ data class JarnLibraryState(
         },
         focusedFavoriteId = neighbourOf(favorites.items.map { it.id }, gameId) ?: focusedFavoriteId,
         focusedRecentId = neighbourOf(recent.items.map { it.id }, gameId) ?: focusedRecentId,
+        focusedAllGameId = neighbourOf(allGames.items.map { it.id }, gameId) ?: focusedAllGameId,
     )
 
     fun focusOpenGame(gameId: String): JarnLibraryState {

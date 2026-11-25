@@ -164,7 +164,7 @@ class JarnScreenTabsTest {
     fun `r1 from deck steps stage and r2 steps deck`() {
         session.update { activate(JarnScreen.Deck) }
         pull(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
         assertEquals(DeckTab.Now, session.state.deckTab)
         pull(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Apps, session.state.deckTab)
@@ -178,13 +178,13 @@ class JarnScreenTabsTest {
         assertEquals(DeckTab.Apps, session.state.deckTab)
         assertEquals(LibrarySection.Systems, session.state.librarySection)
         pull(KeyEvent.KEYCODE_BUTTON_R2)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
         assertControlOn(JarnScreen.Stage)
         session.update { activate(JarnScreen.Deck) }
         pull(KeyEvent.KEYCODE_BUTTON_R1)
         assertEquals(DeckTab.Canvas, session.state.deckTab)
         pull(KeyEvent.KEYCODE_BUTTON_R2)
-        assertEquals(LibrarySection.Recent, session.state.librarySection)
+        assertEquals(LibrarySection.Favorites, session.state.librarySection)
         assertControlOn(JarnScreen.Deck)
     }
 
@@ -228,7 +228,7 @@ class JarnScreenTabsTest {
         session.update { stepLibrarySection(1).activate(JarnScreen.Deck) }
         pull(KeyEvent.KEYCODE_BUTTON_L1)
         assertEquals(1, shrunk)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
     }
 
     @Test

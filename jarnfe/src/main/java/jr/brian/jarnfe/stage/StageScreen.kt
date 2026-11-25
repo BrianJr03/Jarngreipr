@@ -80,6 +80,7 @@ import jr.brian.jarnfe.systems.JarnSystemsRoute
 @StringRes
 private fun LibrarySection.labelRes(): Int = when (this) {
     LibrarySection.Systems -> R.string.jarnfe_section_systems
+    LibrarySection.AllGames -> R.string.jarnfe_section_all_games
     LibrarySection.Favorites -> R.string.jarnfe_section_favorites
     LibrarySection.Recent -> R.string.jarnfe_section_recent
 }

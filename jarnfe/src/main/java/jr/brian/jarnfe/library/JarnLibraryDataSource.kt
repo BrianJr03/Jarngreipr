@@ -14,11 +14,13 @@ import jr.brian.jarnfe.systems.JarnManagedSystem
 import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystems
 import jr.brian.jarnfe.systems.jarnSystemManagerOrNull
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import java.text.NumberFormat
@@ -80,6 +82,12 @@ internal class JarnLibraryDataSource(
         combine(data.games(systemId).asFeed(), gameSort(systems, systemId)) { feed, sort ->
             feed.copy(items = feed.items.sortedFor(sort), sort = sort)
         }
+
+    /** Sorted off the main thread, since a large library holds thousands of games. */
+    override fun observeAllGames(): Flow<JarnLibraryFeed<JarnLibraryGame>> =
+        data.allGames().asFeed()
+            .map { it.inNameOrder() }
+            .flowOn(Dispatchers.Default)
 
     override fun observeFavorites() = data.favorites.asFeed()
 
@@ -179,3 +187,7 @@ internal fun connectJarnLibrary(context: Context) {
     JarnLibrary.connect(JarnLibraryDataSource(data, setup, JarnSystems.manager))
     setup.start()
 }
+
+/** The All games order: the Name sort's order, marked so letter jump turns on. */
+internal fun JarnLibraryFeed<JarnLibraryGame>.inNameOrder(): JarnLibraryFeed<JarnLibraryGame> =
+    copy(items = items.sortedFor(JarnGameSort.Name), sort = JarnGameSort.Name)

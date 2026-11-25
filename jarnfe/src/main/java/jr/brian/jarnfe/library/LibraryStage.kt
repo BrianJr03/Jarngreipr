@@ -61,6 +61,7 @@ internal fun LibraryHome(
     LibraryTabReveal(section) {
         when (section) {
             LibrarySection.Systems -> LibrarySystems(library, onOpenSystem, emptyActions)
+            LibrarySection.AllGames -> LibraryAllGames(library, emptyActions)
             LibrarySection.Favorites -> LibraryGames(
                 feed = library.state.favorites,
                 focusedKey = library.state.focusedFavorite?.id,
@@ -297,7 +298,7 @@ internal fun heroTitle(title: String): String =
     title.substringBefore(" (").substringBefore(" [").trim().ifEmpty { title }
 
 @Composable
-private fun LibraryGames(
+internal fun LibraryGames(
     feed: JarnLibraryFeed<JarnLibraryGame>,
     focusedKey: String?,
     onFocused: (String) -> Unit,

@@ -253,6 +253,23 @@ class JarnLibraryDataTest {
     }
 
     @Test
+    fun `all games spans systems and follows the same hide rules`() = runBlocking {
+        insert("gba", "Shown.gba")
+        val hiddenGame = insert("gba", "Hidden.gba")
+        insert("snes", "Snes.sfc")
+        insert("n64", "InHiddenSystem.z64")
+        insert("gba", "Scanner.gba", hidden = true)
+        visibility.value = LibraryVisibility(
+            hiddenSystems = setOf("n64"),
+            hiddenGames = setOf(libraryHiddenGameKey("gba", hiddenGame.absolutePath, hiddenGame.relativePath)),
+        )
+
+        val all = library.allGames().first()
+        assertEquals(setOf("Shown", "Snes"), all.items.map { it.title }.toSet())
+        assertEquals(2, all.hiddenCount)
+    }
+
+    @Test
     fun `system last played includes launches`() = runBlocking {
         val game = insert("gba", "A.gba", lastPlayed = 10L)
         launches.value = listOf(RecentLaunch("gba", game.relativePath, 500L))

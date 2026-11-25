@@ -105,7 +105,7 @@ class JarnShellInputTest {
     @Test
     fun `without a deck window shoulders only reach the active screen`() {
         press(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
         assertEquals(DeckTab.Now, session.state.deckTab)
         press(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Now, session.state.deckTab)
@@ -113,7 +113,7 @@ class JarnShellInputTest {
         press(KeyEvent.KEYCODE_BUTTON_R2)
         assertEquals(DeckTab.Apps, session.state.deckTab)
         press(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
     }
 
     @Test
@@ -200,9 +200,9 @@ class JarnShellInputTest {
         session.update { withDeckDisplay(false) }
         assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
         press(KeyEvent.KEYCODE_BUTTON_R2)
-        assertEquals(LibrarySection.Favorites, session.state.librarySection)
+        assertEquals(LibrarySection.AllGames, session.state.librarySection)
         press(KeyEvent.KEYCODE_BUTTON_R1)
-        assertEquals(LibrarySection.Recent, session.state.librarySection)
+        assertEquals(LibrarySection.Favorites, session.state.librarySection)
     }
 
     @Test

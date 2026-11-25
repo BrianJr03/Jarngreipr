@@ -34,6 +34,7 @@
     <string name="jarnfe_library_hidden_systems_message">Hidden systems stay safe and can be shown again.</string>
     <string name="jarnfe_library_no_favorites_message">Favorite a game and it lands here.</string>
     <string name="jarnfe_library_no_recent_message">Games you play will show up here.</string>
+    <string name="jarnfe_library_no_all_games_message">Every game from every system will appear here.</string>
     <string name="jarnfe_library_no_games_title">No games here yet</string>
     <string name="jarnfe_library_no_games_message">Games in this system\'s folder will appear here.</string>
     <string name="jarnfe_library_hidden_games_title">All games here are hidden</string>
