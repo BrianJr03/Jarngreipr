@@ -67,7 +67,7 @@ internal fun rememberCanvasRomLauncher(): (JarnCanvasRom) -> Unit {
                 .getOrElse { JarnLaunchResult.Failed(JarnLaunchFailure.Unknown) }
             launchNoticeRes(result)?.let(JarnNotices::show)
             if (result is JarnLaunchResult.Launched) {
-                activity.recordGameLaunched(ref)
+                activity.recordGameLaunched(ref, result.displayId)
                 JarnGameActions.controller?.followLaunch(result.companionChoices)
             }
             if (result is JarnLaunchResult.NeedsFileAccess) {

@@ -33,7 +33,10 @@ internal fun JarnDisplaySection() {
     NowPageGroup(store, display)
     TilesGroup(store, display)
     FeedbackGroup(store, display)
-    if (JarnSession.state.deckDisplayAvailable) TwoScreensGroup(store, display)
+    if (JarnSession.state.deckDisplayAvailable) {
+        TwoScreensGroup(store, display)
+        PlayingScreenGroup(store, display)
+    }
 }
 
 @Composable

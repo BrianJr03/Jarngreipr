@@ -37,6 +37,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.canvas.CanvasStagePreview
 import jr.brian.jarnfe.canvas.tour.CanvasTourStagePreview
 import jr.brian.jarnfe.deck.DeckContent
+import jr.brian.jarnfe.deck.NowPlayingHeaderPill
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
@@ -122,6 +123,7 @@ private fun StageHeader(state: JarnSessionState) {
     ) {
         JarnWordmark(Modifier.jarnSplashMark())
         Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
+        NowPlayingHeaderPill(JarnScreen.Stage, Modifier.padding(start = JarnTheme.space.lg))
         Box(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade()) { JarnStatusReadout() }
     }
 }

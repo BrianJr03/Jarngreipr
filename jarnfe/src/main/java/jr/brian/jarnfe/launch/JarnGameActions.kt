@@ -12,6 +12,7 @@ import jr.brian.frontend.library.art.GameArtChoices
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.media.MediaKind
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.deck.JarnNowPlaying
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
@@ -209,6 +210,7 @@ internal class JarnGameActionsController(
     fun offerCompanions(packages: List<String>) {
         if (state.page != GameActionsPage.CompanionLaunch) panelOpenBeforeOffer = JarnSession.state.deckPanelOpen
         state.offer(options.appOptions(packages))
+        JarnNowPlaying.onCompanionsOffered(packages)
         JarnSession.update { withDeckPanel(true) }
     }
 

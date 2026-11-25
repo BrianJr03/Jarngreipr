@@ -4,6 +4,7 @@ import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
 
 /** Jarn FE display choices to and from a backup. A null field keeps the current value. */
@@ -27,6 +28,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     lastPlayedTextVisible = lastPlayedTextVisible,
     gameRowVisible = gameRowVisible,
     systemBackgroundVisible = systemBackgroundVisible,
+    playingScreenVisible = playingScreenVisible,
+    playingDim = playingDim.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -49,4 +52,6 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     lastPlayedTextVisible = lastPlayedTextVisible ?: current.lastPlayedTextVisible,
     gameRowVisible = gameRowVisible ?: current.gameRowVisible,
     systemBackgroundVisible = systemBackgroundVisible ?: current.systemBackgroundVisible,
+    playingScreenVisible = playingScreenVisible ?: current.playingScreenVisible,
+    playingDim = JarnPlayingDim.fromId(playingDim) ?: current.playingDim,
 )

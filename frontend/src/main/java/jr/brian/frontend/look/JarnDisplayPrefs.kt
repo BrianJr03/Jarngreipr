@@ -16,6 +16,20 @@ enum class JarnTapControl(val id: String) {
     }
 }
 
+/** How long the bottom screen's Now Playing waits before it dims. [seconds] is null for never. */
+enum class JarnPlayingDim(val id: String, val seconds: Int?) {
+    TenSeconds("10s", 10),
+    ThirtySeconds("30s", 30),
+    OneMinute("1m", 60),
+    FiveMinutes("5m", 300),
+    Never("never", null),
+    ;
+
+    companion object {
+        fun fromId(id: String?): JarnPlayingDim? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** Jarn FE display choices. The defaults match how Jarn FE looked before they existed. */
 data class JarnDisplayPrefs(
     val systemTileScale: Float = DEFAULT_TILE_SCALE,
@@ -37,6 +51,8 @@ data class JarnDisplayPrefs(
     val lastPlayedTextVisible: Boolean = true,
     val gameRowVisible: Boolean = true,
     val systemBackgroundVisible: Boolean = true,
+    val playingScreenVisible: Boolean = true,
+    val playingDim: JarnPlayingDim = JarnPlayingDim.ThirtySeconds,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

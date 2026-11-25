@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.jarnfe.deck.DeckScreen
+import jr.brian.jarnfe.deck.NowPlayingSlot
 import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
 import jr.brian.jarnfe.firstrun.rememberJarnFirstRun
 import jr.brian.jarnfe.library.JarnEsdeRomsNoticeHost
@@ -55,8 +56,9 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                 Box(Modifier.fillMaxSize().jarnScreenDim(dim).jarnScreenTag(screen)) {
                     when {
                         firstRun?.coversShell(state.stageRoute) == true -> JarnFirstRunScreen(screen, state, firstRun)
-                        screen == JarnScreen.Stage -> StageScreen(state)
-                        else -> DeckScreen(state)
+                        else -> NowPlayingSlot(screen, state) {
+                            if (screen == JarnScreen.Stage) StageScreen(state) else DeckScreen(state)
+                        }
                     }
                     JarnEsdeRomsNoticeHost(screen)
                     JarnEsdeImportNoticeHost(screen)

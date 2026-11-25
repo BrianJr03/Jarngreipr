@@ -25,7 +25,6 @@ import jr.brian.jarnfe.canvas.CanvasRoute
 import jr.brian.jarnfe.dock.JarnDockRow
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
-import jr.brian.jarnfe.launch.JarnCompanionSheetHost
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowShortcutControls
@@ -61,14 +60,8 @@ internal fun DeckScreen(state: JarnSessionState) {
             Box(Modifier.jarnSplashFade()) {
                 JarnWallpaperBackdrop(showWallpaper = true)
             }
-            CompositionLocalProvider(LocalJarnDisabledBacking provides JarnTheme.colors.bg) {
-                JarnScreenFrame(
-                    header = { DeckHeader(state) },
-                    background = Color.Transparent,
-                ) { DeckBody(state) }
-            }
+            DeckPage(state)
             if (deckShowsSettings(state)) JarnSettingsScraperHost()
-            JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)
             JarnDeckSplash()
         }
     }
@@ -89,6 +82,16 @@ private fun deckShowsTabs(state: JarnSessionState) =
  */
 internal fun deckShowsMark(state: JarnSessionState, follows: Boolean): Boolean =
     follows && deckShowsTabs(state)
+
+@Composable
+private fun DeckPage(state: JarnSessionState) {
+    CompositionLocalProvider(LocalJarnDisabledBacking provides JarnTheme.colors.bg) {
+        JarnScreenFrame(
+            header = { DeckHeader(state) },
+            background = Color.Transparent,
+        ) { DeckBody(state) }
+    }
+}
 
 @Composable
 private fun DeckHeader(state: JarnSessionState) {
@@ -143,6 +146,7 @@ private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean) {
                 modifier = Modifier.weight(1f),
                 showsSwitchMark = true,
             )
+            NowPlayingHeaderPill(JarnScreen.Deck, Modifier.padding(start = JarnTheme.space.md))
             if (selected == DeckTab.Canvas) CanvasHeaderControls()
             if (selected.showsNowShortcuts()) NowShortcutControls(Modifier.padding(start = nowShortcutGap(JarnTheme.space.md.value).dp))
         }

@@ -45,10 +45,14 @@ enum class JarnLaunchFailure {
 }
 
 sealed interface JarnLaunchResult {
-    /** [companionChoices] is non-empty when the caller must ask which companion to open. */
+    /**
+     * [companionChoices] is non-empty when the caller must ask which companion to open.
+     * [displayId] is the display the game was sent to, or null when the launcher can't tell.
+     */
     data class Launched(
         val packageName: String,
         val companionChoices: List<String> = emptyList(),
+        val displayId: Int? = null,
     ) : JarnLaunchResult
 
     data class NeedsEmulatorChoice(val kind: JarnEmulatorChoiceKind) : JarnLaunchResult
