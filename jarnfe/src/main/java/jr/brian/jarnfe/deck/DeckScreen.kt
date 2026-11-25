@@ -25,6 +25,7 @@ import jr.brian.jarnfe.canvas.CanvasRoute
 import jr.brian.jarnfe.dock.JarnDockRow
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.launch.JarnCompanionSheetHost
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowShortcutControls
@@ -67,6 +68,7 @@ internal fun DeckScreen(state: JarnSessionState) {
                 ) { DeckBody(state) }
             }
             if (deckShowsSettings(state)) JarnSettingsScraperHost()
+            JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)
             JarnDeckSplash()
         }
     }

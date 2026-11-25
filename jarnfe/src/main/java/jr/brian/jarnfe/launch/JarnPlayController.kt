@@ -102,6 +102,8 @@ internal class JarnPlayController(
                 activity.recordGameLaunched(ref)
                 if (result.companionChoices.isNotEmpty()) {
                     actions?.offerCompanions(game, result.companionChoices)
+                } else {
+                    actions?.dismissCompanions()
                 }
             }
             else -> Unit

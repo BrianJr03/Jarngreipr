@@ -62,12 +62,12 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.launch.GameActionsHost
-import jr.brian.jarnfe.launch.GameActionsPage
 import jr.brian.jarnfe.launch.GameSetupRows
 import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.launch.JarnGameActionsController
 import jr.brian.jarnfe.launch.JarnGameFileStatus
 import jr.brian.core.ui.theme.rememberThemedStyle
+import jr.brian.jarnfe.launch.showsOnGamePage
 
 private const val MARQUEE_WIDTH_FRACTION = 0.8f
 private const val MEDIA_SIZE_FRACTION = 0.84f
@@ -98,7 +98,7 @@ internal fun NowGameView(game: JarnLibraryGame, resume: Boolean = false) {
     val resumeFocus = remember { FocusRequester() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val viewport = maxHeight.takeIf { constraints.hasBoundedHeight }
-        NowGameScroller(game.id, viewport, showsPicker = controller != null && JarnGameActions.page != GameActionsPage.Actions) {
+        NowGameScroller(game.id, viewport, showsPicker = controller != null && JarnGameActions.page.showsOnGamePage()) {
             if (controller == null) {
                 NowGamePage(
                     game = game,
