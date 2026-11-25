@@ -16,6 +16,8 @@ import jr.brian.frontend.library.db.SourceDao
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SourceGameCount
 import jr.brian.frontend.library.migrate.EsdeImportProgress
+import jr.brian.frontend.library.migrate.EsdeAltEmulatorImport
+import jr.brian.frontend.library.migrate.EsdeAltEmulatorResult
 import jr.brian.frontend.library.migrate.EsdeImportSummary
 import jr.brian.frontend.library.migrate.LibraryMigration
 import jr.brian.frontend.library.systems.SystemCatalog
@@ -66,6 +68,7 @@ class LibrarySetup @Inject constructor(
     private val gamelists: LibraryMigration,
     private val esdeDetector: EsdeDetector,
     private val esdeHistory: EsdeImportHistory,
+    private val esdeEmulators: EsdeAltEmulatorImport,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow<LibrarySetupState>(LibrarySetupState.Checking)
@@ -115,13 +118,18 @@ class LibrarySetup @Inject constructor(
     /**
      * "Import from ES-DE": reads every gamelist now, changed or not, once
      * no scan is running. Fills gaps only, like every import. Without file
-     * access nothing is read, and the summary says so.
+     * access nothing is read, and the summary says so. Only this user-started
+     * import brings ES-DE's emulator picks over; start, scan and Refresh never do.
      */
     suspend fun importFromEsde(): EsdeImportSummary {
         val esde = esdeDetector.check()
         if (!esde.hasFileAccess) return EsdeImportSummary(esdeFound = esde.found, accessMissing = true)
         repository.state.first { it !is LibraryState.Scanning }
-        val summary = gamelists.reimportGamelists(force = true).copy(esdeFound = esde.found)
+        val gamelistSummary = gamelists.reimportGamelists(force = true).copy(esdeFound = esde.found)
+        val emulators = runCatching { esdeEmulators.run() }
+            .onFailure { Log.w(TAG, "ES-DE emulator import failed", it) }
+            .getOrDefault(EsdeAltEmulatorResult())
+        val summary = gamelistSummary.withEmulators(emulators)
         esdeHistory.save(summary)
         return summary
     }

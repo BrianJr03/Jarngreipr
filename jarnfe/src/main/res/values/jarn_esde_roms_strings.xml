@@ -51,6 +51,18 @@
         <item quantity="one">%1$d system not recognised: %2$s</item>
         <item quantity="other">%1$d systems not recognised: %2$s</item>
     </plurals>
+    <plurals name="jarnfe_esde_import_emulator_systems">
+        <item quantity="one">Emulator brought over for %1$d system</item>
+        <item quantity="other">Emulator brought over for %1$d systems</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_emulator_games">
+        <item quantity="one">Emulator picks brought over for %1$d game</item>
+        <item quantity="other">Emulator picks brought over for %1$d games</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_emulator_skipped">
+        <item quantity="one">%1$d emulator pick skipped, Jarn can\'t use it yet</item>
+        <item quantity="other">%1$d emulator picks skipped, Jarn can\'t use them yet</item>
+    </plurals>
     <string name="jarnfe_esde_import_list_separator">", "</string>
     <string name="jarnfe_esde_import_ready_row">Bring over ES-DE favorites and play time</string>
     <string name="jarnfe_esde_import_skip_notice">ES-DE found. Bring it over in Settings, Library.</string>

@@ -141,6 +141,13 @@ internal fun esdeLastImportText(summary: EsdeImportSummary): String = stringReso
     pluralStringResource(R.plurals.jarnfe_esde_import_count_favorites, summary.favoritesAdded, summary.favoritesAdded),
 )
 
+/** The emulator lines of a summary, as (plurals, count). Only counts above 0 get a line. */
+internal fun esdeEmulatorLines(summary: EsdeImportSummary): List<Pair<Int, Int>> = listOf(
+    R.plurals.jarnfe_esde_import_emulator_systems to summary.emulatorSystemsSet,
+    R.plurals.jarnfe_esde_import_emulator_games to summary.emulatorGamesSet,
+    R.plurals.jarnfe_esde_import_emulator_skipped to summary.emulatorSkipped,
+).filter { (_, count) -> count > 0 }
+
 /** What an import did, one line each. Used by first run and its Ready card. */
 @Composable
 internal fun JarnEsdeImportSummaryCard(summary: EsdeImportSummary, modifier: Modifier = Modifier) {
@@ -171,6 +178,7 @@ private fun esdeSummaryLines(summary: EsdeImportSummary): List<String> = buildLi
     add(pluralStringResource(R.plurals.jarnfe_esde_import_games, summary.gamesUpdated, summary.gamesUpdated))
     add(pluralStringResource(R.plurals.jarnfe_esde_import_favorites, summary.favoritesAdded, summary.favoritesAdded))
     add(pluralStringResource(R.plurals.jarnfe_esde_import_playtime, summary.playStatsUpdated, summary.playStatsUpdated))
+    esdeEmulatorLines(summary).forEach { (res, count) -> add(pluralStringResource(res, count, count)) }
     val unrecognised = summary.unrecognisedSystems
     val separator = stringResource(R.string.jarnfe_esde_import_list_separator)
     if (unrecognised.isNotEmpty()) {

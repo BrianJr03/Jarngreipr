@@ -33,6 +33,10 @@ class EsdeImportHistory @Inject constructor(@ApplicationContext context: Context
             putInt(KEY_FAVORITES, summary.favoritesAdded)
             putInt(KEY_PLAY_STATS, summary.playStatsUpdated)
             putInt(KEY_UNREADABLE, summary.unreadable)
+            putInt(KEY_EMULATOR_SYSTEMS, summary.emulatorSystemsSet)
+            putInt(KEY_EMULATOR_GAMES, summary.emulatorGamesSet)
+            putInt(KEY_EMULATOR_KEPT, summary.emulatorKeptExisting)
+            putInt(KEY_EMULATOR_SKIPPED, summary.emulatorSkipped)
         }
     }
 
@@ -46,6 +50,10 @@ class EsdeImportHistory @Inject constructor(@ApplicationContext context: Context
             favoritesAdded = prefs.getInt(KEY_FAVORITES, 0),
             playStatsUpdated = prefs.getInt(KEY_PLAY_STATS, 0),
             unreadable = prefs.getInt(KEY_UNREADABLE, 0),
+            emulatorSystemsSet = prefs.getInt(KEY_EMULATOR_SYSTEMS, 0),
+            emulatorGamesSet = prefs.getInt(KEY_EMULATOR_GAMES, 0),
+            emulatorKeptExisting = prefs.getInt(KEY_EMULATOR_KEPT, 0),
+            emulatorSkipped = prefs.getInt(KEY_EMULATOR_SKIPPED, 0),
         )
     }
 
@@ -59,5 +67,9 @@ class EsdeImportHistory @Inject constructor(@ApplicationContext context: Context
         const val KEY_FAVORITES = "favorites"
         const val KEY_PLAY_STATS = "play_stats"
         const val KEY_UNREADABLE = "unreadable"
+        const val KEY_EMULATOR_SYSTEMS = "emulator_systems"
+        const val KEY_EMULATOR_GAMES = "emulator_games"
+        const val KEY_EMULATOR_KEPT = "emulator_kept"
+        const val KEY_EMULATOR_SKIPPED = "emulator_skipped"
     }
 }

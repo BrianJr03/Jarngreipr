@@ -31,6 +31,13 @@ data class GamelistFileCounts(
  * @property unreadable gamelists that couldn't be read or parsed.
  * @property skippedUnchanged gamelists left alone because they hadn't
  *   changed since the last import. Always 0 on a forced run.
+ * @property emulatorSystemsSet systems given ES-DE's emulator. Only a
+ *   user-started import brings emulators over.
+ * @property emulatorGamesSet games given their own ES-DE emulator.
+ * @property emulatorKeptExisting ES-DE picks left alone because one was
+ *   already chosen in Jarngreipr.
+ * @property emulatorSkipped ES-DE picks Jarngreipr can't use (unknown,
+ *   not installed or not supported yet).
  */
 data class EsdeImportSummary(
     val esdeFound: Boolean = true,
@@ -43,12 +50,26 @@ data class EsdeImportSummary(
     val playStatsUpdated: Int = 0,
     val unreadable: Int = 0,
     val skippedUnchanged: Int = 0,
+    val emulatorSystemsSet: Int = 0,
+    val emulatorGamesSet: Int = 0,
+    val emulatorKeptExisting: Int = 0,
+    val emulatorSkipped: Int = 0,
 ) {
+    /** This summary with what the emulator import did. */
+    fun withEmulators(result: EsdeAltEmulatorResult): EsdeImportSummary = copy(
+        emulatorSystemsSet = result.systemsSet,
+        emulatorGamesSet = result.gamesSet,
+        emulatorKeptExisting = result.keptExisting,
+        emulatorSkipped = result.skipped.size,
+    )
+
     /** One line for logcat. The device checks grep for its start. */
     fun logLine(): String =
         "Gamelist import: $gamelistsFound gamelists, $skippedUnchanged skipped as unchanged, " +
             "$gamesUpdated games updated, $favoritesAdded favorites added, $playStatsUpdated stats updated, " +
-            "$unreadable unreadable, $systemsMatched systems matched, ${unrecognisedSystems.size} not recognised"
+            "$unreadable unreadable, $systemsMatched systems matched, ${unrecognisedSystems.size} not recognised, " +
+            "emulators: $emulatorSystemsSet systems, $emulatorGamesSet games, $emulatorKeptExisting kept, " +
+            "$emulatorSkipped skipped"
 }
 
 /** How far an import is: [done] of [total] gamelists, now on [systemLabel]. */

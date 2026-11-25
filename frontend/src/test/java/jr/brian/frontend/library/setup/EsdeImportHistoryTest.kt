@@ -38,6 +38,10 @@ class EsdeImportHistoryTest {
             favoritesAdded = 6,
             playStatsUpdated = 12,
             unreadable = 1,
+            emulatorSystemsSet = 2,
+            emulatorGamesSet = 5,
+            emulatorKeptExisting = 3,
+            emulatorSkipped = 1,
         )
         EsdeImportHistory(app).save(summary)
 
