@@ -200,8 +200,9 @@ class GamelistImporter @Inject constructor(
                     "favorite" -> favorite = text.equals("true", ignoreCase = true)
                     "playcount" -> playCount = text.toIntOrNull()
                     "playtime" -> playTimeMinutes = text.toIntOrNull()?.let { it / 60 }
-                    "lasttimeplayed" -> lastPlayedEpochMillis =
-                        try { parseEsdeDate(text) } catch (_: Exception) { null }
+                    // ES-DE writes lastplayed. lasttimeplayed is an older spelling, kept as a fallback.
+                    "lastplayed" -> lastPlayedEpochMillis = parseEsdeDateOrNull(text)
+                    "lasttimeplayed" -> lastPlayedEpochMillis = lastPlayedEpochMillis ?: parseEsdeDateOrNull(text)
                 }
             }
 
@@ -229,5 +230,8 @@ class GamelistImporter @Inject constructor(
 
     private companion object {
         const val TAG = "GamelistImporter"
+
+        fun parseEsdeDateOrNull(text: String): Long? =
+            try { parseEsdeDate(text) } catch (_: Exception) { null }
     }
 }

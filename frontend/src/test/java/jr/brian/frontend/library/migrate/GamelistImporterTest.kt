@@ -67,7 +67,7 @@ class GamelistImporterTest {
                 <favorite>true</favorite>
                 <playcount>42</playcount>
                 <playtime>7200</playtime>
-                <lasttimeplayed>20240115T193000</lasttimeplayed>
+                <lastplayed>20240115T193000</lastplayed>
               </game>
             </gameList>
         """.trimIndent()
@@ -86,6 +86,43 @@ class GamelistImporterTest {
         assertEquals(true, mario.isFavorite)
         assertEquals(42, mario.playCount)
         assertEquals(120, mario.playTimeMinutes) // 7200 seconds / 60
+        assertEquals(parseEsdeDate("20240115T193000"), mario.lastPlayed)
+    }
+
+    @Test
+    fun `lastplayed is read as last played`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = "<gameList><game><path>./Mario.nes</path><lastplayed>20240301T080910</lastplayed></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20240301T080910"), db.gameDao().observeAll().first().single().lastPlayed)
+    }
+
+    @Test
+    fun `lasttimeplayed still works as a fallback`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = "<gameList><game><path>./Mario.nes</path><lasttimeplayed>20230102T030405</lasttimeplayed></game></gameList>"
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20230102T030405"), db.gameDao().observeAll().first().single().lastPlayed)
+    }
+
+    @Test
+    fun `lastplayed wins over lasttimeplayed`() = runBlocking {
+        val (sourceId, _) = seedOneGame(path = "Mario.nes", displayName = "Mario")
+        val xml = """
+            <gameList><game>
+              <path>./Mario.nes</path>
+              <lasttimeplayed>20200101T000000</lasttimeplayed>
+              <lastplayed>20220101T000000</lastplayed>
+            </game></gameList>
+        """.trimIndent()
+
+        importer.importStream(xml.byteInputStream(), sourceId, "nes")
+
+        assertEquals(parseEsdeDate("20220101T000000"), db.gameDao().observeAll().first().single().lastPlayed)
     }
 
     @Test

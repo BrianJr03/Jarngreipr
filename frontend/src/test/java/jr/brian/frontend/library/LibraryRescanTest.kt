@@ -289,7 +289,7 @@ class LibraryRescanTest {
               <rating>0</rating>
               <playcount>1</playcount>
               <playtime>60</playtime>
-              <lasttimeplayed>20000101T000000</lasttimeplayed>
+              <lastplayed>20000101T000000</lastplayed>
             </game></gameList>
             """.trimIndent(),
         )
