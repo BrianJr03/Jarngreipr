@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -136,5 +137,27 @@ class JarnThemeFontLayoutTest {
             }
         }
         rule.runOnIdle { assertEquals(JarnTheme.baseType, inSheet) }
+    }
+
+    @Test
+    fun `continue playing hero follows the override and its Michroma title fits`() {
+        val type = jarnTypeWithFonts("chrome_wide", "chrome_wide")
+        rule.setContent {
+            JarnTheme(type = type) {
+                Box(Modifier.requiredSize(640.dp, 220.dp)) {
+                    JarnHeroPanel(eyebrow = LABEL, title = HERO_TITLE, body = null, art = {})
+                }
+            }
+        }
+        val eyebrow = rule.onNodeWithText(LABEL, useUnmergedTree = true).textLayout()
+        assertEquals(type.labelStrong.fontFamily, eyebrow.layoutInput.style.fontFamily)
+        val title = rule.onAllNodesWithContentDescription(HERO_TITLE, useUnmergedTree = true)[0].textLayout()
+        assertEquals(type.display.fontFamily, title.layoutInput.style.fontFamily)
+        assertTrue(title.lineCount <= 2)
+        assertFalse(title.didOverflowHeight)
+        (0 until title.lineCount).forEach { line ->
+            assertFalse(title.isLineEllipsized(line))
+            assertTrue(title.getLineRight(line) <= title.layoutInput.constraints.maxWidth)
+        }
     }
 }
