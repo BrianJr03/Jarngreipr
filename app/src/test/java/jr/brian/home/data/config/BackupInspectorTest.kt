@@ -217,6 +217,18 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `only a backup that answers the fonts prompt here shows the look as replaced`() {
+        val unanswered = JarngreiprConfig(feature = FeatureConfig(jarnFontsPromptShown = false))
+        val answered = JarngreiprConfig(feature = FeatureConfig(jarnFontsPromptShown = true))
+        val look = { backup: JarngreiprConfig, now: JarngreiprConfig ->
+            buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }.change
+        }
+        assertEquals(JarnBackupChange.Replaces, look(answered, unanswered))
+        assertEquals(JarnBackupChange.Same, look(unanswered, answered))
+        assertEquals(JarnBackupChange.Same, look(answered, answered))
+    }
+
+    @Test
     fun `a backup without matching fonts keeps the current choice`() {
         val now = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember", jarnMatchCommandPanelFonts = true))
         val backup = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember"))

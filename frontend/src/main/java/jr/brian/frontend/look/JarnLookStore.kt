@@ -47,6 +47,17 @@ class JarnLookStore @Inject constructor(
     val matchCommandPanelFontsState: StateFlow<Boolean> = _matchCommandPanelFonts.asStateFlow()
     val matchCommandPanelFonts: Boolean get() = _matchCommandPanelFonts.value
 
+    private val _fontsPromptShown = MutableStateFlow(prefs.getBoolean(KEY_FONTS_PROMPT_SHOWN, false))
+
+    /** The one-time "use Command Panel fonts" prompt was answered. Never turns back off. */
+    val fontsPromptShownState: StateFlow<Boolean> = _fontsPromptShown.asStateFlow()
+    val fontsPromptShown: Boolean get() = _fontsPromptShown.value
+
+    fun markFontsPromptShown() {
+        _fontsPromptShown.value = true
+        prefs.edit { putBoolean(KEY_FONTS_PROMPT_SHOWN, true) }
+    }
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -186,6 +197,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_MATCH_COMMAND_PANEL_FONTS = "match_command_panel_fonts"
+        const val KEY_FONTS_PROMPT_SHOWN = "fonts_prompt_shown"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
         const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"

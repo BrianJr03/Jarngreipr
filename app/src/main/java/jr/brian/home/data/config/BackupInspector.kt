@@ -197,8 +197,9 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
     val display = backup.jarnDisplay
     val match = backup.jarnMatchCommandPanel
     val matchFonts = backup.jarnMatchCommandPanelFonts
+    val promptShown = backup.jarnFontsPromptShown
     if (backup.jarnLook == null && backup.jarnReducedMotion == null && display == null && match == null &&
-        matchFonts == null
+        matchFonts == null && promptShown == null
     ) {
         return JarnBackupChange.NotIncluded
     }
@@ -230,6 +231,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
         (backup.jarnReducedMotion ?: current.jarnReducedMotion) == current.jarnReducedMotion &&
         (match ?: current.jarnMatchCommandPanel) == current.jarnMatchCommandPanel &&
         (matchFonts ?: current.jarnMatchCommandPanelFonts) == current.jarnMatchCommandPanelFonts &&
+        !(promptShown == true && current.jarnFontsPromptShown != true) &&
         merged == shown
     return if (same) JarnBackupChange.Same else JarnBackupChange.Replaces
 }
@@ -272,6 +274,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnFirstRunDone = null,
         jarnMatchCommandPanel = null,
         jarnMatchCommandPanelFonts = null,
+        jarnFontsPromptShown = null,
         jarnWallpaperScreens = null,
         jarnPreview = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,

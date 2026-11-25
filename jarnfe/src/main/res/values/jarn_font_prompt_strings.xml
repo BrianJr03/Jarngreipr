@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_font_prompt_title">Use %1$s fonts?</string>
+    <string name="jarnfe_font_prompt_body">Command Panel is on a look with its own fonts. Jarn can use them too. Colors stay as they are.</string>
+    <string name="jarnfe_font_prompt_jarn_now">Jarn now</string>
+    <string name="jarnfe_font_prompt_with_look">With %1$s</string>
+    <string name="jarnfe_font_prompt_sample_title">Continue playing</string>
+    <string name="jarnfe_font_prompt_sample_label">Last played today</string>
+    <string name="jarnfe_font_prompt_use">Use fonts</string>
+    <string name="jarnfe_font_prompt_not_now">Not now</string>
+    <string name="jarnfe_font_prompt_footer">You can change this any time in Settings, Look.</string>
+</resources>

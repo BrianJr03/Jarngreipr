@@ -233,7 +233,9 @@ data class JarngreiprConfig(
         //      Null on older blobs, and import keeps the current value.
         // v62: added FeatureConfig.jarnMatchCommandPanelFonts, whether Jarn FE uses Command Panel's
         //      fonts. Separate from jarnMatchCommandPanel. Null on older blobs keeps the current value.
-        const val CONFIG_VERSION = 62
+        // v63: added FeatureConfig.jarnFontsPromptShown, whether Jarn FE's one-time Command Panel fonts
+        //      prompt was answered. Null on older blobs keeps the current value. Import only sets it.
+        const val CONFIG_VERSION = 63
     }
 }
 
@@ -425,6 +427,8 @@ data class FeatureConfig(
     val jarnMatchCommandPanel: Boolean? = null,
     /** v62: Jarn FE uses Command Panel's fonts. Null on pre-v62 exports, and import keeps the current value. */
     val jarnMatchCommandPanelFonts: Boolean? = null,
+    /** v63: Jarn FE fonts prompt answered. Null on pre-v63 exports. Import never turns it back off. */
+    val jarnFontsPromptShown: Boolean? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
     val rssFeeds: List<RssFeedConfig>? = null,
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
