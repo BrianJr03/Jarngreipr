@@ -1,0 +1,287 @@
+{
+    "version": 68,
+    "exportedAt": "2026-11-25T12:00:00Z",
+    "ui": {
+        "gridSettings": {
+            "columnCount": 4,
+            "rowCount": 6,
+            "unlimitedMode": true,
+            "notificationShadeEnabled": false,
+            "tabTransitionAnimationName": "",
+            "iconSnapEnabled": true,
+            "snapMode": "ICON",
+            "bottomFlingAppDrawerEnabled": true,
+            "shadeBackgroundColorArgb": 4279308561,
+            "shadeCornerRadiusDp": 20,
+            "shadeBackgroundAlpha": 1.0,
+            "shadeAccentColorArgb": 0
+        },
+        "appDisplayPreferences": {},
+        "promptForDisplayOnLaunch": [],
+        "powerSettings": {
+            "powerButtonVisible": false,
+            "quickDeleteVisible": false,
+            "headerVisible": true,
+            "wakeMethod": "DOUBLE_TAP",
+            "backButtonShortcutEnabled": false,
+            "backButtonShortcut": "NONE",
+            "backButtonShortcutAppPackage": null,
+            "secondaryBackButtonShortcut": "NONE",
+            "secondaryBackButtonShortcutAppPackage": null,
+            "poweredOffBrightness": 40,
+            "appDrawerFilterByPage": false,
+            "pagerSwipeSensitivity": 0
+        },
+        "selectedIconPackage": null,
+        "wallpaper": {
+            "type": "NONE",
+            "activeUri": null,
+            "savedImageUri": null,
+            "savedGifUri": null,
+            "savedVideoUri": null
+        },
+        "frontendWallpaper": {
+            "type": "NONE",
+            "activeUri": null,
+            "savedImageUri": null,
+            "savedGifUri": null,
+            "savedVideoUri": null
+        },
+        "searchLayout": {
+            "isHorizontalLayout": false
+        },
+        "customAppNames": {},
+        "appearance": null
+    },
+    "app": {
+        "visibility": {
+            "hiddenAppsByPage": {},
+            "newAppsVisibleByDefault": true,
+            "showAppNames": false,
+            "showHomeScreenAppNames": true,
+            "appLabelFontSize": 12,
+            "showFolderNames": true,
+            "showSettingsBackButton": true
+        },
+        "positions": {},
+        "folders": {},
+        "pinnedRoms": {}
+    },
+    "page": {
+        "pageCount": 1,
+        "pageTypes": [
+            "APPS_TAB"
+        ],
+        "homeTabIndex": 0,
+        "widgetPageApps": {},
+        "canvasLayouts": {},
+        "widgetProviders": null
+    },
+    "feature": {
+        "dock": {
+            "apps": [],
+            "colorArgb": -16777216,
+            "size": "MEDIUM",
+            "visible": true,
+            "visiblePages": [],
+            "maxApps": 5
+        },
+        "controlPad": {
+            "items": [],
+            "cameraSensitivity": 0.05,
+            "joystickMode": "RIGHT_ONLY"
+        },
+        "appDrawerFab": {
+            "colorArgb": -65536,
+            "enabled": true,
+            "visiblePages": [],
+            "explicitPages": false,
+            "position": "LEFT"
+        },
+        "gameKonfetti": {
+            "enabled": true,
+            "trigger": "GAME_START",
+            "usePreset": true,
+            "selectedPreset": "EXPLODE",
+            "useCharShape": false,
+            "speed": 10.0,
+            "maxSpeed": 30.0,
+            "damping": 0.9,
+            "angle": 270,
+            "spread": 120,
+            "timeToLive": 3000,
+            "emitterDurationMs": 2000,
+            "emitterAmountPerSecond": 30,
+            "letterBurstChar": "",
+            "letterBurstExplodePreset": "EXPLODE",
+            "letterBurstFormationMs": 1200,
+            "letterBurstHoldMs": 400,
+            "letterBurstParticleCount": 100
+        },
+        "floatyMode": {
+            "isUnlocked": false,
+            "isActive": false,
+            "enabledTabs": [],
+            "sectionTapKonfettiEnabled": false,
+            "poweredOffFloatyEffectEnabled": false,
+            "appsModalFloatyEffectEnabled": false,
+            "appDrawerFloatyAppCount": 0,
+            "appDrawerBubblePopEnabled": false
+        },
+        "jingles": {
+            "isMuted": false,
+            "volume": 1.0,
+            "regexPriority": false,
+            "isNormalizationEnabled": false,
+            "enabled": null,
+            "repos": null
+        },
+        "bgMusic": {
+            "mode": "SINGLE_FILE",
+            "folderUri": null,
+            "fileUri": null,
+            "volume": 0.5,
+            "isMuted": false
+        },
+        "romSearch": {
+            "hintsKbVisible": true,
+            "frontendEnabled": true,
+            "companionLaunchWatchdogEnabled": false,
+            "secondaryMediaEnabled": true,
+            "jarngreiprMediaEnabled": true,
+            "systemLayout": "Grid",
+            "primarySystemLayout": "Row",
+            "secondarySystemLayout": "Grid",
+            "gameLayout": "Grid",
+            "primaryGameLayout": "Grid",
+            "secondaryGameLayout": "Grid",
+            "systemCustomizations": {},
+            "systemOrder": [],
+            "frontendHintsVisible": true,
+            "frontendFloatIntensity": 1.0,
+            "canvasContinuousSpinRoms": [],
+            "gameMediaMap": {},
+            "systemMediaMap": {},
+            "gameCompanionMap": {},
+            "gameCompanionsMap": {},
+            "frontendFocusHapticEnabled": true,
+            "frontendFocusBackgroundEnabled": false,
+            "frontendFocusBackgroundSystems": true,
+            "frontendFocusBackgroundGames": true,
+            "frontendFocusBackgroundDim": 0.55,
+            "frontendFocusBackgroundDimSystems": 0.55,
+            "frontendFocusBackgroundDimGames": 0.55,
+            "frontendTransition": "Fade",
+            "frontendTransitionMs": 280,
+            "frontendSystemRowAlignment": "Center",
+            "frontendGameRowAlignment": "Center",
+            "frontendSystemTileScale": 1.0,
+            "frontendGameTileScale": 1.0,
+            "gamelistDecorationEnabled": true,
+            "gameEmulatorMap": null,
+            "systemEmulatorMap": null,
+            "gameCommandMap": null,
+            "gameCoreMap": null,
+            "scraper": {
+                "screenScraperEnabled": false,
+                "screenScraperDevId": "",
+                "screenScraperDevPassword": "",
+                "screenScraperUserId": "",
+                "screenScraperUserPassword": "",
+                "screenScraperMediaTypes": [],
+                "steamGridDbEnabled": false,
+                "steamGridDbApiKey": "",
+                "steamGridDbMediaTypes": [],
+                "concurrencyOverride": 0
+            },
+            "userMetadata": {
+                "enabled": true
+            }
+        },
+        "homeButton": {
+            "interceptionEnabled": false,
+            "homeTarget": null,
+            "mainScreen": "BOTTOM",
+            "focusLockAutoManageEnabled": true,
+            "focusLockMode": null
+        },
+        "recentlyPlayed": [],
+        "screenAssignment": null,
+        "experience": null,
+        "artSource": null,
+        "systemArtSource": null,
+        "libraryFolders": [
+            {
+                "treeUri": "content://tree/roms",
+                "displayPath": "/ROMs",
+                "volumeId": "primary"
+            }
+        ],
+        "jarnLook": null,
+        "jarnReducedMotion": null,
+        "jarnArtChoices": {
+            "topBySystem": {
+                "gc": "cover"
+            },
+            "bottomBySystem": {},
+            "topByGame": {},
+            "bottomByGame": {}
+        },
+        "jarnPinnedApps": [
+            "com.example.app"
+        ],
+        "jarnDisplay": {
+            "systemTileScale": null,
+            "gameTileScale": null,
+            "hintsVisible": false,
+            "buttonHaptics": null,
+            "tapControl": null,
+            "appNamesVisible": null,
+            "undoCountdownVisible": null,
+            "switchCue": null,
+            "systemView": null,
+            "gameView": null,
+            "pageTransition": null,
+            "systemNamesVisible": null,
+            "randomVisible": null,
+            "lastPlayedVisible": null,
+            "systemLogoVisible": null,
+            "gameCountVisible": null,
+            "lastPlayedTextVisible": null,
+            "gameRowVisible": null,
+            "systemBackgroundVisible": null,
+            "playingScreenVisible": true,
+            "playingDim": "30s"
+        },
+        "jarnLiveWallpaper": null,
+        "jarnPlayStats": [
+            {
+                "systemId": "gc",
+                "relativePath": "Melee.rvz",
+                "playCount": 3,
+                "playTimeMinutes": 42
+            }
+        ],
+        "jarnFirstRunDone": null,
+        "jarnMatchCommandPanel": null,
+        "jarnMatchCommandPanelFonts": null,
+        "jarnFontsPromptShown": null,
+        "jarnEsdeImportNoticeShown": null,
+        "jarnSystemSorts": {
+            "gc": "name"
+        },
+        "rssFeeds": null,
+        "jarnWallpaperScreens": null,
+        "jarnPreview": null
+    },
+    "system": {
+        "badgesVisible": true,
+        "shadeTabPage": 0,
+        "hiddenSystems": [],
+        "hiddenGames": [
+            "gc/Hidden.rvz"
+        ],
+        "systemFolderMappings": [],
+        "rcNotificationsEnabled": false
+    }
+}
