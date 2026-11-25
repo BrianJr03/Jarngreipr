@@ -6,7 +6,7 @@ import java.io.File
 private const val ES_DE_CUSTOM_SYSTEMS = "ES-DE/custom_systems"
 private const val SHARED_CUSTOM_SYSTEMS = "/storage/emulated/0/ES-DE/custom_systems"
 
-private fun customSystemsFile(context: Context, name: String): File =
+internal fun customSystemsFile(context: Context, name: String): File =
     File(context.filesDir.parent ?: "", "$ES_DE_CUSTOM_SYSTEMS/$name")
         .takeIf { it.exists() }
         ?: File(SHARED_CUSTOM_SYSTEMS, name)
