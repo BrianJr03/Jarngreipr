@@ -16,6 +16,7 @@
     <string name="jarnfe_game_companion_limit">A game can have two companions. Adding a third starts over.</string>
     <string name="jarnfe_game_clear_companions">Clear companions</string>
     <string name="jarnfe_game_open_companion">Open a companion</string>
+    <string name="jarnfe_companion_tap_hint">Tap to choose</string>
     <string name="jarnfe_game_no_emulators">No compatible emulators found.</string>
     <string name="jarnfe_game_no_cores">No RetroArch cores found. Download them in RetroArch first.</string>
     <string name="jarnfe_game_no_apps">No apps found.</string>

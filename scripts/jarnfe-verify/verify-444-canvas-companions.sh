@@ -18,9 +18,10 @@
 # ROM gets the two companions in Classic's esde_prefs (game_companion_map, keyed by the tile's
 # system and path, as the launch engine reads it). Then it restarts, walks to the same tile and
 # presses A once. Once the game is in front:
-#   1. the Deck display is captured (444-offer.png),
+#   1. the Deck display is captured (444-offer.png, and 444-tap-hint.png for the "Tap to choose"
+#      hint, which uiautomator can't read while the game holds focus),
 #   2. one tap on the sheet's bottom edge gives the Deck the controller, then a uiautomator dump
-#      must show the picker sheet with two rows and focus inside it,
+#      must show the picker sheet with two rows, focus inside it and no tap hint,
 #   3. B closes it: the next dump has no picker,
 #   4. no crash or ANR, and screen_focus_lock is unchanged.
 #
@@ -143,6 +144,7 @@ main_444() {
   check_lock_unchanged
   restore_companions
   section "For a human"
+  echo "  look  $OUT_DIR/444-tap-hint.png: the sheet shows \"Tap to choose\" as plain text, no key cap"
   echo "  look  $OUT_DIR/444-offer.png: \"$PICKER_TITLE\" sits over the Canvas while the game runs"
   echo "  look  pick a companion by touch: it opens and the sheet goes away"
   echo "  look  a ROM tile with one companion: that companion opens by itself, no sheet"

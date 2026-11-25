@@ -68,7 +68,7 @@ internal fun DeckScreen(state: JarnSessionState) {
                 ) { DeckBody(state) }
             }
             if (deckShowsSettings(state)) JarnSettingsScraperHost()
-            JarnCompanionSheetHost(state.deckDisplayAvailable)
+            JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)
             JarnDeckSplash()
         }
     }

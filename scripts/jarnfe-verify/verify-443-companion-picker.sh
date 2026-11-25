@@ -17,9 +17,10 @@
 # game row. With Jarn FE stopped, that game gets the two companions in Classic's esde_prefs
 # (game_companion_map, the same map the game's Companion row writes, under both of its path
 # keys). Then it restarts, walks to the same cover and presses A once. Once the game is in front:
-#   1. the Deck display is captured (443-offer.png),
+#   1. the Deck display is captured (443-offer.png, and 443-tap-hint.png for the "Tap to choose"
+#      hint, which uiautomator can't read while the game holds focus),
 #   2. one tap on the sheet's bottom edge gives the Deck the controller, then a uiautomator dump
-#      must show the picker sheet with two rows and focus inside it,
+#      must show the picker sheet with two rows, focus inside it and no tap hint,
 #   3. B closes it: the next dump has no picker,
 #   4. no crash or ANR, and screen_focus_lock is unchanged.
 #
@@ -125,6 +126,7 @@ main_443() {
   restore_companions
   section "For a human"
   echo "  look  $OUT_DIR/443-offer.png: \"$PICKER_TITLE\" sits over the Deck while the game runs"
+  echo "  look  $OUT_DIR/443-tap-hint.png: the sheet shows \"Tap to choose\" as plain text, no key cap"
   echo "  look  pick a companion by touch: it opens and the sheet goes away"
   echo "  look  launch from Continue playing, the Resume poster and a game page: the sheet shows once"
   echo "  look  on one screen (no Deck display): the Deck panel shows the picker over the game's return"

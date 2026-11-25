@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.launch
 
+import jr.brian.jarnfe.input.JarnScreen
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,5 +39,19 @@ class CompanionPickerTest {
     fun `the offer rides in the Deck panel on one screen and the Deck window on two`() {
         assertEquals(CompanionPickerPlace.DeckWindow, companionPickerPlace(deckDisplayAvailable = true))
         assertEquals(CompanionPickerPlace.DeckPanel, companionPickerPlace(deckDisplayAvailable = false))
+    }
+
+    @Test
+    fun `the tap hint shows on two screens until the Deck window has focus`() {
+        assertTrue(companionTapHintShown(deckDisplayAvailable = true, osFocusedScreen = JarnScreen.Stage))
+        assertTrue(companionTapHintShown(deckDisplayAvailable = true, osFocusedScreen = null))
+        assertFalse(companionTapHintShown(deckDisplayAvailable = true, osFocusedScreen = JarnScreen.Deck))
+    }
+
+    @Test
+    fun `the tap hint never shows on one screen`() {
+        (JarnScreen.entries + null).forEach {
+            assertFalse("$it", companionTapHintShown(deckDisplayAvailable = false, osFocusedScreen = it))
+        }
     }
 }

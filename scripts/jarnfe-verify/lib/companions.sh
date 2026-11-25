@@ -7,6 +7,7 @@ HELPER="$LIB_DIR/companionquery.py"
 ESDE_PREFS=esde_prefs
 COMPANION_KEY=game_companion_map
 PICKER_TITLE="Open a companion"
+TAP_HINT_TAG=jarn_companion_tap_hint
 KEY_A=96
 GAME_WAIT_S="${JARNFE_GAME_WAIT_S:-20}"
 INSTALL_APK="" CONSENT=0 COMPANIONS="" ORIG_JSON="" ORIG_PRESENT=0 PREF_CHANGED=0
@@ -122,8 +123,14 @@ tap_sheet_edge() {
 
 picker_field() { python3 -I "$HELPER" "$UI_XML" picker "$PICKER_TITLE" | tr ' ' '\n' | grep "^$1=" | cut -d= -f2; }
 
+tap_hint_shown() { python3 -I "$HELPER" "$UI_XML" tag "$TAP_HINT_TAG"; }
+
+# Before the tap the game holds focus, so uiautomator can't read the Deck: the hint is only
+# captured here, for a human. After the tap the dump must show it gone.
 check_offer() {
   shot "$DECK_PHYSICAL" "$OUT_DIR/$TICKET-offer.png" && echo "  info  Deck while the game runs: $OUT_DIR/$TICKET-offer.png"
+  shot "$DECK_PHYSICAL" "$OUT_DIR/$TICKET-tap-hint.png" \
+    && echo "  info  "Tap to choose" hint before the Deck has control: $OUT_DIR/$TICKET-tap-hint.png"
   tap_sheet_edge || { fail "could not read the Deck display size for the tap"; return 1; }
   if ! ui_wait_role deck; then
     fail "the Deck did not take the controller after the tap"
@@ -140,6 +147,8 @@ check_offer() {
   [ "${rows:-0}" -ge 2 ] && pass "it lists $rows companions" || fail "it lists ${rows:-no} rows, wanted 2"
   [ "$(picker_field focused)" = 1 ] && pass "focus is inside the picker" \
     || fail "focus is not inside the picker ($(ui_focused))"
+  [ "$(tap_hint_shown)" = 0 ] && pass "the tap hint is gone once the Deck has control" \
+    || fail "the tap hint still shows with control on the Deck"
 }
 
 check_back_closes() {
