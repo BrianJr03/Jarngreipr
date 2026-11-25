@@ -14,6 +14,8 @@ data class JarnLibrarySystem(
     val logoPath: String? = null,
     val favoriteCount: Int = 0,
     val playtimeMinutes: Long = 0,
+    /** The image picked for this system's Now page. Wins over its art when it can be read. */
+    val nowBackgroundPath: String? = null,
 )
 
 /** Every field is optional because scraped metadata is often partial. Blank values are not shown. */

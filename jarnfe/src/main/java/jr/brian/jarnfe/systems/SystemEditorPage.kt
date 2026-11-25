@@ -30,6 +30,7 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.launch
 
@@ -95,7 +96,11 @@ private fun AppearanceRows(system: JarnManagedSystem, manager: JarnSystemManager
     BackgroundRows(R.string.jarnfe_systems_tile_background, appearance.backgroundUri) {
         update(appearance.copy(backgroundUri = it))
     }
-    BackgroundRows(R.string.jarnfe_systems_focus_background, appearance.focusBackgroundUri) {
+    BackgroundRows(
+        labelRes = R.string.jarnfe_systems_now_background,
+        uri = appearance.focusBackgroundUri,
+        supporting = nowBackgroundHint(),
+    ) {
         update(appearance.copy(focusBackgroundUri = it))
     }
     JarnToggleRow(
@@ -108,7 +113,18 @@ private fun AppearanceRows(system: JarnManagedSystem, manager: JarnSystemManager
 }
 
 @Composable
-private fun BackgroundRows(@StringRes labelRes: Int, uri: String?, onChange: (String?) -> Unit) {
+private fun nowBackgroundHint(): String? {
+    val hint = stringResource(R.string.jarnfe_systems_now_background_hint)
+    return if (rememberJarnDisplay().systemBackgroundVisible) null else hint
+}
+
+@Composable
+private fun BackgroundRows(
+    @StringRes labelRes: Int,
+    uri: String?,
+    supporting: String? = null,
+    onChange: (String?) -> Unit,
+) {
     val context = LocalContext.current
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { picked ->
         if (picked != null) {
@@ -126,6 +142,7 @@ private fun BackgroundRows(@StringRes labelRes: Int, uri: String?, onChange: (St
                 .onFailure { JarnNotices.show(R.string.jarnfe_systems_picker_unavailable) }
         },
         modifier = Modifier.fillMaxWidth(),
+        supporting = supporting,
     )
     if (uri != null) {
         JarnNavigateRow(

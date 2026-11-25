@@ -30,7 +30,8 @@
 
     <string name="jarnfe_systems_show_in_library">Show in Library</string>
     <string name="jarnfe_systems_tile_background">Tile background</string>
-    <string name="jarnfe_systems_focus_background">Focus background</string>
+    <string name="jarnfe_systems_now_background">Now background</string>
+    <string name="jarnfe_systems_now_background_hint">Now shows this when System background is on</string>
     <string name="jarnfe_systems_show_name">Show name</string>
     <string name="jarnfe_systems_show_name_hint">Show the system name on its tile</string>
     <string name="jarnfe_systems_choose">Choose</string>

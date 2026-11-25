@@ -29,7 +29,7 @@ private data class NowWall(val systemId: String, val covers: List<LibraryWallCov
 
 /** Null until the system's art is known, so the held image is not dropped while it loads. */
 internal fun nowSystemPaths(system: JarnLibrarySystem, now: JarnSystemNow?): List<String>? {
-    val paths = listOfNotNull(system.artPath, now?.sceneArtPath).filter(String::isNotBlank).distinct()
+    val paths = listOfNotNull(system.nowBackgroundPath, system.artPath, now?.sceneArtPath).filter(String::isNotBlank).distinct()
     return paths.takeIf { it.isNotEmpty() || now?.isLoaded == true }
 }
 
