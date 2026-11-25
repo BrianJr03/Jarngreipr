@@ -102,7 +102,7 @@ internal fun BoxScope.CanvasImage(
 internal fun BoxScope.LabelTile(label: String) {
     JarnText(
         text = label,
-        style = JarnTheme.type.labelStrong,
+        style = JarnTheme.baseType.labelStrong,
         color = JarnTheme.colors.textMid,
         modifier = Modifier
             .align(Alignment.Center)
@@ -232,7 +232,7 @@ private fun BoxScope.MusicTile(music: JarnCanvasMusic?) {
             .background(JarnTheme.colors.artScrim)
             .padding(JarnTheme.space.sm),
     ) {
-        JarnText(music.title, JarnTheme.type.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
+        JarnText(music.title, JarnTheme.baseType.labelStrong, JarnTheme.colors.textHigh, maxLines = 1)
         music.artist?.let { JarnText(it, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 1) }
     }
 }

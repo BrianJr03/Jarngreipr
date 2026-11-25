@@ -282,7 +282,7 @@ private fun NowMarquee(path: String, title: String) {
 private fun NowTitlePlate(title: String, modifier: Modifier = Modifier) {
     JarnText(
         text = title,
-        style = JarnTheme.type.heading,
+        style = JarnTheme.baseType.heading,
         color = JarnTheme.colors.textHigh,
         maxLines = TITLE_MAX_LINES,
         modifier = modifier
@@ -476,7 +476,7 @@ private fun NowDescription(text: String) {
     NowReadable {
         JarnText(
             text = text,
-            style = JarnTheme.type.body,
+            style = JarnTheme.baseType.body,
             color = JarnTheme.colors.textMid,
             maxLines = DESCRIPTION_MAX_LINES,
             modifier = Modifier

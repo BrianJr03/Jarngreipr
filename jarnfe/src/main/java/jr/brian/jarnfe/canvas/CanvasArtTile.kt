@@ -161,7 +161,7 @@ private fun BoxScope.ArtScrimPlaceholder(title: String) {
     ) {
         JarnText(
             text = title,
-            style = JarnTheme.type.labelStrong,
+            style = JarnTheme.baseType.labelStrong,
             color = colors.readableOverWallpaper(colors.textHigh),
             maxLines = PLACEHOLDER_MAX_LINES,
             textAlign = TextAlign.Center,

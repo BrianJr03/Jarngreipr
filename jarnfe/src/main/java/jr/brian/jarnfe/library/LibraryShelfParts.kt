@@ -86,13 +86,13 @@ internal fun <T> BoxScope.LibraryShelfCaption(item: T, content: LibraryShelfCont
     ) {
         JarnText(
             text = content.headline(item),
-            style = JarnTheme.type.heading,
+            style = JarnTheme.baseType.heading,
             color = colors.textHigh,
             maxLines = 1,
             textAlign = TextAlign.Center,
         )
         content.caption(item)?.let { meta ->
-            JarnText(meta, JarnTheme.type.label, colors.textMid, maxLines = 1, textAlign = TextAlign.Center)
+            JarnText(meta, JarnTheme.baseType.label, colors.textMid, maxLines = 1, textAlign = TextAlign.Center)
         }
     }
 }
@@ -118,7 +118,7 @@ internal fun BoxScope.LibraryShelfBadge(title: String, tick: Int, fast: Boolean)
     ) {
         JarnText(
             text = shelfBadgeLetter(title),
-            style = JarnTheme.type.display,
+            style = JarnTheme.baseType.display,
             color = JarnTheme.colors.textHigh,
             modifier = Modifier
                 .background(

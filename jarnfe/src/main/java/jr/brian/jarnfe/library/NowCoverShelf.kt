@@ -175,7 +175,7 @@ internal fun NowSoloCard(
             LibraryCoverArt(game)
         }
         Column(Modifier.weight(1f).padding(end = JarnTheme.space.md)) {
-            JarnText(game.title, JarnTheme.type.heading, colors.textHigh, maxLines = 2)
+            JarnText(game.title, JarnTheme.baseType.heading, colors.textHigh, maxLines = 2)
             JarnText(soloCaption(game), JarnTheme.type.caption, colors.textMid, maxLines = 1)
         }
     }

@@ -20,6 +20,7 @@ import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnScrim
@@ -45,6 +46,7 @@ fun JarnHeroPanel(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     artEndWidth: Dp? = null,
+    titleStyle: TextStyle = JarnTheme.type.display,
     art: @Composable BoxScope.() -> Unit,
     footer: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -69,7 +71,7 @@ fun JarnHeroPanel(
             eyebrow?.let { JarnHeroEyebrow(it) }
             JarnBalancedTitle(
                 title = title,
-                style = JarnTheme.type.display,
+                style = titleStyle,
                 color = JarnTheme.colors.textHigh,
                 modifier = Modifier.weight(1f, fill = false),
             )

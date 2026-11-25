@@ -6,6 +6,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import jr.brian.core.ui.R
 
 /**
@@ -47,6 +48,20 @@ data class JarnFontScale(
     }
 }
 
+/** Letter-spacing per role, in em. Measured against Barlow Condensed SemiBold. */
+@Immutable
+data class JarnFontTracking(
+    val display: Float = 0f,
+    val title: Float = 0f,
+    val heading: Float = 0f,
+    val body: Float = 0f,
+    val label: Float = 0f,
+) {
+    companion object {
+        val None = JarnFontTracking()
+    }
+}
+
 /**
  * A face Jarn can apply to its type roles.
  * [headingWeight] null keeps Jarn's own display/title/heading weights.
@@ -61,6 +76,7 @@ data class JarnFontFace(
     val style: FontStyle = FontStyle.Normal,
     val textFace: Boolean = false,
     val scale: JarnFontScale = JarnFontScale.None,
+    val tracking: JarnFontTracking = JarnFontTracking.None,
 )
 
 private val CondensedFamily = FontFamily(
@@ -86,16 +102,29 @@ private val ChromeWideFamily = FontFamily(Font(R.font.jarn_cp_chrome_wide, FontW
 
 private val MonoScale = JarnFontScale(display = 0.62f, title = 0.72f, heading = 0.78f, body = 0.88f, label = 0.9f)
 private val SerifScale = JarnFontScale(display = 0.82f, title = 0.86f, heading = 0.9f, body = 0.96f, label = 1f)
-private val RoundedScale = JarnFontScale(display = 0.8f, title = 0.84f, heading = 0.88f)
-private val ChromeWideScale = JarnFontScale(display = 0.56f, title = 0.62f, heading = 0.66f, label = 0.66f)
-private val StencilScale = JarnFontScale(display = 0.78f, title = 0.82f, heading = 0.86f, label = 0.9f)
+private val RoundedScale = JarnFontScale(display = 0.8f, title = 0.84f, heading = 0.88f, label = 1f)
+private val ChromeWideScale = JarnFontScale(display = 0.56f, title = 0.62f, heading = 0.66f, label = 0.86f)
+private val StencilScale = JarnFontScale(display = 0.66f, title = 0.74f, heading = 0.8f, label = 0.9f)
 
-private fun single(family: FontFamily, weight: FontWeight, scale: JarnFontScale) = JarnFontFace(
+private val MonoTracking = JarnFontTracking(display = -0.02f, title = -0.01f)
+private val SerifTracking = JarnFontTracking(display = -0.01f)
+private val RoundedTracking = JarnFontTracking(display = -0.01f, label = 0.01f)
+private val ChromeWideTracking = JarnFontTracking(display = -0.02f, title = -0.01f)
+private val StencilTracking = JarnFontTracking(heading = 0.01f, label = 0.02f)
+private val ComicTracking = JarnFontTracking(display = 0.01f, title = 0.01f, heading = 0.02f, label = 0.03f)
+
+private fun single(
+    family: FontFamily,
+    weight: FontWeight,
+    scale: JarnFontScale,
+    tracking: JarnFontTracking,
+) = JarnFontFace(
     family = family,
     labelWeight = weight,
     labelStrongWeight = weight,
     headingWeight = weight,
     scale = scale,
+    tracking = tracking,
 )
 
 private fun condensed(weight: FontWeight, strong: FontWeight, heading: FontWeight?) = JarnFontFace(
@@ -112,6 +141,7 @@ private fun mono() = JarnFontFace(
     headingWeight = FontWeight.Bold,
     textFace = true,
     scale = MonoScale,
+    tracking = MonoTracking,
 )
 
 private fun serif() = JarnFontFace(
@@ -121,6 +151,7 @@ private fun serif() = JarnFontFace(
     headingWeight = FontWeight.Normal,
     textFace = true,
     scale = SerifScale,
+    tracking = SerifTracking,
 )
 
 /** Null for unknown keys and for DSEG7, which only has digits and is never used for text. */
@@ -129,10 +160,10 @@ fun jarnCpFontFace(key: JarnCpFontKey?): JarnFontFace? = when (key) {
     JarnCpFontKey.Condensed -> condensed(FontWeight.SemiBold, FontWeight.Bold, null)
     JarnCpFontKey.CondensedDisplay -> condensed(FontWeight.ExtraBold, FontWeight.ExtraBold, FontWeight.ExtraBold)
     JarnCpFontKey.Mono -> mono()
-    JarnCpFontKey.Rounded -> single(RoundedFamily, FontWeight.ExtraBold, RoundedScale)
-    JarnCpFontKey.Stencil -> single(StencilFamily, FontWeight.Normal, StencilScale)
-    JarnCpFontKey.Comic -> single(ComicFamily, FontWeight.Normal, JarnFontScale.None)
-    JarnCpFontKey.ChromeWide -> single(ChromeWideFamily, FontWeight.Normal, ChromeWideScale)
+    JarnCpFontKey.Rounded -> single(RoundedFamily, FontWeight.ExtraBold, RoundedScale, RoundedTracking)
+    JarnCpFontKey.Stencil -> single(StencilFamily, FontWeight.Normal, StencilScale, StencilTracking)
+    JarnCpFontKey.Comic -> single(ComicFamily, FontWeight.Normal, JarnFontScale.None, ComicTracking)
+    JarnCpFontKey.ChromeWide -> single(ChromeWideFamily, FontWeight.Normal, ChromeWideScale, ChromeWideTracking)
     JarnCpFontKey.Serif -> serif()
 }
 
@@ -162,16 +193,16 @@ fun jarnTypeWithFonts(
 fun jarnTypeWithFaces(display: JarnFontFace?, label: JarnFontFace?, base: JarnType = JarnType()): JarnType {
     val bodyFace = label?.takeIf { it.textFace } ?: display?.takeIf { it.textFace }
     return base.copy(
-        display = base.display.withFace(display, display?.headingWeight, display?.scale?.display),
-        title = base.title.withFace(display, display?.headingWeight, display?.scale?.title),
-        heading = base.heading.withFace(display, display?.headingWeight, display?.scale?.heading),
-        body = base.body.withFace(bodyFace, null, bodyFace?.scale?.body),
-        label = base.label.withFace(label, label?.labelWeight, label?.scale?.label),
-        labelStrong = base.labelStrong.withFace(label, label?.labelStrongWeight, label?.scale?.label),
+        display = base.display.withFace(display, display?.headingWeight, display?.scale?.display, display?.tracking?.display),
+        title = base.title.withFace(display, display?.headingWeight, display?.scale?.title, display?.tracking?.title),
+        heading = base.heading.withFace(display, display?.headingWeight, display?.scale?.heading, display?.tracking?.heading),
+        body = base.body.withFace(bodyFace, null, bodyFace?.scale?.body, bodyFace?.tracking?.body),
+        label = base.label.withFace(label, label?.labelWeight, label?.scale?.label, label?.tracking?.label),
+        labelStrong = base.labelStrong.withFace(label, label?.labelStrongWeight, label?.scale?.label, label?.tracking?.label),
     )
 }
 
-private fun TextStyle.withFace(face: JarnFontFace?, weight: FontWeight?, scale: Float?): TextStyle {
+private fun TextStyle.withFace(face: JarnFontFace?, weight: FontWeight?, scale: Float?, tracking: Float?): TextStyle {
     if (face == null) return this
     val factor = scale ?: 1f
     return copy(
@@ -180,5 +211,6 @@ private fun TextStyle.withFace(face: JarnFontFace?, weight: FontWeight?, scale: 
         fontStyle = face.style,
         fontSize = fontSize * factor,
         lineHeight = lineHeight * factor,
+        letterSpacing = tracking?.takeIf { it != 0f }?.em ?: letterSpacing,
     )
 }

@@ -246,6 +246,7 @@ private fun LibraryHeroBanner(
             title = hero.system.title,
             body = gameCountText(hero.system.gameCount),
             modifier = Modifier.fillMaxWidth().height(HeroHeight),
+            titleStyle = JarnTheme.baseType.display,
             art = { LibrarySystemArt(hero.system) },
         )
     }
@@ -276,6 +277,7 @@ private fun ContinuePlayingBanner(game: JarnLibraryGame, canPlay: Boolean, onFoc
             .height(HeroHeight),
         onClick = { resumeGame(game, status, screen) }.takeIf { canPlay },
         artEndWidth = coverWidth,
+        titleStyle = JarnTheme.baseType.display,
         art = {
             Box(Modifier.matchParentSize().alpha(missingArtAlpha(status))) {
                 LibraryCoverArt(game, Alignment.CenterEnd, onAspectRatio = { coverWidth = heroCoverWidth(it) })
@@ -380,7 +382,7 @@ internal fun LibraryGameListTitle(state: JarnLibraryState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         JarnKeyCap(JarnKey.L1)
-        JarnText(state.openSystem?.title.orEmpty(), JarnTheme.type.labelStrong, colors.textHigh, maxLines = 1)
+        JarnText(state.openSystem?.title.orEmpty(), JarnTheme.baseType.labelStrong, colors.textHigh, maxLines = 1)
         JarnKeyCap(JarnKey.R1)
         if (position >= 0) {
             JarnText(

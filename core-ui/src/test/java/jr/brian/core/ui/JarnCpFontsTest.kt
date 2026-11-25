@@ -2,8 +2,11 @@ package jr.brian.core.ui
 
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import jr.brian.core.ui.theme.JarnCpFontKey
+import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.JarnType
 import jr.brian.core.ui.theme.jarnCpFontFace
 import jr.brian.core.ui.theme.jarnTypeWithFonts
@@ -101,6 +104,57 @@ class JarnCpFontsTest {
         assertEquals(32f * 0.62f, type.title.fontSize.value, 0.01f)
         assertEquals(24f * 0.66f, type.heading.fontSize.value, 0.01f)
         assertEquals(14f * 0.9f, type.label.fontSize.value, 0.01f)
+    }
+
+    @Test
+    fun measuredScalesForWideFaces() {
+        val stencil = jarnTypeWithFonts("stencil", "stencil")
+        assertEquals(56f * 0.66f, stencil.display.fontSize.value, 0.01f)
+        assertEquals(32f * 0.74f, stencil.title.fontSize.value, 0.01f)
+        assertEquals(24f * 0.8f, stencil.heading.fontSize.value, 0.01f)
+        assertEquals(14f * 0.9f, stencil.label.fontSize.value, 0.01f)
+        assertEquals(14f * 0.86f, jarnTypeWithFonts(null, "chrome_wide").label.fontSize.value, 0.01f)
+        val comic = jarnTypeWithFonts("comic", "comic")
+        assertEquals(base.display.fontSize, comic.display.fontSize)
+        assertEquals(base.label.fontSize, comic.label.fontSize)
+    }
+
+    @Test
+    fun trackingAppliesPerRoleInEm() {
+        val stencil = jarnTypeWithFonts("stencil", "stencil")
+        assertEquals(TextUnit.Unspecified, stencil.display.letterSpacing)
+        assertEquals(0.01f.em, stencil.heading.letterSpacing)
+        assertEquals(0.02f.em, stencil.label.letterSpacing)
+        assertEquals(0.02f.em, stencil.labelStrong.letterSpacing)
+        val comic = jarnTypeWithFonts("comic", "comic")
+        assertEquals(0.01f.em, comic.display.letterSpacing)
+        assertEquals(0.01f.em, comic.title.letterSpacing)
+        assertEquals(0.02f.em, comic.heading.letterSpacing)
+        assertEquals(0.03f.em, comic.label.letterSpacing)
+        val chrome = jarnTypeWithFonts("chrome_wide", "chrome_wide")
+        assertEquals((-0.02f).em, chrome.display.letterSpacing)
+        assertEquals((-0.01f).em, chrome.title.letterSpacing)
+        assertEquals(TextUnit.Unspecified, chrome.label.letterSpacing)
+        val mono = jarnTypeWithFonts("mono", "mono")
+        assertEquals((-0.02f).em, mono.display.letterSpacing)
+        assertEquals(TextUnit.Unspecified, mono.body.letterSpacing)
+        assertEquals(0.01f.em, jarnTypeWithFonts(null, "rounded").label.letterSpacing)
+        assertEquals((-0.01f).em, jarnTypeWithFonts("serif", null).display.letterSpacing)
+    }
+
+    @Test
+    fun condensedAddsNoTracking() {
+        val type = jarnTypeWithFonts("condensed", "condensed")
+        listOf(type.display, type.title, type.heading, type.label, type.labelStrong).forEach {
+            assertEquals(TextUnit.Unspecified, it.letterSpacing)
+        }
+    }
+
+    @Test
+    fun overridesNeverTouchJarnBaseType() {
+        contractKeys.forEach { jarnTypeWithFonts(it, it) }
+        assertEquals(JarnType(), JarnTheme.baseType)
+        assertEquals(base.display.fontFamily, JarnTheme.baseType.display.fontFamily)
     }
 
     @Test
