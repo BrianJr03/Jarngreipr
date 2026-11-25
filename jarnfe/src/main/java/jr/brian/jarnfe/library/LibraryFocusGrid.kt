@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -51,7 +52,8 @@ internal val LibraryGridColumnSpacing = 12.dp
 /**
  * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
  * the focused item disappears in a refresh. Right after a Library tab switch it focuses its first
- * item instead, once the tab has slid open.
+ * item instead, once the tab has slid open. With [itemTitle] and [letterJumpEnabled], holding Up
+ * or Down jumps by letter (see [gridLetterJumpKeys]) and shows the letter badge.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -67,6 +69,9 @@ internal fun <T : Any> LibraryFocusGrid(
     header: (@Composable () -> Unit)? = null,
     jump: LibraryJump? = null,
     onLanded: (String) -> Unit = {},
+    itemTitle: ((T) -> String)? = null,
+    letterJumpEnabled: Boolean = true,
+    titleKey: (String) -> String = { it },
     itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
 ) {
     val gridState = rememberLazyGridState()
@@ -101,38 +106,71 @@ internal fun <T : Any> LibraryFocusGrid(
         onLanded = onLanded,
     )
 
+    val letterJump = remember { GridLetterJump() }
+    val letterTitle = itemTitle.takeIf { letterJumpEnabled }
+    GridLetterJumpLands(gridState, letterJump, items.indexOfFirst { itemKey(it) == letterJump.targetKey }, headerCount)
+
     CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(cellMinSize),
-            state = gridState,
-            modifier = modifier.fillMaxSize().libraryJumpStopper(landing),
-            contentPadding = libraryGridPadding(),
-            horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
-            verticalArrangement = Arrangement.spacedBy(rowSpacing),
-        ) {
-            header?.let { content ->
-                item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {
-                    Box(Modifier.jarnSplashTile(0).onSizeChanged { headerHeight = it.height }) { content() }
+        Box(modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(cellMinSize),
+                state = gridState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .libraryJumpStopper(landing)
+                    .gridLetterJumpKeys(letterJump, enabled = letterTitle != null) { forward ->
+                        val title = letterTitle ?: return@gridLetterJumpKeys null
+                        val fromKey = letterJump.heldKey ?: lastFocused
+                        val from = items.indexOfFirst { itemKey(it) == fromKey }
+                        letterJumpTarget(items.size, from, forward) { letterJumpGroup(title(items[it]), titleKey) }
+                            ?.let { itemKey(items[it]) }
+                    },
+                contentPadding = libraryGridPadding(),
+                horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
+                verticalArrangement = Arrangement.spacedBy(rowSpacing),
+            ) {
+                header?.let { content ->
+                    item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {
+                        Box(Modifier.jarnSplashTile(0).onSizeChanged { headerHeight = it.height }) { content() }
+                    }
+                }
+                itemsIndexed(
+                    items,
+                    key = { _, item -> ITEM_KEY_PREFIX + itemKey(item) },
+                    contentType = { _, _ -> ITEM_KEY_PREFIX },
+                ) { index, item ->
+                    val id = itemKey(item)
+                    val restore = if (id == target) Modifier.focusRequester(requester) else Modifier
+                    val jumpLanding = if (id == letterJump.targetKey) Modifier.focusRequester(letterJump.requester) else Modifier
+                    itemContent(
+                        item,
+                        Modifier.jarnSplashTile(index + 1).then(restore).then(jumpLanding).onFocusChanged { focus ->
+                            if (focus.isFocused) {
+                                lastFocused = id
+                                onFocused(id)
+                            }
+                        },
+                    )
                 }
             }
-            itemsIndexed(
-                items,
-                key = { _, item -> ITEM_KEY_PREFIX + itemKey(item) },
-                contentType = { _, _ -> ITEM_KEY_PREFIX },
-            ) { index, item ->
-                val id = itemKey(item)
-                val restore = if (id == target) Modifier.focusRequester(requester) else Modifier
-                itemContent(
-                    item,
-                    Modifier.jarnSplashTile(index + 1).then(restore).onFocusChanged { focus ->
-                        if (focus.isFocused) {
-                            lastFocused = id
-                            onFocused(id)
-                        }
-                    },
-                )
+            letterTitle?.let { title ->
+                val landed = items.firstOrNull { itemKey(it) == letterJump.targetKey }
+                if (landed != null) LibraryShelfBadge(titleKey(title(landed)), letterJump.tick, letterJump.jumping)
             }
         }
+    }
+}
+
+/** Scrolls a letter jump's landing item into view, then moves focus onto it. */
+@Composable
+private fun GridLetterJumpLands(state: LazyGridState, jump: GridLetterJump, itemIndex: Int, headerCount: Int) {
+    val index by rememberUpdatedState(itemIndex + headerCount)
+    LaunchedEffect(jump.tick) {
+        if (jump.tick == 0 || itemIndex < 0) return@LaunchedEffect
+        if (state.layoutInfo.visibleItemsInfo.none { it.index == index }) state.scrollToItem(index)
+        snapshotFlow { state.layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
+        withFrameNanos { }
+        jump.requester.requestFocus()
     }
 }
 

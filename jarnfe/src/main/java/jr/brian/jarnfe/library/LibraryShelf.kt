@@ -83,7 +83,9 @@ internal class LibraryShelfContent<T>(
  * at [SHELF_WRAP_MIN_ITEMS] or more, Down is reserved, and only items near the center are
  * composed, so a list of thousands stays smooth. While a direction is held, the letter badge
  * shows and [onFocused] waits [SHELF_SETTLE_MS] for the row to settle, so the Deck doesn't
- * flicker through every cover.
+ * flicker through every cover. With [letterJumpEnabled], a hold past [LETTER_JUMP_HOLD_MS] jumps
+ * by letter instead (see [letterJumpTarget]). Groups and the badge read [titleKey], the list's
+ * sort key.
  */
 @Composable
 internal fun <T : Any> LibraryShelf(
@@ -96,12 +98,15 @@ internal fun <T : Any> LibraryShelf(
     refocusSignal: Int = 0,
     jump: LibraryJump? = null,
     onLanded: (String) -> Unit = {},
+    letterJumpEnabled: Boolean = true,
+    titleKey: (String) -> String = { it },
 ) {
     if (items.isEmpty()) return
     var chosenKey by remember { mutableStateOf(focusedKey) }
     var fast by remember { mutableStateOf(false) }
     var spinning by remember { mutableStateOf(false) }
     val landing = remember { LibraryJumpLanding() }
+    val pacer = remember { LetterJumpPacer() }
     var badgeTick by remember { mutableIntStateOf(0) }
     val center = shelfCenterIndex(items, content.itemKey, chosenKey, focusedKey)
     val centerKey = content.itemKey(items[center])
@@ -128,13 +133,27 @@ internal fun <T : Any> LibraryShelf(
         chosenKey = content.itemKey(items[shelfStep(center, delta, items.size)])
     }
 
+    fun jumpBy(delta: Int) {
+        letterJumpTarget(items.size, center, delta > 0) { letterJumpGroup(content.itemTitle(items[it]), titleKey) }
+            ?.let { chosenKey = content.itemKey(items[it]) }
+    }
+
+    fun moveBy(delta: Int, event: KeyEvent) {
+        val pace = if (letterJumpEnabled) pacer.pace(event) else LetterJumpPace.Step
+        when (pace) {
+            LetterJumpPace.Step -> stepBy(delta)
+            LetterJumpPace.Jump -> jumpBy(delta)
+            LetterJumpPace.Wait -> Unit
+        }
+    }
+
     val latestStep by rememberUpdatedState<(Int) -> Unit>(::stepBy)
 
     val onKey: (KeyEvent) -> Boolean = { event ->
         handleShelfKey(event, onFast = { repeat ->
             fast = repeat
             if (repeat) badgeTick++
-        }, onStep = ::stepBy)
+        }, onStep = { delta -> moveBy(delta, event) })
     }
     BoxWithConstraints(
         modifier
@@ -172,7 +191,7 @@ internal fun <T : Any> LibraryShelf(
             }
         }
         if (content.showsCaption) LibraryShelfCaption(items[center], content, metrics)
-        LibraryShelfBadge(content.itemTitle(items[center]), badgeTick, fast)
+        LibraryShelfBadge(titleKey(content.itemTitle(items[center])), badgeTick, fast)
     }
 }
 

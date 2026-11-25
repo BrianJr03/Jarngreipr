@@ -148,6 +148,7 @@ internal fun LibrarySystemShelf(
             focusedKey = state.focusedSystem?.id,
             onFocused = onFocused,
             modifier = Modifier.weight(1f),
+            letterJumpEnabled = false,
         )
     }
 }
@@ -304,6 +305,8 @@ private fun LibraryGames(
 ) {
     val display = rememberJarnDisplay()
     val cellMinSize = GameCellMinSize * display.gameTileScale
+    val letterJumpEnabled = feed.letterJumpEnabled()
+    val letterJumpKey = feed.letterJumpKey()
     LibraryFeedContent(
         feed = feed,
         cellMinSize = cellMinSize,
@@ -324,6 +327,9 @@ private fun LibraryGames(
                     rowSpacing = LibraryGridRowSpacing,
                     jump = jump,
                     onLanded = library::landJump,
+                    itemTitle = JarnLibraryGame::title,
+                    letterJumpEnabled = letterJumpEnabled,
+                    titleKey = letterJumpKey,
                 ) { game, modifier ->
                     LibraryGameTile(
                         game = game,
@@ -342,6 +348,8 @@ private fun LibraryGames(
                     refocusSignal = library.stageRefocus,
                     jump = jump,
                     onLanded = library::landJump,
+                    letterJumpEnabled = letterJumpEnabled,
+                    titleKey = letterJumpKey,
                 )
             },
         )
