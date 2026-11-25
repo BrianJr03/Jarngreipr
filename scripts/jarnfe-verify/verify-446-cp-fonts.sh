@@ -30,17 +30,17 @@ set -uo pipefail
 VERIFY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=run.sh
 source "$VERIFY_DIR/run.sh"
+# shellcheck source=lib/prefs.sh
+source "$VERIFY_DIR/lib/prefs.sh"
+# shellcheck source=lib/jarnui.sh
+source "$VERIFY_DIR/lib/jarnui.sh"
 
-KEY_A=96
 LOOK_PREFS=jarnfe_look_prefs
 FONTS_KEY=match_command_panel_fonts
 COLORS_KEY=match_command_panel
 TOUR_KEY=first_run_done
-FONTS_LABEL="Match Command Panel fonts"
 COLORS_LABEL="Match Command Panel colors"
-UNAVAILABLE_PREFIX="Unavailable."
-MAX_ROWS=30
-INSTALL_APK="" ORIG_FONTS="" ORIG_COLORS="" ORIG_TOUR="" PREF_CHANGED=0 BEFORE_FOCUS="" FONTS_FOCUS=""
+INSTALL_APK="" ORIG_FONTS="" ORIG_COLORS="" ORIG_TOUR="" PREF_CHANGED=0
 
 usage_446() { sed -n '2,26p' "$VERIFY_DIR/verify-446-cp-fonts.sh" | sed 's/^# \{0,1\}//'; }
 
@@ -62,32 +62,6 @@ install_if_asked() {
   [ -f "$INSTALL_APK" ] || { echo "no such APK: $INSTALL_APK" >&2; exit 2; }
   echo "Installing $INSTALL_APK"
   adb install -r "$INSTALL_APK" || { echo "adb install failed (signature mismatch? not uninstalling)" >&2; exit 2; }
-}
-
-look_pref() { read_prefs "$LOOK_PREFS" | parse_pref "$1"; }
-
-# Writes boolean pref $1 as $2 (true or false), or removes it when $2 is empty, with the app stopped.
-write_bool() {
-  local name="$1" value="$2" script
-  sh_dev am force-stop "$PKG" >/dev/null
-  script="$(python3 -I -c '
-import sys
-import xml.etree.ElementTree as ET
-raw, key, value = sys.stdin.read(), sys.argv[1], sys.argv[2]
-try:
-    root = ET.fromstring(raw) if raw.strip() else ET.Element("map")
-except ET.ParseError:
-    root = ET.Element("map")
-for item in list(root):
-    if item.get("name") == key:
-        root.remove(item)
-if value:
-    ET.SubElement(root, "boolean", name=key, value=value)
-print("<?xml version=\x271.0\x27 encoding=\x27utf-8\x27 standalone=\x27yes\x27 ?>")
-print(ET.tostring(root, encoding="unicode"))
-' "$name" "$value" <<<"$(read_prefs "$LOOK_PREFS")")" || return 1
-  printf '%s\n' "$script" | adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cat > shared_prefs/$LOOK_PREFS.xml'" || return 1
-  [ "$(look_pref "$name")" = "$value" ]
 }
 
 write_fonts() { write_bool "$FONTS_KEY" "$1"; }
@@ -131,47 +105,6 @@ preflight_446() {
   echo "  info  $PKG, fonts was ${ORIG_FONTS:-default (off)}, colors ${ORIG_COLORS:-default (off)}"
   echo "  info  Stage on display $STAGE_DISPLAY, Deck on display $DECK_DISPLAY"
   echo "  info  output in $OUT_DIR"
-}
-
-focused_label() { ui_focused | awk -F' [|] ' '{ print $1 }'; }
-
-open_look_settings() {
-  ui_wait_role stage || return 1
-  step_to_tab 0 "${#LIBRARY_TABS[@]}" "$STAGE_DISPLAY" || return 1
-  settings_start_is_safe || { fail "Stage is not on Library, so Start is not pressed"; return 1; }
-  key "$KEY_START" || return 1
-  IN_SETTINGS=1
-  ui_wait_role deck || { fail "Settings did not show on the Deck"; return 1; }
-  tab_keys_for "$DECK_DISPLAY"
-  press_times "$TAB_PREV" "$((${#SETTINGS_TABS[@]} - 1))" &&
-    press_times "$TAB_NEXT" "$(index_of Look "${SETTINGS_TABS[@]}")" || return 1
-  ui_dump
-  [ "$(ui_selected "${SETTINGS_TABS[@]}")" = Look ] || { fail "could not step the Deck to Look"; return 1; }
-}
-
-# Presses Down until the fonts row has focus. Sets BEFORE_FOCUS and FONTS_FOCUS.
-find_fonts_row() {
-  local i last=""
-  for ((i = 0; i < MAX_ROWS; i++)); do
-    key "$KEY_DOWN" || return 1
-    ui_wait_role deck || continue
-    if [ "$(focused_label)" = "$FONTS_LABEL" ]; then
-      BEFORE_FOCUS="$last"
-      FONTS_FOCUS="$(ui_focused)"
-      return 0
-    fi
-    last="$(focused_label)"
-  done
-  return 1
-}
-
-press_a_on_fonts() {
-  ui_wait_role deck || return 1
-  [ "$(focused_label)" = "$FONTS_LABEL" ] || return 1
-  jarn_is_focused || { ABORTED=1; return 1; }
-  sh_dev input -d 0 keyevent "$KEY_A" >/dev/null
-  KEYS_SENT=1
-  pause 1.5
 }
 
 check_order() {
