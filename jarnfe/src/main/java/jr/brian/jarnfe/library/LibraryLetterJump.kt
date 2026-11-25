@@ -19,11 +19,11 @@ internal const val LETTER_JUMP_HOLD_MS = 1200L
 /** Time spent on each letter while jumping, so the badge can be read and released on. */
 internal const val LETTER_JUMP_DWELL_MS = 350L
 
-/** Whether [this] feed is in an order where jumping by letter makes sense. */
-internal fun JarnLibraryFeed<*>.letterJumpEnabled(): Boolean = true
+/** Only a list in Name order jumps by letter. Recent, Favorites and the other sorts step as usual. */
+internal fun JarnLibraryFeed<*>.letterJumpEnabled(): Boolean = sort == JarnGameSort.Name
 
-/** The key [this] feed is sorted by, so letter groups and the badge follow the list's order. */
-internal fun JarnLibraryFeed<*>.letterJumpKey(): (String) -> String = { it }
+/** The key the Name sort orders by, so letter groups and the badge follow the list's order. */
+internal fun JarnLibraryFeed<*>.letterJumpKey(): (String) -> String = ::nameSortKey
 
 /** The letter group an item belongs to, the same one the shelf badge shows, read from [titleKey]. */
 internal fun letterJumpGroup(title: String, titleKey: (String) -> String = { it }): String =

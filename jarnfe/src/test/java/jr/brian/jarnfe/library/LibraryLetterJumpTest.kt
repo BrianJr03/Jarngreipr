@@ -1,7 +1,9 @@
 package jr.brian.jarnfe.library
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LibraryLetterJumpTest {
@@ -74,6 +76,25 @@ class LibraryLetterJumpTest {
         val target = letterJumpTarget(list.size, 0, forward = true) { letterJumpGroup(list[it], dropThe) }
         assertEquals(1, target)
         assertEquals(3, letterJumpTarget(list.size, 1, forward = true) { letterJumpGroup(list[it], dropThe) })
+    }
+
+    @Test
+    fun `only a Name sorted feed jumps by letter`() {
+        assertTrue(JarnLibraryFeed<String>(sort = JarnGameSort.Name).letterJumpEnabled())
+        assertFalse(JarnLibraryFeed<String>(sort = null).letterJumpEnabled())
+        JarnGameSort.entries.filter { it != JarnGameSort.Name }.forEach {
+            assertFalse(it.name, JarnLibraryFeed<String>(sort = it).letterJumpEnabled())
+        }
+    }
+
+    @Test
+    fun `the feed's key groups titles the way the Name sort orders them`() {
+        val key = JarnLibraryFeed<String>(sort = JarnGameSort.Name).letterJumpKey()
+        assertEquals("L", letterJumpGroup("The Legend of Zelda", key))
+        assertEquals("T", letterJumpGroup("Theme Hospital", key))
+        val sorted = listOf("Kirby", "Lemmings", "The Legend of Zelda", "Mario").sortedBy(::nameSortKey)
+        assertEquals(listOf("Kirby", "The Legend of Zelda", "Lemmings", "Mario"), sorted)
+        assertEquals(3, letterJumpTarget(sorted.size, 1, forward = true) { letterJumpGroup(sorted[it], key) })
     }
 
     @Test
