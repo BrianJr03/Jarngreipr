@@ -116,12 +116,11 @@ private fun StageHeader(state: JarnSessionState) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = JarnTheme.space.stageMargin),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         JarnWordmark(Modifier.jarnSplashMark())
         Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
-        Box(Modifier.jarnSplashFade()) { JarnStatusReadout() }
+        Box(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade()) { JarnStatusReadout() }
     }
 }
 

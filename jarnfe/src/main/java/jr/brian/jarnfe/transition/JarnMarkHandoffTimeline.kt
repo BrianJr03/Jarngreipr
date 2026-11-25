@@ -46,6 +46,26 @@ internal object JarnMarkHandoffTimeline {
         )
     }
 
+    /**
+     * How open the label's slot is, so the header row slides over to fill it. It closes with the
+     * leaving label and opens across the whole arrival, landing with the label. Reduced motion
+     * snaps it once the label has faded out, or before the label fades in.
+     */
+    fun slotLeg(from: Float, arriving: Boolean, motion: JarnMotion): JarnMarkLeg {
+        val to = if (arriving) 1f else 0f
+        val remaining = abs(to - from)
+        val token = if (arriving) motion.markArrive else motion.markLeave
+        val span = token.durationMillis + if (arriving) motion.markArriveDelayMillis else 0
+        val delay = if (motion.reduced && !arriving) motion.markLeave.durationMillis * remaining else 0f
+        return JarnMarkLeg(
+            from = from,
+            to = to,
+            delayMillis = delay.roundToInt(),
+            durationMillis = if (motion.reduced) 0 else (span * remaining).roundToInt(),
+            easing = token.easing,
+        )
+    }
+
     /** Offset from rest in [JarnMotion.markTravel] units, positive downward. */
     fun travel(presence: Float, towardOtherScreen: Float): Float = (1f - presence) * towardOtherScreen
 }

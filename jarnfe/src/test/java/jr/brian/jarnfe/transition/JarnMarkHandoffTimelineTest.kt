@@ -67,6 +67,42 @@ class JarnMarkHandoffTimelineTest {
     }
 
     @Test
+    fun `the row closes with the leaving label and opens to land with the arriving one`() {
+        val label = JarnMarkHandoffTimeline.leg(from = 0f, arriving = true, motion = full)
+        val closing = JarnMarkHandoffTimeline.slotLeg(from = 1f, arriving = false, motion = full)
+        val opening = JarnMarkHandoffTimeline.slotLeg(from = 0f, arriving = true, motion = full)
+
+        assertEquals(160, closing.totalMillis)
+        assertEquals(0f, closing.presenceAt(160f), 0f)
+        assertEquals(0, opening.delayMillis)
+        assertEquals(label.totalMillis, opening.totalMillis)
+        assertTrue(opening.presenceAt(100f) > label.presenceAt(100f))
+        assertEquals(1f, opening.presenceAt(340f), 0f)
+    }
+
+    @Test
+    fun `an interrupted row slides back from where it is`() {
+        val closing = JarnMarkHandoffTimeline.slotLeg(from = 1f, arriving = false, motion = full)
+        val midway = closing.presenceAt(80f)
+        val back = JarnMarkHandoffTimeline.slotLeg(from = midway, arriving = true, motion = full)
+
+        assertEquals(midway, back.presenceAt(0f), 0f)
+        assertTrue(back.totalMillis < 340)
+        assertEquals(1f, back.presenceAt(back.totalMillis.toFloat()), 0f)
+    }
+
+    @Test
+    fun `reduced motion snaps the row once the label is gone or before it fades in`() {
+        val closing = JarnMarkHandoffTimeline.slotLeg(from = 1f, arriving = false, motion = reduced)
+        val opening = JarnMarkHandoffTimeline.slotLeg(from = 0f, arriving = true, motion = reduced)
+
+        assertEquals(1f, closing.presenceAt(119f), 0f)
+        assertEquals(0f, closing.presenceAt(120f), 0f)
+        assertEquals(1f, opening.presenceAt(0f), 0f)
+        assertEquals(0, JarnMarkHandoffTimeline.slotLeg(from = 1f, arriving = false, motion = instant).totalMillis)
+    }
+
+    @Test
     fun `the label travels toward the screen it is heading for`() {
         assertEquals(1f, jarnMarkTowardOtherScreen(JarnScreen.Stage, rolesSwapped = false), 0f)
         assertEquals(-1f, jarnMarkTowardOtherScreen(JarnScreen.Deck, rolesSwapped = false), 0f)

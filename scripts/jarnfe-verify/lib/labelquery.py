@@ -4,8 +4,10 @@
   labelquery.py bounds DUMP.xml TEXT       -> "x1 y1 x2 y2" of the first node showing TEXT
   labelquery.py ink SHOT.png x1 y1 x2 y2   -> share of near-white pixels in the box (0..1)
   labelquery.py diff A.png B.png x1 y1 x2 y2 -> mean per-pixel difference in the box (0..255)
+  labelquery.py shift A.png B.png x1 y1 x2 y2 MAX -> horizontal move (px) of A's box content in B
 
 The box is padded by 32px on each side, so a label sitting 24dp off its rest spot still counts.
+shift uses the box as given and searches B within MAX px either way, in 2px steps.
 """
 import re
 import sys
@@ -45,6 +47,21 @@ def diff(path_a, path_b, coords):
     return ImageStat.Stat(ImageChops.difference(a, b)).mean[0]
 
 
+def shift(path_a, path_b, coords, limit):
+    x1, y1, x2, y2 = (int(value) for value in coords)
+    a = Image.open(path_a).convert("L").crop((x1, y1, x2, y2))
+    b = Image.open(path_b).convert("L")
+    best, best_dx = None, 0
+    for dx in range(-limit, limit + 1, 2):
+        if x1 + dx < 0 or x2 + dx > b.size[0]:
+            continue
+        moved = b.crop((x1 + dx, y1, x2 + dx, y2))
+        score = ImageStat.Stat(ImageChops.difference(a, moved)).mean[0]
+        if best is None or score < best:
+            best, best_dx = score, dx
+    return best_dx
+
+
 def main(argv):
     if len(argv) < 2:
         return 2
@@ -55,6 +72,8 @@ def main(argv):
         print(f"{ink(args[0], args[1:]):.4f}")
     elif command == "diff" and len(args) == 6:
         print(f"{diff(args[0], args[1], args[2:]):.2f}")
+    elif command == "shift" and len(args) == 7:
+        print(shift(args[0], args[1], args[2:6], int(args[6])))
     else:
         return 2
     return 0

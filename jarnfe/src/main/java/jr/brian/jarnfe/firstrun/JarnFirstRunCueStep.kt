@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnButtonVariant
 import jr.brian.core.ui.components.JarnChoiceRow
@@ -110,7 +111,7 @@ internal fun FirstRunCueSample(takesFocus: Boolean = true) {
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (LocalJarnMarkHandoff.current.follows) JarnWordmark()
+        if (LocalJarnMarkHandoff.current.follows) JarnWordmark(gap = 0.dp)
         Box(focus.background(JarnTheme.colors.raised, shape)) {
             JarnText(
                 text = stringResource(R.string.jarnfe_section_systems),

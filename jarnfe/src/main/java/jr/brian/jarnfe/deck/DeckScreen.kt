@@ -133,7 +133,7 @@ private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (showsMark) JarnWordmark(Modifier.padding(end = JarnTheme.space.lg))
+            if (showsMark) JarnWordmark()
             JarnTabs(
                 labels = tabs.map { stringResource(it.labelRes()) },
                 selectedIndex = tabs.indexOf(selected),

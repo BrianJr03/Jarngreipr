@@ -12,8 +12,9 @@
 # Selects the "Jarn label" switch cue by editing the app's own prefs (run-as, so debug builds
 # only), restarts Jarn FE, then:
 #   1. finds the label on Stage and its slot on the Deck in uiautomator dumps,
-#   2. presses X and checks the label left Stage and arrived on the Deck,
-#   3. presses X again and checks it came back,
+#   2. presses X and checks the label left Stage and arrived on the Deck, and that each screen's
+#      first tab slid left into the label's place where the label is away, and back where it is,
+#   3. presses X again and checks it came back, with the tabs back in place,
 #   4. presses X twice in one burst (an interrupted handoff) and checks it settles on Stage,
 #   5. opens Settings with Start and checks no screen shows the label while the Deck has hidden
 #      its tabs, then leaves with B and checks the label is back on Stage,
@@ -48,15 +49,17 @@ TOP_DISPLAY="${JARNFE_TOP_DISPLAY:-0}"
 BOTTOM_DISPLAY="${JARNFE_BOTTOM_DISPLAY:-4}"
 TOP_PHYSICAL="${JARNFE_TOP_PHYSICAL:-4630946441858561667}"
 BOTTOM_PHYSICAL="${JARNFE_BOTTOM_PHYSICAL:-4630946482288158084}"
-# Share of near-white pixels the label adds to its box. Text covers far more than this.
-INK_MARGIN="${JARNFE_INK_MARGIN:-0.02}"
+# Mean pixel difference in the label box. Below it the label shows as in its reference frame.
+SAME_MAX="${JARNFE_SAME_MAX:-10}"
+# A tab back in place may land this many px off after rounding.
+SHIFT_TOL="${JARNFE_SHIFT_TOL:-6}"
 
 APK="" OUT_DIR="" KEEP_CUE=0 ALLOW_SYNC=0 HANDOFF_OK=0 HANDOFF_REASON=""
 LOCK_MODE="" START_LOCK="" START_PID="" LOG_START=""
 ORIG_CUE="" CUE_CHANGED=0
 STAGE_DISPLAY=$TOP_DISPLAY DECK_DISPLAY=$BOTTOM_DISPLAY
 STAGE_PHYSICAL=$TOP_PHYSICAL DECK_PHYSICAL=$BOTTOM_PHYSICAL
-STAGE_BOX="" DECK_BOX=""
+STAGE_BOX="" DECK_BOX="" STAGE_TAB="" DECK_TAB="" STAGE_SLOT=0 DECK_SLOT=0
 
 usage() { sed -n '2,28p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
@@ -185,18 +188,32 @@ find_boxes() {
   if ui_wait_role stage; then
     cp "$UI_XML" "$OUT_DIR/stage.xml"
     STAGE_BOX="$(python3 -I "$HELPER" bounds "$UI_XML" "$WORDMARK")"
+    STAGE_TAB="$(python3 -I "$HELPER" bounds "$UI_XML" "${LIBRARY_TABS[0]}")"
   fi
   [ -n "$STAGE_BOX" ] && pass "Stage label at [$STAGE_BOX]" || fail "no $WORDMARK node on Stage"
   key "$KEY_X" || return 1
   if ui_wait_role deck; then
     cp "$UI_XML" "$OUT_DIR/deck.xml"
     DECK_BOX="$(python3 -I "$HELPER" bounds "$UI_XML" "$WORDMARK")"
+    DECK_TAB="$(python3 -I "$HELPER" bounds "$UI_XML" "${DECK_TABS[0]}")"
   fi
   [ -n "$DECK_BOX" ] && pass "Deck label slot left of the tabs at [$DECK_BOX]" || fail "no $WORDMARK slot on the Deck"
   key "$KEY_X" || return 1
   wait_top_display "$STAGE_DISPLAY"
   pause 1
+  [ -n "$STAGE_TAB" ] && [ -n "$DECK_TAB" ] || { fail "first tab not found on both screens"; return 1; }
+  STAGE_SLOT="$(slot_width "$STAGE_BOX" "$STAGE_TAB")"
+  DECK_SLOT="$(slot_width "$DECK_BOX" "$DECK_TAB")"
+  echo "  info  slot widths: stage ${STAGE_SLOT}px, deck ${DECK_SLOT}px"
   [ -n "$STAGE_BOX" ] && [ -n "$DECK_BOX" ]
+}
+
+# Label left edge to first tab left edge: how far the tab moves when the slot closes.
+slot_width() {
+  local label tab
+  read -r -a label <<<"$1"
+  read -r -a tab <<<"$2"
+  echo $((tab[0] - label[0]))
 }
 
 # Captures both screens as $1-stage.png and $1-deck.png at the same moment.
@@ -206,29 +223,67 @@ shots() {
   wait
 }
 
-ink() {
-  local box
-  if [ "$2" = stage ]; then box="$STAGE_BOX"; else box="$DECK_BOX"; fi
-  # shellcheck disable=SC2086
-  python3 -I "$HELPER" ink "$OUT_DIR/$1-$2.png" $box
+box_of() { if [ "$1" = stage ]; then echo "$STAGE_BOX"; else echo "$DECK_BOX"; fi; }
+tab_of() { if [ "$1" = stage ]; then echo "$STAGE_TAB"; else echo "$DECK_TAB"; fi; }
+slot_of() { if [ "$1" = stage ]; then echo "$STAGE_SLOT"; else echo "$DECK_SLOT"; fi; }
+
+# Frame names where each screen holds the label: Stage at rest, the Deck after the first X.
+home_frame() { if [ "$1" = stage ]; then echo rest; else echo to-deck; fi; }
+
+# $1 reference frame, $2 frame, $3 screen.
+label_diff() {
+  # shellcheck disable=SC2046
+  python3 -I "$HELPER" diff "$OUT_DIR/$1-$3.png" "$OUT_DIR/$2-$3.png" $(box_of "$3")
 }
 
-more_than() { python3 -I -c 'import sys; a, b, m = map(float, sys.argv[1:]); sys.exit(0 if a > b + m else 1)' "$1" "$2" "$INK_MARGIN"; }
+tab_shift() {
+  # shellcheck disable=SC2046
+  python3 -I "$HELPER" shift "$OUT_DIR/$1-$3.png" "$OUT_DIR/$2-$3.png" $(tab_of "$3") "$(( $(slot_of "$3") + 40 ))"
+}
 
-# $1 the frame, $2 the screen that should show the label. Compares against the rest frame,
-# where the label is on Stage.
+below() { python3 -I -c 'import sys; sys.exit(0 if float(sys.argv[1]) <= float(sys.argv[2]) else 1)' "$1" "$2"; }
+
+# The first tab of $1 in frame $2 sits where it does with the label home.
+expect_tab_home() {
+  local dx
+  dx="$(tab_shift "$(home_frame "$1")" "$2" "$1")"
+  if [ "${dx#-}" -le "$SHIFT_TOL" ]; then pass "$2: $1 tabs in place beside the label (moved ${dx}px)"
+  else fail "$2: $1 tabs moved ${dx}px with the label home"; fi
+}
+
+# The first tab of $1 in frame $2 slid left by most of the slot.
+expect_tab_away() {
+  local dx want
+  dx="$(tab_shift "$(home_frame "$1")" "$2" "$1")"
+  want=$(( $(slot_of "$1") * 7 / 10 ))
+  if [ "$dx" -le "-$want" ]; then pass "$2: $1 tabs slid ${dx}px into the label's place"
+  else fail "$2: $1 tabs moved ${dx}px, wanted about -$(slot_of "$1")px"; fi
+}
+
+expect_label_home() {
+  local diff
+  diff="$(label_diff "$(home_frame "$1")" "$2" "$1")"
+  if below "$diff" "$SAME_MAX"; then pass "$2: label shows on $1 (diff $diff)"
+  else fail "$2: label missing on $1 (diff $diff)"; fi
+}
+
+expect_label_away() {
+  local diff
+  diff="$(label_diff "$(home_frame "$1")" "$2" "$1")"
+  if below "$diff" "$SAME_MAX"; then fail "$2: label still on $1 (diff $diff)"
+  else pass "$2: label gone from $1 (diff $diff)"; fi
+}
+
+# $1 the frame, $2 the screen that should show the label.
 expect_label_on() {
-  local frame="$1" holder="$2" stage deck rest_stage rest_deck
-  stage="$(ink "$frame" stage)" deck="$(ink "$frame" deck)"
-  rest_stage="$(ink rest stage)" rest_deck="$(ink rest deck)"
-  echo "  info  $frame ink: stage $stage (rest $rest_stage), deck $deck (rest $rest_deck)"
-  if [ "$holder" = deck ]; then
-    if more_than "$deck" "$rest_deck"; then pass "$frame: label arrived on the Deck"; else fail "$frame: no label on the Deck"; fi
-    if more_than "$rest_stage" "$stage"; then pass "$frame: label left Stage"; else fail "$frame: label still on Stage"; fi
-  else
-    if more_than "$deck" "$rest_deck"; then fail "$frame: label still on the Deck"; else pass "$frame: Deck has no label"; fi
-    if more_than "$rest_stage" "$stage"; then fail "$frame: label missing on Stage"; else pass "$frame: label back on Stage"; fi
+  local frame="$1" holder="$2" away
+  if [ "$holder" = stage ]; then away=deck; else away=stage; fi
+  if [ "$frame" != "$(home_frame "$holder")" ]; then
+    expect_label_home "$holder" "$frame"
+    expect_tab_home "$holder" "$frame"
   fi
+  expect_label_away "$away" "$frame"
+  expect_tab_away "$away" "$frame"
 }
 
 # One X, with mid-animation frames right away and the settled frames after.
@@ -261,6 +316,7 @@ check_handoff() {
   shots rest
   switch_and_capture to-deck || return 1
   expect_label_on to-deck deck
+  expect_tab_away deck rest
   switch_and_capture to-stage || return 1
   expect_label_on to-stage stage
   section "Interrupted handoff settles"
@@ -284,10 +340,7 @@ check_hidden_tabs() {
   if ui_has "$WORDMARK"; then fail "the Deck shows a label slot in Settings"; else pass "no label slot on the Deck in Settings"; fi
   pause 0.6
   shots settings
-  local stage
-  stage="$(ink settings stage)"
-  echo "  info  settings ink: stage $stage (rest $(ink rest stage))"
-  if more_than "$(ink rest stage)" "$stage"; then pass "settings: label left Stage"; else fail "settings: label still on Stage"; fi
+  expect_label_away stage settings
   key "$KEY_B" || return 1
   wait_top_display "$STAGE_DISPLAY"
   pause 1.2
@@ -308,6 +361,7 @@ main() {
   check_lock_unchanged
   section "For a human"
   echo "  look  $OUT_DIR/*-mid-*.png: label part way out on one screen, part way in on the other"
+  echo "  look  the tabs slide with the label and land with it, never jumping at the end"
   echo "  look  swap screens (L3) and rerun: the label should still travel toward the screen it goes to"
   printf '\n%s passed, %s failed, %s skipped\n' "$PASS_COUNT" "$FAIL_COUNT" "$SKIP_COUNT"
   [ "$FAIL_COUNT" = 0 ]

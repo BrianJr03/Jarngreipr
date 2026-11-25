@@ -11,24 +11,34 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import jr.brian.core.ui.theme.JarnMotion
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.splash.JarnSplash
+import kotlin.math.roundToInt
 
-/** Drawing only, so a label on its way never holds back input on either screen. */
+/**
+ * [value] is drawn only, so a label on its way never holds back input on either screen. [slot]
+ * changes layout, so once it settles the tabs sit and take touches exactly where they show.
+ */
 @Stable
 internal class JarnMarkPresence(initial: Float) {
     var value by mutableFloatStateOf(initial)
         private set
+    var slot by mutableFloatStateOf(initial)
+        private set
 
-    /** Each window runs its own leg from the same switch. A new switch cancels this one mid-leg. */
+    /** Each window runs its own legs from the same switch. A new switch cancels these mid-leg. */
     suspend fun moveTo(arriving: Boolean, motion: JarnMotion) {
-        val leg = JarnMarkHandoffTimeline.leg(value, arriving, motion)
-        if (leg.totalMillis == 0) {
-            value = leg.to
+        val label = JarnMarkHandoffTimeline.leg(value, arriving, motion)
+        val row = JarnMarkHandoffTimeline.slotLeg(slot, arriving, motion)
+        val total = maxOf(label.totalMillis, row.totalMillis)
+        if (total == 0) {
+            value = label.to
+            slot = row.to
             return
         }
         val startedAt = withFrameMillis { it }
@@ -36,8 +46,9 @@ internal class JarnMarkPresence(initial: Float) {
         while (!done) {
             withFrameMillis { now ->
                 val elapsed = (now - startedAt).toFloat()
-                value = leg.presenceAt(elapsed)
-                done = elapsed >= leg.totalMillis
+                value = label.presenceAt(elapsed)
+                slot = row.presenceAt(elapsed)
+                done = elapsed >= total
             }
         }
     }
@@ -66,6 +77,15 @@ internal fun rememberJarnMarkHandoff(screen: JarnScreen, cue: JarnSwitchCue, sta
     val follows = cue == JarnSwitchCue.JarnLabel
     val toward = jarnMarkTowardOtherScreen(screen, state.rolesSwapped)
     return remember(presence, follows, toward) { JarnMarkHandoff(follows, presence, toward) }
+}
+
+/** Reports the label plus [gapPx] scaled by how open the slot is, keeping the row's height. */
+internal fun Modifier.jarnMarkSlot(handoff: JarnMarkHandoff, gapPx: Int): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0))
+    val width = ((placeable.width + gapPx) * handoff.presence.slot).roundToInt()
+    layout(width.coerceIn(constraints.minWidth, constraints.maxWidth), placeable.height) {
+        placeable.placeRelative(0, 0)
+    }
 }
 
 internal fun Modifier.jarnMarkHandoff(handoff: JarnMarkHandoff, travelPx: Float): Modifier = graphicsLayer {
