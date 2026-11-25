@@ -103,6 +103,16 @@ internal fun nowPlayingFreeRole(
 }
 
 /**
+ * The role the companion sheet belongs on: the window a running game left free, or the Deck when
+ * no game covers a window. Swapped screens put the free window in the Stage role.
+ */
+internal fun companionSheetRole(
+    session: NowPlayingSession?,
+    deckDisplayAvailable: Boolean,
+    rolesSwapped: Boolean,
+): JarnScreen = nowPlayingFreeRole(session, deckDisplayAvailable, rolesSwapped) ?: JarnScreen.Deck
+
+/**
  * The role that shows Now Playing, or null. It needs the setting, two screens, a game in front
  * and the player not having left it. The covered window taking OS focus back means Jarn is in
  * front again there, even before its resume lands.

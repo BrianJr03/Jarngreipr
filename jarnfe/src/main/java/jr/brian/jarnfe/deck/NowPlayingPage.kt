@@ -88,7 +88,7 @@ internal fun nowPlayingRole(state: JarnSessionState, prefs: JarnDisplayPrefs): J
 
 /**
  * What a role's window shows: Now Playing when this role is the free screen beside a game,
- * otherwise [content]. The companion sheet sits above the Deck role.
+ * otherwise [content]. The companion sheet sits above either on its role.
  */
 @Composable
 internal fun NowPlayingSlot(role: JarnScreen, state: JarnSessionState, content: @Composable () -> Unit) {
@@ -99,7 +99,8 @@ internal fun NowPlayingSlot(role: JarnScreen, state: JarnSessionState, content: 
     } else {
         content()
     }
-    if (role == JarnScreen.Deck) JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)
+    val sheetRole = companionSheetRole(JarnNowPlaying.session, state.deckDisplayAvailable, state.rolesSwapped)
+    if (sheetRole == role) JarnCompanionSheetHost(state.deckDisplayAvailable, state.osFocusedScreen)
 }
 
 /** The header's way back to a page the player left, on the role that page lives on. */
