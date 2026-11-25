@@ -208,6 +208,23 @@ class BackupInspectorTest {
     }
 
     @Test
+    fun `a backup that changes matching fonts shows the look as replaced`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanelFonts = false))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnMatchCommandPanelFonts = true))
+        val items = buildBackupPreview(backup, now).items.associateBy { it.area }
+        assertEquals(JarnBackupChange.Replaces, items.getValue(JarnBackupArea.Look).change)
+        assertEquals(JarnBackupChange.Same, items.getValue(JarnBackupArea.OtherSettings).change)
+    }
+
+    @Test
+    fun `a backup without matching fonts keeps the current choice`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember", jarnMatchCommandPanelFonts = true))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember"))
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }
+        assertEquals(JarnBackupChange.Same, look.change)
+    }
+
+    @Test
     fun `a backup without matching keeps the current choice`() {
         val now = JarngreiprConfig(
             feature = FeatureConfig(jarnLook = "ember", jarnMatchCommandPanel = true),

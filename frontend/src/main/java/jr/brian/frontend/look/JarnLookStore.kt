@@ -41,6 +41,12 @@ class JarnLookStore @Inject constructor(
     val matchCommandPanelState: StateFlow<Boolean> = _matchCommandPanel.asStateFlow()
     val matchCommandPanel: Boolean get() = _matchCommandPanel.value
 
+    private val _matchCommandPanelFonts = MutableStateFlow(prefs.getBoolean(KEY_MATCH_COMMAND_PANEL_FONTS, false))
+
+    /** Independent of [matchCommandPanelState], so fonts and colors can be matched one at a time. */
+    val matchCommandPanelFontsState: StateFlow<Boolean> = _matchCommandPanelFonts.asStateFlow()
+    val matchCommandPanelFonts: Boolean get() = _matchCommandPanelFonts.value
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -147,6 +153,11 @@ class JarnLookStore @Inject constructor(
         prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL, enabled) }
     }
 
+    fun setMatchCommandPanelFonts(enabled: Boolean) {
+        _matchCommandPanelFonts.value = enabled
+        prefs.edit { putBoolean(KEY_MATCH_COMMAND_PANEL_FONTS, enabled) }
+    }
+
     fun setLiveWallpaperId(id: String?) {
         val next = id.withoutOffValue()
         _liveWallpaperId.value = next
@@ -174,6 +185,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
+        const val KEY_MATCH_COMMAND_PANEL_FONTS = "match_command_panel_fonts"
         const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SAME_WALLPAPER_ON_BOTH = "wallpaper_same_on_both"
         const val KEY_BOTTOM_WALLPAPER_URI = "bottom_wallpaper_uri"

@@ -23,6 +23,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.JarnLookPreview
+import jr.brian.jarnfe.look.commandpanel.FontMatchAvailability
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 
 private val TwoColumnMaxWidth = 480.dp
@@ -36,12 +37,15 @@ internal fun JarnLookSection() {
     val savedId by store.lookIdState.collectAsState()
     val savedLook = JarnLooks.fromId(savedId)
     val matchCard = rememberJarnMatchCard(store, savedLook)
+    val fontRow = rememberJarnFontMatchRow(store, FontMatchAvailability.fromColorCard(matchCard.state))
     SettingsGroup(R.string.jarnfe_look_theme_title) {
         JarnLookPicker(
             chosen = savedLook.takeUnless { matchCard.state.isMatching },
             onChoose = { store.setLookId(it.id) },
         )
         JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
+        JarnMatchCommandPanelFontsRow(fontRow, store::setMatchCommandPanelFonts)
+        JarnMatchCommandPanelSwatches(matchCard)
     }
 }
 

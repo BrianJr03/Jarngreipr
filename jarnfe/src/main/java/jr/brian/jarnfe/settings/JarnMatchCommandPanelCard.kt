@@ -2,9 +2,7 @@ package jr.brian.jarnfe.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -44,18 +42,22 @@ internal fun rememberJarnMatchCard(store: JarnLookStore, savedLook: JarnLook): J
 @Composable
 internal fun JarnMatchCommandPanelCard(card: JarnMatchCard, onCheckedChange: (Boolean) -> Unit) {
     if (card.state == JarnMatchCardState.Hidden) return
-    Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
-        JarnToggleRow(
-            label = stringResource(R.string.jarnfe_look_match_cp),
-            checked = card.enabled,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier.fillMaxWidth(),
-            supporting = stringResource(card.state.statusText),
-            enabled = card.enabled || card.state.canTurnOn,
-            focusableWhenDisabled = true,
-        )
-        card.preview?.let { JarnMatchPreview(it) }
-    }
+    JarnToggleRow(
+        label = stringResource(R.string.jarnfe_look_match_cp),
+        checked = card.enabled,
+        onCheckedChange = onCheckedChange,
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(card.state.statusText),
+        enabled = card.enabled || card.state.canTurnOn,
+        focusableWhenDisabled = true,
+    )
+}
+
+/** Shown after both Command Panel toggles, so the two rows stay together. */
+@Composable
+internal fun JarnMatchCommandPanelSwatches(card: JarnMatchCard) {
+    if (card.state == JarnMatchCardState.Hidden) return
+    card.preview?.let { JarnMatchPreview(it) }
 }
 
 @Composable
