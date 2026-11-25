@@ -7,6 +7,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.text.TextLayoutResult
+import jr.brian.core.ui.library.JarnHeroPanel
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.jarnTypeWithFonts
 import jr.brian.jarnfe.shell.JarnWordmark
@@ -18,6 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
+private const val LAST_PLAYED = "Last played today"
 private const val HEADER = "In this system"
 private const val EYEBROW = "Continue playing"
 private const val MIXED = "Pok\u00e9mon \u30bc\u30eb\u30c0"
@@ -58,5 +60,19 @@ class NowThemedTextTest {
         assertEquals(JarnTheme.baseType.captionStrong.fontFamily, mixed.fontFamily)
         assertEquals(JarnTheme.baseType.captionStrong.fontSize, mixed.fontSize)
         assertEquals(type.heading.fontFamily, mark.fontFamily)
+    }
+
+    @Test
+    fun `top screen Continue playing body follows the resume style`() {
+        var expected: androidx.compose.ui.text.font.FontFamily? = null
+        rule.setContent {
+            JarnTheme(type = type) {
+                expected = resumeStatsStyle().fontFamily
+                JarnHeroPanel(eyebrow = null, title = "Okami", body = LAST_PLAYED, bodyStyle = resumeStatsStyle(), art = {})
+            }
+        }
+        val body = rule.onNodeWithText(LAST_PLAYED).textLayout().layoutInput.style
+        assertEquals(type.label.fontFamily, expected)
+        assertEquals(expected, body.fontFamily)
     }
 }
