@@ -66,6 +66,19 @@ class NowGameFactsTest {
     }
 
     @Test
+    fun `a game's video reaches the now art`() {
+        val art = nowGameArt(mapOf(MediaKind.Video to "content://videos/Mario.MP4"), null)
+        assertEquals("content://videos/Mario.MP4", art.videoPath)
+    }
+
+    @Test
+    fun `a blank or missing video is null`() {
+        assertNull(nowGameArt(mapOf(MediaKind.Video to " "), null).videoPath)
+        assertNull(nowGameArt(mapOf(MediaKind.Cover to "cover"), null).videoPath)
+        assertNull(NowGameArt().videoPath)
+    }
+
+    @Test
     fun `no art still counts as loaded`() {
         assertEquals(NowGameArt(isLoaded = true), nowGameArt(mapOf(MediaKind.Cover to " "), null))
     }

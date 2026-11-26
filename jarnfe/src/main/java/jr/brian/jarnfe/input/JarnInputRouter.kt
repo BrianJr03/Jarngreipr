@@ -34,12 +34,14 @@ class JarnInputLayerHandle internal constructor(
 ) {
     internal var entries: Map<JarnAction, JarnBinding> = emptyMap()
     internal var labels by mutableStateOf<Map<JarnAction, Int?>>(emptyMap())
+    internal var longPressLabels by mutableStateOf<Map<JarnAction, Int>>(emptyMap())
     internal var sequence = 0L
     internal var attached = false
 
     fun update(bindings: JarnBindings) {
         entries = bindings.entries
         labels = bindings.labels
+        longPressLabels = bindings.longPressLabels
     }
 }
 
@@ -70,6 +72,12 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
 
     /** Runs for every D-pad press and repeat, whatever handles it. */
     var onDirectionPressed: (() -> Unit)? = null
+
+    /**
+     * Sees each fresh press before any layer. Returning true swallows the whole press, for UI that
+     * a press only brings back, such as Now hidden over a game preview.
+     */
+    var pressInterceptor: ((JarnAction) -> Boolean)? = null
 
     fun activate(screen: JarnScreen) {
         activeScreen = screen
@@ -132,6 +140,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     /** For predictive back, which arrives through the back dispatcher instead of a key event. */
     fun dispatchSystemBack() {
         if (presses.values.any { it.action == JarnAction.Back }) return
+        if (pressInterceptor?.invoke(JarnAction.Back) == true) return
         when (val route = resolve(JarnAction.Back)) {
             is Route.Bound -> route.layer.entries[JarnAction.Back]?.onPress?.invoke()
             Route.ReturnToStage -> activate(JarnScreen.Stage)
@@ -154,15 +163,20 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
      */
     var shellTabTarget: (JarnShoulderPair) -> JarnScreen? = { null }
 
+    /** One hint per key, then the hold hints, which share a key with a tap. */
     fun hintsFor(screen: JarnScreen): List<JarnInputHint> {
         val hints = LinkedHashMap<JarnKey, JarnInputHint>()
+        val holds = LinkedHashMap<JarnKey, JarnInputHint>()
         JarnAction.entries.forEach { action ->
             val key = action.hintKey ?: return@forEach
-            val label = hintLabel(screen, action) ?: return@forEach
-            hints.getOrPut(key) { JarnInputHint(key, label) }
+            hintLabel(screen, action)?.let { hints.getOrPut(key) { JarnInputHint(key, it) } }
+            longPressLabel(screen, action)?.let { holds.getOrPut(key) { JarnInputHint(key, it) } }
         }
-        return hints.values.toList()
+        return hints.values.toList() + holds.values
     }
+
+    private fun longPressLabel(screen: JarnScreen, action: JarnAction): Int? =
+        (lookup(screen, action) as? Lookup.Found)?.layer?.longPressLabels?.get(action)
 
     /**
      * The shoulder pair that moves this screen's tabs: L1/R1 on the top screen and L2/R2 on the
@@ -195,7 +209,8 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         val isDuplicate = presses.any { (code, press) ->
             code != input.keyCode && press.action == action && press.route != Route.PassThrough
         }
-        val route = if (isDuplicate) Route.Swallow else resolve(action)
+        val isIntercepted = !isDuplicate && pressInterceptor?.invoke(action) == true
+        val route = if (isDuplicate || isIntercepted) Route.Swallow else resolve(action)
         when {
             action.isDirection -> onDirectionPressed?.invoke()
             route != Route.Swallow -> onButtonPressed?.invoke()

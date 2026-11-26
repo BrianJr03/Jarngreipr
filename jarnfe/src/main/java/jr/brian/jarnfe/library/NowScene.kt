@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,17 +45,28 @@ internal fun nowGamePaths(game: JarnLibraryGame, art: NowSceneGameArt?): List<St
 internal fun NowScene(
     selection: LibrarySelection,
     systemNow: JarnSystemNow?,
+    preview: NowVideoPreview = NowVideoPreview.Off,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box(Modifier.fillMaxSize().clipToBounds()) {
-        NowSceneArt(selection, systemNow)
-        NowBottomShade()
-        content()
+    val hold = remember { NowVideoHold() }
+    val backdrop = remember { NowVideoBackdrop() }
+    CompositionLocalProvider(LocalNowVideoHold provides hold) {
+        Box(Modifier.fillMaxSize()) {
+            NowVideoFill {
+                NowSceneArt(selection, systemNow, backdrop)
+                NowSceneVideo(selection, preview, backdrop)
+            }
+            NowHiddenUiInput()
+            Box(Modifier.matchParentSize().clipToBounds().nowHideableUi()) {
+                NowBottomShade()
+                content()
+            }
+        }
     }
 }
 
 @Composable
-private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?) {
+private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?, backdrop: NowVideoBackdrop) {
     val showsBackground = rememberJarnDisplay().systemBackgroundVisible
     val target = when (selection) {
         LibrarySelection.None -> emptyList()
@@ -64,8 +76,10 @@ private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSys
     NowRevealWhen(target != null)
     val paths = rememberHeldPaths(target)
     val wall = rememberHeldWall(systemNow).takeIf { nowShowsWall(selection, showsBackground) }
-    LibraryHeldArt(paths) {
-        wall?.let { LibraryCoverWall(it.systemId, it.covers, Modifier.matchParentSize()) }
+    Box(Modifier.matchParentSize().nowVideoBackdrop(backdrop.blurred)) {
+        LibraryHeldArt(paths) {
+            wall?.let { LibraryCoverWall(it.systemId, it.covers, Modifier.matchParentSize()) }
+        }
     }
 }
 

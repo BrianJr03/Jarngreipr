@@ -12,6 +12,7 @@ import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.LibraryConfirm
 import jr.brian.jarnfe.library.LibrarySelection
+import jr.brian.jarnfe.library.optionsOrHideUi
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
@@ -78,7 +79,7 @@ private fun JarnBindingsBuilder.gameActionsBinding(
 ) {
     val selection = library.nowSelection(state.stageRoute, state.librarySection)
     if (selection !is LibrarySelection.Game || JarnGameActions.controller == null) return
-    on(JarnAction.Context, R.string.jarnfe_hint_context) {
+    optionsOrHideUi(R.string.jarnfe_hint_context) {
         if (state.stageRoute == StageRoute.Search) JarnSearch.showActions()
         JarnGameActions.focusActions()
         session.update { openDeckNow() }
@@ -113,6 +114,7 @@ private fun JarnBindingsBuilder.confirmHint(confirm: LibraryConfirm) {
 
 internal fun JarnBindingsBuilder.deckBindings(state: JarnSessionState, session: JarnSessionStore) {
     backHint(state, session)
+    optionsOrHideUi(label = null) {}
     if (state.stageRoute == StageRoute.Settings && state.settingsOnDeck) {
         hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
     }

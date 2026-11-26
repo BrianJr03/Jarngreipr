@@ -130,6 +130,16 @@ class ArtResolutionTest {
     }
 
     @Test
+    fun `es-de video in a folder alias reaches the catalog system`() = runBlocking {
+        write(esde, "3ds/videos/Pilotwings.MP4")
+
+        val art = resolver.resolve(game("n3ds", "Pilotwings.3ds"), ArtSource.EsDe)
+
+        assertEquals(File(esde, "3ds/videos/Pilotwings.MP4").path, art.video?.path)
+        assertEquals(ArtSource.EsDe, art.video?.source)
+    }
+
+    @Test
     fun `chosen source wins and others fill gaps per kind`() = runBlocking {
         write(esde, "gba/covers/Sonic.png")
         write(esde, "gba/marquees/Sonic.png")

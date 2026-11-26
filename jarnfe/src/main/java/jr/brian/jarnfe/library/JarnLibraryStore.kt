@@ -110,7 +110,12 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         if (systemId != null) update { openSystem(systemId) }
     }
 
+    /** Grows on every press of Play, so a preview behind Now stops as the game opens. */
+    var launches by mutableIntStateOf(0)
+        private set
+
     fun play(game: JarnLibraryGame) {
+        launches += 1
         onPlay?.invoke(game)
     }
 

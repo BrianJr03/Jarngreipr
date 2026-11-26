@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_video_previews_title">Video previews</string>
+    <string name="jarnfe_video_previews_play">Play video previews</string>
+    <string name="jarnfe_video_previews_play_hint">Loops a game\'s video on the bottom screen when it has one</string>
+    <string name="jarnfe_video_previews_sound">Preview sound</string>
+    <string name="jarnfe_video_previews_sound_hint">Plays the video\'s audio.</string>
+    <string name="jarnfe_video_previews_sound_hint_off">Plays the video\'s audio. Turn on video previews first.</string>
+    <string name="jarnfe_video_previews_fit">Video fit</string>
+    <string name="jarnfe_video_previews_fit_hint">Shows the whole video over blurred art</string>
+    <string name="jarnfe_video_previews_crop_hint">Fills the screen, trimming the edges</string>
+    <string name="jarnfe_video_previews_hint">This game has a video preview. Turn it on in Settings, Look.</string>
+</resources>

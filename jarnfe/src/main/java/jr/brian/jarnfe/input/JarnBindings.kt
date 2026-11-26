@@ -22,10 +22,13 @@ class JarnBinding internal constructor(
     val onLongPress: (() -> Unit)?,
     val onPress: (() -> Unit)?,
     val onRepeat: (() -> Unit)? = null,
+    @param:StringRes val longPressLabelRes: Int? = null,
 )
 
 class JarnBindings internal constructor(internal val entries: Map<JarnAction, JarnBinding>) {
     internal val labels: Map<JarnAction, Int?> = entries.mapValues { it.value.labelRes }
+    internal val longPressLabels: Map<JarnAction, Int> =
+        entries.mapNotNull { (action, binding) -> binding.longPressLabelRes?.let { action to it } }.toMap()
 
     companion object {
         val Empty = JarnBindings(emptyMap())
@@ -38,6 +41,7 @@ class JarnBindingsBuilder internal constructor() {
     /**
      * Binds [action]. A null [label] handles the action without showing a hint. [onRepeat] replaces
      * [onPress] for key repeats, for actions where only a fresh press may do something.
+     * [longPressLabel] adds a second hint for the same button, for what holding it does.
      */
     fun on(
         action: JarnAction,
@@ -45,11 +49,13 @@ class JarnBindingsBuilder internal constructor() {
         repeats: Boolean = action.isDirection,
         onLongPress: (() -> Unit)? = null,
         onRepeat: (() -> Unit)? = null,
+        @StringRes longPressLabel: Int? = null,
         onPress: () -> Unit,
     ) {
         require(!(repeats && onLongPress != null)) { "$action cannot both repeat and long press" }
+        require(longPressLabel == null || onLongPress != null) { "$action has a hold hint but no long press" }
         require(!(repeats && action == JarnAction.Back)) { "Back pops one layer per press" }
-        entries[action] = JarnBinding(label, repeats, onLongPress, onPress, onRepeat)
+        entries[action] = JarnBinding(label, repeats, onLongPress, onPress, onRepeat, longPressLabel)
     }
 
     /** Shows a hint for [action] while leaving the press to the focused composable. */

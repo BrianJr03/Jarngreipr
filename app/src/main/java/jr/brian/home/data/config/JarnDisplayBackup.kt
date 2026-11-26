@@ -6,6 +6,7 @@ import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
+import jr.brian.frontend.look.JarnVideoFit
 
 /** Jarn FE display choices to and from a backup. A null field keeps the current value. */
 internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
@@ -31,6 +32,9 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     playingScreenVisible = playingScreenVisible,
     playingDim = playingDim.id,
     playingScreenOff = playingScreenOff,
+    videoPreviews = videoPreviews,
+    videoPreviewSound = videoPreviewSound,
+    videoFit = videoFit.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -56,4 +60,7 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     playingScreenVisible = playingScreenVisible ?: current.playingScreenVisible,
     playingDim = JarnPlayingDim.fromId(playingDim) ?: current.playingDim,
     playingScreenOff = playingScreenOff ?: current.playingScreenOff,
+    videoPreviews = videoPreviews ?: current.videoPreviews,
+    videoPreviewSound = videoPreviewSound ?: current.videoPreviewSound,
+    videoFit = JarnVideoFit.fromId(videoFit) ?: current.videoFit,
 )

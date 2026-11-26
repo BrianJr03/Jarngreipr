@@ -61,6 +61,9 @@ data class JarnMotion(
     val screen = if (reduced) ReducedFade else JarnMotionToken(320, JarnEasingEmphasized)
     val art = if (reduced) ReducedFade else JarnMotionToken(400, LinearEasing)
 
+    /** A game preview fading in over its art once its first frame is drawn. */
+    val videoReveal = if (reduced) ReducedFade else JarnMotionToken(400, LinearEasing)
+
     /** A list scrolling itself to a chosen item. Reduced motion lands there at once. */
     val listJump = if (reduced) Instant else JarnMotionToken(340, JarnEasingEmphasized)
 

@@ -196,6 +196,7 @@ private fun SettingsSectionContent(
         SettingsSection.Look -> {
             JarnLookSection()
             SettingsGroup(R.string.jarnfe_wallpaper_title) { JarnWallpaperSection() }
+            JarnVideoPreviewSection()
         }
         SettingsSection.Display -> JarnDisplaySection()
         SettingsSection.Apps -> JarnAppsSettingsSection(actions)

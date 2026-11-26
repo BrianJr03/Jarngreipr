@@ -26,12 +26,19 @@ class ConfigFixtureTest {
     }
 
     @Test
-    fun `a v68 backup re-encodes to the same bytes apart from the version and the v69 field`() {
+    fun `a v68 backup re-encodes to the same bytes apart from the fields added later`() {
         val reencoded = json.encodeToString(json.decodeFromString<JarngreiprConfig>(fixture))
-        val expected = fixture.replace(
-            "\"playingDim\": \"30s\"",
-            "\"playingDim\": \"30s\",\n            \"playingScreenOff\": null",
-        )
+        val expected = fixture
+            .replace(
+                "\"playingDim\": \"30s\"",
+                "\"playingDim\": \"30s\",\n            \"playingScreenOff\": null," +
+                    "\n            \"videoPreviews\": null,\n            \"videoPreviewSound\": null," +
+                    "\n            \"videoFit\": null",
+            )
+            .replace(
+                "\"jarnEsdeImportNoticeShown\": null,",
+                "\"jarnEsdeImportNoticeShown\": null,\n        \"jarnVideoHintShown\": null,",
+            )
         assertEquals(expected, reencoded)
     }
 }

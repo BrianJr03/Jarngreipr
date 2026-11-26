@@ -68,6 +68,16 @@ class JarnLookStore @Inject constructor(
         prefs.edit { putBoolean(KEY_ESDE_IMPORT_NOTICE_SHOWN, true) }
     }
 
+    private val _videoHintShown = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_HINT_SHOWN, false))
+
+    /** The one-time "this game has a video preview" hint was shown. Never turns back off. */
+    val videoHintShown: Boolean get() = _videoHintShown.value
+
+    fun markVideoHintShown() {
+        _videoHintShown.value = true
+        prefs.edit { putBoolean(KEY_VIDEO_HINT_SHOWN, true) }
+    }
+
     private val _liveWallpaperId = MutableStateFlow(
         prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
     )
@@ -118,6 +128,9 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_PLAYING_SCREEN_VISIBLE, next.playingScreenVisible)
             putString(KEY_PLAYING_DIM, next.playingDim.id)
             putBoolean(KEY_PLAYING_SCREEN_OFF, next.playingScreenOff)
+            putBoolean(KEY_VIDEO_PREVIEWS, next.videoPreviews)
+            putBoolean(KEY_VIDEO_PREVIEW_SOUND, next.videoPreviewSound)
+            putString(KEY_VIDEO_FIT, next.videoFit.id)
         }
     }
 
@@ -163,6 +176,9 @@ class JarnLookStore @Inject constructor(
         playingScreenVisible = prefs.getBoolean(KEY_PLAYING_SCREEN_VISIBLE, true),
         playingDim = JarnPlayingDim.fromId(prefs.getString(KEY_PLAYING_DIM, null)) ?: JarnPlayingDim.ThirtySeconds,
         playingScreenOff = prefs.getBoolean(KEY_PLAYING_SCREEN_OFF, false),
+        videoPreviews = prefs.getBoolean(KEY_VIDEO_PREVIEWS, false),
+        videoPreviewSound = prefs.getBoolean(KEY_VIDEO_PREVIEW_SOUND, false),
+        videoFit = JarnVideoFit.fromId(prefs.getString(KEY_VIDEO_FIT, null)) ?: JarnVideoFit.Fit,
     ).coerced()
 
     fun setLookId(id: String) {
@@ -240,6 +256,10 @@ class JarnLookStore @Inject constructor(
         const val KEY_PLAYING_SCREEN_VISIBLE = "playing_screen_visible"
         const val KEY_PLAYING_DIM = "playing_dim"
         const val KEY_PLAYING_SCREEN_OFF = "playing_screen_off"
+        const val KEY_VIDEO_PREVIEWS = "video_previews"
+        const val KEY_VIDEO_PREVIEW_SOUND = "video_preview_sound"
+        const val KEY_VIDEO_FIT = "video_fit"
+        const val KEY_VIDEO_HINT_SHOWN = "video_hint_shown"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"
     }

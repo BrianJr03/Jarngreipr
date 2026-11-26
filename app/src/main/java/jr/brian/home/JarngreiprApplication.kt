@@ -53,6 +53,8 @@ import jr.brian.jarnfe.home.JarnHomeApp
 import jr.brian.jarnfe.home.JarnHomeAppProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
 import jr.brian.jarnfe.library.JarnEsdeRomsProvider
+import jr.brian.jarnfe.library.JarnGameVideos
+import jr.brian.jarnfe.library.JarnGameVideosProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
 import jr.brian.jarnfe.settings.JarnLauncherSettings
@@ -65,6 +67,7 @@ import jr.brian.jarnfe.scraper.JarnScraperSetup
 import jr.brian.jarnfe.scraper.JarnScraperSetupProvider
 import jr.brian.jarnfe.tools.JarnInputTools
 import jr.brian.jarnfe.tools.JarnInputToolsProvider
+import jr.brian.home.jarn.AppJarnGameVideos
 import jr.brian.home.jarn.AppJarnRssData
 import jr.brian.jarnfe.rss.JarnRssData
 import jr.brian.jarnfe.rss.JarnRssDataProvider
@@ -102,6 +105,7 @@ class JarngreiprApplication :
     JarnDataProvider,
     JarnUtilitiesProvider,
     JarnRssDataProvider,
+    JarnGameVideosProvider,
     JarnLauncherSettingsProvider,
     jr.brian.jarnfe.settings.JarnGamelistSettingProvider,
     jr.brian.jarnfe.audio.JarnAudioDataProvider,
@@ -271,6 +275,13 @@ class JarngreiprApplication :
 
     override val jarnRssData: JarnRssData
         get() = jarnRssDataProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's game previews. */
+    @Inject
+    lateinit var jarnGameVideosProvider: Provider<AppJarnGameVideos>
+
+    override val jarnGameVideos: JarnGameVideos
+        get() = jarnGameVideosProvider.get()
 
     /** A [Provider] so Classic never builds Jarn FE's audio bridge. */
     @Inject

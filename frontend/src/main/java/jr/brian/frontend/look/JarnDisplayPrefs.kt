@@ -30,6 +30,17 @@ enum class JarnPlayingDim(val id: String, val seconds: Int?) {
     }
 }
 
+/** How a game's video preview meets its frame. [Fit] shows the whole video over blurred art. */
+enum class JarnVideoFit(val id: String) {
+    Fit("fit"),
+    Crop("crop"),
+    ;
+
+    companion object {
+        fun fromId(id: String?): JarnVideoFit? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** Jarn FE display choices. The defaults match how Jarn FE looked before they existed. */
 data class JarnDisplayPrefs(
     val systemTileScale: Float = DEFAULT_TILE_SCALE,
@@ -54,6 +65,9 @@ data class JarnDisplayPrefs(
     val playingScreenVisible: Boolean = true,
     val playingDim: JarnPlayingDim = JarnPlayingDim.ThirtySeconds,
     val playingScreenOff: Boolean = false,
+    val videoPreviews: Boolean = false,
+    val videoPreviewSound: Boolean = false,
+    val videoFit: JarnVideoFit = JarnVideoFit.Fit,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

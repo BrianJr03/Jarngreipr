@@ -142,6 +142,7 @@ private fun NowGameScroller(
 ) {
     val scroll = rememberScrollState()
     LaunchedEffect(gameId, showsPicker) { scroll.scrollTo(0) }
+    NowVideoSheetReport(scroll)
     val page = @Composable { modifier: Modifier ->
         Column(
             modifier = modifier
@@ -173,6 +174,7 @@ private fun NowGamePage(
     setupRows: (@Composable () -> Unit)? = null,
 ) {
     val art = rememberNowGameArt(game)
+    JarnVideoPreviewHintEffect(art.videoPath)
     val marqueeBounds = rememberNowArtBounds(art.marqueePath)
     val coverBounds = rememberNowArtBounds(art.coverPath)
     NowRevealWhen(
