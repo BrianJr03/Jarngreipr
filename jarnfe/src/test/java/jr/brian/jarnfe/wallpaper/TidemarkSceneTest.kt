@@ -143,7 +143,7 @@ class TidemarkSceneTest {
         val entry = JarnLiveWallpapers.fromId("tidemark")
         assertNotNull(entry)
         val label = ApplicationProvider.getApplicationContext<Application>().getString(entry!!.nameRes)
-        assertEquals("Tidemark", label)
+        assertEquals("Face Buttons", label)
     }
 
     private fun crestCounts(halfWidth: Float, top: Float): List<Int> {
