@@ -234,6 +234,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             playingScreenVisible = it.playingScreenVisible ?: shown?.playingScreenVisible,
             playingDim = it.playingDim?.takeIf { id -> JarnPlayingDim.fromId(id) != null } ?: shown?.playingDim,
             playingScreenOff = it.playingScreenOff ?: shown?.playingScreenOff,
+            videoPreviews = it.videoPreviews ?: shown?.videoPreviews,
+            videoPreviewSound = it.videoPreviewSound ?: shown?.videoPreviewSound,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
@@ -285,6 +287,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnMatchCommandPanelFonts = null,
         jarnFontsPromptShown = null,
         jarnEsdeImportNoticeShown = null,
+        jarnVideoHintShown = null,
         jarnSystemSorts = feature.jarnSystemSorts ?: current.feature.jarnSystemSorts,
         jarnWallpaperScreens = null,
         jarnPreview = null,

@@ -31,6 +31,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     playingScreenVisible = playingScreenVisible,
     playingDim = playingDim.id,
     playingScreenOff = playingScreenOff,
+    videoPreviews = videoPreviews,
+    videoPreviewSound = videoPreviewSound,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -56,4 +58,6 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     playingScreenVisible = playingScreenVisible ?: current.playingScreenVisible,
     playingDim = JarnPlayingDim.fromId(playingDim) ?: current.playingDim,
     playingScreenOff = playingScreenOff ?: current.playingScreenOff,
+    videoPreviews = videoPreviews ?: current.videoPreviews,
+    videoPreviewSound = videoPreviewSound ?: current.videoPreviewSound,
 )
