@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.frontend.library.collections.BackedUpCollection
 import jr.brian.frontend.library.collections.BackedUpCollectionMember
+import jr.brian.frontend.library.favorites.BackedUpFavorite
 import kotlinx.serialization.Serializable
 
 /** A game by system and ROM path, so it matches after a rescan under a different ROM folder. */
@@ -29,3 +30,7 @@ internal fun JarnCollectionConfig.toBackedUpCollection() = BackedUpCollection(
     position = position,
     members = members.map { BackedUpCollectionMember(it.systemId, it.relativePath) },
 )
+
+internal fun BackedUpFavorite.toConfig() = JarnGameKeyConfig(systemId, relativePath)
+
+internal fun JarnGameKeyConfig.toBackedUpFavorite() = BackedUpFavorite(systemId, relativePath)

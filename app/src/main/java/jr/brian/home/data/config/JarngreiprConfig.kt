@@ -238,9 +238,10 @@ data class JarngreiprConfig(
         //      Null on older blobs keeps the current values. Import only sets the hint flag.
         // v71: added JarnDisplayConfig.videoFit, Jarn FE video previews cropped or fitted. Null on
         //      older blobs keeps the current value. An unknown id falls back to fit.
-        // v72: added FeatureConfig.jarnCollections, keyed by system and ROM path so members match
-        //      under a different ROM folder. Null on older blobs keeps the device's. Import only adds:
-        //      same-name collections (ignoring case) gain members and the rest are made.
+        // v72: added FeatureConfig.jarnCollections and jarnFavorites, keyed by system and ROM path so
+        //      they match under a different ROM folder. Null on older blobs keeps the device's. Import
+        //      only adds: same-name collections (ignoring case) gain members, the rest are made, and
+        //      favorites not scanned yet wait on the device until a scan lists them.
         const val CONFIG_VERSION = 72
     }
 }

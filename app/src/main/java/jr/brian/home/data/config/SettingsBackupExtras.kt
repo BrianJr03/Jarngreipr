@@ -6,6 +6,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.library.art.GameSortStore
 import jr.brian.frontend.library.collections.CollectionsBackup
+import jr.brian.frontend.library.favorites.FavoritesBackup
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,6 +26,7 @@ class SettingsBackupExtras @Inject constructor(
     private val jingles: JingleBackup,
     private val gameSorts: GameSortStore,
     private val collections: CollectionsBackup,
+    private val favorites: FavoritesBackup,
 ) {
     private val widgetManager by lazy { runCatching { AppWidgetManager.getInstance(context) }.getOrNull() }
 
@@ -37,6 +39,7 @@ class SettingsBackupExtras @Inject constructor(
             rssFeeds = rssFeeds.export(),
             jarnSystemSorts = gameSorts.state.value,
             jarnCollections = collections.export()?.map { it.toConfig() },
+            jarnFavorites = favorites.export()?.map { it.toConfig() },
             jingles = config.feature.jingles.copy(enabled = jingles.enabled, repos = jingles.repos),
         ),
     )
@@ -58,6 +61,7 @@ class SettingsBackupExtras @Inject constructor(
         jingles.restore(config.feature.jingles.enabled, config.feature.jingles.repos)
         config.feature.jarnSystemSorts?.let(gameSorts::restore)
         config.feature.jarnCollections?.let { list -> collections.restore(list.map { it.toBackedUpCollection() }) }
+        config.feature.jarnFavorites?.let { list -> favorites.restore(list.map { it.toBackedUpFavorite() }) }
     }
 
     private fun providerOf(widgetId: Int): String? =

@@ -41,7 +41,7 @@ class ConfigFixtureTest {
             )
             .replace(
                 "\"jarnPreview\": null\n",
-                "\"jarnPreview\": null,\n        \"jarnCollections\": null\n",
+                "\"jarnPreview\": null,\n        \"jarnCollections\": null,\n        \"jarnFavorites\": null\n",
             )
         assertEquals(expected, reencoded)
     }

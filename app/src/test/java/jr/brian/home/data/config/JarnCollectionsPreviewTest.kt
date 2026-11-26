@@ -15,9 +15,10 @@ class JarnCollectionsPreviewTest {
             .items.first { it.area == area }
 
     @Test
-    fun `an older backup shows collections as not included`() {
-        val now = FeatureConfig(jarnCollections = listOf(JarnCollectionConfig("Mine")))
+    fun `an older backup shows collections and favorites as not included`() {
+        val now = FeatureConfig(jarnCollections = listOf(JarnCollectionConfig("Mine")), jarnFavorites = listOf(mario))
         assertEquals(JarnBackupChange.NotIncluded, preview(FeatureConfig(), now, JarnBackupArea.Collections).change)
+        assertEquals(JarnBackupChange.NotIncluded, preview(FeatureConfig(), now, JarnBackupArea.Favorites).change)
     }
 
     @Test
@@ -34,14 +35,25 @@ class JarnCollectionsPreviewTest {
 
     @Test
     fun `a backup with nothing new is the same`() {
-        val now = FeatureConfig(jarnCollections = listOf(JarnCollectionConfig("RPGs", 0, listOf(mario))))
-        val backup = FeatureConfig(jarnCollections = emptyList())
+        val now = FeatureConfig(
+            jarnCollections = listOf(JarnCollectionConfig("RPGs", 0, listOf(mario))),
+            jarnFavorites = listOf(mario, chrono),
+        )
+        val backup = FeatureConfig(jarnCollections = emptyList(), jarnFavorites = listOf(chrono))
         assertEquals(JarnBackupChange.Same, preview(backup, now, JarnBackupArea.Collections).change)
+        assertEquals(JarnBackupChange.Same, preview(backup, now, JarnBackupArea.Favorites).change)
     }
 
     @Test
-    fun `collections never count as other settings`() {
-        val backup = FeatureConfig(jarnCollections = listOf(JarnCollectionConfig("New")))
+    fun `favorites count only the ones not already favorite`() {
+        val now = FeatureConfig(jarnFavorites = listOf(mario))
+        val backup = FeatureConfig(jarnFavorites = listOf(mario, chrono))
+        assertEquals(JarnBackupChange.Adds(1), preview(backup, now, JarnBackupArea.Favorites).change)
+    }
+
+    @Test
+    fun `collections and favorites never count as other settings`() {
+        val backup = FeatureConfig(jarnCollections = listOf(JarnCollectionConfig("New")), jarnFavorites = listOf(chrono))
         assertEquals(JarnBackupChange.Same, preview(backup, FeatureConfig(), JarnBackupArea.OtherSettings).change)
     }
 }

@@ -82,4 +82,6 @@ data class FeatureConfig(
     val jarnPreview: JarnPreviewConfig? = null,
     /** v72: Jarn FE collections. Null on pre-v72 exports keeps them. Import only adds, so empty adds nothing. */
     val jarnCollections: List<JarnCollectionConfig>? = null,
+    /** v72: Jarn FE favorites. Null on pre-v72 exports keeps them. Import never unfavorites a game. */
+    val jarnFavorites: List<JarnGameKeyConfig>? = null,
 )

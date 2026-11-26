@@ -23,6 +23,14 @@ internal fun collectionsItem(
     return addsItem(JarnBackupArea.Collections, backup.size, currentCount ?: 0, added)
 }
 
+/** Restoring favorites only adds, never unfavorites. */
+internal fun favoritesItem(backup: List<JarnGameKeyConfig>?, current: List<JarnGameKeyConfig>?): JarnBackupItem {
+    if (backup == null) return JarnBackupItem(JarnBackupArea.Favorites, null, current?.size, JarnBackupChange.NotIncluded)
+    val existing = current.orEmpty().toSet()
+    val added = backup.filter { it.systemId.isNotBlank() && it.relativePath.isNotBlank() }.distinct().count { it !in existing }
+    return addsItem(JarnBackupArea.Favorites, backup.size, current?.size ?: 0, added)
+}
+
 private fun addsItem(area: JarnBackupArea, backupCount: Int, currentCount: Int, added: Int) = JarnBackupItem(
     area = area,
     backupCount = backupCount,

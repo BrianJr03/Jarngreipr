@@ -216,6 +216,14 @@ interface GameDao {
     @Query("UPDATE games SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun setFavorite(id: Long, isFavorite: Boolean)
 
+    /** Hidden favorites included, so a backup keeps them. */
+    @Query("SELECT DISTINCT systemId, relativePath FROM games WHERE isFavorite = 1")
+    suspend fun favoriteKeys(): List<PlayGameKey>
+
+    /** Every copy of the game, whichever source lists it. Returns how many rows matched. */
+    @Query("UPDATE games SET isFavorite = 1 WHERE systemId = :systemId AND relativePath = :relativePath")
+    suspend fun favoriteByKey(systemId: String, relativePath: String): Int
+
     @Query("SELECT * FROM games WHERE absolutePath = :absolutePath LIMIT 1")
     suspend fun findByAbsolutePath(absolutePath: String): GameEntity?
 
