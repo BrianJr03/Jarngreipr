@@ -79,5 +79,7 @@ data class FeatureConfig(
     /** v54: Jarn FE wallpaper per screen. Null on pre-v54 exports, and import keeps the current choice. */
     val jarnWallpaperScreens: JarnWallpaperScreensConfig? = null,
     /** v57: Meet Jarn preview state. Null on pre-v57 exports, and import keeps the current state. */
-    val jarnPreview: JarnPreviewConfig? = null
+    val jarnPreview: JarnPreviewConfig? = null,
+    /** v72: Jarn FE collections. Null on pre-v72 exports keeps them. Import only adds, so empty adds nothing. */
+    val jarnCollections: List<JarnCollectionConfig>? = null,
 )
