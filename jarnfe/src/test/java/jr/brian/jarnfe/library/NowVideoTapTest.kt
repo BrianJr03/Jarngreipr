@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
@@ -25,6 +26,9 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnInputRouter
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
+import jr.brian.jarnfe.launch.GameActionsPage
+import jr.brian.jarnfe.launch.JarnGameActions
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,6 +41,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 private const val SCENE_TAG = "scene"
+private const val SHEET_TAG = "sheet"
+private const val SHEET_SCROLL_PX = 400
 
 /**
  * The Deck's layering: the scene's parent holds the tap, the scrolling Now page with its controls
@@ -61,7 +67,7 @@ class NowVideoTapTest {
         rule.setContent {
             JarnTheme {
                 Box(Modifier.size(538.dp, 420.dp)) {
-                    Box(Modifier.matchParentSize().testTag(SCENE_TAG).nowVideoTapToFill()) {
+                    Box(Modifier.matchParentSize().testTag(SCENE_TAG).nowVideoTapToFill { false }) {
                         Column(Modifier.matchParentSize().verticalScroll(rememberScrollState())) {
                             Spacer(Modifier.height(300.dp))
                             JarnButton(label = "Play", onClick = { plays++ }, modifier = Modifier.fillMaxWidth())
@@ -150,6 +156,60 @@ class NowVideoTapTest {
         assertFalse(NowVideoVisibility.uiHidden)
         tapVideo()
         assertTrue(NowVideoVisibility.uiHidden)
+    }
+
+    private fun showSceneWithSheet(scroll: ScrollState) {
+        rule.setContent {
+            JarnTheme {
+                ProvideJarnInput(JarnInputRouter(), JarnScreen.Deck) {
+                    Box(Modifier.size(538.dp, 420.dp).testTag(SCENE_TAG)) {
+                        NowScene(LibrarySelection.None, systemNow = null) {
+                            NowVideoSheetReport(scroll)
+                            Column(Modifier.matchParentSize().verticalScroll(scroll)) {
+                                Spacer(Modifier.height(420.dp))
+                                Spacer(Modifier.height(600.dp).testTag(SHEET_TAG))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        rule.runOnIdle { NowVideoVisibility.report(true) }
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `a tap on the More sheet's empty space, scrolled up over the video, stays put`() {
+        val scroll = ScrollState(0)
+        showSceneWithSheet(scroll)
+        rule.runOnIdle { runBlocking { scroll.scrollTo(SHEET_SCROLL_PX) } }
+        rule.waitForIdle()
+        tapVideo()
+        assertFalse(NowVideoVisibility.uiHidden)
+    }
+
+    @Test
+    fun `with the More sheet back down a tap on the video goes full screen`() {
+        val scroll = ScrollState(0)
+        showSceneWithSheet(scroll)
+        rule.runOnIdle { runBlocking { scroll.scrollTo(SHEET_SCROLL_PX) } }
+        rule.waitForIdle()
+        rule.runOnIdle { runBlocking { scroll.scrollTo(0) } }
+        rule.waitForIdle()
+        tapVideo()
+        assertTrue(NowVideoVisibility.uiHidden)
+    }
+
+    @Test
+    fun `a game action page over the scene also keeps the tap from going full screen`() {
+        showSceneWithSheet(ScrollState(0))
+        rule.runOnIdle { JarnGameActions.page = GameActionsPage.Emulators }
+        try {
+            tapVideo()
+            assertFalse(NowVideoVisibility.uiHidden)
+        } finally {
+            JarnGameActions.page = GameActionsPage.Actions
+        }
     }
 
     @Test

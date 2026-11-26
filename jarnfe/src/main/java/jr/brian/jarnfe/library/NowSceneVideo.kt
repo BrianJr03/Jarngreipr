@@ -141,8 +141,11 @@ internal fun NowVideoSheetReport(scroll: ScrollState) {
 }
 
 @Composable
-private fun nowVideoCovered(): Boolean =
-    LocalNowVideoHold.current?.sheetOpen == true || JarnGameActions.page != GameActionsPage.Actions
+private fun nowVideoCovered(): Boolean = nowSceneCovered(LocalNowVideoHold.current)
+
+/** True while the More sheet or a game action page sits over the scene. */
+internal fun nowSceneCovered(hold: NowVideoHold?): Boolean =
+    hold?.sheetOpen == true || JarnGameActions.page != GameActionsPage.Actions
 
 /** Pressing Play holds this game's preview until the player comes back from the game or moves on. */
 @Composable
