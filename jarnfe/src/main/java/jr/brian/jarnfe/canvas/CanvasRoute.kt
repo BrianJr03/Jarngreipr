@@ -358,7 +358,7 @@ private fun CanvasPageSurface(
     val focusTarget = page?.takeIf { it.kind != JarnCanvasPageKind.Rss }
         ?.let { canvasFocusTarget(it, lastFocused) }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing) {
+    LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing, tabsFocus.handoffs) {
         if (focusTarget == null || sheetOpen || !isActive) return@LaunchedEffect
         withFrameNanos { }
         if (editor.arranging || !tabsFocus.hasFocus) runCatching { requesterFor(focusTarget).requestFocus() }

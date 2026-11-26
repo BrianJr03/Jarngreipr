@@ -265,7 +265,7 @@ internal fun openCollection(collectionId: Long) {
 private fun LibraryRouteLinks(showDeckPanelLink: Boolean) {
     val firstLink = remember { FocusRequester() }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) firstLink.requestFocus() }
+    LaunchedEffect(tabsFocus.handoffs) { if (!tabsFocus.hasFocus) firstLink.requestFocus() }
     Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
         StageLinkButton(R.string.jarnfe_route_settings, Modifier.focusRequester(firstLink)) {
             JarnSession.update { openSettings() }

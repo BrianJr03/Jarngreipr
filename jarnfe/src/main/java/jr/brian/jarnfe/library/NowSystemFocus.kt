@@ -110,7 +110,7 @@ internal fun NowEntryFocus(focus: NowSystemFocus, entry: FocusRequester?, isRest
     val active = LocalJarnScreenActive.current
     val tabs = LocalJarnTabsFocus.current
     val wasActive = remember { booleanArrayOf(active) }
-    LaunchedEffect(active) {
+    LaunchedEffect(active, tabs.handoffs) {
         val activated = active && !wasActive[0]
         wasActive[0] = active
         if (!active || isRestoring) return@LaunchedEffect

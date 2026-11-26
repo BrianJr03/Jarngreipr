@@ -30,4 +30,5 @@ data class JarnDisplayConfig(
     val videoPreviews: Boolean? = null,
     val videoPreviewSound: Boolean? = null,
     val videoFit: String? = null,
+    val tabFocus: String? = null,
 )

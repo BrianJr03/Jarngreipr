@@ -113,7 +113,10 @@ internal fun <S : Any> LibraryTabReveal(tab: S, content: @Composable () -> Unit)
         val animate = remember { switched }
         val router = LocalJarnInputRouter.current
         val screen = LocalJarnScreen.current
-        val gate = remember { LibraryRevealGate(closed = animate, takesFocus = animate && router.activeScreen == screen) }
+        val tabsFocus = LocalJarnTabsFocus.current
+        val gate = remember {
+            LibraryRevealGate(closed = animate, takesFocus = animate && router.activeScreen == screen && !tabsFocus.hasFocus)
+        }
         val holder = remember { FocusRequester() }
         LibraryRevealTiming(gate, holder, animate)
         CompositionLocalProvider(LocalLibraryRevealGate provides gate) {

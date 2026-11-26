@@ -158,12 +158,12 @@ private fun JarnAppsContent(
         menuKey = null
         focus.pending = jarnAppsFocusAfter(orderAtMenu, order, gone)
     }
-    LaunchedEffect(isActive, order.isEmpty()) {
+    val tabsFocus = LocalJarnTabsFocus.current
+    LaunchedEffect(isActive, order.isEmpty(), tabsFocus.handoffs) {
         if (isActive && !focus.listHasFocus && !sheetOpen) {
             focus.pending = focus.lastKey?.takeIf { it in order } ?: order.firstOrNull()
         }
     }
-    val tabsFocus = LocalJarnTabsFocus.current
     LaunchedEffect(focus.pending, rows, sheetOpen, isActive) {
         val target = focus.pending ?: return@LaunchedEffect
         if (sheetOpen || !isActive) return@LaunchedEffect

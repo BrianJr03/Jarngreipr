@@ -649,7 +649,7 @@ class JarnLookConfigImportTest {
 
     @Test
     fun `schema version covers app names`() {
-        assertEquals(72, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(73, JarngreiprConfig.CONFIG_VERSION)
     }
 
     private companion object {

@@ -235,7 +235,7 @@ private fun BackShortcutAppPicker(
 @Composable
 internal fun ToolsInitialFocus(target: FocusRequester) {
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(Unit) {
+    LaunchedEffect(tabsFocus.handoffs) {
         withFrameNanos { }
         if (!tabsFocus.hasFocus) runCatching { target.requestFocus() }
     }

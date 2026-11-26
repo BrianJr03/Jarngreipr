@@ -103,7 +103,7 @@ private fun CanvasEmptySpaceFocus(first: FocusRequester, pageIndex: Int, sheetOp
     val router = LocalJarnInputRouter.current
     val isActive = router.activeScreen == LocalJarnScreen.current
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(pageIndex, sheetOpen, isActive) {
+    LaunchedEffect(pageIndex, sheetOpen, isActive, tabsFocus.handoffs) {
         if (sheetOpen || !isActive) return@LaunchedEffect
         withFrameNanos { }
         if (!tabsFocus.hasFocus) runCatching { first.requestFocus() }

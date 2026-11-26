@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_tab_focus_group">Navigation</string>
+    <string name="jarnfe_tab_focus_title">Focus after switching tabs</string>
+    <string name="jarnfe_tab_focus_shoulders">Shoulders</string>
+    <string name="jarnfe_tab_focus_dpad">D-pad</string>
+    <string name="jarnfe_tab_focus_both">Both</string>
+    <string name="jarnfe_tab_focus_neither">Neither</string>
+    <string name="jarnfe_tab_focus_shoulders_hint">The shoulder buttons take you into the new tab. The D-pad stays on the tabs.</string>
+    <string name="jarnfe_tab_focus_dpad_hint">Resting the D-pad on a tab takes you into it. The shoulder buttons stay on the tabs.</string>
+    <string name="jarnfe_tab_focus_both_hint">The shoulder buttons, and resting the D-pad on a tab, both take you into it.</string>
+    <string name="jarnfe_tab_focus_neither_hint">Switching tabs keeps you on the tabs.</string>
+</resources>

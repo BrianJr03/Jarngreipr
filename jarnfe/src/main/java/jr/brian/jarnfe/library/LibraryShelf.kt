@@ -276,7 +276,7 @@ private fun ShelfReportsFocus(centerKey: String, fast: Boolean, spinning: Boolea
 private fun ShelfTakesFocus(centerKey: String, refocusSignal: Int, spinning: Boolean, requester: () -> FocusRequester) {
     val tabsFocus = LocalJarnTabsFocus.current
     val gate = LocalLibraryRevealGate.current
-    LaunchedEffect(centerKey, refocusSignal, spinning) {
+    LaunchedEffect(centerKey, refocusSignal, spinning, tabsFocus.handoffs) {
         if (spinning) return@LaunchedEffect
         withFrameNanos { }
         gate.whenOpen {

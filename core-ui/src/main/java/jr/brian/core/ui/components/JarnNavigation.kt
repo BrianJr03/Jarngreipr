@@ -56,8 +56,18 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.R
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
+import jr.brian.core.ui.focus.JARN_TAB_DPAD_SETTLE_MS
+import jr.brian.core.ui.focus.JARN_TAB_HANDOFF_MS
+import jr.brian.core.ui.focus.JarnTabSwitchSource
+import jr.brian.core.ui.focus.JarnTabsFocus
+import jr.brian.core.ui.focus.LocalJarnTabSwitchFocus
+import jr.brian.core.ui.focus.jarnTabSwitchTakesFocus
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.core.ui.theme.LocalJarnScreenActive
+import androidx.compose.runtime.rememberUpdatedState
 import jr.brian.core.ui.theme.LocalJarnSwitchMark
 
 private const val SELECTED_TAB_TINT_ALPHA = 0.14f
@@ -96,8 +106,9 @@ fun JarnTabs(
     val tabsFocus = LocalJarnTabsFocus.current
     val group = remember { Any() }
     var groupFocused by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedIndex) {
-        if (groupFocused) runCatching { requesters.getOrNull(selectedIndex)?.requestFocus() }
+    val focusPicked = remember { intArrayOf(NO_TAB) }
+    JarnTabSwitchEffect(selectedIndex, { groupFocused }, focusPicked, tabsFocus, group) {
+        runCatching { requesters.getOrNull(selectedIndex)?.requestFocus() }
     }
     DisposableEffect(tabsFocus, group) { onDispose { tabsFocus.update(group, false) } }
     val focusModifier = shoulderModifier
@@ -116,7 +127,7 @@ fun JarnTabs(
                 .horizontalScroll(rememberScrollState())
                 .padding(ringPadding),
             horizontalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, Modifier, showsSwitchMark) }
+        ) { JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, focusPicked, Modifier, showsSwitchMark) }
 
         JarnTabsStyle.Rail -> Column(
             modifier = focusModifier
@@ -125,8 +136,55 @@ fun JarnTabs(
                 .padding(ringPadding),
             verticalArrangement = gap,
         ) {
-            JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, Modifier.fillMaxWidth(), showsSwitchMark)
+            JarnTabItems(
+                labels,
+                selectedIndex,
+                requesters,
+                viewRequesters,
+                onSelect,
+                focusPicked,
+                Modifier.fillMaxWidth(),
+                showsSwitchMark,
+            )
         }
+    }
+}
+
+private const val NO_TAB = -1
+
+/**
+ * After each switch, keeps focus on the selected tab when the strip holds it, then hands focus to
+ * the new tab's content when [LocalJarnTabSwitchFocus] allows that switch. A tab the strip's own
+ * focus picked came from the D-pad and waits [JARN_TAB_DPAD_SETTLE_MS] first, so a newer step
+ * cancels it. Any other switch came from a shoulder. The first selection never hands off, and
+ * neither does a switch made while the controller is on the other screen.
+ */
+@Composable
+private fun JarnTabSwitchEffect(
+    selectedIndex: Int,
+    groupFocused: () -> Boolean,
+    focusPicked: IntArray,
+    tabsFocus: JarnTabsFocus,
+    group: Any,
+    focusSelectedTab: () -> Unit,
+) {
+    val rule = LocalJarnTabSwitchFocus.current
+    val active by rememberUpdatedState(LocalJarnScreenActive.current)
+    val shownFirst = remember { selectedIndex }
+    val switched = remember { booleanArrayOf(false) }
+    val stripHadFocus = remember(selectedIndex) { groupFocused() }
+    LaunchedEffect(selectedIndex) {
+        tabsFocus.endHandOff(group)
+        if (groupFocused()) focusSelectedTab()
+        val source = if (focusPicked[0] == selectedIndex) JarnTabSwitchSource.Dpad else JarnTabSwitchSource.Shoulder
+        focusPicked[0] = NO_TAB
+        if (selectedIndex != shownFirst) switched[0] = true
+        if (!switched[0] || !active || !jarnTabSwitchTakesFocus(rule, source, stripHadFocus)) return@LaunchedEffect
+        if (source == JarnTabSwitchSource.Dpad) delay(JARN_TAB_DPAD_SETTLE_MS)
+        withFrameNanos { }
+        tabsFocus.handOff(group)
+        delay(JARN_TAB_HANDOFF_MS)
+        tabsFocus.endHandOff(group)
     }
 }
 
@@ -137,6 +195,7 @@ private fun JarnTabItems(
     requesters: List<FocusRequester>,
     viewRequesters: List<BringIntoViewRequester>,
     onSelect: (Int) -> Unit,
+    focusPicked: IntArray,
     itemModifier: Modifier,
     showsSwitchMark: Boolean,
 ) {
@@ -147,6 +206,10 @@ private fun JarnTabItems(
             selected,
             requesters[index],
             { onSelect(index) },
+            {
+                focusPicked[0] = index
+                onSelect(index)
+            },
             itemModifier.bringIntoViewRequester(viewRequesters[index]),
             showsSwitchMark && selected,
         )
@@ -159,6 +222,7 @@ private fun JarnTab(
     selected: Boolean,
     requester: FocusRequester,
     onClick: () -> Unit,
+    onFocusPick: () -> Unit,
     modifier: Modifier,
     showsSwitchMark: Boolean,
 ) {
@@ -172,7 +236,7 @@ private fun JarnTab(
     Box(
         modifier = modifier
             .focusRequester(requester)
-            .onFocusChanged { if (it.isFocused && !selected) onClick() }
+            .onFocusChanged { if (it.isFocused && !selected) onFocusPick() }
             .semantics { this.selected = selected }
             .jarnInteractive(shape, source, role = Role.Tab, onClick = onClick)
             .heightIn(min = 36.dp)

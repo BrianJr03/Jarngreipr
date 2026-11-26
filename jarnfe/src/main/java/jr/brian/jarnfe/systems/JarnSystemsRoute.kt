@@ -163,7 +163,7 @@ internal fun SystemsPageColumn(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 internal fun SystemsPageFocus(requester: FocusRequester, key: Any?) {
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(key) {
+    LaunchedEffect(key, tabsFocus.handoffs) {
         withFrameNanos { }
         if (!tabsFocus.hasFocus) runCatching { requester.requestFocus() }
     }
