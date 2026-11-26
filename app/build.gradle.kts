@@ -16,8 +16,8 @@ android {
         applicationId = "jr.brian.home"
         minSdk = 33
         targetSdk = 37
-        versionCode = 4
-        versionName = "4.0.3"
+        versionCode = 5
+        versionName = "4.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
