@@ -233,6 +233,9 @@ data class JarngreiprConfig(
         // v67: added FeatureConfig.jarnSystemSorts, each system's game order. Null on older blobs keeps them.
         // v68: added JarnDisplayConfig.playingScreenVisible and playingDim, Jarn FE Now Playing.
         // v69: added JarnDisplayConfig.playingScreenOff, Jarn FE's black bottom screen during a game.
-        const val CONFIG_VERSION = 69
+        // v70: added JarnDisplayConfig.videoPreviews and videoPreviewSound, Jarn FE game video
+        //      previews and their sound, and FeatureConfig.jarnVideoHintShown, the one-time hint.
+        //      Null on older blobs keeps the current values. Import only sets the hint flag.
+        const val CONFIG_VERSION = 70
     }
 }

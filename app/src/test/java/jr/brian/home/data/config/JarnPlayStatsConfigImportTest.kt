@@ -79,7 +79,7 @@ class JarnPlayStatsConfigImportTest {
 
     @Test
     fun `schema version includes play stats`() {
-        assertEquals(69, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(70, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

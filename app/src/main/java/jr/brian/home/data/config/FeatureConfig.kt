@@ -70,6 +70,8 @@ data class FeatureConfig(
     val jarnFontsPromptShown: Boolean? = null,
     /** v65: Jarn FE "ES-DE found" notice shown. Null on pre-v65 exports. Import never turns it back off. */
     val jarnEsdeImportNoticeShown: Boolean? = null,
+    /** v70: Jarn FE video preview hint shown. Null on pre-v70 exports. Import never turns it back off. */
+    val jarnVideoHintShown: Boolean? = null,
     /** v67: Jarn FE game order by system id. Null on pre-v67 exports, and import keeps them. */
     val jarnSystemSorts: Map<String, String>? = null,
     /** v52: RSS feeds in order. Null on pre-v52 exports. Import only adds missing feeds. */
