@@ -242,6 +242,8 @@ data class JarngreiprConfig(
         //      they match under a different ROM folder. Null on older blobs keeps the device's. Import
         //      only adds: same-name collections (ignoring case) gain members, the rest are made, and
         //      favorites not scanned yet wait on the device until a scan lists them.
-        const val CONFIG_VERSION = 72
+        // v73: added JarnDisplayConfig.tabFocus, which Jarn FE tab switches move focus into the tab.
+        //      Null on older blobs, or an unknown id, keeps the current value.
+        const val CONFIG_VERSION = 73
     }
 }

@@ -6,6 +6,7 @@ import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
+import jr.brian.frontend.look.JarnTabFocus
 import jr.brian.frontend.look.JarnVideoFit
 
 /** Jarn FE display choices to and from a backup. A null field keeps the current value. */
@@ -35,6 +36,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     videoPreviews = videoPreviews,
     videoPreviewSound = videoPreviewSound,
     videoFit = videoFit.id,
+    tabFocus = tabFocus.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -63,4 +65,5 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     videoPreviews = videoPreviews ?: current.videoPreviews,
     videoPreviewSound = videoPreviewSound ?: current.videoPreviewSound,
     videoFit = JarnVideoFit.fromId(videoFit) ?: current.videoFit,
+    tabFocus = JarnTabFocus.fromId(tabFocus) ?: current.tabFocus,
 )

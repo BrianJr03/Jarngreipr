@@ -33,7 +33,7 @@ class ConfigFixtureTest {
                 "\"playingDim\": \"30s\"",
                 "\"playingDim\": \"30s\",\n            \"playingScreenOff\": null," +
                     "\n            \"videoPreviews\": null,\n            \"videoPreviewSound\": null," +
-                    "\n            \"videoFit\": null",
+                    "\n            \"videoFit\": null,\n            \"tabFocus\": null",
             )
             .replace(
                 "\"jarnEsdeImportNoticeShown\": null,",

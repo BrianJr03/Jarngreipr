@@ -95,7 +95,7 @@ internal fun <T : Any> LibraryFocusGrid(
     }
 
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(target, refocusSignal) {
+    LaunchedEffect(target, refocusSignal, tabsFocus.handoffs) {
         val index = items.indexOfFirst { itemKey(it) == target }
         if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus, gate)
     }

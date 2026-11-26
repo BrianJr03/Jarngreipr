@@ -41,6 +41,19 @@ enum class JarnVideoFit(val id: String) {
     }
 }
 
+/** Which tab switches move focus from a tab strip into the new tab's content. */
+enum class JarnTabFocus(val id: String) {
+    Shoulders("shoulders"),
+    Dpad("dpad"),
+    Both("both"),
+    Neither("neither"),
+    ;
+
+    companion object {
+        fun fromId(id: String?): JarnTabFocus? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** Jarn FE display choices. The defaults match how Jarn FE looked before they existed. */
 data class JarnDisplayPrefs(
     val systemTileScale: Float = DEFAULT_TILE_SCALE,
@@ -68,6 +81,7 @@ data class JarnDisplayPrefs(
     val videoPreviews: Boolean = false,
     val videoPreviewSound: Boolean = false,
     val videoFit: JarnVideoFit = JarnVideoFit.Fit,
+    val tabFocus: JarnTabFocus = JarnTabFocus.Both,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

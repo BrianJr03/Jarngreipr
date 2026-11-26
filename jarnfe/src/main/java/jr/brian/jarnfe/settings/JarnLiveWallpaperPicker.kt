@@ -76,7 +76,7 @@ private fun LiveWallpaperOptions(
     var focusedId by remember { mutableStateOf<String?>(null) }
     val chosenFocus = remember { FocusRequester() }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(Unit) {
+    LaunchedEffect(tabsFocus.handoffs) {
         withFrameNanos { }
         if (!tabsFocus.hasFocus) chosenFocus.requestFocus()
     }

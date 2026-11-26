@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import jr.brian.core.ui.focus.LocalJarnTabSwitchFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.core.ui.theme.LocalJarnFocusFloatAllowed
 import jr.brian.jarnfe.deck.DeckScreen
@@ -24,6 +25,7 @@ import jr.brian.jarnfe.look.fontprompt.JarnFontPromptHost
 import jr.brian.jarnfe.look.rememberJarnAppearance
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnInput
+import jr.brian.jarnfe.settings.switchFocus
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.stage.StageScreen
@@ -35,7 +37,8 @@ import jr.brian.jarnfe.wallpaper.rememberJarnFocusFloatAllowed
 internal fun JarnShellRoot(screen: JarnScreen) {
     val state = JarnSession.state
     val appearance = rememberJarnAppearance()
-    val savedCue = rememberJarnDisplay().switchCue
+    val display = rememberJarnDisplay()
+    val savedCue = display.switchCue
     val switchCue = jarnShownCue(JarnSwitchCuePreview.cue ?: savedCue, state.settingsOnDeck)
     RememberDeckTab(state.deckTab)
     JarnTheme(
@@ -48,6 +51,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
         CompositionLocalProvider(
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),
             LocalJarnMarkHandoff provides rememberJarnMarkHandoff(screen, switchCue, state),
+            LocalJarnTabSwitchFocus provides display.tabFocus.switchFocus(),
         ) {
             ProvideJarnInput(JarnInput, screen) {
                 val firstRun = rememberJarnFirstRun(state.stageRoute)

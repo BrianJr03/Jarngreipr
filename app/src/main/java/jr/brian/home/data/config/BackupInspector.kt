@@ -5,6 +5,7 @@ import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
+import jr.brian.frontend.look.JarnTabFocus
 import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.core.model.Experience
 import jr.brian.home.canvas.model.CanvasItem
@@ -240,6 +241,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             videoPreviews = it.videoPreviews ?: shown?.videoPreviews,
             videoPreviewSound = it.videoPreviewSound ?: shown?.videoPreviewSound,
             videoFit = it.videoFit?.takeIf { id -> JarnVideoFit.fromId(id) != null } ?: shown?.videoFit,
+            tabFocus = it.tabFocus?.takeIf { id -> JarnTabFocus.fromId(id) != null } ?: shown?.tabFocus,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

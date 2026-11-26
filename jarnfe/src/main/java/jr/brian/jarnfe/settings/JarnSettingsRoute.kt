@@ -166,7 +166,7 @@ private fun SettingsSectionPage(
 ) {
     val firstRow = remember { FocusRequester() }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(Unit) {
+    LaunchedEffect(tabsFocus.handoffs) {
         withFrameNanos { }
         if (!tabsFocus.hasFocus) firstRow.requestFocus()
     }

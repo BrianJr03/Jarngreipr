@@ -27,6 +27,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnTabs
+import jr.brian.core.ui.focus.JARN_TAB_DPAD_SETTLE_MS
+import jr.brian.core.ui.focus.JarnTabSwitchFocus
+import jr.brian.core.ui.focus.LocalJarnTabSwitchFocus
+import androidx.compose.runtime.CompositionLocalProvider
 import jr.brian.core.ui.theme.JarnMotion
 import jr.brian.jarnfe.input.JarnInputRouter
 import jr.brian.jarnfe.input.JarnScreen
@@ -84,10 +88,15 @@ class LibraryTabRevealTest {
     private val router = JarnInputRouter()
     private val tabs = listOf("a", "b", "c")
 
+    private var screenActive by mutableStateOf(true)
+    private var switchFocus by mutableStateOf(JarnTabSwitchFocus.Both)
+
     private fun show(reducedMotion: Boolean = false, content: @Composable () -> Unit) {
         rule.setContent {
-            JarnTheme(reducedMotion = reducedMotion) {
-                ProvideJarnInput(router, JarnScreen.Stage) { Column { content() } }
+            JarnTheme(reducedMotion = reducedMotion, screenActive = screenActive) {
+                CompositionLocalProvider(LocalJarnTabSwitchFocus provides switchFocus) {
+                    ProvideJarnInput(router, JarnScreen.Stage) { Column { content() } }
+                }
             }
         }
         rule.waitForIdle()
@@ -167,13 +176,43 @@ class LibraryTabRevealTest {
     }
 
     @Test
-    fun `a d-pad switch on the tab row moves focus into the new tab's content`() {
+    fun `a d-pad switch on the tab row moves focus into the new tab's content once it rests`() {
+        switchFocus = JarnTabSwitchFocus(onShoulder = false, onDpad = true)
         show { TabsAndGrid() }
         rule.onNodeWithTag("a9").assertIsFocused()
         focusTabRow()
         press(Key.DirectionRight)
+        rule.onNodeWithText("b").assertIsFocused()
+        restPastSettle()
         rule.onNodeWithTag("b9").assertIsFocused()
-        assertTrue("focused after ${delayOf("b9")}ms", delayOf("b9") >= revealMillis)
+        assertTrue("focused after ${delayOf("b9")}ms", delayOf("b9") >= JARN_TAB_DPAD_SETTLE_MS)
+    }
+
+    private fun restPastSettle() {
+        rule.mainClock.advanceTimeBy(JARN_TAB_DPAD_SETTLE_MS + LOAD_SLACK_MS)
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `by default a d-pad switch on the tab row drops in after the rest`() {
+        show { TabsAndGrid() }
+        focusTabRow()
+        press(Key.DirectionRight)
+        rule.onNodeWithText("b").assertIsFocused()
+        restPastSettle()
+        rule.onNodeWithTag("b9").assertIsFocused()
+        assertTrue("focused after ${delayOf("b9")}ms", delayOf("b9") >= JARN_TAB_DPAD_SETTLE_MS)
+    }
+
+    @Test
+    fun `in shoulders mode a d-pad switch on the tab row stays on the tabs`() {
+        switchFocus = JarnTabSwitchFocus.Shoulders
+        show { TabsAndGrid() }
+        focusTabRow()
+        press(Key.DirectionRight)
+        restPastSettle()
+        rule.onNodeWithText("b").assertIsFocused()
+        rule.onNodeWithTag("b9").assertIsNotFocused()
     }
 
     @Test
@@ -189,7 +228,7 @@ class LibraryTabRevealTest {
     fun `up from the content still returns to the tabs`() {
         show { TabsAndGrid() }
         focusTabRow()
-        press(Key.DirectionRight)
+        press(Key.ButtonR1)
         rule.onNodeWithTag("b9").assertIsFocused()
         repeat(MAX_ROWS_UP) { if (!tabFocused("b")) press(Key.DirectionUp) }
         rule.onNodeWithText("b").assertIsFocused()
@@ -199,7 +238,10 @@ class LibraryTabRevealTest {
     fun `a switch from the other screen changes the tab but never takes focus`() {
         show { TabsAndGrid() }
         focusTabRow()
-        rule.runOnIdle { router.activate(JarnScreen.Deck) }
+        rule.runOnIdle {
+            router.activate(JarnScreen.Deck)
+            screenActive = false
+        }
         switchTab("b")
         assertFalse("content took focus", focusedAt.keys.any { it.startsWith("b") })
         rule.onNodeWithTag("b9").assertIsNotFocused()

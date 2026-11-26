@@ -25,6 +25,7 @@ import jr.brian.jarnfe.shell.jarnExperienceSwitchOrNull
 @Composable
 internal fun JarnGeneralSection(actions: JarnSettingsActions) {
     ExperienceGroup()
+    JarnTabFocusGroup()
     SoundAndToolsGroup(actions)
     FeedsGroup(actions)
     ToursGroup()

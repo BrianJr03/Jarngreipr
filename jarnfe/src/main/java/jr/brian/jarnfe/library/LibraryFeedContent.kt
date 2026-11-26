@@ -98,7 +98,7 @@ private fun LibraryUnavailableBanner(onRetry: () -> Unit) {
 private fun LibraryUnavailableState(onRetry: () -> Unit) {
     val requester = remember { FocusRequester() }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) requester.requestFocus() }
+    LaunchedEffect(tabsFocus.handoffs) { if (!tabsFocus.hasFocus) requester.requestFocus() }
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

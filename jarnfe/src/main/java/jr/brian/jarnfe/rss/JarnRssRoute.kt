@@ -317,7 +317,7 @@ private fun RssBrowserFocus(
     val focusGone = browser.focusKey?.let { key ->
         key !in railKeys && articles.none { it.focusKey() == key } && !(key == FOCUS_PLAYER && hasPlayer)
     } == true
-    LaunchedEffect(ready, focusGone) {
+    LaunchedEffect(ready, focusGone, tabsFocus.handoffs) {
         if (!ready) return@LaunchedEffect
         withFrameNanos { }
         if (!tabsFocus.hasFocus) browser.restore(railKeys, latestArticles, hasPlayer, filter.focusKey())
