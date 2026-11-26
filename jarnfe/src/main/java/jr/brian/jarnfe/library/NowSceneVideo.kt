@@ -38,7 +38,7 @@ import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.jarnfe.launch.GameActionsPage
 import jr.brian.jarnfe.launch.JarnGameActions
-import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperCanAnimate
+import jr.brian.jarnfe.wallpaper.rememberJarnVideoPreviewCanPlay
 import kotlinx.coroutines.delay
 
 /** On top of the settled selection's own wait, so scrolling never starts a player. */
@@ -224,7 +224,7 @@ private fun rememberNowVideoAlpha(shown: Boolean): State<Float> {
  */
 @Composable
 private fun rememberNowVideoCanPlay(): Boolean {
-    val canAnimate by rememberJarnWallpaperCanAnimate()
+    val canAnimate by rememberJarnVideoPreviewCanPlay()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     return canAnimate && lifecycle.isAtLeast(Lifecycle.State.STARTED) && rememberDisplayLit()
 }

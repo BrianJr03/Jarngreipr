@@ -19,6 +19,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import jr.brian.core.model.JarnGameCover
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.NowVideoVisibility
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.shell.JarnHomeEntry
@@ -41,6 +42,7 @@ internal data class JarnWallpaperConditions(
     val isSplashPlaying: Boolean,
     val isGameRunning: Boolean = false,
     val pausesOnBatterySaver: Boolean = true,
+    val isVideoPreviewShowing: Boolean = false,
 ) {
     /**
      * A Deck display without a Deck window (lost, or never opened) cannot prove it is free, so
@@ -59,7 +61,13 @@ internal data class JarnWallpaperConditions(
      * must be resumed. A game on a display with no Jarn window stops nothing but still takes
      * top-resumed from us.
      */
-    fun canAnimate(): Boolean = pause() == null && !isSplashPlaying && isJarnInFront()
+    fun canAnimate(): Boolean = canPlayVideoPreview() && !isVideoPreviewShowing
+
+    /**
+     * The same rule without the preview itself, so a showing preview never stops its own player.
+     * A showing preview holds wallpapers still instead, which is not a pause the note explains.
+     */
+    fun canPlayVideoPreview(): Boolean = pause() == null && !isSplashPlaying && isJarnInFront()
 
     /**
      * Why wallpapers hold still by the player's own choice or the system's, if they do. Battery
@@ -122,6 +130,9 @@ internal object JarnWallpaperGate {
     fun allowsAnimation(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true): Boolean =
         conditions(isMotionReduced, pausesOnBatterySaver).canAnimate()
 
+    fun allowsVideoPreview(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true): Boolean =
+        conditions(isMotionReduced, pausesOnBatterySaver).canPlayVideoPreview()
+
     fun allowsArtWork(): Boolean = conditions(isMotionReduced = false).isJarnInFront()
 
     fun pause(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true): JarnWallpaperPause? =
@@ -136,6 +147,7 @@ internal object JarnWallpaperGate {
         isSplashPlaying = JarnSplash.isPlaying,
         isGameRunning = JarnHomeEntry.gameCover != JarnGameCover.None,
         pausesOnBatterySaver = pausesOnBatterySaver,
+        isVideoPreviewShowing = NowVideoVisibility.showing,
     )
 
     private fun untrack(activity: ComponentActivity) {
@@ -181,21 +193,26 @@ internal object JarnWallpaperGate {
 
 /**
  * True while wallpapers may move. When false they hold their last frame. Only Jarn's own Reduce
- * motion stops them, not Android animations being off.
+ * motion stops them, not Android animations being off. A showing video preview holds them too.
  */
 @Composable
-internal fun rememberJarnWallpaperCanAnimate(): State<Boolean> {
+internal fun rememberJarnWallpaperCanAnimate(): State<Boolean> = rememberJarnGateState(JarnWallpaperGate::allowsAnimation)
+
+/** For the video preview and the focus float, which keep moving while a preview shows. */
+@Composable
+internal fun rememberJarnVideoPreviewCanPlay(): State<Boolean> = rememberJarnGateState(JarnWallpaperGate::allowsVideoPreview)
+
+@Composable
+private fun rememberJarnGateState(allows: (isMotionReduced: Boolean, pausesOnBatterySaver: Boolean) -> Boolean): State<Boolean> {
     val isMotionReduced by rememberUpdatedState(JarnTheme.motion.ambientReduced)
     val pausesOnBatterySaver by rememberUpdatedState(rememberJarnDisplay().pauseOnBatterySaver)
-    return remember {
-        derivedStateOf { JarnWallpaperGate.allowsAnimation(isMotionReduced, pausesOnBatterySaver) }
-    }
+    return remember { derivedStateOf { allows(isMotionReduced, pausesOnBatterySaver) } }
 }
 
 /** The focus float is UI movement, so it also stops when Android animations are off. */
 @Composable
 internal fun rememberJarnFocusFloatAllowed(): State<Boolean> {
-    val canAnimate = rememberJarnWallpaperCanAnimate()
+    val canAnimate = rememberJarnVideoPreviewCanPlay()
     val isMotionReduced by rememberUpdatedState(JarnTheme.motion.reduced)
     return remember(canAnimate) { derivedStateOf { canAnimate.value && !isMotionReduced } }
 }
