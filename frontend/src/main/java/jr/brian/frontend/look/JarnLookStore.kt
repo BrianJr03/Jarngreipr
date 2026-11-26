@@ -131,6 +131,7 @@ class JarnLookStore @Inject constructor(
             putBoolean(KEY_VIDEO_PREVIEWS, next.videoPreviews)
             putBoolean(KEY_VIDEO_PREVIEW_SOUND, next.videoPreviewSound)
             putString(KEY_VIDEO_FIT, next.videoFit.id)
+            putBoolean(KEY_PAUSE_ON_BATTERY_SAVER, next.pauseOnBatterySaver)
             putString(KEY_TAB_FOCUS, next.tabFocus.id)
         }
     }
@@ -180,6 +181,7 @@ class JarnLookStore @Inject constructor(
         videoPreviews = prefs.getBoolean(KEY_VIDEO_PREVIEWS, false),
         videoPreviewSound = prefs.getBoolean(KEY_VIDEO_PREVIEW_SOUND, false),
         videoFit = JarnVideoFit.fromId(prefs.getString(KEY_VIDEO_FIT, null)) ?: JarnVideoFit.Fit,
+        pauseOnBatterySaver = prefs.getBoolean(KEY_PAUSE_ON_BATTERY_SAVER, true),
         tabFocus = JarnTabFocus.fromId(prefs.getString(KEY_TAB_FOCUS, null)) ?: JarnTabFocus.Both,
     ).coerced()
 
@@ -261,6 +263,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_VIDEO_PREVIEWS = "video_previews"
         const val KEY_VIDEO_PREVIEW_SOUND = "video_preview_sound"
         const val KEY_VIDEO_FIT = "video_fit"
+        const val KEY_PAUSE_ON_BATTERY_SAVER = "pause_on_battery_saver"
         const val KEY_TAB_FOCUS = "tab_focus"
         const val KEY_VIDEO_HINT_SHOWN = "video_hint_shown"
         const val KEY_FIRST_RUN_DONE = "first_run_done"

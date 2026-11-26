@@ -241,6 +241,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             videoPreviews = it.videoPreviews ?: shown?.videoPreviews,
             videoPreviewSound = it.videoPreviewSound ?: shown?.videoPreviewSound,
             videoFit = it.videoFit?.takeIf { id -> JarnVideoFit.fromId(id) != null } ?: shown?.videoFit,
+            pauseOnBatterySaver = it.pauseOnBatterySaver ?: shown?.pauseOnBatterySaver,
             tabFocus = it.tabFocus?.takeIf { id -> JarnTabFocus.fromId(id) != null } ?: shown?.tabFocus,
         )
     } ?: shown

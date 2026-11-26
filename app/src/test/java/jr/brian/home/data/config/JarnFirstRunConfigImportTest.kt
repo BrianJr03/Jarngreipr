@@ -65,7 +65,7 @@ class JarnFirstRunConfigImportTest {
 
     @Test
     fun `schema version covers first run`() {
-        assertEquals(73, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(74, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

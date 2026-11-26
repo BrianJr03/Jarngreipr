@@ -19,6 +19,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import jr.brian.core.model.JarnGameCover
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.shell.JarnHomeEntry
 import jr.brian.jarnfe.splash.JarnSplash
@@ -39,6 +40,7 @@ internal data class JarnWallpaperConditions(
     val isMotionReduced: Boolean,
     val isSplashPlaying: Boolean,
     val isGameRunning: Boolean = false,
+    val pausesOnBatterySaver: Boolean = true,
 ) {
     /**
      * A Deck display without a Deck window (lost, or never opened) cannot prove it is free, so
@@ -59,9 +61,12 @@ internal data class JarnWallpaperConditions(
      */
     fun canAnimate(): Boolean = pause() == null && !isSplashPlaying && isJarnInFront()
 
-    /** Why wallpapers hold still by the player's own choice or the system's, if they do. */
+    /**
+     * Why wallpapers hold still by the player's own choice or the system's, if they do. Battery
+     * Saver counts only while [pausesOnBatterySaver] is on.
+     */
     fun pause(): JarnWallpaperPause? = when {
-        isBatterySaverOn -> JarnWallpaperPause.BatterySaver
+        isBatterySaverOn && pausesOnBatterySaver -> JarnWallpaperPause.BatterySaver
         isMotionReduced -> JarnWallpaperPause.ReduceMotion
         else -> null
     }
@@ -82,6 +87,9 @@ internal object JarnWallpaperGate {
     private var isScreenOn by mutableStateOf(false)
     private var isBatterySaverOn by mutableStateOf(false)
     private var watchedContext: Context? = null
+
+    /** Android's Battery Saver, read by the same receiver that gates wallpapers. */
+    val batterySaverOn: Boolean get() = isBatterySaverOn
 
     private val systemReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) = readSystemState(context)
@@ -111,13 +119,15 @@ internal object JarnWallpaperGate {
         publishWindows()
     }
 
-    fun allowsAnimation(isMotionReduced: Boolean): Boolean = conditions(isMotionReduced).canAnimate()
+    fun allowsAnimation(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true): Boolean =
+        conditions(isMotionReduced, pausesOnBatterySaver).canAnimate()
 
     fun allowsArtWork(): Boolean = conditions(isMotionReduced = false).isJarnInFront()
 
-    fun pause(isMotionReduced: Boolean): JarnWallpaperPause? = conditions(isMotionReduced).pause()
+    fun pause(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true): JarnWallpaperPause? =
+        conditions(isMotionReduced, pausesOnBatterySaver).pause()
 
-    private fun conditions(isMotionReduced: Boolean) = JarnWallpaperConditions(
+    private fun conditions(isMotionReduced: Boolean, pausesOnBatterySaver: Boolean = true) = JarnWallpaperConditions(
         windows = windows,
         deckDisplayAvailable = JarnSession.state.run { deckDisplayAvailable || deckWindowLost },
         isScreenOn = isScreenOn,
@@ -125,6 +135,7 @@ internal object JarnWallpaperGate {
         isMotionReduced = isMotionReduced,
         isSplashPlaying = JarnSplash.isPlaying,
         isGameRunning = JarnHomeEntry.gameCover != JarnGameCover.None,
+        pausesOnBatterySaver = pausesOnBatterySaver,
     )
 
     private fun untrack(activity: ComponentActivity) {
@@ -175,7 +186,10 @@ internal object JarnWallpaperGate {
 @Composable
 internal fun rememberJarnWallpaperCanAnimate(): State<Boolean> {
     val isMotionReduced by rememberUpdatedState(JarnTheme.motion.ambientReduced)
-    return remember { derivedStateOf { JarnWallpaperGate.allowsAnimation(isMotionReduced) } }
+    val pausesOnBatterySaver by rememberUpdatedState(rememberJarnDisplay().pauseOnBatterySaver)
+    return remember {
+        derivedStateOf { JarnWallpaperGate.allowsAnimation(isMotionReduced, pausesOnBatterySaver) }
+    }
 }
 
 /** The focus float is UI movement, so it also stops when Android animations are off. */
@@ -190,5 +204,5 @@ internal fun rememberJarnFocusFloatAllowed(): State<Boolean> {
 @Composable
 internal fun rememberJarnWallpaperPause(): JarnWallpaperPause? {
     val isMotionReduced = JarnTheme.motion.ambientReduced
-    return JarnWallpaperGate.pause(isMotionReduced)
+    return JarnWallpaperGate.pause(isMotionReduced, rememberJarnDisplay().pauseOnBatterySaver)
 }

@@ -9,11 +9,18 @@ import jr.brian.jarnfe.R
 import jr.brian.jarnfe.wallpaper.JarnWallpaperPause
 import jr.brian.jarnfe.wallpaper.rememberJarnWallpaperPause
 
-/** Says why a moving wallpaper holds still. Shows nothing while wallpapers may move. */
+/**
+ * Says why a moving wallpaper holds still. Shows nothing while wallpapers may move, so Battery
+ * Saver only gets a note while "Pause animations on Battery Saver" is on.
+ */
 @Composable
 internal fun JarnWallpaperPausedNote(hasMovingWallpaper: Boolean) {
-    val pause = rememberJarnWallpaperPause() ?: return
-    if (!hasMovingWallpaper) return
+    JarnWallpaperPausedNoteContent(rememberJarnWallpaperPause().takeIf { hasMovingWallpaper })
+}
+
+@Composable
+internal fun JarnWallpaperPausedNoteContent(pause: JarnWallpaperPause?) {
+    if (pause == null) return
     JarnText(
         text = stringResource(pause.noteRes),
         style = JarnTheme.type.caption,

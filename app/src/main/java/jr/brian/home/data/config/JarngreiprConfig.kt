@@ -244,6 +244,8 @@ data class JarngreiprConfig(
         //      favorites not scanned yet wait on the device until a scan lists them.
         // v73: added JarnDisplayConfig.tabFocus, which Jarn FE tab switches move focus into the tab.
         //      Null on older blobs, or an unknown id, keeps the current value.
-        const val CONFIG_VERSION = 73
+        // v74: added JarnDisplayConfig.pauseOnBatterySaver, whether Battery Saver holds Jarn FE's
+        //      wallpapers and video previews still. Null on older blobs keeps the current value (on).
+        const val CONFIG_VERSION = 74
     }
 }

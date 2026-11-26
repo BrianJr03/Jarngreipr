@@ -50,6 +50,6 @@ class JarnTabFocusConfigTest {
 
     @Test
     fun `the schema version covers tab focus`() {
-        assertEquals(73, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(74, JarngreiprConfig.CONFIG_VERSION)
     }
 }
