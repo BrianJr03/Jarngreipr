@@ -27,6 +27,10 @@
 - Hold A on a tab, or long-press it, to reorder your tabs
 - The Jarn label now follows you to the active screen with every switch cue
 
+**Audio**
+- Turn on Mute with L3 and R3 to mute jingles and music with the sticks (Settings, General, Music and jingles)
+- A small pop-up in the top corner confirms when jingles or music are muted or back on
+
 **Fixes**
 - Background music no longer stays quiet after you come back from a game
 
