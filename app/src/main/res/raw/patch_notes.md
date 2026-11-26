@@ -24,6 +24,7 @@
 - Choose whether switching tabs takes you straight into the tab (Settings, General)
 - The Apps tab shows a loading spinner instead of a blank screen
 - The clock and battery now show on the top screen only
+- Hold A on a tab, or long-press it, to reorder your tabs
 
 **Fixes**
 - Background music no longer stays quiet after you come back from a game
