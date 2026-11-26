@@ -1,29 +1,20 @@
-**Library**
-- New All games tab shows every game in one place
-- Sort a system's games by name, last played, most played or release year
-- Hold left or right on the D-pad to jump to the next or previous letter
-- Hide a game from Game Actions, and show it again from Settings, Systems
+**Video previews**
+- Game videos from ES-DE can play behind the Now panel on the bottom screen (Settings, Look)
+- Turn on preview sound to hear the video; your music and jingles pause while it plays
+- Choose Fit to see the whole video or Crop to fill the screen
+- Hold Select to hide the UI and watch the video full screen
 
-**Coming from ES-DE**
-- Import your ES-DE library during first run or anytime from Settings
-- Favorites, play counts, last played and game info now come over from ES-DE
-- The emulators you picked in ES-DE come over too
+**Collections**
+- New Collections tab for your own game lists
+- Add a game to a collection from its options with Select
+- Rename, reorder or delete a collection with Select on its tile
+- Collections and favorites are now saved in your backups
 
-**While you play**
-- The bottom screen shows Now Playing during a game, with cover, session time, clock and battery
-- New option to turn the bottom screen off while a game runs (tap to wake)
-
-**Now**
-- Play time and last played stack neatly when they don't fit on one line
+**Navigation**
+- Choose whether switching tabs takes you straight into the tab (Settings, General)
+- The Apps tab shows a loading spinner instead of a blank screen
 
 **Fixes**
-- Restoring a backup now keeps your emulator, core and custom command choices
-- The companion app picker shows up again after launching a game, including from Canvas tiles
-- Companion apps open on the free screen instead of covering the game
-- The companion picker is visible when your screens are swapped
-- B now closes the ES-DE ROMs folder notice
-- Cancelling the ES-DE import puts you back where you were
-- The letter badge no longer hides behind covers in the carousel
-- Switching library tabs with L1 or R1 keeps you on your game
+- Background music no longer stays quiet after you come back from a game
 
-4.1.0
+4.2.0
