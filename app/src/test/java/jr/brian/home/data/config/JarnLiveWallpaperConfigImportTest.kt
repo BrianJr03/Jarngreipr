@@ -113,6 +113,13 @@ class JarnLiveWallpaperConfigImportTest {
     }
 
     @Test
+    fun `a backed up Tidemark choice restores`() = runTest {
+        restore(backupWith("tidemark"))
+
+        assertEquals("tidemark", store.liveWallpaperId)
+    }
+
+    @Test
     fun `an unknown id is kept as written and survives a restart`() = runTest {
         restore(backupWith("from-a-newer-build"))
 

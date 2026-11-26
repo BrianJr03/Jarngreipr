@@ -57,7 +57,7 @@ class JarnLiveWallpapersTest {
     @Test
     fun `the permanent wallpaper ids stay registered`() {
         val ids = JarnLiveWallpapers.All.map { it.id }
-        assertTrue(ids.containsAll(listOf("starstave", "ironweave", "hearthrise")))
+        assertTrue(ids.containsAll(listOf("starstave", "ironweave", "hearthrise", "tidemark")))
     }
 
     private companion object {

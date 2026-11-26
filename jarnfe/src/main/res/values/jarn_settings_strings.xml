@@ -57,6 +57,7 @@
     <string name="jarnfe_wallpaper_starstave">Starstave</string>
     <string name="jarnfe_wallpaper_ironweave">Ironweave</string>
     <string name="jarnfe_wallpaper_hearthrise">Hearthrise</string>
+    <string name="jarnfe_wallpaper_tidemark">Face Buttons</string>
     <string name="jarnfe_wallpaper_use_theme">Use theme background</string>
     <string name="jarnfe_wallpaper_use_theme_hint">Goes back to the theme\'s own background.</string>
     <string name="jarnfe_wallpaper_failed">That file can\'t be used as a wallpaper</string>
