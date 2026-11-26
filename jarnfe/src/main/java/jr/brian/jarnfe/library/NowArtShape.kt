@@ -45,11 +45,13 @@ private fun readArtBounds(context: Context, path: String): IntSize {
     return IntSize(options.outWidth, options.outHeight)
 }
 
-/** Null until the image's size is known. Reads only the header, and waits while a game is up. */
+/**
+ * Null until the image's size is known. Reads only the header, and waits while a game is up
+ * unless [canLoad] says the caller is a page meant to show beside the game.
+ */
 @Composable
-internal fun rememberNowArtBounds(path: String?): IntSize? {
+internal fun rememberNowArtBounds(path: String?, canLoad: Boolean = rememberJarnArtCanLoad()): IntSize? {
     val context = LocalContext.current.applicationContext
-    val canLoad = rememberJarnArtCanLoad()
     val read by produceState<Pair<String, IntSize>?>(null, path, canLoad) {
         if (path == null || !canLoad || artBounds.get(path) != null) return@produceState
         val bounds = withContext(Dispatchers.IO) { readArtBounds(context, path) }
