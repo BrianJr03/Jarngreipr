@@ -27,8 +27,10 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
+import jr.brian.jarnfe.library.NowHiddenUiTouch
 import jr.brian.jarnfe.library.NowShortcutControls
 import jr.brian.jarnfe.library.NowVideoPreview
+import jr.brian.jarnfe.library.nowHideableUi
 import jr.brian.jarnfe.library.nowShortcutGap
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.search.JarnSearch
@@ -59,10 +61,11 @@ private fun DeckTab.labelRes(): Int = when (this) {
 internal fun DeckScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            Box(Modifier.jarnSplashFade()) {
+            Box(Modifier.jarnSplashFade().nowHideableUi()) {
                 JarnWallpaperBackdrop(showWallpaper = true)
             }
             DeckPage(state)
+            NowHiddenUiTouch()
             if (deckShowsSettings(state)) JarnSettingsScraperHost()
             JarnDeckSplash()
         }
@@ -91,6 +94,7 @@ private fun DeckPage(state: JarnSessionState) {
         JarnScreenFrame(
             header = { DeckHeader(state) },
             background = Color.Transparent,
+            hintBarModifier = Modifier.nowHideableUi(),
         ) { DeckBody(state) }
     }
 }
@@ -98,7 +102,11 @@ private fun DeckPage(state: JarnSessionState) {
 @Composable
 private fun DeckHeader(state: JarnSessionState) {
     if (!deckShowsTabs(state)) return
-    DeckTabStrip(state.deckTab, deckShowsMark(state, LocalJarnMarkHandoff.current.follows))
+    DeckTabStrip(
+        selected = state.deckTab,
+        showsMark = deckShowsMark(state, LocalJarnMarkHandoff.current.follows),
+        modifier = Modifier.nowHideableUi(),
+    )
 }
 
 @Composable
@@ -111,7 +119,7 @@ private fun DeckBody(state: JarnSessionState) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 DeckTabContent(state, NowVideoPreview(enabled = display.videoPreviews, muted = true))
             }
-            JarnDockRow()
+            JarnDockRow(Modifier.nowHideableUi())
         }
     }
 }
@@ -134,9 +142,9 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
 internal fun DeckTab.showsNowShortcuts(): Boolean = this == DeckTab.Now
 
 @Composable
-private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean) {
+private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean, modifier: Modifier = Modifier) {
     val tabs = DeckTab.entries
-    Box(Modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
             verticalAlignment = Alignment.CenterVertically,

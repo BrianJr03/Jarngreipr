@@ -19,6 +19,7 @@ import jr.brian.jarnfe.splash.jarnSplashFade
 internal fun JarnScreenFrame(
     header: @Composable ColumnScope.() -> Unit,
     background: Color = JarnTheme.colors.bg,
+    hintBarModifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Column(
@@ -34,6 +35,6 @@ internal fun JarnScreenFrame(
                 .jarnSplashFade(),
             contentAlignment = Alignment.Center,
         ) { content() }
-        if (rememberJarnDisplay().hintsVisible) JarnScreenHintBar(Modifier.jarnSplashFade())
+        if (rememberJarnDisplay().hintsVisible) JarnScreenHintBar(hintBarModifier.jarnSplashFade())
     }
 }
