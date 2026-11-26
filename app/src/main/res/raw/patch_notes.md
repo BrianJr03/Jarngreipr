@@ -1,37 +1,7 @@
-**Video previews**
-- Game videos from ES-DE can play behind the Now panel on the bottom screen (Settings, Look)
-- Turn on preview sound to hear the video; your music and jingles pause while it plays
-- Choose Fit to see the whole video or Crop to fill the screen
-- Hold Select to hide the UI and watch the video full screen
-- Tap a playing video to watch it full screen
-- Live wallpapers hold still while a video preview plays
+**Look**
+- New Cover glow setting lets the focused game's art glow fill the whole screen (Settings, Display, Browsing)
+- Cover glow is off by default; choose Full screen to turn it on
+- Header text switches between light and dark to stay readable over the glow
+- Your Cover glow choice is saved in your backups
 
-**Collections**
-- New Collections tab for your own game lists
-- Add a game to a collection from its options with Select
-- Rename, reorder or delete a collection with Select on its tile
-- Collections and favorites are now saved in your backups
-
-**Live wallpapers**
-- Ironweave's rings now pulse in a slow wave
-- New Face Buttons wallpaper: a grid of shapes that swell as a slow wave rolls by
-
-**Battery Saver**
-- A Battery Saver icon shows next to the clock while it's on
-- Choose whether Battery Saver pauses wallpapers and video previews (Settings, Look)
-
-**Navigation**
-- Choose whether switching tabs takes you straight into the tab (Settings, General)
-- The Apps tab shows a loading spinner instead of a blank screen
-- The clock and battery now show on the top screen only
-- Hold A on a tab, or long-press it, to reorder your tabs
-- The Jarn label now follows you to the active screen with every switch cue
-
-**Audio**
-- Turn on Mute with L3 and R3 to mute jingles and music with the sticks (Settings, General, Music and jingles)
-- A small pop-up in the top corner confirms when jingles or music are muted or back on
-
-**Fixes**
-- Background music no longer stays quiet after you come back from a game
-
-4.2.0
+4.3.0
