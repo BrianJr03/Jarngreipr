@@ -14,13 +14,17 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 
-/** [isLoaded] tells a game with no art apart from one whose art is still being read. */
+/**
+ * [isLoaded] tells a game with no art apart from one whose art is still being read. [videoPath] is
+ * a file path or a content URI.
+ */
 @Immutable
 internal data class NowGameArt(
     val marqueePath: String? = null,
     val coverPath: String? = null,
     val mediaPath: String? = null,
     val isLoaded: Boolean = false,
+    val videoPath: String? = null,
 )
 
 /** Art the user chose as the full-screen image isn't repeated in the foreground. */
@@ -31,6 +35,7 @@ internal fun nowGameArt(slots: Map<MediaKind, String>, wideArtPath: String?): No
         coverPath = path(MediaKind.Cover),
         mediaPath = path(MediaKind.PhysicalMedia)?.takeUnless { it == wideArtPath },
         isLoaded = true,
+        videoPath = path(MediaKind.Video),
     )
 }
 
