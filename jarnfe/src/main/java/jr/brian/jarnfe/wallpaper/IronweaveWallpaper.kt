@@ -21,7 +21,6 @@ import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.LocalJarnScreen
 
 private const val IRONWEAVE_FPS = 15
-private const val TRANSPARENT_RGB_MASK = 0x00FFFFFF
 
 @Composable
 internal fun IronweaveWallpaper(modifier: Modifier) {
@@ -40,7 +39,7 @@ internal fun IronweaveWallpaper(modifier: Modifier) {
 }
 
 /**
- * A background-colored tile with the rings punched out. Light painted beneath it shows only
+ * A background-colored tile with the rings punched out. The wave painted beneath it shows only
  * through the rings, which needs no offscreen layer and no per-frame shader.
  */
 private class IronweaveTile(private val bg: Int) {
@@ -91,20 +90,18 @@ private class IronweavePainter(
     hasDeckUi: Boolean,
     private val isMotionReduced: Boolean,
 ) : JarnWallpaperPainter {
-    private val ringBase = ironweaveRingBase(palette)
     private val band = JarnWallpaperBand(palette, hasDeckUi)
     private val tilePaint = Paint(Paint.FILTER_BITMAP_FLAG)
-    private val sheenPaint = Paint().apply {
+    private val wavePaint = Paint().apply {
         isDither = true
-        val clear = palette.glow and TRANSPARENT_RGB_MASK
         shader = LinearGradient(
-            IronweaveScene.SHEEN_START_X,
-            IronweaveScene.SHEEN_START_Y,
-            IronweaveScene.SHEEN_END_X,
-            IronweaveScene.SHEEN_END_Y,
-            intArrayOf(clear, palette.glow, clear),
-            floatArrayOf(0f, 0.5f, 1f),
-            Shader.TileMode.CLAMP,
+            0f,
+            0f,
+            IronweaveScene.WaveDirectionX * IronweaveScene.WAVELENGTH,
+            IronweaveScene.WaveDirectionY * IronweaveScene.WAVELENGTH,
+            ironweaveWaveColors(palette),
+            IronweaveScene.WaveStops,
+            Shader.TileMode.REPEAT,
         )
     }
 
@@ -118,22 +115,23 @@ private class IronweavePainter(
         val top = jarnWallpaperOriginY(isBottomScreen)
         val bottom = top + JARN_WALLPAPER_SCREEN_HEIGHT
 
-        canvas.drawColor(ringBase)
         val checkpoint = canvas.save()
         canvas.translate(size.width / 2f, -top * scale)
         canvas.scale(scale, scale)
-        drawSheen(canvas, ironweaveSheenPosition(ironweaveSeconds(timeNanos, isStill)), halfWidth, top, bottom)
+        drawWave(canvas, ironweaveWavePhase(ironweaveSeconds(timeNanos, isStill)), halfWidth, top, bottom)
         tilePaint.shader = tile.shaderFor(scale)
         canvas.drawRect(-halfWidth, top, halfWidth, bottom, tilePaint)
         canvas.restoreToCount(checkpoint)
         band.draw(canvas, size.width, height)
     }
 
-    private fun drawSheen(canvas: Canvas, position: Float, halfWidth: Float, top: Float, bottom: Float) {
-        val driftY = position * IronweaveScene.SHEEN_DRIFT_Y
+    /** Shifts the repeating gradient along its own direction, so the rect stays put on screen. */
+    private fun drawWave(canvas: Canvas, phase: Float, halfWidth: Float, top: Float, bottom: Float) {
+        val shiftX = phase * IronweaveScene.WaveDirectionX
+        val shiftY = phase * IronweaveScene.WaveDirectionY
         val checkpoint = canvas.save()
-        canvas.translate(position, driftY)
-        canvas.drawRect(-halfWidth - position, top - driftY, halfWidth - position, bottom - driftY, sheenPaint)
+        canvas.translate(shiftX, shiftY)
+        canvas.drawRect(-halfWidth - shiftX, top - shiftY, halfWidth - shiftX, bottom - shiftY, wavePaint)
         canvas.restoreToCount(checkpoint)
     }
 }
