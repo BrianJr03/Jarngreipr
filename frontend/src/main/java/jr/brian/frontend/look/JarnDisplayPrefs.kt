@@ -81,6 +81,7 @@ data class JarnDisplayPrefs(
     val videoPreviews: Boolean = false,
     val videoPreviewSound: Boolean = false,
     val videoFit: JarnVideoFit = JarnVideoFit.Fit,
+    val pauseOnBatterySaver: Boolean = true,
     val tabFocus: JarnTabFocus = JarnTabFocus.Both,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(

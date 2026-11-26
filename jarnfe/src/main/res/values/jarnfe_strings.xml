@@ -3,6 +3,7 @@
     <string name="jarnfe_wordmark" translatable="false">JARN</string>
     <string name="jarnfe_wordmark_suffix" translatable="false">GREIPR</string>
     <string name="jarnfe_battery_percent">%1$d%%</string>
+    <string name="jarnfe_status_battery_saver">Battery Saver is on</string>
 
     <string name="jarnfe_section_systems">Systems</string>
     <string name="jarnfe_section_favorites">Favorites</string>

@@ -36,6 +36,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     videoPreviews = videoPreviews,
     videoPreviewSound = videoPreviewSound,
     videoFit = videoFit.id,
+    pauseOnBatterySaver = pauseOnBatterySaver,
     tabFocus = tabFocus.id,
 )
 
@@ -65,5 +66,6 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     videoPreviews = videoPreviews ?: current.videoPreviews,
     videoPreviewSound = videoPreviewSound ?: current.videoPreviewSound,
     videoFit = JarnVideoFit.fromId(videoFit) ?: current.videoFit,
+    pauseOnBatterySaver = pauseOnBatterySaver ?: current.pauseOnBatterySaver,
     tabFocus = JarnTabFocus.fromId(tabFocus) ?: current.tabFocus,
 )

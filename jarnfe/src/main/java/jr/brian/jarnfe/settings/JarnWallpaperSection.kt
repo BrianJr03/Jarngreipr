@@ -62,6 +62,7 @@ internal fun JarnWallpaperSection(initialFocus: FocusRequester? = null) {
         )
     }
     store?.let { JarnLiveWallpaperPicker(savedId = liveId, onChoose = it::setLiveWallpaperId) }
+    store?.let { JarnPauseOnBatterySaverSetting(it) }
     if (!perScreen) {
         WallpaperThemeRow(source, store, JarnWallpaperScreen.Top, hasAnyWallpaper || showsLive)
     }

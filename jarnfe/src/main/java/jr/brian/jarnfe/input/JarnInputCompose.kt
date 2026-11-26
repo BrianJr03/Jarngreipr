@@ -88,8 +88,9 @@ internal fun jarnSplitTrailingHints(hints: List<JarnHint>): Pair<List<JarnHint>,
     return trailing to hints.filterNot { it.key in TrailingHintKeys }
 }
 
+/** The top screen is the default display, whichever role is shown on it. The Deck never hosts there. */
 @Composable
-private fun isOnTopScreen(): Boolean =
+internal fun isOnTopScreen(): Boolean =
     (LocalView.current.display?.displayId ?: Display.DEFAULT_DISPLAY) == Display.DEFAULT_DISPLAY
 
 /**
