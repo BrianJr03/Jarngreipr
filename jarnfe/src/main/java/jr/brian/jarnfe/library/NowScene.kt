@@ -53,8 +53,11 @@ internal fun NowScene(
         Box(Modifier.fillMaxSize().clipToBounds()) {
             NowSceneArt(selection, systemNow)
             NowSceneVideo(selection, preview)
-            NowBottomShade()
-            content()
+            NowHiddenUiInput()
+            Box(Modifier.matchParentSize().nowHideableUi()) {
+                NowBottomShade()
+                content()
+            }
         }
     }
 }
