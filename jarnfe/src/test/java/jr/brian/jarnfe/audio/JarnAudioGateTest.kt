@@ -2,6 +2,7 @@ package jr.brian.jarnfe.audio
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -64,5 +65,59 @@ class JarnAudioGateTest {
         val trigger = JarnJingleTrigger()
         assertEquals(JarnJingleStep.None, trigger.next("a", false))
         assertEquals(JarnJingleStep.Play("a"), trigger.next("a", true))
+    }
+
+    @Test
+    fun `a preview with sound holds music but may still play itself`() {
+        val claimed = JarnAudioGate().withTop(1, true).copy(previewGameId = "a")
+        assertFalse(claimed.allowed)
+        assertTrue(claimed.previewMayPlay)
+    }
+
+    @Test
+    fun `other media, an RSS video or a covered screen keep a preview quiet`() {
+        val claimed = JarnAudioGate().withTop(1, true).copy(previewGameId = "a")
+        assertFalse(claimed.copy(otherMediaPlaying = true).previewMayPlay)
+        assertFalse(claimed.copy(videoOpen = true).previewMayPlay)
+        assertFalse(claimed.withCovered(1, true).previewMayPlay)
+        assertFalse(claimed.withTop(1, false).previewMayPlay)
+    }
+
+    @Test
+    fun `a game whose preview has sound never plays its jingle`() {
+        val trigger = JarnJingleTrigger()
+        assertEquals(JarnJingleStep.None, trigger.next("a", false, previewGameId = "a"))
+        assertEquals(JarnJingleStep.None, trigger.next("a", true))
+    }
+
+    @Test
+    fun `a preview claiming its game stops a jingle already playing`() {
+        val trigger = JarnJingleTrigger()
+        trigger.next("a", true)
+        assertEquals(JarnJingleStep.Stop, trigger.next("a", false, previewGameId = "a"))
+    }
+
+    @Test
+    fun `the next game plays its jingle once the last preview lets go`() {
+        val trigger = JarnJingleTrigger()
+        trigger.next("a", false, previewGameId = "a")
+        assertEquals(JarnJingleStep.None, trigger.next("b", false, previewGameId = "a"))
+        assertEquals(JarnJingleStep.Play("b"), trigger.next("b", true))
+    }
+
+    @Test
+    fun `only the claiming game can release a preview claim`() {
+        JarnAudio.resetForTest(JarnAudioGate(topWindows = setOf(1)))
+        try {
+            JarnAudio.claimPreview("a")
+            JarnAudio.claimPreview("b")
+            JarnAudio.releasePreview("a")
+            assertEquals("b", JarnAudio.gateState.value.previewGameId)
+            JarnAudio.releasePreview("b")
+            assertNull(JarnAudio.gateState.value.previewGameId)
+            assertTrue(JarnAudio.gateState.value.allowed)
+        } finally {
+            JarnAudio.resetForTest()
+        }
     }
 }

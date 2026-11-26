@@ -78,6 +78,7 @@ internal object NowVideoFailures {
  */
 @Composable
 internal fun BoxScope.NowSceneVideo(selection: LibrarySelection, preview: NowVideoPreview) {
+    NowVideoSoundMode(preview)
     val game = (selection as? LibrarySelection.Game)?.takeUnless { it.resume }?.game
     if (game == null || !preview.enabled) return
     val videos = rememberJarnGameVideos() ?: return
@@ -101,6 +102,7 @@ internal fun BoxScope.NowGameVideo(
     val heldByLaunch = rememberHeldByLaunch(gameId, canPlay)
     if (!canPlay || heldByLaunch) return
     val wanted = path?.takeUnless { it in NowVideoFailures || nowVideoCovered() }
+    NowVideoSoundClaim(gameId, claims = wanted != null && !muted)
     val target = rememberArmedPath(wanted)
     val shown = rememberLeavingPath(target, JarnTheme.motion.focusOut.durationMillis.toLong())
     if (shown != null) {
@@ -162,8 +164,9 @@ private fun BoxScope.NowVideoPlayer(videos: JarnGameVideos, path: String, visibl
     val context = LocalContext.current
     val video = remember(videos, path) { videos.create(context, path, crop = true) }
     DisposableEffect(video) { onDispose { video.release() } }
-    LaunchedEffect(video, muted) { video.setMuted(muted) }
     val state by video.state.collectAsState()
+    val audible = rememberNowVideoAudible(muted, visible && state == JarnGameVideoState.Ready)
+    LaunchedEffect(video, audible) { video.setMuted(!audible) }
     LaunchedEffect(state) {
         if (state == JarnGameVideoState.Failed) NowVideoFailures.add(path)
     }

@@ -42,7 +42,8 @@ internal fun gameVideoUri(path: String): Uri? = when {
 
 /**
  * A [TextureView] rather than a SurfaceView, so Compose can fade and clip it over art. No audio
- * focus is taken: a muted preview must never pause the user's music.
+ * focus is taken, muted or not: a preview must never pause or duck the user's music, and Jarn FE
+ * only unmutes one while its own music is held and no other media is playing.
  */
 @OptIn(UnstableApi::class)
 private class AppJarnGameVideo(context: Context, path: String, crop: Boolean) : JarnGameVideo {
