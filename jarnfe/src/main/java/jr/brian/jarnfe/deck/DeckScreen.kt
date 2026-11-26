@@ -25,7 +25,6 @@ import jr.brian.jarnfe.canvas.CanvasRoute
 import jr.brian.jarnfe.dock.JarnDockRow
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
-import jr.brian.jarnfe.input.isOnTopScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowHiddenUiTouch
@@ -44,7 +43,7 @@ import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.settings.JarnSettingsControls
 import jr.brian.jarnfe.settings.JarnSettingsScraperHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
-import jr.brian.jarnfe.shell.JarnStatusReadout
+import jr.brian.jarnfe.shell.JarnTopScreenStatus
 import jr.brian.jarnfe.shell.JarnWordmark
 import jr.brian.jarnfe.shell.deckBindings
 import jr.brian.jarnfe.splash.JarnDeckSplash
@@ -109,7 +108,7 @@ private fun DeckHeader(state: JarnSessionState) {
         selected = state.deckTab,
         showsMark = deckShowsMark(state, LocalJarnMarkHandoff.current.follows),
         modifier = Modifier.nowHideableUi(),
-        showsStatus = isOnTopScreen(),
+        showsStatus = true,
     )
 }
 
@@ -145,7 +144,7 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
 /** Random and Last Played live in the header only on Now, opposite the tabs. */
 internal fun DeckTab.showsNowShortcuts(): Boolean = this == DeckTab.Now
 
-/** [showsStatus] gives the Deck the clock and battery while it is shown on the top screen. */
+/** [showsStatus] gives the Deck window the clock and battery while it is on the top screen. */
 @Composable
 private fun DeckTabStrip(
     selected: DeckTab,
@@ -170,7 +169,7 @@ private fun DeckTabStrip(
             NowPlayingHeaderPill(JarnScreen.Deck, Modifier.padding(start = JarnTheme.space.md))
             if (selected == DeckTab.Canvas) CanvasHeaderControls()
             if (selected.showsNowShortcuts()) NowShortcutControls(Modifier.padding(start = nowShortcutGap(JarnTheme.space.md.value).dp))
-            if (showsStatus) Box(Modifier.padding(start = JarnTheme.space.lg)) { JarnStatusReadout() }
+            if (showsStatus) JarnTopScreenStatus(Modifier.padding(start = JarnTheme.space.lg))
         }
         if (selected == DeckTab.Canvas) CanvasHeaderEditBanner(Modifier.matchParentSize())
     }

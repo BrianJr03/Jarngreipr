@@ -8,6 +8,7 @@ import android.os.BatteryManager
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -32,6 +34,8 @@ import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 import java.util.Date
 
 private val BatterySaverIconSize = 16.dp
+
+internal const val JARN_STATUS_READOUT_TAG = "jarn_status_readout"
 
 /** At or below this the battery reads as low. */
 internal const val LOW_BATTERY_PERCENT = 15
@@ -78,12 +82,22 @@ internal fun rememberDeviceStatus(): JarnDeviceStatus {
 internal fun showsBatterySaverIcon(batterySaverOn: Boolean, pausesOnBatterySaver: Boolean, onTopScreen: Boolean): Boolean =
     batterySaverOn && pausesOnBatterySaver && onTopScreen
 
+/**
+ * The clock, battery and Battery Saver icon, on the top screen only, whichever role is drawn
+ * there. A swapped Stage on the bottom screen shows none of them.
+ */
 @Composable
-internal fun JarnStatusReadout() {
+internal fun JarnTopScreenStatus(modifier: Modifier = Modifier, onTopScreen: Boolean = isOnTopScreen()) {
+    if (!onTopScreen) return
+    Box(modifier) { JarnStatusReadout() }
+}
+
+@Composable
+private fun JarnStatusReadout() {
     val showsSaver = showsBatterySaverIcon(
         batterySaverOn = JarnWallpaperGate.batterySaverOn,
         pausesOnBatterySaver = rememberJarnDisplay().pauseOnBatterySaver,
-        onTopScreen = isOnTopScreen(),
+        onTopScreen = true,
     )
     JarnStatusReadoutContent(rememberDeviceStatus(), showsSaver)
 }
@@ -92,6 +106,7 @@ internal fun JarnStatusReadout() {
 internal fun JarnStatusReadoutContent(status: JarnDeviceStatus, showsBatterySaver: Boolean) {
     val colors = JarnTheme.colors
     Row(
+        modifier = Modifier.testTag(JARN_STATUS_READOUT_TAG),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {

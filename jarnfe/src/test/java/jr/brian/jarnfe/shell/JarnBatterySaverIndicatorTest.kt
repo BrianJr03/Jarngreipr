@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import jr.brian.core.ui.theme.JarnTheme
@@ -62,6 +63,18 @@ class JarnBatterySaverIndicatorTest {
         val top = mutableStateOf<Boolean?>(null)
         show { top.value = isOnTopScreen() }
         assertTrue(top.value == true)
+    }
+
+    @Test
+    fun `a Stage or Deck on the top screen shows the clock and battery`() {
+        show { JarnTopScreenStatus(onTopScreen = true) }
+        rule.onNodeWithTag(JARN_STATUS_READOUT_TAG).assertExists()
+    }
+
+    @Test
+    fun `a swapped Stage on the bottom screen shows no clock or battery`() {
+        show { JarnTopScreenStatus(onTopScreen = false) }
+        rule.onNodeWithTag(JARN_STATUS_READOUT_TAG).assertDoesNotExist()
     }
 
     @Test

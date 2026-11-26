@@ -65,7 +65,7 @@ import jr.brian.jarnfe.settings.JarnSettingsPreview
 import jr.brian.jarnfe.settings.JarnSettingsSingleScreen
 import jr.brian.jarnfe.shell.JarnNoticeHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
-import jr.brian.jarnfe.shell.JarnStatusReadout
+import jr.brian.jarnfe.shell.JarnTopScreenStatus
 import jr.brian.jarnfe.shell.JarnWordmark
 import jr.brian.jarnfe.shell.deckPanelBindings
 import jr.brian.jarnfe.shell.stageBindings
@@ -129,7 +129,7 @@ private fun StageHeader(state: JarnSessionState) {
         JarnWordmark(Modifier.jarnSplashMark())
         Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
         NowPlayingHeaderPill(JarnScreen.Stage, Modifier.padding(start = JarnTheme.space.lg))
-        Box(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade()) { JarnStatusReadout() }
+        JarnTopScreenStatus(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade())
     }
 }
 
