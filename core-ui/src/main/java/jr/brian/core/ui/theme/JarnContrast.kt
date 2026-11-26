@@ -16,11 +16,12 @@ fun jarnRelativeLuminance(color: Color): Double {
     return 0.2126 * linear(color.red) + 0.7152 * linear(color.green) + 0.0722 * linear(color.blue)
 }
 
-fun jarnContrastRatio(first: Color, second: Color): Double {
-    val a = jarnRelativeLuminance(first)
-    val b = jarnRelativeLuminance(second)
-    return (max(a, b) + 0.05) / (min(a, b) + 0.05)
-}
+fun jarnContrastRatio(first: Color, second: Color): Double =
+    jarnContrastRatio(jarnRelativeLuminance(first), jarnRelativeLuminance(second))
+
+/** The WCAG ratio between two relative luminances, from 1 to 21. */
+fun jarnContrastRatio(firstLuminance: Double, secondLuminance: Double): Double =
+    (max(firstLuminance, secondLuminance) + 0.05) / (min(firstLuminance, secondLuminance) + 0.05)
 
 fun jarnBlend(foreground: Color, background: Color): Color {
     val alpha = foreground.alpha
