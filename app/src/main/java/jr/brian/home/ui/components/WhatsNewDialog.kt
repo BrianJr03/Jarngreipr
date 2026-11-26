@@ -42,6 +42,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -75,6 +78,12 @@ fun WhatsNewDialog(
 //    var konfettiTrigger by remember { mutableIntStateOf(0) }
 //    var isKonfettiPlaying by remember { mutableStateOf(selectedPreset != KonfettiPreset.NONE) }
 
+    val showTryJarn = showJarnCard && rememberJarnFeOffered()
+    var isTryJarnSheetOpen by remember { mutableStateOf(false) }
+    val tryJarnFocusRequester = remember { FocusRequester() }
+    val closeFocusRequester = remember { FocusRequester() }
+    val headerFocusRequester = if (showTryJarn) tryJarnFocusRequester else closeFocusRequester
+
     AppBottomSheet(onDismissRequest = onDismiss) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -83,45 +92,26 @@ fun WhatsNewDialog(
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 24.dp)
             ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.whats_new_title),
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = stringResource(R.string.whats_new_version, versionName),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                        IconButton(onClick = onDismiss) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.whats_new_close),
-                                tint = Color.White
-                            )
-                        }
-                    }
+                WhatsNewHeader(
+                    versionName = versionName,
+                    showTryJarn = showTryJarn,
+                    onTryJarn = { isTryJarnSheetOpen = true },
+                    onClose = onDismiss,
+                    tryJarnFocusRequester = tryJarnFocusRequester,
+                    closeFocusRequester = closeFocusRequester,
+                )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                if (showJarnCard) JarnFeWhatsNewPreview(onOpened = onDismiss)
+                Spacer(modifier = Modifier.height(16.dp))
 
                 GamepadScrollColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f, fill = false),
+                        .weight(1f, fill = false)
+                        .focusProperties { up = headerFocusRequester },
                     focusOnOpen = true,
                 ) {
                     MarkdownText(
@@ -179,6 +169,62 @@ fun WhatsNewDialog(
 //                    )
 //                }
 //            }
+        }
+    }
+
+    if (isTryJarnSheetOpen) {
+        TryJarnSheet(
+            onDismiss = {
+                isTryJarnSheetOpen = false
+                runCatching { tryJarnFocusRequester.requestFocus() }
+            },
+            onOpened = onDismiss,
+        )
+    }
+}
+
+@Composable
+private fun WhatsNewHeader(
+    versionName: String,
+    showTryJarn: Boolean,
+    onTryJarn: () -> Unit,
+    onClose: () -> Unit,
+    tryJarnFocusRequester: FocusRequester,
+    closeFocusRequester: FocusRequester,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.whats_new_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                text = stringResource(R.string.whats_new_version, versionName),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.6f)
+            )
+        }
+        if (showTryJarn) {
+            TryJarnHeaderButton(
+                onClick = onTryJarn,
+                modifier = Modifier.focusRequester(tryJarnFocusRequester),
+            )
+        }
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.focusRequester(closeFocusRequester),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(R.string.whats_new_close),
+                tint = Color.White
+            )
         }
     }
 }
