@@ -1,10 +1,13 @@
 package jr.brian.jarnfe.wallpaper
 
 import kotlin.math.PI
+import kotlin.math.ceil
 import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.floor
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
-/** Outlined shapes riding a swell that flows down the shared 1920 by 2160 scene. */
+/** An even grid of small outlines in the shared scene, swelling as a slow diagonal wave passes. */
 internal object TidemarkScene {
     const val KIND_CROSS = 0
     const val KIND_TRIANGLE = 1
@@ -12,81 +15,58 @@ internal object TidemarkScene {
     const val KIND_CIRCLE = 3
     const val KIND_COUNT = 4
 
-    const val SHAPE_STRIDE = 5
-    const val SHAPE_X = 0
-    const val SHAPE_Y = 1
-    const val SHAPE_SIZE = 2
-    const val SHAPE_TURN = 3
-    const val SHAPE_TONE = 4
+    const val CELL = 45f
+    const val PATTERN_SIZE = 4
+    const val TILE_SIZE = CELL * PATTERN_SIZE
 
-    const val SCENE_HEIGHT = 2160f
-    const val BOB = 12f
-    const val SWAY_DEGREES = 6f
-    const val SQUASH = 0.08f
-    const val MAX_TURN_DEGREES = 18f
-    const val MIN_SIZE = 30f
-    const val SIZE_RANGE = 26f
+    const val BASE_HALF = 7f
+    const val CREST_HALF = 15f
+    const val STROKE = 2.2f
+    const val BASE_ALPHA = 0.5f
 
-    /** The first band is the swell the shapes ride, the others add depth. */
-    val BandLength = floatArrayOf(620f, 410f, 900f)
-    val BandPeriod = doubleArrayOf(8.0, 6.5, 10.0)
-    val BandTiltDegrees = floatArrayOf(7f, 4f, 10f)
-    val BandAlpha = floatArrayOf(0.38f, 0.55f, 0.35f)
-    val BandUsesGlow = booleanArrayOf(true, false, false)
+    /** Seconds for one crest to pass a point. */
+    const val SWELL_PERIOD_SECONDS = 8.0
+    const val WAVELENGTH = 420f
 
-    private const val TOP_COLS = 4
-    private const val TOP_ROWS = 3
-    private const val BOTTOM_COLS = 4
-    private const val BOTTOM_ROWS = 2
-    const val SHAPE_COUNT = TOP_COLS * TOP_ROWS + BOTTOM_COLS * BOTTOM_ROWS
+    /** Only the top of each swell lifts out of the base grid, which keeps crest cells few. */
+    const val CREST_START = 0.88f
 
-    val Kinds = IntArray(SHAPE_COUNT)
-    val Shapes: FloatArray = seededShapes(Kinds)
+    const val CREST_STRIDE = 4
+    const val CREST_X = 0
+    const val CREST_Y = 1
+    const val CREST_AMOUNT = 2
+    const val CREST_KIND = 3
 
-    /** Fills [kinds] too. Each row holds one of every kind, so the mix stays even. */
-    fun seededShapes(kinds: IntArray): FloatArray {
-        val random = JarnWallpaperRandom(SHAPE_SEED)
-        val shapes = FloatArray(SHAPE_COUNT * SHAPE_STRIDE)
-        var index = 0
-        fun place(cols: Int, rows: Int, width: Float, top: Float) {
-            val cellWidth = width / cols
-            val cellHeight = JARN_WALLPAPER_SCREEN_HEIGHT / rows
-            for (row in 0 until rows) {
-                for (col in 0 until cols) {
-                    val at = index * SHAPE_STRIDE
-                    val jitterX = (random.next() * 2 - 1) * JITTER * cellWidth
-                    val jitterY = (random.next() * 2 - 1) * JITTER * cellHeight
-                    shapes[at + SHAPE_X] = (-width / 2 + (col + 0.5f) * cellWidth + jitterX).toFloat()
-                    shapes[at + SHAPE_Y] = (top + (row + 0.5f) * cellHeight + jitterY).toFloat()
-                    shapes[at + SHAPE_SIZE] = (MIN_SIZE + random.next() * SIZE_RANGE).toFloat()
-                    shapes[at + SHAPE_TURN] = ((random.next() * 2 - 1) * MAX_TURN_DEGREES).toFloat()
-                    shapes[at + SHAPE_TONE] = if (random.next() < NEAR_SHARE) 1f else 0f
-                    kinds[index] = (col + row) % KIND_COUNT
-                    index++
-                }
-            }
-        }
-        place(TOP_COLS, TOP_ROWS, TOP_WIDTH, 0f)
-        place(BOTTOM_COLS, BOTTOM_ROWS, BOTTOM_WIDTH, JARN_WALLPAPER_SCREEN_HEIGHT)
-        return shapes
-    }
+    // A Latin square: every row and column holds each kind once, so the mix stays even.
+    val Pattern = intArrayOf(
+        KIND_CROSS, KIND_CIRCLE, KIND_SQUARE, KIND_TRIANGLE,
+        KIND_SQUARE, KIND_TRIANGLE, KIND_CROSS, KIND_CIRCLE,
+        KIND_CIRCLE, KIND_CROSS, KIND_TRIANGLE, KIND_SQUARE,
+        KIND_TRIANGLE, KIND_SQUARE, KIND_CIRCLE, KIND_CROSS,
+    )
 
-    private const val SHAPE_SEED = 5151L
-    private const val TOP_WIDTH = 1760f
-    // The bottom screen is narrower, so its shapes stay near the middle.
-    private const val BOTTOM_WIDTH = 1040f
-    private const val JITTER = 0.3
-    private const val NEAR_SHARE = 0.5
+    /** The wave travels down and right, so crests run from the top screen into the bottom. */
+    val DIR_X = (1 / sqrt(2.0)).toFloat()
+    val DIR_Y = (1 / sqrt(2.0)).toFloat()
+
+    /** Where the still frame parks a crest: the upper middle of the top screen. */
+    const val STILL_CREST_X = 0f
+    const val STILL_CREST_Y = 330f
 }
 
 private const val NANOS_PER_SECOND = 1_000_000_000.0
 private const val FULL_TURN = 2 * PI
-private const val DEGREES_TO_RADIANS = PI / 180
-private val RideCos = cos(TidemarkScene.BandTiltDegrees[0] * DEGREES_TO_RADIANS).toFloat()
-private val RideSin = sin(TidemarkScene.BandTiltDegrees[0] * DEGREES_TO_RADIANS).toFloat()
+private const val CHANNEL_MASK = 0xFF
 
-/** Starts live time at the still moment, so the first moving frame matches the still. */
-internal const val TIDEMARK_STILL_SECONDS = 1.5
+private fun floorMod(value: Int, mod: Int): Int = ((value % mod) + mod) % mod
+
+/** Seconds at which a crest sits on the still point, so the first live frame matches the still. */
+internal val TIDEMARK_STILL_SECONDS: Double = run {
+    val along = TidemarkScene.STILL_CREST_X * TidemarkScene.DIR_X +
+        TidemarkScene.STILL_CREST_Y * TidemarkScene.DIR_Y
+    val wrapped = ((along % TidemarkScene.WAVELENGTH) + TidemarkScene.WAVELENGTH) % TidemarkScene.WAVELENGTH
+    wrapped / TidemarkScene.WAVELENGTH * TidemarkScene.SWELL_PERIOD_SECONDS
+}
 
 internal fun tidemarkSeconds(timeNanos: Long, isStill: Boolean): Double =
     if (isStill) {
@@ -95,27 +75,80 @@ internal fun tidemarkSeconds(timeNanos: Long, isStill: Boolean): Double =
         TIDEMARK_STILL_SECONDS + timeNanos / NANOS_PER_SECOND
     }
 
-/** How far a band has flowed along its own direction, wrapping every swell length. */
-internal fun tidemarkSwellOffset(seconds: Double, band: Int): Float {
-    val period = TidemarkScene.BandPeriod[band]
-    return ((seconds % period) / period * TidemarkScene.BandLength[band]).toFloat()
+/** How far the crests have travelled along the wave direction, wrapping every wavelength. */
+internal fun tidemarkPhase(seconds: Double): Float {
+    val period = TidemarkScene.SWELL_PERIOD_SECONDS
+    return ((seconds % period) / period * TidemarkScene.WAVELENGTH).toFloat()
 }
 
-/**
- * Where a point sits on the ridden swell. Matches the band drawn rotated by its tilt and
- * shifted by [offset], so the crest (cosine at -1) lines up with the band's brightest line.
- */
-internal fun tidemarkWaveAngle(x: Float, y: Float, offset: Float): Float {
-    val along = y * RideCos - x * RideSin - offset
-    return (FULL_TURN * along / TidemarkScene.BandLength[0]).toFloat()
+/** 1 on a crest, 0 in a trough, for a point in scene space. */
+internal fun tidemarkLevel(x: Float, y: Float, phase: Float): Float {
+    val along = x * TidemarkScene.DIR_X + y * TidemarkScene.DIR_Y - phase
+    return ((1 + cos(FULL_TURN * along / TidemarkScene.WAVELENGTH)) / 2).toFloat()
 }
 
-/** Negative is up, so a shape rises as the crest passes under it. */
-internal fun tidemarkLift(angle: Float): Float = TidemarkScene.BOB * cos(angle)
+/** How far a cell has lifted out of the base grid, eased so it swells in and out smoothly. */
+internal fun tidemarkCrestAmount(level: Float): Float {
+    val t = ((level - TidemarkScene.CREST_START) / (1f - TidemarkScene.CREST_START)).coerceIn(0f, 1f)
+    return t * t * (3f - 2f * t)
+}
 
-internal fun tidemarkTurn(angle: Float, baseTurn: Float): Float =
-    baseTurn + TidemarkScene.SWAY_DEGREES * sin(angle)
+internal fun tidemarkHalfSize(amount: Float): Float =
+    TidemarkScene.BASE_HALF + (TidemarkScene.CREST_HALF - TidemarkScene.BASE_HALF) * amount
 
-/** Flattens a little on the crest, which reads as the outline bending with the water. */
-internal fun tidemarkSquash(angle: Float): Float =
-    1f - TidemarkScene.SQUASH * (1f - cos(angle)) / 2f
+/** Blends two opaque colors without allocating, for use inside a frame. */
+internal fun tidemarkMix(from: Int, to: Int, amount: Float): Int {
+    var result = from and (CHANNEL_MASK shl 24)
+    for (shift in ColorShifts) {
+        val start = from shr shift and CHANNEL_MASK
+        val end = to shr shift and CHANNEL_MASK
+        result = result or ((start + (end - start) * amount).roundToInt().coerceIn(0, CHANNEL_MASK) shl shift)
+    }
+    return result
+}
+
+private val ColorShifts = intArrayOf(16, 8, 0)
+
+internal fun tidemarkKind(col: Int, row: Int): Int {
+    val size = TidemarkScene.PATTERN_SIZE
+    return TidemarkScene.Pattern[floorMod(row, size) * size + floorMod(col, size)]
+}
+
+internal fun tidemarkCellCenter(index: Int): Float = (index + 0.5f) * TidemarkScene.CELL
+
+internal fun tidemarkFirstRow(top: Float): Int = floor(top / TidemarkScene.CELL).toInt()
+
+internal fun tidemarkLastRow(top: Float): Int =
+    ceil((top + JARN_WALLPAPER_SCREEN_HEIGHT) / TidemarkScene.CELL).toInt() - 1
+
+internal fun tidemarkFirstCol(halfWidth: Float): Int = floor(-halfWidth / TidemarkScene.CELL).toInt()
+
+internal fun tidemarkLastCol(halfWidth: Float): Int = ceil(halfWidth / TidemarkScene.CELL).toInt() - 1
+
+/** Room for every visible cell, so [tidemarkFillCrest] never runs out. */
+internal fun tidemarkCrestCapacity(halfWidth: Float, top: Float): Int {
+    val cols = tidemarkLastCol(halfWidth) - tidemarkFirstCol(halfWidth) + 1
+    val rows = tidemarkLastRow(top) - tidemarkFirstRow(top) + 1
+    return cols * rows * TidemarkScene.CREST_STRIDE
+}
+
+/** Writes each visible crest cell into [out] (stride [TidemarkScene.CREST_STRIDE]) and returns the count. */
+internal fun tidemarkFillCrest(phase: Float, halfWidth: Float, top: Float, out: FloatArray): Int {
+    var count = 0
+    val capacity = out.size / TidemarkScene.CREST_STRIDE
+    for (row in tidemarkFirstRow(top)..tidemarkLastRow(top)) {
+        val y = tidemarkCellCenter(row)
+        for (col in tidemarkFirstCol(halfWidth)..tidemarkLastCol(halfWidth)) {
+            val x = tidemarkCellCenter(col)
+            val amount = tidemarkCrestAmount(tidemarkLevel(x, y, phase))
+            if (amount <= 0f || count == capacity) continue
+            val at = count * TidemarkScene.CREST_STRIDE
+            out[at + TidemarkScene.CREST_X] = x
+            out[at + TidemarkScene.CREST_Y] = y
+            out[at + TidemarkScene.CREST_AMOUNT] = amount
+            out[at + TidemarkScene.CREST_KIND] = tidemarkKind(col, row).toFloat()
+            count++
+        }
+    }
+    return count
+}
