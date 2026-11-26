@@ -43,6 +43,15 @@ internal fun JarnKeyboardAutoFocus(firstKey: FocusRequester) {
     LaunchedEffect(Unit) { if (!tabsFocus.hasFocus) firstKey.requestFocus() }
 }
 
+/** Waits a frame so it lands after the window's own fallback focus, then takes it. */
+@Composable
+internal fun JarnKeyboardTakeFocus(firstKey: FocusRequester) {
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        runCatching { firstKey.requestFocus() }
+    }
+}
+
 /** The key grid every Jarn FE keyboard shares. Callers own the text and the button bindings. */
 @Composable
 internal fun JarnKeyboardGrid(

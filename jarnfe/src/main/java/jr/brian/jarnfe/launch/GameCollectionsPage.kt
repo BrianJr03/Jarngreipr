@@ -188,5 +188,6 @@ private fun CollectionNameEntry(
         onCancel = onCancel,
         modifier = Modifier.fillMaxWidth(),
         maxLength = COLLECTION_NAME_MAX_LENGTH,
+        takesFocus = true,
     )
 }

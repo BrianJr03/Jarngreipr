@@ -9,6 +9,10 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.requestFocus
+import androidx.compose.ui.semantics.SemanticsActions
+import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.library.collections.COLLECTION_NAME_MAX_LENGTH
 import jr.brian.frontend.library.collections.CollectionNameResult
@@ -49,15 +53,40 @@ class GameCollectionsPageTest {
 
     private fun collectionNames(): List<String> = runBlocking { source.observeCollections().first().items.map { it.name } }
 
-    private fun showPicker() {
+    private fun showPicker(withTabs: Boolean = false) {
         rule.setContent {
             JarnTheme {
                 ProvideJarnInput(router, JarnScreen.Stage) {
-                    Column { GameCollectionsPage(game, remember { FocusRequester() }, source) }
+                    Column {
+                        if (withTabs) JarnTabs(labels = listOf("Now", "Apps"), selectedIndex = 0, onSelect = {})
+                        GameCollectionsPage(game, remember { FocusRequester() }, source)
+                    }
                 }
             }
         }
         rule.waitForIdle()
+    }
+
+    private fun openNewCollectionWithoutTouch() {
+        rule.onNodeWithText("New collection…").performSemanticsAction(SemanticsActions.OnClick)
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `opening New collection puts focus on the first key`() {
+        showPicker(withTabs = true)
+        rule.onNodeWithText("New collection…").assertIsFocused()
+        openNewCollectionWithoutTouch()
+        rule.onNodeWithText("1").assertIsFocused()
+    }
+
+    @Test
+    fun `the keyboard takes focus back when the tab strip picked it up`() {
+        showPicker(withTabs = true)
+        rule.onNodeWithText("Now").requestFocus()
+        rule.waitForIdle()
+        openNewCollectionWithoutTouch()
+        rule.onNodeWithText("1").assertIsFocused()
     }
 
     private fun press(code: Int) {
