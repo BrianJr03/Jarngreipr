@@ -50,11 +50,13 @@ internal fun NowScene(
 ) {
     val hold = remember { NowVideoHold() }
     CompositionLocalProvider(LocalNowVideoHold provides hold) {
-        Box(Modifier.fillMaxSize().clipToBounds()) {
-            NowSceneArt(selection, systemNow)
-            NowSceneVideo(selection, preview)
+        Box(Modifier.fillMaxSize()) {
+            NowVideoFill {
+                NowSceneArt(selection, systemNow)
+                NowSceneVideo(selection, preview)
+            }
             NowHiddenUiInput()
-            Box(Modifier.matchParentSize().nowHideableUi()) {
+            Box(Modifier.matchParentSize().clipToBounds().nowHideableUi()) {
                 NowBottomShade()
                 content()
             }
