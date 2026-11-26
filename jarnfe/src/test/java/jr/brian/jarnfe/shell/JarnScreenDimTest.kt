@@ -26,10 +26,11 @@ class JarnScreenDimTest {
     }
 
     @Test
-    fun `the jarn label only moves with two screens`() {
-        assertEquals(JarnSwitchCue.JarnLabel, jarnShownCue(JarnSwitchCue.JarnLabel, twoScreens = true))
-        assertEquals(JarnSwitchCue.Pulse, jarnShownCue(JarnSwitchCue.JarnLabel, twoScreens = false))
-        assertEquals(0f, jarnDimTarget(JarnSwitchCue.JarnLabel, isLit = false, twoScreens = true))
+    fun `every cue keeps its own effect with two screens, the label moving on top`() {
+        JarnSwitchCue.entries.forEach { assertEquals(it, jarnShownCue(it, twoScreens = true)) }
+        assertEquals(1f, jarnDimTarget(JarnSwitchCue.Dim, isLit = false, twoScreens = true))
+        assertEquals(0f, jarnDimTarget(JarnSwitchCue.Pulse, isLit = false, twoScreens = true))
+        assertEquals(0f, jarnDimTarget(JarnSwitchCue.TabMark, isLit = false, twoScreens = true))
     }
 
     @Test

@@ -15,12 +15,15 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-/** How a screen shows it just received control. The ids are stored in prefs and backups. */
+/**
+ * How a screen shows it just received control, on top of the Jarn label moving to it. The ids are
+ * stored in prefs and backups. The old "jarn_label" id reads as [Pulse], since the label now moves
+ * with every cue.
+ */
 enum class JarnSwitchCue(val id: String) {
     Pulse("pulse"),
     Dim("dim"),
     TabMark("tab_mark"),
-    JarnLabel("jarn_label"),
     ;
 
     companion object {

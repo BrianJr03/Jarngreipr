@@ -72,6 +72,4 @@
     <string name="jarnfe_switch_cue_dim_hint">The screen you are not using rests a little darker.</string>
     <string name="jarnfe_switch_cue_tab_mark">Tab mark</string>
     <string name="jarnfe_switch_cue_tab_mark_hint">A small line lights up under the current tab.</string>
-    <string name="jarnfe_switch_cue_jarn_label">Jarn label</string>
-    <string name="jarnfe_switch_cue_jarn_label_hint">The Jarn label moves to the screen you are using.</string>
 </resources>
