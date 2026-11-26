@@ -17,6 +17,7 @@ import jr.brian.jarnfe.library.optionsOrHideUi
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
+import jr.brian.jarnfe.session.JarnTabOrders
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.systems.JarnSystems
 
@@ -137,7 +138,7 @@ internal fun JarnBindingsBuilder.deckPanelBindings(session: JarnSessionStore) {
     on(JarnAction.SwitchScreen, R.string.jarnfe_hint_switch_screen) {
         session.update { switchActiveScreen() }
     }
-    tabBindings(JarnShoulderPair.entries) { delta -> session.update { stepDeckTab(delta) } }
+    tabBindings(JarnShoulderPair.entries) { delta -> session.update { stepDeckTab(delta, JarnTabOrders.deck) } }
 }
 
 private fun JarnBindingsBuilder.backHint(state: JarnSessionState, session: JarnSessionStore) {

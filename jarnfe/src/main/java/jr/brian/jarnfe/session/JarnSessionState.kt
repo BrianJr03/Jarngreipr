@@ -152,11 +152,13 @@ data class JarnSessionState(
     fun activate(screen: JarnScreen): JarnSessionState =
         if (deckDisplayAvailable) copy(activeScreen = screen) else this
 
-    fun stepLibrarySection(delta: Int): JarnSessionState =
-        copy(librarySection = LibrarySection.entries.stepped(librarySection, delta))
+    /** Steps along [order], the player's tab order. */
+    fun stepLibrarySection(delta: Int, order: List<LibrarySection> = LibrarySection.entries): JarnSessionState =
+        copy(librarySection = order.stepped(librarySection, delta))
 
-    fun stepDeckTab(delta: Int): JarnSessionState =
-        copy(deckTab = DeckTab.entries.stepped(deckTab, delta))
+    /** Steps along [order], the player's tab order. */
+    fun stepDeckTab(delta: Int, order: List<DeckTab> = DeckTab.entries): JarnSessionState =
+        copy(deckTab = order.stepped(deckTab, delta))
 
     fun switchActiveScreen(): JarnSessionState = when {
         deckDisplayAvailable -> copy(activeScreen = activeScreen.other(), tapHold = null)

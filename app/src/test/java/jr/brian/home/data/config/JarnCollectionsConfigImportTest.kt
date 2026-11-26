@@ -87,7 +87,7 @@ class JarnCollectionsConfigImportTest {
 
     @Test
     fun `schema version covers collections and favorites`() {
-        assertEquals(74, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(75, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

@@ -133,6 +133,8 @@ class JarnLookStore @Inject constructor(
             putString(KEY_VIDEO_FIT, next.videoFit.id)
             putBoolean(KEY_PAUSE_ON_BATTERY_SAVER, next.pauseOnBatterySaver)
             putString(KEY_TAB_FOCUS, next.tabFocus.id)
+            putString(KEY_LIBRARY_TAB_ORDER, next.librarySectionOrder.joinToString(ORDER_SEPARATOR))
+            putString(KEY_DECK_TAB_ORDER, next.deckTabOrder.joinToString(ORDER_SEPARATOR))
         }
     }
 
@@ -183,7 +185,12 @@ class JarnLookStore @Inject constructor(
         videoFit = JarnVideoFit.fromId(prefs.getString(KEY_VIDEO_FIT, null)) ?: JarnVideoFit.Fit,
         pauseOnBatterySaver = prefs.getBoolean(KEY_PAUSE_ON_BATTERY_SAVER, true),
         tabFocus = JarnTabFocus.fromId(prefs.getString(KEY_TAB_FOCUS, null)) ?: JarnTabFocus.Both,
+        librarySectionOrder = prefs.getString(KEY_LIBRARY_TAB_ORDER, null).orderIds(),
+        deckTabOrder = prefs.getString(KEY_DECK_TAB_ORDER, null).orderIds(),
     ).coerced()
+
+    private fun String?.orderIds(): List<String> =
+        this?.split(ORDER_SEPARATOR)?.map(String::trim)?.filter(String::isNotEmpty).orEmpty()
 
     fun setLookId(id: String) {
         _lookId.value = id
@@ -265,6 +272,9 @@ class JarnLookStore @Inject constructor(
         const val KEY_VIDEO_FIT = "video_fit"
         const val KEY_PAUSE_ON_BATTERY_SAVER = "pause_on_battery_saver"
         const val KEY_TAB_FOCUS = "tab_focus"
+        const val KEY_LIBRARY_TAB_ORDER = "library_tab_order"
+        const val KEY_DECK_TAB_ORDER = "deck_tab_order"
+        const val ORDER_SEPARATOR = ","
         const val KEY_VIDEO_HINT_SHOWN = "video_hint_shown"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
         const val KEY_FIRST_RUN_STEP = "first_run_step"

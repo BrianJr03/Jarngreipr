@@ -11,6 +11,7 @@ import jr.brian.jarnfe.search.JarnSearchStore
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
+import jr.brian.jarnfe.session.JarnTabOrders
 import jr.brian.jarnfe.session.StageRoute
 
 internal enum class JarnTabStrip { LibrarySections, GameListSystems, CollectionLists, SearchTabs, DeckTabs, SettingsSections }
@@ -105,11 +106,11 @@ internal fun stepScreenTabs(
     router: JarnInputRouter,
 ) {
     when (tabStripNow(pair, session, library, search, router)) {
-        JarnTabStrip.LibrarySections -> session.update { stepLibrarySection(delta) }
+        JarnTabStrip.LibrarySections -> session.update { stepLibrarySection(delta, JarnTabOrders.library) }
         JarnTabStrip.GameListSystems -> library.update { stepOpenSystem(delta) }
         JarnTabStrip.CollectionLists -> library.update { stepOpenCollection(delta) }
         JarnTabStrip.SearchTabs -> search.stepTab(delta)
-        JarnTabStrip.DeckTabs -> session.update { stepDeckTab(delta) }
+        JarnTabStrip.DeckTabs -> session.update { stepDeckTab(delta, JarnTabOrders.deck) }
         JarnTabStrip.SettingsSections -> session.update { stepSettingsSection(delta) }
         null -> Unit
     }

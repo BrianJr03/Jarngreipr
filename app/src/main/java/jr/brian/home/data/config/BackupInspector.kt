@@ -243,6 +243,8 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             videoFit = it.videoFit?.takeIf { id -> JarnVideoFit.fromId(id) != null } ?: shown?.videoFit,
             pauseOnBatterySaver = it.pauseOnBatterySaver ?: shown?.pauseOnBatterySaver,
             tabFocus = it.tabFocus?.takeIf { id -> JarnTabFocus.fromId(id) != null } ?: shown?.tabFocus,
+            librarySectionOrder = it.librarySectionOrder ?: shown?.librarySectionOrder,
+            deckTabOrder = it.deckTabOrder ?: shown?.deckTabOrder,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

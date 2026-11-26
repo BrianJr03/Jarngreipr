@@ -28,6 +28,7 @@ import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.settings.switchFocus
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
+import jr.brian.jarnfe.session.SyncTabOrders
 import jr.brian.jarnfe.stage.StageScreen
 import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 import jr.brian.jarnfe.transition.rememberJarnMarkHandoff
@@ -41,6 +42,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
     val savedCue = display.switchCue
     val switchCue = jarnShownCue(JarnSwitchCuePreview.cue ?: savedCue, state.settingsOnDeck)
     RememberDeckTab(state.deckTab)
+    SyncTabOrders(display)
     JarnTheme(
         look = appearance.look,
         reducedMotion = appearance.reducedMotion,

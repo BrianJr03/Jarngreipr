@@ -32,4 +32,6 @@ data class JarnDisplayConfig(
     val videoFit: String? = null,
     val tabFocus: String? = null,
     val pauseOnBatterySaver: Boolean? = null,
+    val librarySectionOrder: List<String>? = null,
+    val deckTabOrder: List<String>? = null,
 )
