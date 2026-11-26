@@ -10,6 +10,7 @@ sealed interface LibrarySelection {
     data class System(val system: JarnLibrarySystem) : LibrarySelection
     /** [resume] is the Continue playing card, shown on Now as a Resume poster. */
     data class Game(val game: JarnLibraryGame, val resume: Boolean = false) : LibrarySelection
+    data class Collection(val collection: JarnCollection) : LibrarySelection
 }
 
 sealed interface LibraryHero {
@@ -35,7 +36,28 @@ data class JarnLibraryState(
     val focusedAllGameId: String? = null,
     val focusedGameBySystem: Map<String, String> = emptyMap(),
     val searchSelection: LibrarySelection = LibrarySelection.None,
+    val collections: JarnLibraryFeed<JarnCollection> = JarnLibraryFeed(),
+    val focusedCollectionId: Long? = null,
+    val openCollectionId: Long? = null,
+    val gamesByCollection: Map<Long, JarnLibraryFeed<JarnLibraryGame>> = emptyMap(),
+    val focusedGameByCollection: Map<Long, String> = emptyMap(),
 ) {
+    val focusedCollection: JarnCollection?
+        get() = collections.items.firstOrNull { it.id == focusedCollectionId } ?: collections.items.firstOrNull()
+
+    val openCollection: JarnCollection?
+        get() = collections.items.firstOrNull { it.id == openCollectionId }
+
+    val openCollectionGames: JarnLibraryFeed<JarnLibraryGame>
+        get() = openCollectionId?.let(gamesByCollection::get) ?: JarnLibraryFeed()
+
+    val focusedCollectionGame: JarnLibraryGame?
+        get() {
+            val games = openCollectionGames.items
+            val focusedId = openCollectionId?.let(focusedGameByCollection::get)
+            return games.firstOrNull { it.id == focusedId } ?: games.firstOrNull()
+        }
+
     val focusedSystem: JarnLibrarySystem?
         get() = systems.items.firstOrNull { it.id == focusedSystemId } ?: systems.items.firstOrNull()
 
@@ -82,8 +104,10 @@ data class JarnLibraryState(
             LibrarySection.AllGames -> focusedAllGame.asSelection()
             LibrarySection.Favorites -> focusedFavorite.asSelection()
             LibrarySection.Recent -> focusedRecent.asSelection()
+            LibrarySection.Collections -> focusedCollection.asSelection()
         }
         StageRoute.GameList -> focusedOpenGame?.let(LibrarySelection::Game) ?: openSystem.asSelection()
+        StageRoute.Collection -> focusedCollectionGame?.let(LibrarySelection::Game) ?: openCollection.asSelection()
         StageRoute.Settings, StageRoute.Systems -> LibrarySelection.None
         StageRoute.Search -> searchSelection
     }
@@ -94,29 +118,46 @@ data class JarnLibraryState(
             StageRoute.Settings -> LibraryConfirm.Generic
             StageRoute.Search -> when (searchSelection) {
                 LibrarySelection.None -> LibraryConfirm.None
-                is LibrarySelection.System -> LibraryConfirm.Open
+                is LibrarySelection.System, is LibrarySelection.Collection -> LibraryConfirm.Open
                 is LibrarySelection.Game -> play
             }
             StageRoute.Systems -> LibraryConfirm.None
-            StageRoute.GameList -> when {
-                openGames.items.isNotEmpty() -> play
-                openGames.status == JarnLibraryStatus.Unavailable -> LibraryConfirm.Generic
-                else -> LibraryConfirm.None
-            }
+            StageRoute.GameList -> openGames.listConfirm(play)
+            StageRoute.Collection -> openCollectionGames.listConfirm(play)
             StageRoute.Library -> when (section) {
                 LibrarySection.Systems -> systems.confirm(LibraryConfirm.Open)
                 LibrarySection.AllGames -> allGames.confirm(play)
                 LibrarySection.Favorites -> favorites.confirm(play)
                 LibrarySection.Recent -> recent.confirm(play)
+                LibrarySection.Collections -> collections.confirm(LibraryConfirm.Open)
             }
         }
     }
 
     /** True when the game list has lost its system, for example after a restore or a rescan. */
-    fun gameListIsOrphaned(route: StageRoute): Boolean {
-        if (route != StageRoute.GameList) return false
-        if (openSystemId == null) return true
-        return systems.status == JarnLibraryStatus.Ready && openSystem == null
+    fun gameListIsOrphaned(route: StageRoute): Boolean = when (route) {
+        StageRoute.GameList -> openSystemId == null || (systems.status == JarnLibraryStatus.Ready && openSystem == null)
+        StageRoute.Collection ->
+            openCollectionId == null || (collections.status == JarnLibraryStatus.Ready && openCollection == null)
+        else -> false
+    }
+
+    fun openCollection(collectionId: Long): JarnLibraryState =
+        copy(openCollectionId = collectionId, focusedCollectionId = collectionId)
+
+    /** Stops at the first and last collection, like stepping systems. */
+    fun stepOpenCollection(delta: Int): JarnLibraryState {
+        val items = collections.items
+        val current = items.indexOfFirst { it.id == openCollectionId }
+        if (current < 0) return this
+        return openCollection(items[(current + delta).coerceIn(items.indices)].id)
+    }
+
+    fun focusCollection(collectionId: Long): JarnLibraryState = copy(focusedCollectionId = collectionId)
+
+    fun focusCollectionGame(gameId: String): JarnLibraryState {
+        val collectionId = openCollectionId ?: return this
+        return copy(focusedGameByCollection = focusedGameByCollection + (collectionId to gameId))
     }
 
     fun openSystem(systemId: String): JarnLibraryState =
@@ -152,6 +193,9 @@ data class JarnLibraryState(
         focusedFavoriteId = neighbourOf(favorites.items.map { it.id }, gameId) ?: focusedFavoriteId,
         focusedRecentId = neighbourOf(recent.items.map { it.id }, gameId) ?: focusedRecentId,
         focusedAllGameId = neighbourOf(allGames.items.map { it.id }, gameId) ?: focusedAllGameId,
+        focusedGameByCollection = focusedGameByCollection + gamesByCollection.mapNotNull { (collectionId, feed) ->
+            neighbourOf(feed.items.map { it.id }, gameId)?.let { collectionId to it }
+        },
     )
 
     fun focusOpenGame(gameId: String): JarnLibraryState {
@@ -164,6 +208,15 @@ data class JarnLibraryState(
         status is JarnLibraryStatus.Loading -> LibraryConfirm.None
         else -> LibraryConfirm.Generic
     }
+
+    private fun JarnLibraryFeed<*>.listConfirm(play: LibraryConfirm): LibraryConfirm = when {
+        items.isNotEmpty() -> play
+        status == JarnLibraryStatus.Unavailable -> LibraryConfirm.Generic
+        else -> LibraryConfirm.None
+    }
+
+    private fun JarnCollection?.asSelection(): LibrarySelection =
+        this?.let(LibrarySelection::Collection) ?: LibrarySelection.None
 
     private fun JarnLibrarySystem?.asSelection(): LibrarySelection =
         this?.let(LibrarySelection::System) ?: LibrarySelection.None

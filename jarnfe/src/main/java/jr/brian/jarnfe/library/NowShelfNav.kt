@@ -25,11 +25,11 @@ internal fun NowShelfReturn.isLive(route: StageRoute, selection: LibrarySelectio
     route == StageRoute.GameList && when (selection) {
         is LibrarySelection.Game -> selection.game.id == gameId
         is LibrarySelection.System -> selection.system.id == systemId
-        LibrarySelection.None -> false
+        is LibrarySelection.Collection, LibrarySelection.None -> false
     }
 
 internal fun LibrarySelection.sceneSystemId(): String? = when (this) {
-    LibrarySelection.None -> null
+    LibrarySelection.None, is LibrarySelection.Collection -> null
     is LibrarySelection.System -> system.id
     is LibrarySelection.Game -> game.systemId
 }

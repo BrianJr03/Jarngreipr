@@ -81,9 +81,15 @@ class LibraryAllGamesTest {
     }
 
     @Test
-    fun `tabs go Systems, All games, Favorites, Recent`() {
+    fun `tabs go Systems, All games, Favorites, Recent, Collections`() {
         assertEquals(
-            listOf(LibrarySection.Systems, LibrarySection.AllGames, LibrarySection.Favorites, LibrarySection.Recent),
+            listOf(
+                LibrarySection.Systems,
+                LibrarySection.AllGames,
+                LibrarySection.Favorites,
+                LibrarySection.Recent,
+                LibrarySection.Collections,
+            ),
             LibrarySection.entries,
         )
     }

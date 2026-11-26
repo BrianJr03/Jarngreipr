@@ -120,8 +120,8 @@ class JarnShellInputTest {
     fun `shoulders stop at the first and last tab`() {
         press(KeyEvent.KEYCODE_BUTTON_L1)
         assertEquals(LibrarySection.Systems, session.state.librarySection)
-        repeat(5) { press(KeyEvent.KEYCODE_BUTTON_R1) }
-        assertEquals(LibrarySection.Recent, session.state.librarySection)
+        repeat(6) { press(KeyEvent.KEYCODE_BUTTON_R1) }
+        assertEquals(LibrarySection.Collections, session.state.librarySection)
     }
 
     @Test

@@ -74,6 +74,7 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     }
 
     private val openSystemId = MutableStateFlow<String?>(null)
+    private val openCollectionId = MutableStateFlow<Long?>(null)
     private val retries = MutableStateFlow(0)
 
     /** All games loads the first time its tab shows, then stays live, so startup never pays for it. */
@@ -94,6 +95,9 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
             focusedRecentId = state.focusedRecentId,
             focusedAllGameId = state.focusedAllGameId,
             focusedGameBySystem = state.focusedGameBySystem,
+            focusedCollectionId = state.focusedCollectionId,
+            openCollectionId = state.openCollectionId,
+            focusedGameByCollection = state.focusedGameByCollection,
         )
     }
 
@@ -101,6 +105,7 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         restoreConsumed = true
         state = state.transform()
         openSystemId.value = state.openSystemId
+        openCollectionId.value = state.openCollectionId
     }
 
     /** Only a new process restores, so a recreated activity never rolls back a live session. */
@@ -130,6 +135,12 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         launch { from.observeSystems().keepLast({ systems }) { copy(systems = it) } }
         launch { from.observeFavorites().keepLast({ favorites }) { copy(favorites = it) } }
         launch { from.observeRecent().keepLast({ recent }) { copy(recent = it) } }
+        launch { from.collections.observeCollections().keepLast({ collections }) { copy(collections = it) } }
+        launch {
+            openCollectionId.collectLatest { collectionId ->
+                if (collectionId != null) from.observeCollectionGames(collectionId)
+            }
+        }
         launch {
             allGamesWanted.collectLatest { wanted ->
                 if (wanted) from.observeAllGames().keepLast({ allGames }) { copy(allGames = it) }
@@ -140,6 +151,13 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
                 if (systemId != null) from.observeSystemGames(systemId)
             }
         }
+    }
+
+    private suspend fun JarnLibrarySource.observeCollectionGames(collectionId: Long) {
+        collections.observeCollectionGames(collectionId).keepLast(
+            read = { gamesByCollection[collectionId] ?: JarnLibraryFeed() },
+            write = { copy(gamesByCollection = gamesByCollection + (collectionId to it)) },
+        )
     }
 
     private suspend fun JarnLibrarySource.observeSystemGames(systemId: String) {

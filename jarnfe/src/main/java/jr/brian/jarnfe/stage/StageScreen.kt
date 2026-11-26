@@ -44,6 +44,9 @@ import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.JarnCompanionPanelContent
 import jr.brian.jarnfe.launch.offeredCompanionController
 import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.collectionAnchorKey
+import jr.brian.jarnfe.library.LibraryCollectionList
+import jr.brian.jarnfe.library.LibraryCollectionListTitle
 import jr.brian.jarnfe.library.LibraryGameList
 import jr.brian.jarnfe.library.LibraryGameListTitle
 import jr.brian.jarnfe.library.LibraryHome
@@ -83,6 +86,7 @@ private fun LibrarySection.labelRes(): Int = when (this) {
     LibrarySection.AllGames -> R.string.jarnfe_section_all_games
     LibrarySection.Favorites -> R.string.jarnfe_section_favorites
     LibrarySection.Recent -> R.string.jarnfe_section_recent
+    LibrarySection.Collections -> R.string.jarnfe_section_collections
 }
 
 @Composable
@@ -141,6 +145,7 @@ private fun StageRouteTitleFor(state: JarnSessionState, route: StageRoute) {
     when (route) {
         StageRoute.Library -> LibrarySectionTabs(state.librarySection)
         StageRoute.GameList -> LibraryGameListTitle(JarnLibrary.state)
+        StageRoute.Collection -> LibraryCollectionListTitle(JarnLibrary.state)
         StageRoute.Settings -> StageRouteTitle(R.string.jarnfe_route_settings)
         StageRoute.Search -> JarnSearchTabs()
         StageRoute.Systems -> StageRouteTitle(R.string.jarnfe_systems_title)
@@ -174,23 +179,31 @@ private fun StageRouteContent(state: JarnSessionState) {
     JarnDepthPush(
         target = state.stageRoute,
         levelOf = ::stageRouteLevel,
-        anchor = { JarnDepthAnchors.boundsOf(JarnLibrary.state.openSystemId) },
+        anchor = { JarnDepthAnchors.boundsOf(depthAnchorKey(state)) },
         modifier = Modifier.fillMaxSize(),
     ) { route -> StageRouteBody(state, route) }
 }
 
-/** Systems sit above their games. Other routes change without the depth push. */
+/** Systems and collections sit above their games. Other routes change without the depth push. */
 private fun stageRouteLevel(route: StageRoute): Int? = when (route) {
     StageRoute.Library -> 0
-    StageRoute.GameList -> 1
+    StageRoute.GameList, StageRoute.Collection -> 1
     else -> null
 }
+
+private fun depthAnchorKey(state: JarnSessionState): String? =
+    if (state.librarySection == LibrarySection.Collections) {
+        collectionAnchorKey(JarnLibrary.state.openCollectionId)
+    } else {
+        JarnLibrary.state.openSystemId
+    }
 
 @Composable
 private fun StageRouteBody(state: JarnSessionState, route: StageRoute) {
     when (route) {
         StageRoute.Library -> StageLibrary(state)
         StageRoute.GameList -> LibraryGameList(JarnLibrary)
+        StageRoute.Collection -> LibraryCollectionList(JarnLibrary)
         StageRoute.Settings -> StageSettings(state)
         StageRoute.Search -> JarnSearchResultsPanel(state)
         StageRoute.Systems -> StageSystems()
@@ -210,6 +223,7 @@ private fun StageLibrary(state: JarnSessionState) {
             section = state.librarySection,
             library = JarnLibrary,
             onOpenSystem = ::openSystem,
+            onOpenCollection = ::openCollection,
             emptyActions = { LibraryRouteLinks(showDeckPanelLink = !state.deckDisplayAvailable) },
         )
     }
@@ -240,6 +254,11 @@ private fun StageSystems() {
 private fun openSystem(systemId: String) {
     JarnLibrary.update { openSystem(systemId) }
     JarnSession.update { openRoute(StageRoute.GameList) }
+}
+
+internal fun openCollection(collectionId: Long) {
+    JarnLibrary.update { openCollection(collectionId) }
+    JarnSession.update { openRoute(StageRoute.Collection) }
 }
 
 @Composable

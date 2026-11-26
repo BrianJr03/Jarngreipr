@@ -2,10 +2,11 @@ package jr.brian.jarnfe.session
 
 import jr.brian.jarnfe.input.JarnScreen
 
-enum class StageRoute { Library, GameList, Settings, Search, Systems }
+/** [Collection] is one collection's games, opened from the Collections tab. */
+enum class StageRoute { Library, GameList, Settings, Search, Systems, Collection }
 
 /** Saved by name, so adding a section never changes what an older session restores. */
-enum class LibrarySection { Systems, AllGames, Favorites, Recent }
+enum class LibrarySection { Systems, AllGames, Favorites, Recent, Collections }
 
 enum class DeckTab { Now, Apps, Canvas }
 

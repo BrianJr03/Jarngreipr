@@ -79,6 +79,7 @@ private fun pageIsReady(page: GameActionsPage): Boolean = when (page) {
     GameActionsPage.EmulatorConfirm,
     GameActionsPage.Edit,
     GameActionsPage.ArtConfirm,
+    GameActionsPage.Collections,
     -> true
 }
 
@@ -126,6 +127,7 @@ private fun GameActionRows(
 @Composable
 internal fun GameSetupRows(game: JarnLibraryGame, controller: JarnGameActionsController) {
     val setup = JarnGameActions.setup
+    GameCollectionsRow(game, onOpen = { controller.openPage(GameActionsPage.Collections) })
     JarnValueRow(
         label = stringResource(R.string.jarnfe_game_companion),
         value = setup?.companions?.takeIf { it.isNotEmpty() }
@@ -214,6 +216,7 @@ private fun GameActionPicker(
         GameActionsPage.ArtScope,
         GameActionsPage.ArtConfirm,
         -> GameScopePage(game, controller, firstFocus)
+        GameActionsPage.Collections -> GameCollectionsPage(game, firstFocus)
     }
 }
 

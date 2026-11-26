@@ -177,7 +177,7 @@ internal fun rememberCanvasStageArt(state: JarnSessionState, page: JarnCanvasPag
         )
         is LibrarySelection.System ->
             CanvasStageArt(selection.system.title, selection.system.artPath, selection.system.logoPath)
-        LibrarySelection.None -> null
+        is LibrarySelection.Collection, LibrarySelection.None -> null
     }
 }
 

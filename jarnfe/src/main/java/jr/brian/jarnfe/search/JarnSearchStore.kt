@@ -64,7 +64,7 @@ internal data class JarnSearchResults(
     } ?: LibrarySelection.None
 
     fun contains(selection: LibrarySelection): Boolean = when (selection) {
-        LibrarySelection.None -> false
+        LibrarySelection.None, is LibrarySelection.Collection -> false
         is LibrarySelection.Game -> games.any { it.id == selection.game.id }
         is LibrarySelection.System -> systems.any { it.id == selection.system.id }
     }
