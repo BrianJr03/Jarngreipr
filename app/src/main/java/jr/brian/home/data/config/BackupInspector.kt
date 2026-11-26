@@ -245,6 +245,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             tabFocus = it.tabFocus?.takeIf { id -> JarnTabFocus.fromId(id) != null } ?: shown?.tabFocus,
             librarySectionOrder = it.librarySectionOrder ?: shown?.librarySectionOrder,
             deckTabOrder = it.deckTabOrder ?: shown?.deckTabOrder,
+            stickMute = it.stickMute ?: shown?.stickMute,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

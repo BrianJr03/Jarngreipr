@@ -11,7 +11,8 @@ enum class JarnScreen { Stage, Deck }
  * - [Modal]: lower layers are blocked, but D-pad and A still reach the focused composable.
  * - [Capture]: every mapped button belongs to this layer, for modes like Canvas grab.
  *
- * Swap is reserved app-wide, so it passes through Modal and Capture unless the layer binds it.
+ * Swap and the L3/R3 mutes are reserved app-wide (see [JarnAction.isAppWide]), so they pass
+ * through Modal and Capture unless the layer binds them.
  */
 enum class JarnLayerMode { Passive, Modal, Capture }
 

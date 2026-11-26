@@ -79,6 +79,9 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
      */
     var pressInterceptor: ((JarnAction) -> Boolean)? = null
 
+    /** The player's "Mute with L3 and R3" setting, set by the shell. */
+    var sticksMute = false
+
     fun activate(screen: JarnScreen) {
         activeScreen = screen
     }
@@ -127,7 +130,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
 
     /** Returns true when the event is consumed and must not reach the focused composable. */
     fun dispatch(input: JarnKeyInput): Boolean {
-        val action = JarnButtonMap.actionFor(input.keyCode) ?: return false
+        val action = JarnButtonMap.actionFor(input.keyCode, sticksMute) ?: return false
         // A's system fallback only exists because A was passed through, so it must not act again.
         if (input.isFallback && action == JarnAction.Confirm) return false
         return when {
@@ -281,7 +284,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
             if (layer.screen != screen) continue
             if (action in layer.labels) return Lookup.Found(layer)
             if (layer.mode != JarnLayerMode.Passive) {
-                return if (action == JarnAction.Swap) global(action) else Lookup.Blocked(layer.mode)
+                return if (action.isAppWide) global(action) else Lookup.Blocked(layer.mode)
             }
         }
         return global(action)

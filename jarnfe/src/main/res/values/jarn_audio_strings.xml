@@ -99,4 +99,12 @@
     <string name="jarnfe_audio_pack_saved">Jingle saved</string>
     <string name="jarnfe_audio_pack_failed">Couldn\'t save the jingle</string>
     <string name="jarnfe_audio_pack_invalid">Fill in every field. Platform uses letters, numbers, - or _, and names can\'t contain slashes.</string>
+    <string name="jarnfe_audio_stick_mute">Mute with L3 and R3</string>
+    <string name="jarnfe_audio_stick_mute_hint">L3 mutes jingles, R3 mutes music. Hold X to swap screens while this is on.</string>
+    <string name="jarnfe_audio_toast_jingles_muted">Jingles muted</string>
+    <string name="jarnfe_audio_toast_jingles_on">Jingles on</string>
+    <string name="jarnfe_audio_toast_music_muted">Music muted</string>
+    <string name="jarnfe_audio_toast_music_on">Music on</string>
+    <string name="jarnfe_audio_toast_l3">L3</string>
+    <string name="jarnfe_audio_toast_r3">R3</string>
 </resources>

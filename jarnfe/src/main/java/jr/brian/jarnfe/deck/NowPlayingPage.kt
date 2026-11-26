@@ -257,15 +257,15 @@ private fun NowPlayingActions(session: NowPlayingSession, awake: Boolean) {
 }
 
 /**
- * Over the dimmed page, so the waking tap or button never also presses what is under it. Swap is
- * left to the app, as everywhere.
+ * Over the dimmed page, so the waking tap or button never also presses what is under it. Swap and
+ * the L3/R3 mutes are left to the app, as everywhere.
  */
 @Composable
 private fun NowPlayingWakeLayer(dimState: NowPlayingDimState) {
     JarnInputLayer(
         mode = JarnLayerMode.Capture,
         bindings = {
-            JarnAction.entries.filter { it != JarnAction.Swap }.forEach { action ->
+            JarnAction.entries.filter { !it.isAppWide }.forEach { action ->
                 on(action, repeats = false) { dimState.wake() }
             }
         },

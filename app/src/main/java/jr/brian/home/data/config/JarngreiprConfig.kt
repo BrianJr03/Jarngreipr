@@ -250,6 +250,8 @@ data class JarngreiprConfig(
         // v75: added JarnDisplayConfig.librarySectionOrder and deckTabOrder, the player's order of the
         //      Library and bottom screen tabs as id lists. Null on older blobs keeps the current order;
         //      unknown ids are dropped and missing tabs are added at the end when read.
-        const val CONFIG_VERSION = 75
+        // v76: added JarnDisplayConfig.stickMute, whether L3 and R3 mute Jarn FE's jingles and music
+        //      instead of swapping the screens. Null on older blobs keeps the current value (off).
+        const val CONFIG_VERSION = 76
     }
 }
