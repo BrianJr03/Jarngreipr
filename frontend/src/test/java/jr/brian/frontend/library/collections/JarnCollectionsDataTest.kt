@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import jr.brian.frontend.library.art.LibraryVisibility
 import jr.brian.frontend.library.art.gameKey
+import jr.brian.frontend.library.db.CollectionEntity
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.GameMerge
 import jr.brian.frontend.library.db.LibraryDatabase
@@ -166,6 +167,51 @@ class JarnCollectionsDataTest {
         create("Apple")
         assertEquals(listOf("Zebra", "Apple"), collections.collections.first().map { it.name })
     }
+
+    @Test
+    fun `moving a collection saves the new order and stops at either end`() = runBlocking {
+        val racing = create("Racing")
+        create("Party")
+        val puzzle = create("Puzzle")
+        assertTrue(collections.move(puzzle, -1))
+        assertEquals(listOf("Racing", "Puzzle", "Party"), names())
+        assertFalse(collections.move(racing, -1))
+        assertTrue(collections.move(racing, 5))
+        assertEquals(listOf("Puzzle", "Party", "Racing"), names())
+        assertFalse(collections.move(racing, 1))
+        assertFalse(collections.move(999L, 1))
+    }
+
+    @Test
+    fun `a moved order is what a backup sees`() = runBlocking {
+        create("Racing")
+        val party = create("Party")
+        collections.move(party, -1)
+        val snapshot = CollectionsRepository(db.collectionDao()).snapshot()
+        assertEquals(listOf("Party" to 0, "Racing" to 1), snapshot.map { it.collection.name to it.collection.position })
+    }
+
+    @Test
+    fun `older collections that share one position still move one step`() = runBlocking {
+        val dao = db.collectionDao()
+        listOf("Apple", "Banana", "Cherry").forEach { dao.insert(CollectionEntity(name = it, createdAt = 0L)) }
+        val cherry = dao.getAll().first { it.name == "Cherry" }.id
+        assertTrue(collections.move(cherry, -1))
+        assertEquals(listOf("Apple", "Cherry", "Banana"), names())
+        assertEquals(listOf(0, 1, 2), dao.getAll().map { it.position })
+    }
+
+    @Test
+    fun `a renamed collection keeps its place and its games`() = runBlocking {
+        create("Racing")
+        val party = create("Party")
+        collections.add(party, key(insert("snes", "A.sfc", "A")))
+        assertEquals(CollectionNameResult.Saved(party), collections.rename(party, "  Couch  "))
+        assertEquals(listOf("Racing", "Couch"), names())
+        assertEquals(1, collections.collections.first().last().gameCount)
+    }
+
+    private suspend fun names() = collections.collections.first().map { it.name }
 
     private suspend fun create(name: String): Long =
         (collections.create(name) as CollectionNameResult.Saved).collectionId

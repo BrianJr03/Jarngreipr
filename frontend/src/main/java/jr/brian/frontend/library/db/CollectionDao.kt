@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -31,6 +32,15 @@ interface CollectionDao {
 
     @Query("DELETE FROM collections WHERE id = :id")
     suspend fun delete(id: Long): Int
+
+    @Query("UPDATE collections SET position = :position WHERE id = :id")
+    suspend fun setPosition(id: Long, position: Int): Int
+
+    /** Positions become 0, 1, 2 in [ids] order, which also evens out older rows that all read 0. */
+    @Transaction
+    suspend fun setOrder(ids: List<Long>) {
+        ids.forEachIndexed { position, id -> setPosition(id, position) }
+    }
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addGame(member: CollectionGameEntity): Long

@@ -12,4 +12,11 @@
     <string name="jarnfe_collection_name_too_long">Names can be up to %1$d characters.</string>
     <string name="jarnfe_collection_name_duplicate">You already have a collection with that name.</string>
     <string name="jarnfe_collection_save_failed">Couldn\'t save the collection. Try again.</string>
+    <string name="jarnfe_collection_manage">Manage</string>
+    <string name="jarnfe_collection_rename">Rename</string>
+    <string name="jarnfe_collection_move_earlier">Move earlier</string>
+    <string name="jarnfe_collection_move_later">Move later</string>
+    <string name="jarnfe_collection_delete">Delete</string>
+    <string name="jarnfe_collection_delete_title">Delete %1$s?</string>
+    <string name="jarnfe_collection_delete_message">The games stay in your library.</string>
 </resources>

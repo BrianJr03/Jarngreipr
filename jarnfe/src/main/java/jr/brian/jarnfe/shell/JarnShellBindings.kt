@@ -12,6 +12,7 @@ import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.LibraryConfirm
 import jr.brian.jarnfe.library.LibrarySelection
+import jr.brian.jarnfe.library.manageCollectionBinding
 import jr.brian.jarnfe.library.optionsOrHideUi
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.session.JarnSessionState
@@ -65,6 +66,7 @@ internal fun JarnBindingsBuilder.stageBindings(
     backHint(state, session)
     gameActionsBinding(state, session, library)
     manageSystemBinding(state, session, library)
+    manageCollectionBinding(state, library)
     if (state.stageRoute != StageRoute.Settings) {
         on(JarnAction.Menu, R.string.jarnfe_route_settings) {
             session.update { openSettings() }

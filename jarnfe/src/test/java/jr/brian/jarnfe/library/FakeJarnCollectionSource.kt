@@ -2,6 +2,7 @@ package jr.brian.jarnfe.library
 
 import jr.brian.frontend.library.collections.CollectionNameResult
 import jr.brian.frontend.library.collections.collectionNameProblem
+import jr.brian.frontend.library.collections.collectionOrderMoved
 import jr.brian.frontend.library.db.CollectionEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +52,12 @@ class FakeJarnCollectionSource(
         if (names.value.none { it.id == collectionId }) return false
         names.value = names.value.filterNot { it.id == collectionId }
         members.value -= collectionId
+        return true
+    }
+
+    override suspend fun moveCollection(collectionId: Long, delta: Int): Boolean {
+        val order = collectionOrderMoved(names.value.map { it.id }, collectionId, delta) ?: return false
+        names.value = order.map { id -> names.value.first { it.id == id } }
         return true
     }
 

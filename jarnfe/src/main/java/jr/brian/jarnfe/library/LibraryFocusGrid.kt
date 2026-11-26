@@ -54,7 +54,8 @@ internal val LibraryGridColumnSpacing = 12.dp
  * the focused item disappears in a refresh. After a Library tab switch it focuses that remembered
  * item once the tab has slid open, or its first item when the remembered one is gone (see
  * [rememberedOrFirst]). With [itemTitle] and [letterJumpEnabled], holding Up
- * or Down jumps by letter (see [gridLetterJumpKeys]) and shows the letter badge.
+ * or Down jumps by letter (see [gridLetterJumpKeys]) and shows the letter badge. Each change of
+ * [takeFocusSignal] focuses [focusedKey] even when the tab strip holds focus.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -66,6 +67,7 @@ internal fun <T : Any> LibraryFocusGrid(
     cellMinSize: Dp,
     modifier: Modifier = Modifier,
     refocusSignal: Int = 0,
+    takeFocusSignal: Int = 0,
     rowSpacing: Dp = JarnTheme.space.md,
     header: (@Composable () -> Unit)? = null,
     jump: LibraryJump? = null,
@@ -81,7 +83,7 @@ internal fun <T : Any> LibraryFocusGrid(
     val keys = remember(items) { items.mapTo(HashSet(), itemKey) }
     val focusLost = lastFocused?.let { it !in keys } ?: false
     val gate = LocalLibraryRevealGate.current
-    val target = remember(items.isEmpty(), focusLost, refocusSignal) {
+    val target = remember(items.isEmpty(), focusLost, refocusSignal, takeFocusSignal) {
         rememberedOrFirst(focusedKey, keys, items.firstOrNull()?.let(itemKey))
     }
     val headerCount = if (header != null) 1 else 0
@@ -96,6 +98,11 @@ internal fun <T : Any> LibraryFocusGrid(
     LaunchedEffect(target, refocusSignal) {
         val index = items.indexOfFirst { itemKey(it) == target }
         if (index >= 0) gridState.restoreFocus(index + headerCount, requester, tabsFocus, gate)
+    }
+    val takeFocusAtEntry = remember { takeFocusSignal }
+    LaunchedEffect(takeFocusSignal) {
+        val index = items.indexOfFirst { itemKey(it) == target }
+        if (takeFocusSignal != takeFocusAtEntry && index >= 0) gridState.takeFocus(index + headerCount, requester)
     }
 
     val landing = rememberLibraryGridJump(
@@ -217,6 +224,18 @@ private suspend fun LazyGridState.restoreFocus(
         libraryContentTakesFocus(gate.forcing, tabsFocus.hasFocus, LibraryLaunchFocus.isPending) &&
             LibraryLaunchFocus.settle { requester.requestFocus() }
     }
+}
+
+/**
+ * For focus handed back from a sheet. Waits a frame so it lands after the window's own fallback
+ * focus, then takes it even when the tab strip picked it up.
+ */
+private suspend fun LazyGridState.takeFocus(index: Int, requester: FocusRequester) {
+    snapshotFlow { layoutInfo.totalItemsCount }.first { it > index }
+    if (layoutInfo.visibleItemsInfo.none { it.index == index }) scrollToItem(index)
+    snapshotFlow { layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
+    withFrameNanos { }
+    runCatching { requester.requestFocus() }
 }
 
 @Composable
