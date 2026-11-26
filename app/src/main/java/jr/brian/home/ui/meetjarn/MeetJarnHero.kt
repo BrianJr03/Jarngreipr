@@ -55,6 +55,10 @@ private const val SHELF_NEIGHBOR_ALPHA = 0.55f
 private const val BUNDLED_DUAL_ASPECT = 960f / 1118f
 private const val BUNDLED_SINGLE_ASPECT = 960f / 558f
 
+/** The hero's width over its height: exact for the bundled picture, close for the covers mock. */
+internal fun MeetJarnContent.heroAspect(): Float =
+    if (twoScreens) BUNDLED_DUAL_ASPECT else BUNDLED_SINGLE_ASPECT
+
 /**
  * Jarn on the player's screens, made from their own covers when the library has enough art, or
  * the bundled picture otherwise. It is a still picture: nothing in it moves or takes focus.
