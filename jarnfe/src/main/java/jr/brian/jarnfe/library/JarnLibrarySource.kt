@@ -98,6 +98,7 @@ interface JarnLibrarySource {
     fun observeSystemNow(systemId: String): Flow<JarnSystemNow> =
         flowOf(JarnSystemNow(systemId, isLoaded = true))
     fun observeWideArt(gameId: String): Flow<String?> = flowOf(null)
+    val collections: JarnCollectionSource get() = EmptyJarnCollectionSource
     fun refresh()
 }
 

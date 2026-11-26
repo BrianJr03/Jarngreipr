@@ -8,8 +8,8 @@ import androidx.room.TypeConverters
  * Phase 2+ library engine database. Separate from `:app`'s `AppDatabase`
  * so the launcher's prefs lifecycle doesn't couple to the library's.
  *
- * `exportSchema = false` for now — once v1 ships to a real device we
- * flip it on and start committing the schema JSON next to the module.
+ * Schemas are exported to `frontend/schemas/` and committed. Every version
+ * bump needs a migration in [LIBRARY_MIGRATIONS] and a migration test.
  */
 @Database(
     entities = [
@@ -19,9 +19,11 @@ import androidx.room.TypeConverters
         MediaEntity::class,
         ScrapeJobEntity::class,
         PlayHistoryEntity::class,
+        CollectionEntity::class,
+        CollectionGameEntity::class,
     ],
-    version = 1,
-    exportSchema = false,
+    version = 2,
+    exportSchema = true,
 )
 @TypeConverters(StringCollectionConverters::class)
 abstract class LibraryDatabase : RoomDatabase() {
@@ -31,6 +33,7 @@ abstract class LibraryDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
     abstract fun scrapeJobDao(): ScrapeJobDao
     abstract fun playHistoryDao(): PlayHistoryDao
+    abstract fun collectionDao(): CollectionDao
 
     companion object {
         const val DATABASE_NAME = "jarngreipr_library"
