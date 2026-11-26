@@ -117,7 +117,7 @@ private fun DeckBody(state: JarnSessionState) {
         else -> Column(Modifier.fillMaxSize()) {
             val display = rememberJarnDisplay()
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                DeckTabContent(state, NowVideoPreview(enabled = display.videoPreviews, muted = true))
+                DeckTabContent(state, NowVideoPreview(enabled = display.videoPreviews, muted = !display.videoPreviewSound))
             }
             JarnDockRow(Modifier.nowHideableUi())
         }

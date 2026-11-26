@@ -165,6 +165,7 @@ private fun BoxScope.NowVideoPlayer(videos: JarnGameVideos, path: String, visibl
     val video = remember(videos, path) { videos.create(context, path, crop = true) }
     DisposableEffect(video) { onDispose { video.release() } }
     val state by video.state.collectAsState()
+    NowVideoVisibilityReport(visible && state == JarnGameVideoState.Ready)
     val audible = rememberNowVideoAudible(muted, visible && state == JarnGameVideoState.Ready)
     LaunchedEffect(video, audible) { video.setMuted(!audible) }
     LaunchedEffect(state) {
