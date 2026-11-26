@@ -71,7 +71,12 @@ fun JarnScrim(edge: JarnScrimEdge, modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun JarnSpinner(color: Color, modifier: Modifier = Modifier, size: Dp = 18.dp) {
+internal fun JarnSpinner(
+    color: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = 18.dp,
+    strokeWidth: Dp = 2.dp,
+) {
     val sized = modifier.size(size)
     if (JarnTheme.motion.reduced) {
         CircularProgressIndicator(
@@ -79,10 +84,10 @@ internal fun JarnSpinner(color: Color, modifier: Modifier = Modifier, size: Dp =
             modifier = sized,
             color = color,
             trackColor = Color.Transparent,
-            strokeWidth = 2.dp,
+            strokeWidth = strokeWidth,
         )
     } else {
-        CircularProgressIndicator(modifier = sized, color = color, strokeWidth = 2.dp)
+        CircularProgressIndicator(modifier = sized, color = color, strokeWidth = strokeWidth)
     }
 }
 
