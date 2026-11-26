@@ -28,6 +28,7 @@ import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowShortcutControls
+import jr.brian.jarnfe.library.NowVideoPreview
 import jr.brian.jarnfe.library.nowShortcutGap
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.JarnSearchDeck
@@ -106,7 +107,7 @@ private fun DeckBody(state: JarnSessionState) {
         deckShowsSettings(state) -> JarnSettingsControls(state.settingsSection, JarnTheme.space.deckMargin)
         else -> Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                DeckTabContent(state)
+                DeckTabContent(state, NowVideoPreview(enabled = false, muted = true))
             }
             JarnDockRow()
         }
@@ -154,11 +155,13 @@ private fun DeckTabStrip(selected: DeckTab, showsMark: Boolean) {
     }
 }
 
+/** Only the Deck's own window plays previews, never the single-screen Deck panel. */
 @Composable
-private fun DeckTabContent(state: JarnSessionState) {
+private fun DeckTabContent(state: JarnSessionState, preview: NowVideoPreview = NowVideoPreview.Off) {
     when (state.deckTab) {
         DeckTab.Now -> LibraryNowPanel(
             selection = JarnLibrary.nowSelection(state.stageRoute, state.librarySection),
+            preview = preview,
         )
         DeckTab.Apps -> JarnAppsRoute()
         DeckTab.Canvas -> CanvasRoute(state)

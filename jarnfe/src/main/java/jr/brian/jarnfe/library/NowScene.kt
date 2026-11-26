@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,12 +45,17 @@ internal fun nowGamePaths(game: JarnLibraryGame, art: NowSceneGameArt?): List<St
 internal fun NowScene(
     selection: LibrarySelection,
     systemNow: JarnSystemNow?,
+    preview: NowVideoPreview = NowVideoPreview.Off,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box(Modifier.fillMaxSize().clipToBounds()) {
-        NowSceneArt(selection, systemNow)
-        NowBottomShade()
-        content()
+    val hold = remember { NowVideoHold() }
+    CompositionLocalProvider(LocalNowVideoHold provides hold) {
+        Box(Modifier.fillMaxSize().clipToBounds()) {
+            NowSceneArt(selection, systemNow)
+            NowSceneVideo(selection, preview)
+            NowBottomShade()
+            content()
+        }
     }
 }
 

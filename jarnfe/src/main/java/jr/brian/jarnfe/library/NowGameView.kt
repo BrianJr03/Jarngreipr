@@ -142,6 +142,7 @@ private fun NowGameScroller(
 ) {
     val scroll = rememberScrollState()
     LaunchedEffect(gameId, showsPicker) { scroll.scrollTo(0) }
+    NowVideoSheetReport(scroll)
     val page = @Composable { modifier: Modifier ->
         Column(
             modifier = modifier

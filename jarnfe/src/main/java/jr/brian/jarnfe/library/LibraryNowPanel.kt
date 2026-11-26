@@ -26,14 +26,14 @@ private const val MINUTES_PER_HOUR = 60L
 internal val NowTopZone = 240.dp
 
 @Composable
-internal fun LibraryNowPanel(selection: LibrarySelection) {
+internal fun LibraryNowPanel(selection: LibrarySelection, preview: NowVideoPreview = NowVideoPreview.Off) {
     val settled = rememberSettledSelection(selection)
     val sceneNow = settled.sceneSystemId()?.takeUnless { settled.isResume() }?.let { rememberSystemNow(it) }
     val reveal = rememberNowReveal(settled, followsRoute = ::isRouteChange) { it.focusKey() }
     val shown = reveal.shown
     val shownNow = rememberShownSystemNow(sceneNow, shown.sceneSystemId())
     CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
-        NowScene(settled, sceneNow) {
+        NowScene(settled, sceneNow, preview) {
             NowShelfReturnLayer(settled) {
                 NowFocusKeeper(shown) {
                     NowRevealBox(reveal) {
