@@ -83,6 +83,10 @@ data class JarnDisplayPrefs(
     val videoFit: JarnVideoFit = JarnVideoFit.Fit,
     val pauseOnBatterySaver: Boolean = true,
     val tabFocus: JarnTabFocus = JarnTabFocus.Both,
+    /** Library tab ids in the player's order. Empty keeps the built-in order. */
+    val librarySectionOrder: List<String> = emptyList(),
+    /** Bottom screen tab ids in the player's order. Empty keeps the built-in order. */
+    val deckTabOrder: List<String> = emptyList(),
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

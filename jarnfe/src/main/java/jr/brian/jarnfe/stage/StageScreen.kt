@@ -59,6 +59,10 @@ import jr.brian.jarnfe.search.JarnSearchResultsPanel
 import jr.brian.jarnfe.search.JarnSearchTabs
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
+import jr.brian.jarnfe.session.JarnTabOrders
+import jr.brian.jarnfe.session.rememberSaveLibraryOrder
+import jr.brian.jarnfe.shell.JarnTabReorderInput
+import jr.brian.jarnfe.shell.rememberStripReorder
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.settings.JarnSettingsPreview
@@ -165,12 +169,15 @@ private fun StageRouteTitle(@StringRes titleRes: Int) {
 
 @Composable
 private fun LibrarySectionTabs(selected: LibrarySection) {
-    val sections = LibrarySection.entries
+    val sections = JarnTabOrders.library
+    val reorder = rememberStripReorder(sections, rememberSaveLibraryOrder())
+    JarnTabReorderInput(reorder)
     JarnTabs(
         labels = sections.map { stringResource(it.labelRes()) },
         selectedIndex = sections.indexOf(selected),
         onSelect = { index -> JarnSession.update { copy(librarySection = sections[index]) } },
         showsSwitchMark = true,
+        reorder = reorder,
     )
 }
 

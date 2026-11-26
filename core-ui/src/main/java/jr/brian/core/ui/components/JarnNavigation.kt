@@ -2,6 +2,9 @@ package jr.brian.core.ui.components
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.key
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -77,6 +80,11 @@ internal fun jarnShoulderTabIndex(current: Int, count: Int, delta: Int): Int =
 
 enum class JarnTabsStyle { Top, Rail }
 
+/**
+ * A row (or rail) of tabs. With [reorder], holding A or long-pressing a tab lifts it so the strip
+ * can be reordered; the caller drives the move, save and cancel. While it is reordered, the
+ * shoulders do nothing here.
+ */
 @Composable
 fun JarnTabs(
     labels: List<String>,
@@ -85,6 +93,7 @@ fun JarnTabs(
     modifier: Modifier = Modifier,
     style: JarnTabsStyle = JarnTabsStyle.Top,
     showsSwitchMark: Boolean = false,
+    reorder: JarnTabReorder? = null,
 ) {
     val shoulderModifier = modifier.onKeyEvent { event ->
         val delta = when (event.key) {
@@ -92,7 +101,7 @@ fun JarnTabs(
             Key.ButtonR1 -> 1
             else -> return@onKeyEvent false
         }
-        if (event.type == KeyEventType.KeyDown) {
+        if (event.type == KeyEventType.KeyDown && reorder?.isEditing != true) {
             val next = jarnShoulderTabIndex(selectedIndex, labels.size, delta)
             if (next != selectedIndex) onSelect(next)
         }
@@ -106,18 +115,21 @@ fun JarnTabs(
     val tabsFocus = LocalJarnTabsFocus.current
     val group = remember { Any() }
     var groupFocused by remember { mutableStateOf(false) }
-    val focusPicked = remember { intArrayOf(NO_TAB) }
-    JarnTabSwitchEffect(selectedIndex, { groupFocused }, focusPicked, tabsFocus, group) {
-        runCatching { requesters.getOrNull(selectedIndex)?.requestFocus() }
+    val focusPicked = remember { arrayOfNulls<String>(1) }
+    val latestSelected by rememberUpdatedState(selectedIndex)
+    JarnTabSwitchEffect(labels.getOrNull(selectedIndex), { groupFocused }, focusPicked, tabsFocus, group) {
+        runCatching { requesters.getOrNull(latestSelected)?.requestFocus() }
     }
     DisposableEffect(tabsFocus, group) { onDispose { tabsFocus.update(group, false) } }
     val focusModifier = shoulderModifier
+        .then(if (reorder != null) Modifier.jarnReorderKeys(reorder) else Modifier)
         .onFocusChanged {
             groupFocused = it.hasFocus
             tabsFocus.update(group, it.hasFocus)
         }
         .focusProperties { onEnter = { requesters.getOrNull(selectedIndex)?.requestFocus() } }
         .focusGroup()
+    val strip = JarnTabStrip(labels, selectedIndex, requesters, viewRequesters, onSelect, focusPicked, reorder)
     val gap = Arrangement.spacedBy(JarnTheme.space.xs)
     val ringPadding = PaddingValues(JarnTheme.space.lg)
     when (style) {
@@ -127,7 +139,7 @@ fun JarnTabs(
                 .horizontalScroll(rememberScrollState())
                 .padding(ringPadding),
             horizontalArrangement = gap,
-        ) { JarnTabItems(labels, selectedIndex, requesters, viewRequesters, onSelect, focusPicked, Modifier, showsSwitchMark) }
+        ) { JarnTabItems(strip, Modifier, showsSwitchMark) }
 
         JarnTabsStyle.Rail -> Column(
             modifier = focusModifier
@@ -135,50 +147,53 @@ fun JarnTabs(
                 .verticalScroll(rememberScrollState())
                 .padding(ringPadding),
             verticalArrangement = gap,
-        ) {
-            JarnTabItems(
-                labels,
-                selectedIndex,
-                requesters,
-                viewRequesters,
-                onSelect,
-                focusPicked,
-                Modifier.fillMaxWidth(),
-                showsSwitchMark,
-            )
-        }
+        ) { JarnTabItems(strip, Modifier.fillMaxWidth(), showsSwitchMark) }
     }
 }
 
-private const val NO_TAB = -1
+/** Everything one strip's tabs share. [focusPicked] names the tab the strip's own focus picked. */
+private class JarnTabStrip(
+    val labels: List<String>,
+    val selectedIndex: Int,
+    val requesters: List<FocusRequester>,
+    val viewRequesters: List<BringIntoViewRequester>,
+    val onSelect: (Int) -> Unit,
+    val focusPicked: Array<String?>,
+    val reorder: JarnTabReorder?,
+) {
+    /** The caller's tab indices in the order they show, which is the working order while reordered. */
+    val shown: List<Int>
+        get() = reorder?.order?.takeIf { reorder.isEditing && it.size == labels.size } ?: labels.indices.toList()
+}
 
 /**
  * After each switch, keeps focus on the selected tab when the strip holds it, then hands focus to
  * the new tab's content when [LocalJarnTabSwitchFocus] allows that switch. A tab the strip's own
  * focus picked came from the D-pad and waits [JARN_TAB_DPAD_SETTLE_MS] first, so a newer step
  * cancels it. Any other switch came from a shoulder. The first selection never hands off, and
- * neither does a switch made while the controller is on the other screen.
+ * neither does a switch made while the controller is on the other screen. It follows the selected
+ * tab by its label, so a reordered strip whose selected tab moved is not a switch.
  */
 @Composable
 private fun JarnTabSwitchEffect(
-    selectedIndex: Int,
+    selectedKey: String?,
     groupFocused: () -> Boolean,
-    focusPicked: IntArray,
+    focusPicked: Array<String?>,
     tabsFocus: JarnTabsFocus,
     group: Any,
     focusSelectedTab: () -> Unit,
 ) {
     val rule = LocalJarnTabSwitchFocus.current
     val active by rememberUpdatedState(LocalJarnScreenActive.current)
-    val shownFirst = remember { selectedIndex }
+    val shownFirst = remember { selectedKey }
     val switched = remember { booleanArrayOf(false) }
-    val stripHadFocus = remember(selectedIndex) { groupFocused() }
-    LaunchedEffect(selectedIndex) {
+    val stripHadFocus = remember(selectedKey) { groupFocused() }
+    LaunchedEffect(selectedKey) {
         tabsFocus.endHandOff(group)
         if (groupFocused()) focusSelectedTab()
-        val source = if (focusPicked[0] == selectedIndex) JarnTabSwitchSource.Dpad else JarnTabSwitchSource.Shoulder
-        focusPicked[0] = NO_TAB
-        if (selectedIndex != shownFirst) switched[0] = true
+        val source = if (focusPicked[0] == selectedKey) JarnTabSwitchSource.Dpad else JarnTabSwitchSource.Shoulder
+        focusPicked[0] = null
+        if (selectedKey != shownFirst) switched[0] = true
         if (!switched[0] || !active || !jarnTabSwitchTakesFocus(rule, source, stripHadFocus)) return@LaunchedEffect
         if (source == JarnTabSwitchSource.Dpad) delay(JARN_TAB_DPAD_SETTLE_MS)
         withFrameNanos { }
@@ -189,31 +204,42 @@ private fun JarnTabSwitchEffect(
 }
 
 @Composable
-private fun JarnTabItems(
-    labels: List<String>,
-    selectedIndex: Int,
-    requesters: List<FocusRequester>,
-    viewRequesters: List<BringIntoViewRequester>,
-    onSelect: (Int) -> Unit,
-    focusPicked: IntArray,
-    itemModifier: Modifier,
-    showsSwitchMark: Boolean,
-) {
-    labels.forEachIndexed { index, label ->
-        val selected = index == selectedIndex
-        JarnTab(
-            label,
-            selected,
-            requesters[index],
-            { onSelect(index) },
-            {
-                focusPicked[0] = index
-                onSelect(index)
-            },
-            itemModifier.bringIntoViewRequester(viewRequesters[index]),
-            showsSwitchMark && selected,
-        )
+private fun JarnTabItems(strip: JarnTabStrip, itemModifier: Modifier, showsSwitchMark: Boolean) {
+    val gapPx = with(LocalDensity.current) { JarnTheme.space.xs.toPx() }
+    strip.shown.forEach { index ->
+        val label = strip.labels[index]
+        val selected = index == strip.selectedIndex
+        key(label) {
+            JarnTab(
+                label = label,
+                selected = selected,
+                requester = strip.requesters[index],
+                onClick = { strip.onSelect(index) },
+                onFocusPick = {
+                    strip.focusPicked[0] = label
+                    strip.onSelect(index)
+                },
+                modifier = itemModifier
+                    .bringIntoViewRequester(strip.viewRequesters[index])
+                    .jarnTabReorderable(strip, index, gapPx),
+                showsSwitchMark = showsSwitchMark && selected,
+                lifted = strip.reorder?.held == index,
+            )
+        }
     }
+}
+
+/** Hold A or long-press to lift the tab, and slide aside when another tab moves past. */
+@Composable
+private fun Modifier.jarnTabReorderable(strip: JarnTabStrip, index: Int, gapPx: Float): Modifier {
+    val reorder = strip.reorder ?: return this
+    val lifted = reorder.held == index
+    return this
+        .graphicsLayer { translationX = if (lifted) reorder.dragOffset else 0f }
+        .jarnSlideToPlace(skip = lifted && reorder.dragging)
+        .jarnTabWidth(reorder, index)
+        .jarnTabDrag(reorder, index, { strip.labels.size }, gapPx)
+        .jarnHoldA(onTap = { strip.onSelect(index) }, onHold = { reorder.begin(index, strip.labels.size) })
 }
 
 @Composable
@@ -225,6 +251,7 @@ private fun JarnTab(
     onFocusPick: () -> Unit,
     modifier: Modifier,
     showsSwitchMark: Boolean,
+    lifted: Boolean = false,
 ) {
     val colors = JarnTheme.colors
     val source = remember { MutableInteractionSource() }
@@ -235,6 +262,7 @@ private fun JarnTab(
     )
     Box(
         modifier = modifier
+            .jarnTabLift(lifted, shape)
             .focusRequester(requester)
             .onFocusChanged { if (it.isFocused && !selected) onFocusPick() }
             .semantics { this.selected = selected }
@@ -252,6 +280,17 @@ private fun JarnTab(
         )
         if (showsSwitchMark) JarnSwitchMarkLine()
     }
+}
+
+/** The held tab rises a little and gets the accent outline. */
+@Composable
+private fun Modifier.jarnTabLift(lifted: Boolean, shape: Shape): Modifier {
+    val scale by animateFloatAsState(if (lifted) JARN_TAB_LIFT_SCALE else 1f, JarnTheme.motion.small.spec())
+    val outline = if (lifted) Modifier.border(2.dp, JarnTheme.colors.accent, shape) else Modifier
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }.then(outline)
 }
 
 /** Sized by its parent, so showing it never changes the parent's layout. */

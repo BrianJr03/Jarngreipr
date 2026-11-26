@@ -38,6 +38,8 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     videoFit = videoFit.id,
     pauseOnBatterySaver = pauseOnBatterySaver,
     tabFocus = tabFocus.id,
+    librarySectionOrder = librarySectionOrder,
+    deckTabOrder = deckTabOrder,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -68,4 +70,6 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     videoFit = JarnVideoFit.fromId(videoFit) ?: current.videoFit,
     pauseOnBatterySaver = pauseOnBatterySaver ?: current.pauseOnBatterySaver,
     tabFocus = JarnTabFocus.fromId(tabFocus) ?: current.tabFocus,
+    librarySectionOrder = librarySectionOrder ?: current.librarySectionOrder,
+    deckTabOrder = deckTabOrder ?: current.deckTabOrder,
 )

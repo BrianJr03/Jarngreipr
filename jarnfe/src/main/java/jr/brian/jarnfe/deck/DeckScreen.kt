@@ -39,6 +39,10 @@ import jr.brian.jarnfe.search.JarnSearchDeck
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
+import jr.brian.jarnfe.session.JarnTabOrders
+import jr.brian.jarnfe.session.rememberSaveDeckOrder
+import jr.brian.jarnfe.shell.JarnTabReorderInput
+import jr.brian.jarnfe.shell.rememberStripReorder
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.settings.JarnSettingsControls
 import jr.brian.jarnfe.settings.JarnSettingsScraperHost
@@ -152,7 +156,9 @@ private fun DeckTabStrip(
     modifier: Modifier = Modifier,
     showsStatus: Boolean = false,
 ) {
-    val tabs = DeckTab.entries
+    val tabs = JarnTabOrders.deck
+    val reorder = rememberStripReorder(tabs, rememberSaveDeckOrder())
+    JarnTabReorderInput(reorder)
     Box(modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = JarnTheme.space.deckMargin),
@@ -165,6 +171,7 @@ private fun DeckTabStrip(
                 onSelect = { index -> JarnSession.update { copy(deckTab = tabs[index]) } },
                 modifier = Modifier.weight(1f),
                 showsSwitchMark = true,
+                reorder = reorder,
             )
             NowPlayingHeaderPill(JarnScreen.Deck, Modifier.padding(start = JarnTheme.space.md))
             if (selected == DeckTab.Canvas) CanvasHeaderControls()

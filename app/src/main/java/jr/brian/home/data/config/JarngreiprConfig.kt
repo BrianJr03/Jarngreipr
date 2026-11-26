@@ -246,6 +246,9 @@ data class JarngreiprConfig(
         //      Null on older blobs, or an unknown id, keeps the current value.
         // v74: added JarnDisplayConfig.pauseOnBatterySaver, whether Battery Saver holds Jarn FE's
         //      wallpapers and video previews still. Null on older blobs keeps the current value (on).
-        const val CONFIG_VERSION = 74
+        // v75: added JarnDisplayConfig.librarySectionOrder and deckTabOrder, the player's order of the
+        //      Library and bottom screen tabs as id lists. Null on older blobs keeps the current order;
+        //      unknown ids are dropped and missing tabs are added at the end when read.
+        const val CONFIG_VERSION = 75
     }
 }
