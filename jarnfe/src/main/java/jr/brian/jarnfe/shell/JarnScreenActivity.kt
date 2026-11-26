@@ -24,6 +24,8 @@ import androidx.lifecycle.Lifecycle
 import jr.brian.core.ui.focus.JarnHaptics
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.audio.JarnAudio
+import jr.brian.jarnfe.audio.JarnStickMute
+import jr.brian.jarnfe.audio.jarnAudioDataOrNull
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryLaunchFocus
@@ -103,6 +105,8 @@ abstract class JarnScreenActivity : ComponentActivity() {
                 session = JarnSession,
                 onSearch = { openJarnSearch(JarnSession, JarnLibrary) },
                 onSwap = swap?.let { it::requestSwap },
+                onMuteJingles = { JarnStickMute.onJingles(jarnAudioDataOrNull()) },
+                onMuteMusic = { JarnStickMute.onMusic(jarnAudioDataOrNull()) },
                 onScreenTab = { pair, delta ->
                     stepScreenTabs(pair, delta, JarnSession, JarnLibrary, JarnSearch, JarnInput)
                 },

@@ -17,7 +17,7 @@ class JarnBatterySaverConfigTest {
 
     @Test
     fun `schema version covers the battery saver setting`() {
-        assertEquals(75, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(76, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

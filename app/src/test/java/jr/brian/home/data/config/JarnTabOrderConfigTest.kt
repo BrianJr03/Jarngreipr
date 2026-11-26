@@ -55,6 +55,6 @@ class JarnTabOrderConfigTest {
 
     @Test
     fun `the schema version covers tab order`() {
-        assertEquals(75, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(76, JarngreiprConfig.CONFIG_VERSION)
     }
 }

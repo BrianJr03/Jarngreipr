@@ -85,6 +85,7 @@ private fun AudioMenu(go: (AudioRoute) -> Unit, onClose: () -> Unit, modifier: M
             modifier = Modifier.fillMaxWidth(),
             supporting = stringResource(R.string.jarnfe_audio_jingles_hint),
         )
+        JarnStickMuteSetting()
     }
 }
 

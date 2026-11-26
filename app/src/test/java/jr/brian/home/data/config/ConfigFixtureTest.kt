@@ -35,7 +35,7 @@ class ConfigFixtureTest {
                     "\n            \"videoPreviews\": null,\n            \"videoPreviewSound\": null," +
                     "\n            \"videoFit\": null,\n            \"tabFocus\": null," +
                     "\n            \"pauseOnBatterySaver\": null,\n            \"librarySectionOrder\": null," +
-                    "\n            \"deckTabOrder\": null",
+                    "\n            \"deckTabOrder\": null,\n            \"stickMute\": null",
             )
             .replace(
                 "\"jarnEsdeImportNoticeShown\": null,",

@@ -17,6 +17,9 @@ import jr.brian.core.ui.components.JarnKey
  * top screen's tabs and L2/R2 the bottom screen's. A layer can still claim either pair for itself.
  *
  * X switches screens and holding it swaps them (see [heldAction]). Select is the options button.
+ *
+ * L3 and R3 swap the screens, or mute jingles and music when the player turns that on (see
+ * [JarnButtonMap.actionFor]). Either way they are [isAppWide].
  */
 enum class JarnAction(
     val hintKey: JarnKey?,
@@ -34,6 +37,8 @@ enum class JarnAction(
     Menu(JarnKey.Start),
     SwitchScreen(JarnKey.X),
     Swap(hintKey = null, firesOnPress = true),
+    MuteJingles(hintKey = null, firesOnPress = true),
+    MuteMusic(hintKey = null, firesOnPress = true),
     MoveUp(JarnKey.Dpad, firesOnPress = true, reachesFocus = true),
     MoveDown(JarnKey.Dpad, firesOnPress = true, reachesFocus = true),
     MoveLeft(JarnKey.Dpad, firesOnPress = true, reachesFocus = true),
@@ -41,6 +46,10 @@ enum class JarnAction(
 
     val isDirection: Boolean
         get() = hintKey == JarnKey.Dpad
+
+    /** Reserved app-wide: passes through Modal and Capture layers unless the layer binds it. */
+    internal val isAppWide: Boolean
+        get() = this == Swap || this == MuteJingles || this == MuteMusic
 
     /**
      * What holding this action's button does in every layer that doesn't give it a long press of its
@@ -66,7 +75,8 @@ fun JarnBindingsBuilder.tabBindings(pairs: List<JarnShoulderPair>, step: (Int) -
 
 /** The fixed button map. The Home key is deliberately absent, so it always reaches the system. */
 object JarnButtonMap {
-    fun actionFor(keyCode: Int): JarnAction? = when (keyCode) {
+    /** With [sticksMute], L3 mutes jingles and R3 mutes music instead of swapping the screens. */
+    fun actionFor(keyCode: Int, sticksMute: Boolean = false): JarnAction? = when (keyCode) {
         KeyEvent.KEYCODE_BUTTON_A,
         KeyEvent.KEYCODE_DPAD_CENTER,
         KeyEvent.KEYCODE_ENTER,
@@ -85,8 +95,8 @@ object JarnButtonMap {
         KeyEvent.KEYCODE_BUTTON_L2 -> JarnAction.BottomTabPrevious
         KeyEvent.KEYCODE_BUTTON_R2 -> JarnAction.BottomTabNext
 
-        KeyEvent.KEYCODE_BUTTON_THUMBL,
-        KeyEvent.KEYCODE_BUTTON_THUMBR -> JarnAction.Swap
+        KeyEvent.KEYCODE_BUTTON_THUMBL -> if (sticksMute) JarnAction.MuteJingles else JarnAction.Swap
+        KeyEvent.KEYCODE_BUTTON_THUMBR -> if (sticksMute) JarnAction.MuteMusic else JarnAction.Swap
 
         KeyEvent.KEYCODE_DPAD_UP -> JarnAction.MoveUp
         KeyEvent.KEYCODE_DPAD_DOWN -> JarnAction.MoveDown

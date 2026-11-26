@@ -85,14 +85,14 @@ internal fun rememberNowPlayingBlackout(sessionKey: Long?, dim: JarnPlayingDim):
 
 /**
  * The black screen. It replaces the role's content, so nothing under it can be pressed: the
- * waking tap or button only wakes. Swap is left to the app, as everywhere.
+ * waking tap or button only wakes. Swap and the L3/R3 mutes are left to the app, as everywhere.
  */
 @Composable
 internal fun NowPlayingBlackout(onWake: () -> Unit) {
     JarnInputLayer(
         mode = JarnLayerMode.Capture,
         bindings = {
-            JarnAction.entries.filter { it != JarnAction.Swap }.forEach { action ->
+            JarnAction.entries.filter { !it.isAppWide }.forEach { action ->
                 on(action, repeats = false) { onWake() }
             }
         },

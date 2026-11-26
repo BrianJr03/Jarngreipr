@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -43,6 +44,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
     val switchCue = jarnShownCue(JarnSwitchCuePreview.cue ?: savedCue, state.settingsOnDeck)
     RememberDeckTab(state.deckTab)
     SyncTabOrders(display)
+    SideEffect { JarnInput.sticksMute = display.stickMute }
     JarnTheme(
         look = appearance.look,
         reducedMotion = appearance.reducedMotion,
@@ -68,6 +70,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                     }
                     JarnEsdeRomsNoticeHost(screen)
                     JarnEsdeImportNoticeHost(screen)
+                    JarnCornerToastHost()
                     if (screen == JarnScreen.Deck && firstRun?.coversShell(state.stageRoute) != true) {
                         JarnFontPromptHost()
                     }

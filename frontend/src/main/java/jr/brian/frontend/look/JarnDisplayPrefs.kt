@@ -87,6 +87,8 @@ data class JarnDisplayPrefs(
     val librarySectionOrder: List<String> = emptyList(),
     /** Bottom screen tab ids in the player's order. Empty keeps the built-in order. */
     val deckTabOrder: List<String> = emptyList(),
+    /** L3 and R3 mute jingles and music instead of swapping the screens. */
+    val stickMute: Boolean = false,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

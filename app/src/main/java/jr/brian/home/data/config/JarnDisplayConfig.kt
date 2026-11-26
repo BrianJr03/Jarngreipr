@@ -34,4 +34,5 @@ data class JarnDisplayConfig(
     val pauseOnBatterySaver: Boolean? = null,
     val librarySectionOrder: List<String>? = null,
     val deckTabOrder: List<String>? = null,
+    val stickMute: Boolean? = null,
 )

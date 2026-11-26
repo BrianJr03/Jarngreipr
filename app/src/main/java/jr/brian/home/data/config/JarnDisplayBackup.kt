@@ -40,6 +40,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     tabFocus = tabFocus.id,
     librarySectionOrder = librarySectionOrder,
     deckTabOrder = deckTabOrder,
+    stickMute = stickMute,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -72,4 +73,5 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     tabFocus = JarnTabFocus.fromId(tabFocus) ?: current.tabFocus,
     librarySectionOrder = librarySectionOrder ?: current.librarySectionOrder,
     deckTabOrder = deckTabOrder ?: current.deckTabOrder,
+    stickMute = stickMute ?: current.stickMute,
 )

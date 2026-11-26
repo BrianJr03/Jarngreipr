@@ -32,6 +32,8 @@ internal fun jarnGlobalBindings(
     session: JarnSessionStore,
     onSearch: (() -> Unit)? = null,
     onSwap: (() -> Unit)? = null,
+    onMuteJingles: (() -> Unit)? = null,
+    onMuteMusic: (() -> Unit)? = null,
     onScreenTab: ((JarnShoulderPair, Int) -> Unit)? = null,
     deckMissing: Boolean = false,
     onBackAtRoot: (() -> Unit)? = null,
@@ -45,6 +47,8 @@ internal fun jarnGlobalBindings(
     }
     onSearch?.let { on(JarnAction.Search, R.string.jarnfe_hint_search, onPress = it) }
     onSwap?.let { on(JarnAction.Swap, onPress = it) }
+    onMuteJingles?.let { on(JarnAction.MuteJingles, onPress = it) }
+    onMuteMusic?.let { on(JarnAction.MuteMusic, onPress = it) }
     onScreenTab?.let { step ->
         JarnShoulderPair.entries.forEach { pair -> tabBindings(listOf(pair)) { step(pair, it) } }
     }

@@ -135,6 +135,7 @@ class JarnLookStore @Inject constructor(
             putString(KEY_TAB_FOCUS, next.tabFocus.id)
             putString(KEY_LIBRARY_TAB_ORDER, next.librarySectionOrder.joinToString(ORDER_SEPARATOR))
             putString(KEY_DECK_TAB_ORDER, next.deckTabOrder.joinToString(ORDER_SEPARATOR))
+            putBoolean(KEY_STICK_MUTE, next.stickMute)
         }
     }
 
@@ -187,6 +188,7 @@ class JarnLookStore @Inject constructor(
         tabFocus = JarnTabFocus.fromId(prefs.getString(KEY_TAB_FOCUS, null)) ?: JarnTabFocus.Both,
         librarySectionOrder = prefs.getString(KEY_LIBRARY_TAB_ORDER, null).orderIds(),
         deckTabOrder = prefs.getString(KEY_DECK_TAB_ORDER, null).orderIds(),
+        stickMute = prefs.getBoolean(KEY_STICK_MUTE, false),
     ).coerced()
 
     private fun String?.orderIds(): List<String> =
@@ -274,6 +276,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_TAB_FOCUS = "tab_focus"
         const val KEY_LIBRARY_TAB_ORDER = "library_tab_order"
         const val KEY_DECK_TAB_ORDER = "deck_tab_order"
+        const val KEY_STICK_MUTE = "stick_mute"
         const val ORDER_SEPARATOR = ","
         const val KEY_VIDEO_HINT_SHOWN = "video_hint_shown"
         const val KEY_FIRST_RUN_DONE = "first_run_done"
