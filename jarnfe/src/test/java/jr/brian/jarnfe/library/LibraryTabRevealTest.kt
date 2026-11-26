@@ -89,7 +89,7 @@ class LibraryTabRevealTest {
     private val tabs = listOf("a", "b", "c")
 
     private var screenActive by mutableStateOf(true)
-    private var switchFocus by mutableStateOf(JarnTabSwitchFocus.Shoulders)
+    private var switchFocus by mutableStateOf(JarnTabSwitchFocus.Both)
 
     private fun show(reducedMotion: Boolean = false, content: @Composable () -> Unit) {
         rule.setContent {
@@ -194,7 +194,19 @@ class LibraryTabRevealTest {
     }
 
     @Test
-    fun `by default a d-pad switch on the tab row stays on the tabs`() {
+    fun `by default a d-pad switch on the tab row drops in after the rest`() {
+        show { TabsAndGrid() }
+        focusTabRow()
+        press(Key.DirectionRight)
+        rule.onNodeWithText("b").assertIsFocused()
+        restPastSettle()
+        rule.onNodeWithTag("b9").assertIsFocused()
+        assertTrue("focused after ${delayOf("b9")}ms", delayOf("b9") >= JARN_TAB_DPAD_SETTLE_MS)
+    }
+
+    @Test
+    fun `in shoulders mode a d-pad switch on the tab row stays on the tabs`() {
+        switchFocus = JarnTabSwitchFocus.Shoulders
         show { TabsAndGrid() }
         focusTabRow()
         press(Key.DirectionRight)

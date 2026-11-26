@@ -65,24 +65,24 @@ class JarnTabFocusConfigImportTest {
 
     @Test
     fun `an exported choice comes back from the backup and survives a restart`() = runTest {
-        store.updateDisplay { it.copy(tabFocus = JarnTabFocus.Both) }
+        store.updateDisplay { it.copy(tabFocus = JarnTabFocus.Dpad) }
         val exported = importExport.encodeToJson(
             JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
         )
-        assertEquals("both", importExport.decodeFromJson(exported).feature.jarnDisplay?.tabFocus)
-        store.updateDisplay { it.copy(tabFocus = JarnTabFocus.Shoulders) }
+        assertEquals("dpad", importExport.decodeFromJson(exported).feature.jarnDisplay?.tabFocus)
+        store.updateDisplay { it.copy(tabFocus = JarnTabFocus.Both) }
 
         importBackup(exported)
 
-        assertEquals(JarnTabFocus.Both, store.display.tabFocus)
-        assertEquals(JarnTabFocus.Both, JarnLookStore(ApplicationProvider.getApplicationContext()).display.tabFocus)
+        assertEquals(JarnTabFocus.Dpad, store.display.tabFocus)
+        assertEquals(JarnTabFocus.Dpad, JarnLookStore(ApplicationProvider.getApplicationContext()).display.tabFocus)
     }
 
     @Test
-    fun `an older backup on a fresh install gives shoulders`() = runTest {
+    fun `an older backup on a fresh install gives both`() = runTest {
         importBackup(V72_BACKUP)
 
-        assertEquals(JarnTabFocus.Shoulders, store.display.tabFocus)
+        assertEquals(JarnTabFocus.Both, store.display.tabFocus)
     }
 
     @Test

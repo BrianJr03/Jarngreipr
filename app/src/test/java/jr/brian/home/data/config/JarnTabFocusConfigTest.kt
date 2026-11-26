@@ -16,8 +16,8 @@ class JarnTabFocusConfigTest {
     }
 
     @Test
-    fun `shoulders is the default and every choice round trips`() {
-        assertEquals(JarnTabFocus.Shoulders, JarnDisplayPrefs().tabFocus)
+    fun `both is the default and every choice round trips`() {
+        assertEquals(JarnTabFocus.Both, JarnDisplayPrefs().tabFocus)
         JarnTabFocus.entries.forEach { choice ->
             val prefs = JarnDisplayPrefs(tabFocus = choice)
             val config = json.decodeFromString<JarnDisplayConfig>(json.encodeToString(prefs.toConfig()))
@@ -30,8 +30,8 @@ class JarnTabFocusConfigTest {
     fun `a pre v73 display block keeps the current choice`() {
         val config = json.decodeFromString<JarnDisplayConfig>("""{"videoFit":"crop"}""")
         assertNull(config.tabFocus)
-        assertEquals(JarnTabFocus.Shoulders, config.applyTo(JarnDisplayPrefs()).tabFocus)
-        assertEquals(JarnTabFocus.Both, config.applyTo(JarnDisplayPrefs(tabFocus = JarnTabFocus.Both)).tabFocus)
+        assertEquals(JarnTabFocus.Both, config.applyTo(JarnDisplayPrefs()).tabFocus)
+        assertEquals(JarnTabFocus.Shoulders, config.applyTo(JarnDisplayPrefs(tabFocus = JarnTabFocus.Shoulders)).tabFocus)
     }
 
     @Test

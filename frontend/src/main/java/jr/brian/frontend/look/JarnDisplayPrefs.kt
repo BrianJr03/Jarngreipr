@@ -81,7 +81,7 @@ data class JarnDisplayPrefs(
     val videoPreviews: Boolean = false,
     val videoPreviewSound: Boolean = false,
     val videoFit: JarnVideoFit = JarnVideoFit.Fit,
-    val tabFocus: JarnTabFocus = JarnTabFocus.Shoulders,
+    val tabFocus: JarnTabFocus = JarnTabFocus.Both,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

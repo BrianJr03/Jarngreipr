@@ -16,8 +16,8 @@ class JarnTabFocusPrefsTest {
     private val prefs get() = context.getSharedPreferences("jarnfe_look_prefs", 0)
 
     @Test
-    fun `shoulders is the default`() {
-        assertEquals(JarnTabFocus.Shoulders, JarnLookStore(context).display.tabFocus)
+    fun `both is the default`() {
+        assertEquals(JarnTabFocus.Both, JarnLookStore(context).display.tabFocus)
     }
 
     @Test
@@ -30,8 +30,8 @@ class JarnTabFocusPrefsTest {
     }
 
     @Test
-    fun `an unknown stored id reads as shoulders`() {
+    fun `an unknown stored id reads as both`() {
         prefs.edit { putString("tab_focus", "touch") }
-        assertEquals(JarnTabFocus.Shoulders, JarnLookStore(context).display.tabFocus)
+        assertEquals(JarnTabFocus.Both, JarnLookStore(context).display.tabFocus)
     }
 }

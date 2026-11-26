@@ -180,7 +180,7 @@ class JarnLookStore @Inject constructor(
         videoPreviews = prefs.getBoolean(KEY_VIDEO_PREVIEWS, false),
         videoPreviewSound = prefs.getBoolean(KEY_VIDEO_PREVIEW_SOUND, false),
         videoFit = JarnVideoFit.fromId(prefs.getString(KEY_VIDEO_FIT, null)) ?: JarnVideoFit.Fit,
-        tabFocus = JarnTabFocus.fromId(prefs.getString(KEY_TAB_FOCUS, null)) ?: JarnTabFocus.Shoulders,
+        tabFocus = JarnTabFocus.fromId(prefs.getString(KEY_TAB_FOCUS, null)) ?: JarnTabFocus.Both,
     ).coerced()
 
     fun setLookId(id: String) {

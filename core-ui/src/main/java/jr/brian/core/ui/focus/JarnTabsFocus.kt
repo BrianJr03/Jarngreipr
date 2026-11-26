@@ -26,10 +26,11 @@ data class JarnTabSwitchFocus(val onShoulder: Boolean, val onDpad: Boolean) {
 
     companion object {
         val Shoulders = JarnTabSwitchFocus(onShoulder = true, onDpad = false)
+        val Both = JarnTabSwitchFocus(onShoulder = true, onDpad = true)
     }
 }
 
-val LocalJarnTabSwitchFocus = staticCompositionLocalOf { JarnTabSwitchFocus.Shoulders }
+val LocalJarnTabSwitchFocus = staticCompositionLocalOf { JarnTabSwitchFocus.Both }
 
 /**
  * Whether a switch moves focus into the new tab. Focus that was already in the content always

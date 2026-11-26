@@ -67,7 +67,7 @@ class JarnTabsSwitchFocusTest {
 
     private val shoulders = JarnTabSwitchFocus.Shoulders
     private val dpad = JarnTabSwitchFocus(onShoulder = false, onDpad = true)
-    private val both = JarnTabSwitchFocus(onShoulder = true, onDpad = true)
+    private val both = JarnTabSwitchFocus.Both
     private val neither = JarnTabSwitchFocus(onShoulder = false, onDpad = false)
 
     private fun show(rule: JarnTabSwitchFocus) {
