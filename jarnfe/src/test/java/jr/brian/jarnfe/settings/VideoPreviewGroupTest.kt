@@ -92,6 +92,23 @@ class VideoPreviewGroupTest {
     }
 
     @Test
+    fun `with previews off the sound subtitle says to turn them on first`() {
+        show()
+
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint_off)).assertExists()
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `with previews on the sound subtitle only describes the sound`() {
+        display = JarnDisplayPrefs(videoPreviews = true)
+        show()
+
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint)).assertExists()
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint_off)).assertDoesNotExist()
+    }
+
+    @Test
     fun `up returns to the previews row`() {
         show()
         press(Key.DirectionDown)

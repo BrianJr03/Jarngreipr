@@ -1,5 +1,6 @@
 package jr.brian.jarnfe.settings
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -57,8 +58,12 @@ private fun PreviewSoundRow(on: Boolean, enabled: Boolean, onChange: (Boolean) -
         checked = on,
         onCheckedChange = onChange,
         modifier = Modifier.fillMaxWidth().jarnDisabledRowBacking(enabled),
-        supporting = stringResource(R.string.jarnfe_video_previews_sound_hint),
+        supporting = stringResource(previewSoundHintRes(enabled)),
         enabled = enabled,
         focusableWhenDisabled = true,
     )
 }
+
+@StringRes
+internal fun previewSoundHintRes(previewsOn: Boolean): Int =
+    if (previewsOn) R.string.jarnfe_video_previews_sound_hint else R.string.jarnfe_video_previews_sound_hint_off
