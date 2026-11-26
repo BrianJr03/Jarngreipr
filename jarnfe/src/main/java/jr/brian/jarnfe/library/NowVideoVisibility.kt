@@ -13,6 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import jr.brian.core.ui.theme.JarnTheme
@@ -112,6 +115,34 @@ internal fun BoxScope.NowHiddenUiTouch() {
                 }
             },
     )
+}
+
+/**
+ * A tap on the playing preview, where nothing on top of it took the tap, hides the UI as holding
+ * Select does. Only the uncovered video counts: nothing happens while [covered] says the More sheet
+ * or a game action page is over it. It sits on the scene's parent, so the Play row, the cover and every other control
+ * see the tap first and consume it, and a drag the page scrolls with is consumed too. It acts on
+ * the release, so the touch that brings the UI back afterwards is always a new one.
+ */
+internal fun Modifier.nowVideoTapToFill(covered: () -> Boolean): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        if (down.isConsumed) return@awaitEachGesture
+        val up = awaitUntouchedTap(down, viewConfiguration.touchSlop) ?: return@awaitEachGesture
+        if (NowVideoVisibility.showing && !NowVideoVisibility.uiHidden && !covered()) {
+            up.consume()
+            NowVideoVisibility.toggleUi()
+        }
+    }
+}
+
+/** The release of [down], or null once anything consumes it or it moves past [touchSlop]. */
+private suspend fun AwaitPointerEventScope.awaitUntouchedTap(down: PointerInputChange, touchSlop: Float): PointerInputChange? {
+    while (true) {
+        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: return null
+        if (change.isConsumed || (change.position - down.position).getDistance() > touchSlop) return null
+        if (change.changedToUp()) return change
+    }
 }
 
 /** Fades what sits over the preview while the player watches it with the UI hidden. */

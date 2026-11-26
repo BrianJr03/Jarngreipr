@@ -51,7 +51,7 @@ internal fun NowScene(
     val hold = remember { NowVideoHold() }
     val backdrop = remember { NowVideoBackdrop() }
     CompositionLocalProvider(LocalNowVideoHold provides hold) {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().nowVideoTapToFill { nowSceneCovered(hold) }) {
             NowVideoFill {
                 NowSceneArt(selection, systemNow, backdrop)
                 NowSceneVideo(selection, preview, backdrop)
