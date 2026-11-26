@@ -167,11 +167,13 @@ private fun CollectionChoices(
     }
 }
 
+/** The name keyboard, opened on a key, with the last save's problem above it. */
 @Composable
-private fun CollectionNameEntry(
+internal fun CollectionNameEntry(
     problem: CollectionNameResult?,
     onDone: (String) -> Unit,
     onCancel: () -> Unit,
+    initialName: String = "",
 ) {
     problem?.problemRes()?.let { res ->
         JarnText(
@@ -187,6 +189,7 @@ private fun CollectionNameEntry(
         onDone = onDone,
         onCancel = onCancel,
         modifier = Modifier.fillMaxWidth(),
+        initialText = initialName,
         maxLength = COLLECTION_NAME_MAX_LENGTH,
         takesFocus = true,
     )

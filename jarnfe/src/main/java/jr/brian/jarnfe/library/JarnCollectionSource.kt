@@ -30,6 +30,9 @@ interface JarnCollectionSource {
     /** False when it was already gone. */
     suspend fun deleteCollection(collectionId: Long): Boolean
 
+    /** Moves it [delta] places in the user's order. False when nothing moved. */
+    suspend fun moveCollection(collectionId: Long, delta: Int): Boolean
+
     /** True when the game is in the collection afterwards. */
     suspend fun addToCollection(collectionId: Long, gameId: String): Boolean
 
@@ -46,6 +49,7 @@ object EmptyJarnCollectionSource : JarnCollectionSource {
     override suspend fun createCollection(name: String) = CollectionNameResult.NotFound
     override suspend fun renameCollection(collectionId: Long, name: String) = CollectionNameResult.NotFound
     override suspend fun deleteCollection(collectionId: Long) = false
+    override suspend fun moveCollection(collectionId: Long, delta: Int) = false
     override suspend fun addToCollection(collectionId: Long, gameId: String) = false
     override suspend fun removeFromCollection(collectionId: Long, gameId: String) = false
 }

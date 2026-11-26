@@ -60,6 +60,8 @@ class JarnCollectionsData @Inject constructor(
 
     suspend fun delete(collectionId: Long): Boolean = repository.delete(collectionId)
 
+    suspend fun move(collectionId: Long, delta: Int): Boolean = repository.move(collectionId, delta)
+
     /** False when the key can't be read or the collection is gone. */
     suspend fun add(collectionId: Long, gameKey: String): Boolean {
         val game = parseGameKey(gameKey) ?: return false

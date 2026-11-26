@@ -61,6 +61,9 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
         stageRefocus += 1
     }
 
+    /** The Collections tab's Manage sheet, opened by Select on a tile. */
+    internal var collectionSheet by mutableStateOf<CollectionSheet?>(null)
+
     /** Set when the Continue playing card should take focus once it is on screen. */
     var heroFocusPending by mutableStateOf(false)
         private set

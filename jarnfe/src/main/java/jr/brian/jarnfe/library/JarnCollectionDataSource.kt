@@ -28,6 +28,9 @@ internal class JarnCollectionDataSource(private val data: JarnLibraryData) : Jar
 
     override suspend fun deleteCollection(collectionId: Long): Boolean = collections.delete(collectionId)
 
+    override suspend fun moveCollection(collectionId: Long, delta: Int): Boolean =
+        collections.move(collectionId, delta)
+
     override suspend fun addToCollection(collectionId: Long, gameId: String): Boolean =
         collections.add(collectionId, gameId)
 

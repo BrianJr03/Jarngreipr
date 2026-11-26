@@ -97,9 +97,21 @@ private fun BoxScope.LibraryCollectionIcon() {
     }
 }
 
-/** The Collections tab: a tile per collection, in the user's order. */
+/** The Collections tab: a tile per collection, in the user's order. Select on a tile manages it. */
 @Composable
 internal fun LibraryCollections(
+    library: JarnLibraryStore,
+    onOpenCollection: (Long) -> Unit,
+    emptyActions: @Composable () -> Unit,
+) {
+    Box(Modifier.fillMaxSize()) {
+        LibraryCollectionGrid(library, onOpenCollection, emptyActions)
+        LibraryCollectionManageHost(library)
+    }
+}
+
+@Composable
+private fun LibraryCollectionGrid(
     library: JarnLibraryStore,
     onOpenCollection: (Long) -> Unit,
     emptyActions: @Composable () -> Unit,

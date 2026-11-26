@@ -57,6 +57,13 @@ class CollectionsRepository @Inject constructor(private val dao: CollectionDao) 
     /** Its members go with it. False when it was already gone. */
     suspend fun delete(collectionId: Long): Boolean = writes.withLock { dao.delete(collectionId) > 0 }
 
+    /** Moves it [delta] places in the user's order. False when it is gone or already at that end. */
+    suspend fun move(collectionId: Long, delta: Int): Boolean = writes.withLock {
+        val order = collectionOrderMoved(dao.getAll().map { it.id }, collectionId, delta) ?: return false
+        dao.setOrder(order)
+        true
+    }
+
     /** True when the game is in the collection afterwards. False when the collection is gone. */
     suspend fun addGame(collectionId: Long, systemId: String, relativePath: String): Boolean =
         writes.withLock {
