@@ -174,6 +174,7 @@ private fun NowGamePage(
     setupRows: (@Composable () -> Unit)? = null,
 ) {
     val art = rememberNowGameArt(game)
+    JarnVideoPreviewHintEffect(art.videoPath)
     val marqueeBounds = rememberNowArtBounds(art.marqueePath)
     val coverBounds = rememberNowArtBounds(art.coverPath)
     NowRevealWhen(

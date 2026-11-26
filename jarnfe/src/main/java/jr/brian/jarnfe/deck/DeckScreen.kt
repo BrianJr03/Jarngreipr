@@ -30,6 +30,7 @@ import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowShortcutControls
 import jr.brian.jarnfe.library.NowVideoPreview
 import jr.brian.jarnfe.library.nowShortcutGap
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.search.JarnSearch
 import jr.brian.jarnfe.search.JarnSearchDeck
 import jr.brian.jarnfe.session.DeckTab
@@ -106,8 +107,9 @@ private fun DeckBody(state: JarnSessionState) {
         deckShowsSearch(state) -> JarnSearchDeck()
         deckShowsSettings(state) -> JarnSettingsControls(state.settingsSection, JarnTheme.space.deckMargin)
         else -> Column(Modifier.fillMaxSize()) {
+            val display = rememberJarnDisplay()
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                DeckTabContent(state, NowVideoPreview(enabled = false, muted = true))
+                DeckTabContent(state, NowVideoPreview(enabled = display.videoPreviews, muted = true))
             }
             JarnDockRow()
         }
