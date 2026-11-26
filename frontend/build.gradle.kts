@@ -54,6 +54,14 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+
+    sourceSets {
+        getByName("test").assets.directories.add("$projectDir/schemas")
+    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 tasks.withType<Test>().configureEach {
@@ -103,4 +111,5 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.mockk)
+    testImplementation(libs.androidx.room.testing)
 }

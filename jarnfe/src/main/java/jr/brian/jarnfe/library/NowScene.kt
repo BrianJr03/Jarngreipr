@@ -69,7 +69,7 @@ internal fun NowScene(
 private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?, backdrop: NowVideoBackdrop) {
     val showsBackground = rememberJarnDisplay().systemBackgroundVisible
     val target = when (selection) {
-        LibrarySelection.None -> emptyList()
+        LibrarySelection.None, is LibrarySelection.Collection -> emptyList()
         is LibrarySelection.System -> if (showsBackground) nowSystemPaths(selection.system, systemNow) else emptyList()
         is LibrarySelection.Game -> nowGamePaths(selection.game, rememberNowSceneArt(selection.game))
     }
@@ -85,7 +85,7 @@ private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSys
 
 /** The cover wall stands in for system art, so hiding the system background hides it on a system too. */
 internal fun nowShowsWall(selection: LibrarySelection, showsSystemBackground: Boolean): Boolean = when (selection) {
-    LibrarySelection.None -> false
+    LibrarySelection.None, is LibrarySelection.Collection -> false
     is LibrarySelection.System -> showsSystemBackground
     is LibrarySelection.Game -> true
 }

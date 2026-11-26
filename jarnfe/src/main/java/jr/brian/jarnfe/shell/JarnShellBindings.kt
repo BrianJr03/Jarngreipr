@@ -78,12 +78,21 @@ private fun JarnBindingsBuilder.gameActionsBinding(
     library: JarnLibraryStore,
 ) {
     val selection = library.nowSelection(state.stageRoute, state.librarySection)
-    if (selection !is LibrarySelection.Game || JarnGameActions.controller == null) return
-    optionsOrHideUi(R.string.jarnfe_hint_context) {
+    gameOptionsBinding(selection, hasActions = JarnGameActions.controller != null) {
         if (state.stageRoute == StageRoute.Search) JarnSearch.showActions()
         JarnGameActions.focusActions()
         session.update { openDeckNow() }
     }
+}
+
+/** Select on any game, in a system, a collection or a tab: a tap opens Options, a hold hides the UI. */
+internal fun JarnBindingsBuilder.gameOptionsBinding(
+    selection: LibrarySelection,
+    hasActions: Boolean,
+    onOptions: () -> Unit,
+) {
+    if (selection !is LibrarySelection.Game || !hasActions) return
+    optionsOrHideUi(R.string.jarnfe_hint_context, onOptions)
 }
 
 private fun JarnLibraryStore.bannerHasFocus(state: JarnSessionState) =

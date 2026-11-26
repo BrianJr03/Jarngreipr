@@ -127,6 +127,8 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             current.system.hiddenGames?.toSet(),
         ) { it.size },
         optional(JarnBackupArea.ArtChoices, b.jarnArtChoices, c.jarnArtChoices) { it.count() },
+        collectionsItem(b.jarnCollections, c.jarnCollections),
+        favoritesItem(b.jarnFavorites, c.jarnFavorites),
         replaced(
             JarnBackupArea.RecentlyPlayed,
             b.recentlyPlayed.size,
@@ -293,6 +295,8 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnSystemSorts = feature.jarnSystemSorts ?: current.feature.jarnSystemSorts,
         jarnWallpaperScreens = null,
         jarnPreview = null,
+        jarnCollections = null,
+        jarnFavorites = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,

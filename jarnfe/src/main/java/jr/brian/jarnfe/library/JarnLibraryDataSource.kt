@@ -51,6 +51,8 @@ internal class JarnLibraryDataSource(
     private val setup: LibrarySetup,
     private val systems: JarnSystemManager? = null,
 ) : JarnLibrarySource {
+    override val collections: JarnCollectionSource = JarnCollectionDataSource(data)
+
     override fun observeSystems(): Flow<JarnLibraryFeed<JarnLibrarySystem>> =
         combine(
             data.systemsWithArt,

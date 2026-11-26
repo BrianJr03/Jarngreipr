@@ -45,6 +45,9 @@ internal fun LibraryNowPanel(selection: LibrarySelection, preview: NowVideoPrevi
                             is LibrarySelection.System -> key(shown.system.id) {
                                 NowSystemView(shown.system, shownNow)
                             }
+                            is LibrarySelection.Collection -> key(shown.collection.id) {
+                                NowCollectionView(shown.collection)
+                            }
                             is LibrarySelection.Game -> NowGameShortcuts(shown, shownNow) {
                                 NowGameView(shown.game, shown.resume)
                             }
@@ -95,6 +98,7 @@ private fun NowFocusKeeper(selection: LibrarySelection, content: @Composable () 
 internal fun LibrarySelection.focusKey(): String? = when (this) {
     LibrarySelection.None -> null
     is LibrarySelection.System -> "system:${system.id}"
+    is LibrarySelection.Collection -> "collection:${collection.id}"
     is LibrarySelection.Game -> if (resume) "resume:${game.id}" else "game:${game.id}"
 }
 

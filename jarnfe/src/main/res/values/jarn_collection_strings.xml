@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_section_collections">Collections</string>
+    <string name="jarnfe_collections_empty_title">No collections yet</string>
+    <string name="jarnfe_collections_empty_message">Press Select on a game, then choose Collections to make one.</string>
+    <string name="jarnfe_collection_empty_title">Nothing in this collection</string>
+    <string name="jarnfe_collection_empty_message">Press Select on a game and add it from Collections.</string>
+    <string name="jarnfe_game_collections_supporting">A adds or removes this game. A game can be in many collections.</string>
+    <string name="jarnfe_collection_new">New collection…</string>
+    <string name="jarnfe_collection_name_label">Collection name</string>
+    <string name="jarnfe_collection_name_blank">Type a name first.</string>
+    <string name="jarnfe_collection_name_too_long">Names can be up to %1$d characters.</string>
+    <string name="jarnfe_collection_name_duplicate">You already have a collection with that name.</string>
+    <string name="jarnfe_collection_save_failed">Couldn\'t save the collection. Try again.</string>
+</resources>

@@ -39,6 +39,10 @@ class ConfigFixtureTest {
                 "\"jarnEsdeImportNoticeShown\": null,",
                 "\"jarnEsdeImportNoticeShown\": null,\n        \"jarnVideoHintShown\": null,",
             )
+            .replace(
+                "\"jarnPreview\": null\n",
+                "\"jarnPreview\": null,\n        \"jarnCollections\": null,\n        \"jarnFavorites\": null\n",
+            )
         assertEquals(expected, reencoded)
     }
 }

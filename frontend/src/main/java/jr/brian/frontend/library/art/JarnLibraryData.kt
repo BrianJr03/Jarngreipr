@@ -2,6 +2,7 @@ package jr.brian.frontend.library.art
 
 import jr.brian.core.model.ArtSource
 import jr.brian.core.model.SystemArtSource
+import jr.brian.frontend.library.collections.JarnCollectionsData
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.MediaDao
@@ -41,6 +42,7 @@ class JarnLibraryData @Inject constructor(
     private val recentLaunches: RecentLaunchSource,
     private val visibilitySource: LibraryVisibilitySource,
     private val artChoiceStore: GameArtChoiceStore,
+    val collections: JarnCollectionsData,
     private val choices: ScrapeChoicesSource = ScrapeChoicesSource { ScrapeChoices.All },
 ) {
     val artSource: StateFlow<ArtSource> = store.state

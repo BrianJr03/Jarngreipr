@@ -10,6 +10,8 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import jr.brian.core.model.ArtSource
+import jr.brian.frontend.library.collections.CollectionsRepository
+import jr.brian.frontend.library.collections.JarnCollectionsData
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.LibraryDatabase
 import jr.brian.frontend.library.db.MediaEntity
@@ -97,6 +99,7 @@ class JarnLibraryDataTest {
             recentLaunches = { launches },
             visibilitySource = { visibility },
             artChoiceStore = GameArtChoiceStore(app),
+            collections = JarnCollectionsData(CollectionsRepository(db.collectionDao())) { visibility },
         )
     }
 

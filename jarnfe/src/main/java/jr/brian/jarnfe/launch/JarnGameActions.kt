@@ -35,6 +35,7 @@ internal enum class GameActionsPage {
     EditArt,
     ArtScope,
     ArtConfirm,
+    Collections,
 }
 
 private const val RETROARCH_PREFIX = "com.retroarch"
@@ -96,6 +97,10 @@ internal object JarnGameActions {
         private set
     var pageBeforeOffer = GameActionsPage.Actions
 
+    /** The page B just left, so its own row takes focus back instead of Play. */
+    var returnFrom by mutableStateOf<GameActionsPage?>(null)
+        private set
+
     /** Puts [choices] up as the companion offer. The page under it comes back once it closes. */
     fun offer(choices: List<JarnAppOption>) {
         if (page != GameActionsPage.CompanionLaunch) pageBeforeOffer = page
@@ -123,11 +128,24 @@ internal object JarnGameActions {
     fun focusActions() {
         page = GameActionsPage.Actions
         pendingFocus = true
+        returnFrom = null
     }
 
     fun focusPage(target: GameActionsPage) {
         page = target
         pendingFocus = true
+        returnFrom = null
+    }
+
+    /** Back on the actions page with focus on the row that opened [from]. */
+    fun returnTo(from: GameActionsPage) {
+        page = GameActionsPage.Actions
+        pendingFocus = false
+        returnFrom = from
+    }
+
+    fun returnHandled() {
+        returnFrom = null
     }
 
     fun focusHandled() {
@@ -238,6 +256,10 @@ internal class JarnGameActionsController(
     fun back() {
         val current = state.page
         val previous = pageBefore(current, state.pendingEmulator != null, state.pendingCore != null)
+        if (current == GameActionsPage.Collections) {
+            closePage()
+            return state.returnTo(current)
+        }
         if (previous == GameActionsPage.Actions) return closePage()
         when (current) {
             GameActionsPage.Cores -> {

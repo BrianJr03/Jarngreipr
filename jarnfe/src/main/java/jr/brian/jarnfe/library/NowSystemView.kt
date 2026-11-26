@@ -288,14 +288,14 @@ private fun NowSystemStats(system: JarnLibrarySystem, parts: NowSystemParts) {
 }
 
 @Composable
-private fun nowPlaytimeValue(minutes: Long): String = if (minutes >= MINUTES_PER_HOUR) {
+internal fun nowPlaytimeValue(minutes: Long): String = if (minutes >= MINUTES_PER_HOUR) {
     stringResource(R.string.jarnfe_now_hours, minutes / MINUTES_PER_HOUR)
 } else {
     stringResource(R.string.jarnfe_now_minutes, minutes)
 }
 
 @Composable
-private fun NowStat(value: String, label: String) {
+internal fun NowStat(value: String, label: String) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
         verticalAlignment = Alignment.CenterVertically,

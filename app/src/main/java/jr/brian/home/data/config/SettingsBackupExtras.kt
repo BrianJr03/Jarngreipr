@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.library.art.GameSortStore
+import jr.brian.frontend.library.collections.CollectionsBackup
+import jr.brian.frontend.library.favorites.FavoritesBackup
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,7 +15,7 @@ private const val FILE_SCHEME = "file://"
 private const val CONTENT_SCHEME = "content://"
 
 /**
- * The v52 backup areas, kept out of [ImportExportManager] so it doesn't grow. Export adds them to a
+ * The v52 and later backup areas, kept out of [ImportExportManager] so it doesn't grow. Export adds them to a
  * built config, and restore repairs the canvas before it is applied and restores the rest after.
  */
 @Singleton
@@ -23,6 +25,8 @@ class SettingsBackupExtras @Inject constructor(
     private val rssFeeds: RssFeedBackup,
     private val jingles: JingleBackup,
     private val gameSorts: GameSortStore,
+    private val collections: CollectionsBackup,
+    private val favorites: FavoritesBackup,
 ) {
     private val widgetManager by lazy { runCatching { AppWidgetManager.getInstance(context) }.getOrNull() }
 
@@ -34,6 +38,8 @@ class SettingsBackupExtras @Inject constructor(
         feature = config.feature.copy(
             rssFeeds = rssFeeds.export(),
             jarnSystemSorts = gameSorts.state.value,
+            jarnCollections = collections.export()?.map { it.toConfig() },
+            jarnFavorites = favorites.export()?.map { it.toConfig() },
             jingles = config.feature.jingles.copy(enabled = jingles.enabled, repos = jingles.repos),
         ),
     )
@@ -54,6 +60,8 @@ class SettingsBackupExtras @Inject constructor(
         rssFeeds.restore(config.feature.rssFeeds)
         jingles.restore(config.feature.jingles.enabled, config.feature.jingles.repos)
         config.feature.jarnSystemSorts?.let(gameSorts::restore)
+        config.feature.jarnCollections?.let { list -> collections.restore(list.map { it.toBackedUpCollection() }) }
+        config.feature.jarnFavorites?.let { list -> favorites.restore(list.map { it.toBackedUpFavorite() }) }
     }
 
     private fun providerOf(widgetId: Int): String? =

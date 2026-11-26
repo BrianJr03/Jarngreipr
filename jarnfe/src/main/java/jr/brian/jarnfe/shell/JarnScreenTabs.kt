@@ -13,7 +13,7 @@ import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
 
-internal enum class JarnTabStrip { LibrarySections, GameListSystems, SearchTabs, DeckTabs, SettingsSections }
+internal enum class JarnTabStrip { LibrarySections, GameListSystems, CollectionLists, SearchTabs, DeckTabs, SettingsSections }
 
 /** A swap never moves a window, so the Stage window always sits on the top display. */
 internal fun JarnSessionState.roleAt(pair: JarnShoulderPair): JarnScreen = when (pair) {
@@ -57,6 +57,7 @@ private fun JarnSessionState.canReachAcross(anyModalOpen: Boolean, gameActionPag
 private fun JarnSessionState.stageTabStrip(): JarnTabStrip? = when (stageRoute) {
     StageRoute.Library -> JarnTabStrip.LibrarySections
     StageRoute.GameList -> JarnTabStrip.GameListSystems
+    StageRoute.Collection -> JarnTabStrip.CollectionLists
     StageRoute.Search -> JarnTabStrip.SearchTabs
     StageRoute.Settings -> JarnTabStrip.SettingsSections.takeUnless { settingsOnDeck }
     StageRoute.Systems -> null
@@ -106,6 +107,7 @@ internal fun stepScreenTabs(
     when (tabStripNow(pair, session, library, search, router)) {
         JarnTabStrip.LibrarySections -> session.update { stepLibrarySection(delta) }
         JarnTabStrip.GameListSystems -> library.update { stepOpenSystem(delta) }
+        JarnTabStrip.CollectionLists -> library.update { stepOpenCollection(delta) }
         JarnTabStrip.SearchTabs -> search.stepTab(delta)
         JarnTabStrip.DeckTabs -> session.update { stepDeckTab(delta) }
         JarnTabStrip.SettingsSections -> session.update { stepSettingsSection(delta) }

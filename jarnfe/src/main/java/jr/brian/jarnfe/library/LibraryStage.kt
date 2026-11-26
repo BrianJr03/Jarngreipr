@@ -56,6 +56,7 @@ internal fun LibraryHome(
     library: JarnLibraryStore,
     onOpenSystem: (String) -> Unit,
     emptyActions: @Composable () -> Unit,
+    onOpenCollection: (Long) -> Unit = {},
 ) {
     ResumeMissingDialog()
     LibraryTabReveal(section) {
@@ -86,6 +87,7 @@ internal fun LibraryHome(
                     )
                 },
             )
+            LibrarySection.Collections -> LibraryCollections(library, onOpenCollection, emptyActions)
         }
     }
 }
@@ -384,16 +386,21 @@ private fun LibrarySystemGames(library: JarnLibraryStore, systemId: String?) {
 
 @Composable
 internal fun LibraryGameListTitle(state: JarnLibraryState) {
+    LibraryListTitle(state.openSystem?.title.orEmpty(), state.openGames.items, state.focusedOpenGame?.id)
+}
+
+/** A game list's name between its L1 and R1 caps, with where focus sits in it. */
+@Composable
+internal fun LibraryListTitle(title: String, games: List<JarnLibraryGame>, focusedId: String?) {
     val colors = JarnTheme.colors
-    val games = state.openGames.items
-    val position = games.indexOfFirst { it.id == state.focusedOpenGame?.id }
+    val position = games.indexOfFirst { it.id == focusedId }
     Row(
         modifier = Modifier.padding(vertical = JarnTheme.space.lg),
         horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         JarnKeyCap(JarnKey.L1)
-        JarnText(state.openSystem?.title.orEmpty(), JarnTheme.baseType.labelStrong, colors.textHigh, maxLines = 1)
+        JarnText(title, JarnTheme.baseType.labelStrong, colors.textHigh, maxLines = 1)
         JarnKeyCap(JarnKey.R1)
         if (position >= 0) {
             JarnText(

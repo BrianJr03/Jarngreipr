@@ -5,12 +5,16 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
 import jr.brian.frontend.library.art.GameSortStore
+import jr.brian.frontend.library.collections.CollectionsBackup
+import jr.brian.frontend.library.favorites.FavoritesBackup
 import jr.brian.home.data.database.RssFeedDao
 
 /** Real extras over Robolectric storage, with an empty feed list unless [dao] says otherwise. */
 internal fun testBackupExtras(
     dao: RssFeedDao = mockk(relaxed = true) { coEvery { getAllFeedsSnapshot() } returns emptyList() },
     gameSorts: GameSortStore = GameSortStore(ApplicationProvider.getApplicationContext()),
+    collections: CollectionsBackup = mockk(relaxed = true) { coEvery { export() } returns null },
+    favorites: FavoritesBackup = mockk(relaxed = true) { coEvery { export() } returns null },
 ): SettingsBackupExtras {
     val context = ApplicationProvider.getApplicationContext<Context>()
     return SettingsBackupExtras(
@@ -19,5 +23,7 @@ internal fun testBackupExtras(
         rssFeeds = RssFeedBackup(dao),
         jingles = JingleBackup(context),
         gameSorts = gameSorts,
+        collections = collections,
+        favorites = favorites,
     )
 }

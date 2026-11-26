@@ -14,6 +14,8 @@ enum class JarnBackupArea {
     HiddenSystems,
     HiddenGames,
     ArtChoices,
+    Collections,
+    Favorites,
     RecentlyPlayed,
     Look,
     Wallpaper,

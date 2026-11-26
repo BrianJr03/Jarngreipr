@@ -3,6 +3,8 @@ package jr.brian.home.data
 import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.LibraryRepository
 import jr.brian.frontend.library.LibraryState
+import jr.brian.frontend.library.favorites.FavoritesBackup
+import jr.brian.frontend.library.favorites.scanEnds
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.SetupPreferences
@@ -39,6 +41,7 @@ class LibraryStoreSync @Inject constructor(
     private val esdePreferencesManager: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val scraperCoordinator: ScraperCoordinator,
+    private val favoritesBackup: FavoritesBackup,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
 
@@ -72,6 +75,11 @@ class LibraryStoreSync @Inject constructor(
                     }
                 }
             }
+        }
+
+        // Restored favorites whose games weren't scanned yet are tried again once each scan ends.
+        scope.launch {
+            libraryRepository.state.scanEnds().collect { favoritesBackup.applyPending() }
         }
 
         // Push media roots into the repository whenever the user's

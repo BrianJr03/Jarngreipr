@@ -25,7 +25,9 @@ private const val VISIBLE_ENTRY_CHARS = 40
 
 /**
  * Full text entry for pads. A types, Select deletes (hold to repeat), Y shifts, L1 toggles symbols,
- * R1 adds a space, Start finishes, B cancels.
+ * R1 adds a space, Start finishes, B cancels. [takesFocus] is for a keyboard that replaces the
+ * focused row: the window hands focus to its first item, often a tab, when that row goes, so the
+ * first key claims it back instead of leaving it there.
  */
 @Composable
 internal fun JarnTextKeyboard(
@@ -36,10 +38,11 @@ internal fun JarnTextKeyboard(
     modifier: Modifier = Modifier,
     initialText: String = "",
     maxLength: Int = JarnKeyboardState.MAX_LENGTH,
+    takesFocus: Boolean = false,
 ) {
     var state by remember { mutableStateOf(JarnKeyboardState(initialText, maxLength = maxLength)) }
     val firstKey = remember { FocusRequester() }
-    JarnKeyboardAutoFocus(firstKey)
+    if (takesFocus) JarnKeyboardTakeFocus(firstKey) else JarnKeyboardAutoFocus(firstKey)
     val press: (JarnKeyboardKey) -> Unit = { key ->
         if (key == JarnKeyboardKey.Done) onDone(state.text) else state = state.press(key)
     }
