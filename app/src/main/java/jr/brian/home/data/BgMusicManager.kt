@@ -135,8 +135,15 @@ class BgMusicManager @Inject constructor(
         .setOnAudioFocusChangeListener(audioFocusListener)
         .build()
 
-    private fun requestAudioFocus(): Boolean =
-        audioManager.requestAudioFocus(audioFocusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    // A grant here comes back synchronously, so the listener never sees an
+    // AUDIOFOCUS_GAIN for it. Clear any duck left over from before the focus
+    // was dropped (e.g. a hold that started while ducked), or music stays quiet.
+    private fun requestAudioFocus(): Boolean {
+        val granted = audioManager.requestAudioFocus(audioFocusRequest) ==
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        if (granted) unDuck()
+        return granted
+    }
 
     private fun abandonAudioFocus() {
         audioManager.abandonAudioFocusRequest(audioFocusRequest)
