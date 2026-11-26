@@ -1,7 +1,6 @@
 package jr.brian.jarnfe.transition
 
 import jr.brian.core.ui.theme.JarnMotion
-import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.jarnfe.input.JarnScreen
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -113,11 +112,14 @@ class JarnMarkHandoffTimelineTest {
     }
 
     @Test
-    fun `only the jarn label cue moves the label, and never during the splash`() {
-        assertEquals(JarnScreen.Deck, jarnMarkHolder(JarnSwitchCue.JarnLabel, splashIntro = false, JarnScreen.Deck))
-        assertEquals(JarnScreen.Stage, jarnMarkHolder(JarnSwitchCue.JarnLabel, splashIntro = true, JarnScreen.Deck))
-        JarnSwitchCue.entries.filter { it != JarnSwitchCue.JarnLabel }.forEach { cue ->
-            assertEquals(JarnScreen.Stage, jarnMarkHolder(cue, splashIntro = false, JarnScreen.Deck))
-        }
+    fun `with two screens the label follows control, never during the splash`() {
+        assertEquals(JarnScreen.Deck, jarnMarkHolder(twoScreens = true, splashIntro = false, JarnScreen.Deck))
+        assertEquals(JarnScreen.Stage, jarnMarkHolder(twoScreens = true, splashIntro = false, JarnScreen.Stage))
+        assertEquals(JarnScreen.Stage, jarnMarkHolder(twoScreens = true, splashIntro = true, JarnScreen.Deck))
+    }
+
+    @Test
+    fun `with one screen the label stays on Stage`() {
+        assertEquals(JarnScreen.Stage, jarnMarkHolder(twoScreens = false, splashIntro = false, JarnScreen.Deck))
     }
 }

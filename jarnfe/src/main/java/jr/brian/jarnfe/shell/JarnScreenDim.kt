@@ -28,12 +28,9 @@ private const val DIM_DIRECTION_GAP_MILLIS = 170L
 internal fun jarnDimTarget(cue: JarnSwitchCue, isLit: Boolean, twoScreens: Boolean): Float =
     if (cue == JarnSwitchCue.Dim && twoScreens && !isLit) 1f else 0f
 
-/** A tab mark or the Jarn label would never move with no other screen to hand control to. */
-internal fun jarnShownCue(cue: JarnSwitchCue, twoScreens: Boolean): JarnSwitchCue = when {
-    twoScreens -> cue
-    cue == JarnSwitchCue.TabMark || cue == JarnSwitchCue.JarnLabel -> JarnSwitchCue.Pulse
-    else -> cue
-}
+/** A tab mark would never move with no other screen to hand control to. */
+internal fun jarnShownCue(cue: JarnSwitchCue, twoScreens: Boolean): JarnSwitchCue =
+    if (!twoScreens && cue == JarnSwitchCue.TabMark) JarnSwitchCue.Pulse else cue
 
 /** Limits direction changes, so fast presses can't make a whole screen flicker. */
 internal class JarnDimGate(private var shown: Float, private val gapMillis: Long = DIM_DIRECTION_GAP_MILLIS) {

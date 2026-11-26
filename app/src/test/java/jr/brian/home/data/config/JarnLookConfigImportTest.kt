@@ -368,18 +368,24 @@ class JarnLookConfigImportTest {
     }
 
     @Test
-    fun `the jarn label cue survives a backup and a restart`() = runTest {
-        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.JarnLabel) }
-        val json = importExport.encodeToJson(
-            JarngreiprConfig(feature = FeatureConfig(jarnDisplay = store.display.toConfig())),
-        )
-        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Pulse) }
+    fun `a backup holding the old jarn label cue restores as pulse`() = runTest {
+        store.updateDisplay { it.copy(switchCue = JarnSwitchCue.Dim) }
+        val json = """{ "version": 60, "feature": { "jarnDisplay": { "switchCue": "jarn_label" } } }"""
 
         val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))
 
         assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
-        assertTrue(json.contains("\"jarn_label\""))
-        assertEquals(JarnSwitchCue.JarnLabel, JarnLookStore(ApplicationProvider.getApplicationContext()).display.switchCue)
+        assertEquals(JarnSwitchCue.Pulse, store.display.switchCue)
+        assertEquals(JarnSwitchCue.Pulse, JarnLookStore(ApplicationProvider.getApplicationContext()).display.switchCue)
+    }
+
+    @Test
+    fun `a saved jarn label cue reads as pulse after an update`() {
+        ApplicationProvider.getApplicationContext<android.content.Context>()
+            .getSharedPreferences("jarnfe_look_prefs", android.content.Context.MODE_PRIVATE)
+            .edit().putString("switch_cue", "jarn_label").commit()
+
+        assertEquals(JarnSwitchCue.Pulse, JarnLookStore(ApplicationProvider.getApplicationContext()).display.switchCue)
     }
 
     @Test

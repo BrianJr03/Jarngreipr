@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import jr.brian.core.ui.theme.JarnMotion
-import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.session.JarnSessionState
@@ -54,7 +53,7 @@ internal class JarnMarkPresence(initial: Float) {
     }
 }
 
-/** [follows] is true while the Jarn label cue is on, so the Deck keeps a slot for the label. */
+/** [follows] is true with two screens, so the Deck keeps a slot for the label. */
 @Stable
 internal class JarnMarkHandoff(
     val follows: Boolean,
@@ -69,12 +68,12 @@ internal class JarnMarkHandoff(
 internal val LocalJarnMarkHandoff = staticCompositionLocalOf { JarnMarkHandoff.Resting }
 
 @Composable
-internal fun rememberJarnMarkHandoff(screen: JarnScreen, cue: JarnSwitchCue, state: JarnSessionState): JarnMarkHandoff {
+internal fun rememberJarnMarkHandoff(screen: JarnScreen, twoScreens: Boolean, state: JarnSessionState): JarnMarkHandoff {
     val motion = JarnTheme.motion
-    val holds = jarnMarkHolder(cue, JarnSplash.isIntro, state.activeScreen) == screen
+    val holds = jarnMarkHolder(twoScreens, JarnSplash.isIntro, state.activeScreen) == screen
     val presence = remember(screen) { JarnMarkPresence(if (holds) 1f else 0f) }
     LaunchedEffect(presence, holds, motion) { presence.moveTo(holds, motion) }
-    val follows = cue == JarnSwitchCue.JarnLabel
+    val follows = twoScreens
     val toward = jarnMarkTowardOtherScreen(screen, state.rolesSwapped)
     return remember(presence, follows, toward) { JarnMarkHandoff(follows, presence, toward) }
 }

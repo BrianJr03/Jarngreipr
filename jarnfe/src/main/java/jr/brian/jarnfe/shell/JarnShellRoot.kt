@@ -52,7 +52,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
     ) {
         CompositionLocalProvider(
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),
-            LocalJarnMarkHandoff provides rememberJarnMarkHandoff(screen, switchCue, state),
+            LocalJarnMarkHandoff provides rememberJarnMarkHandoff(screen, state.settingsOnDeck, state),
             LocalJarnTabSwitchFocus provides display.tabFocus.switchFocus(),
         ) {
             ProvideJarnInput(JarnInput, screen) {

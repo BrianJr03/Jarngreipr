@@ -21,10 +21,11 @@ import org.junit.Test
 class JarnSwitchCueTest {
     @Test
     fun `ids are stable and unknown ids fall back to pulse`() {
-        assertEquals(listOf("pulse", "dim", "tab_mark", "jarn_label"), JarnSwitchCue.entries.map { it.id })
+        assertEquals(listOf("pulse", "dim", "tab_mark"), JarnSwitchCue.entries.map { it.id })
         JarnSwitchCue.entries.forEach { assertEquals(it, JarnSwitchCue.fromId(it.id)) }
         assertEquals(JarnSwitchCue.Pulse, JarnSwitchCue.fromId("future"))
         assertEquals(JarnSwitchCue.Pulse, JarnSwitchCue.fromId(null))
+        assertEquals(JarnSwitchCue.Pulse, JarnSwitchCue.fromId("jarn_label"))
     }
 
     @Test

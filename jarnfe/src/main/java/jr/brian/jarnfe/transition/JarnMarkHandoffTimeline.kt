@@ -2,7 +2,6 @@ package jr.brian.jarnfe.transition
 
 import androidx.compose.animation.core.Easing
 import jr.brian.core.ui.theme.JarnMotion
-import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.jarnfe.input.JarnScreen
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -70,9 +69,12 @@ internal object JarnMarkHandoffTimeline {
     fun travel(presence: Float, towardOtherScreen: Float): Float = (1f - presence) * towardOtherScreen
 }
 
-/** The label waits on Stage while the splash docks it, then follows control. */
-internal fun jarnMarkHolder(cue: JarnSwitchCue, splashIntro: Boolean, activeScreen: JarnScreen): JarnScreen =
-    if (cue == JarnSwitchCue.JarnLabel && !splashIntro) activeScreen else JarnScreen.Stage
+/**
+ * With two screens the label follows control, whatever the cue. It waits on Stage while the splash
+ * docks it, and stays there with one screen, where Stage is the only window.
+ */
+internal fun jarnMarkHolder(twoScreens: Boolean, splashIntro: Boolean, activeScreen: JarnScreen): JarnScreen =
+    if (twoScreens && !splashIntro) activeScreen else JarnScreen.Stage
 
 /**
  * 1 moves down, toward the bottom screen, and -1 moves up. Stage is the top screen unless the
