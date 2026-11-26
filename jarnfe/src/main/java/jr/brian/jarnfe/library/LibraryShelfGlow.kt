@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.frontend.look.JarnCoverGlow
 
 private const val SHELF_WASH_ALPHA = 0.22f
 private val ShelfWashBlur = 48.dp
@@ -33,6 +34,8 @@ internal class LibraryShelfGlow {
     var source by mutableStateOf<LibraryGlowSource?>(null)
         private set
 
+    val isShowing: Boolean get() = source != null
+
     fun show(next: LibraryGlowSource) {
         source = next
     }
@@ -40,6 +43,12 @@ internal class LibraryShelfGlow {
     fun clear(owner: Any) {
         if (source?.owner === owner) source = null
     }
+}
+
+/** No holder with the glow off, so shelves hand nothing over and nothing is drawn or sampled. */
+internal fun libraryShelfGlowFor(choice: JarnCoverGlow): LibraryShelfGlow? = when (choice) {
+    JarnCoverGlow.Off -> null
+    JarnCoverGlow.Full -> LibraryShelfGlow()
 }
 
 internal val LocalLibraryShelfGlow = staticCompositionLocalOf<LibraryShelfGlow?> { null }
@@ -55,14 +64,10 @@ internal fun LibraryShelfGlowLayer(glow: LibraryShelfGlow, modifier: Modifier = 
     ) { shown -> if (shown != null) LibraryShelfWashArt(shown.art) }
 }
 
-/** A soft wash of the centered art behind the row, lifted to the screen's glow layer when there is one. */
+/** Hands the centered art to the screen's glow. With the cover glow off there is none, and no wash. */
 @Composable
 internal fun <T> LibraryShelfWash(item: T, content: LibraryShelfContent<T>) {
-    val glow = LocalLibraryShelfGlow.current
-    if (glow == null) {
-        LibraryShelfWashInPlace(item, content)
-        return
-    }
+    val glow = LocalLibraryShelfGlow.current ?: return
     val owner = remember { Any() }
     val key = content.itemKey(item)
     DisposableEffect(glow, key) {
@@ -70,15 +75,6 @@ internal fun <T> LibraryShelfWash(item: T, content: LibraryShelfContent<T>) {
         onDispose { }
     }
     DisposableEffect(glow) { onDispose { glow.clear(owner) } }
-}
-
-@Composable
-private fun <T> LibraryShelfWashInPlace(item: T, content: LibraryShelfContent<T>) {
-    Crossfade(
-        targetState = item,
-        animationSpec = JarnTheme.motion.art.spec(),
-        label = "shelfWash",
-    ) { shown -> LibraryShelfWashArt { content.art(this, shown) } }
 }
 
 @Composable

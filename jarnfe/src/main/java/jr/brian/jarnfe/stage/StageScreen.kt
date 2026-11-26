@@ -53,6 +53,7 @@ import jr.brian.jarnfe.launch.JarnCompanionPanelContent
 import jr.brian.jarnfe.launch.offeredCompanionController
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryShelfGlow
+import jr.brian.jarnfe.library.libraryShelfGlowFor
 import jr.brian.jarnfe.library.LibraryShelfGlowLayer
 import jr.brian.jarnfe.library.LocalLibraryShelfGlow
 import jr.brian.jarnfe.library.collectionAnchorKey
@@ -65,6 +66,7 @@ import jr.brian.jarnfe.library.LibraryOrphanGuard
 import jr.brian.jarnfe.library.LibrarySetupPanel
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.rss.JarnRssStageHost
 import jr.brian.jarnfe.search.JarnSearchResultsPanel
 import jr.brian.jarnfe.search.JarnSearchTabs
@@ -114,11 +116,12 @@ internal fun StageScreen(state: JarnSessionState) {
     val reducedMotion = JarnTheme.motion.reduced
     LaunchedEffect(Unit) { JarnSplash.play(reducedMotion) }
     JarnInputLayer(bindings = { stageBindings(state, JarnSession, JarnLibrary) }) {
-        val glow = remember { LibraryShelfGlow() }
+        val coverGlow = rememberJarnDisplay().coverGlow
+        val glow = remember(coverGlow) { libraryShelfGlowFor(coverGlow) }
         val sampler = rememberJarnBackdropSampler()
         val adaptive = rememberJarnAdaptiveText(
             sampler = sampler,
-            isNeeded = remember(glow) { derivedStateOf { glow.source != null } },
+            isNeeded = remember(glow) { derivedStateOf { glow?.isShowing == true } },
             canSample = remember { derivedStateOf { JarnWallpaperGate.allowsArtWork() } },
         )
         Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -144,14 +147,18 @@ internal fun StageScreen(state: JarnSessionState) {
     }
 }
 
-/** The wallpaper and the shelf's full-height glow, recorded so header text can adapt to them. */
+/**
+ * The wallpaper, plus the shelf's full-height glow when the cover glow is on. Only then is it
+ * recorded, so header text can adapt to it.
+ */
 @Composable
-private fun StageBackdrop(glow: LibraryShelfGlow, sampler: JarnBackdropSampler) {
-    Box(Modifier.fillMaxSize().jarnBackdropSource(sampler)) {
+private fun StageBackdrop(glow: LibraryShelfGlow?, sampler: JarnBackdropSampler) {
+    val recorded = if (glow != null) Modifier.jarnBackdropSource(sampler) else Modifier
+    Box(Modifier.fillMaxSize().then(recorded)) {
         Box(Modifier.jarnSplashFade()) {
             JarnWallpaperBackdrop(showWallpaper = true)
         }
-        LibraryShelfGlowLayer(glow, Modifier.fillMaxSize().jarnSplashFade())
+        if (glow != null) LibraryShelfGlowLayer(glow, Modifier.fillMaxSize().jarnSplashFade())
     }
 }
 

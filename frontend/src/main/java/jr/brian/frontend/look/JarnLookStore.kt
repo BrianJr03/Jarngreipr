@@ -136,6 +136,7 @@ class JarnLookStore @Inject constructor(
             putString(KEY_LIBRARY_TAB_ORDER, next.librarySectionOrder.joinToString(ORDER_SEPARATOR))
             putString(KEY_DECK_TAB_ORDER, next.deckTabOrder.joinToString(ORDER_SEPARATOR))
             putBoolean(KEY_STICK_MUTE, next.stickMute)
+            putString(KEY_COVER_GLOW, next.coverGlow.id)
         }
     }
 
@@ -189,6 +190,7 @@ class JarnLookStore @Inject constructor(
         librarySectionOrder = prefs.getString(KEY_LIBRARY_TAB_ORDER, null).orderIds(),
         deckTabOrder = prefs.getString(KEY_DECK_TAB_ORDER, null).orderIds(),
         stickMute = prefs.getBoolean(KEY_STICK_MUTE, false),
+        coverGlow = JarnCoverGlow.fromId(prefs.getString(KEY_COVER_GLOW, null)) ?: JarnCoverGlow.Off,
     ).coerced()
 
     private fun String?.orderIds(): List<String> =
@@ -277,6 +279,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_LIBRARY_TAB_ORDER = "library_tab_order"
         const val KEY_DECK_TAB_ORDER = "deck_tab_order"
         const val KEY_STICK_MUTE = "stick_mute"
+        const val KEY_COVER_GLOW = "cover_glow"
         const val ORDER_SEPARATOR = ","
         const val KEY_VIDEO_HINT_SHOWN = "video_hint_shown"
         const val KEY_FIRST_RUN_DONE = "first_run_done"

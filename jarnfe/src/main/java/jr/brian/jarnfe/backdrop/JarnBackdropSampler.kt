@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -50,12 +49,23 @@ internal class JarnBackdropPixels(
     }
 }
 
+/** Reads a small copy of what is drawn behind the UI. */
+internal interface JarnBackdropReader {
+    /** [windowRect] moved into the backdrop's own pixels. */
+    fun local(windowRect: Rect): Rect
+
+    suspend fun capture(density: Density, direction: LayoutDirection): JarnBackdropPixels?
+}
+
 /**
  * Records everything drawn behind the screen's UI, so labels can ask how bright it is under them.
  * Recording costs nothing extra per frame. Only [capture] reads pixels, at a small size.
  */
 @Stable
-internal class JarnBackdropSampler(private val source: GraphicsLayer, private val small: GraphicsLayer) {
+internal class JarnBackdropSampler(
+    private val source: GraphicsLayer,
+    private val small: GraphicsLayer,
+) : JarnBackdropReader {
     private var origin = Offset.Zero
     private var size = IntSize.Zero
     private var buffer = IntArray(0)
@@ -65,15 +75,14 @@ internal class JarnBackdropSampler(private val source: GraphicsLayer, private va
         size = layoutSize
     }
 
-    /** [windowRect] moved into the backdrop's own pixels. */
-    fun local(windowRect: Rect): Rect = windowRect.translate(-origin)
+    override fun local(windowRect: Rect): Rect = windowRect.translate(-origin)
 
     fun record(scope: ContentDrawScope) = with(scope) {
         source.record { scope.drawContent() }
         drawLayer(source)
     }
 
-    suspend fun capture(density: Density, direction: LayoutDirection): JarnBackdropPixels? {
+    override suspend fun capture(density: Density, direction: LayoutDirection): JarnBackdropPixels? {
         if (size.width <= 0 || size.height <= 0) return null
         val width = max(1, size.width / JARN_BACKDROP_DOWNSCALE)
         val height = max(1, size.height / JARN_BACKDROP_DOWNSCALE)
@@ -88,8 +97,6 @@ internal class JarnBackdropSampler(private val source: GraphicsLayer, private va
         return JarnBackdropPixels(width, height, JARN_BACKDROP_DOWNSCALE.toFloat(), buffer)
     }
 }
-
-internal val LocalJarnBackdropSampler = staticCompositionLocalOf<JarnBackdropSampler?> { null }
 
 @Composable
 internal fun rememberJarnBackdropSampler(): JarnBackdropSampler {

@@ -35,4 +35,5 @@ data class JarnDisplayConfig(
     val librarySectionOrder: List<String>? = null,
     val deckTabOrder: List<String>? = null,
     val stickMute: Boolean? = null,
+    val coverGlow: String? = null,
 )

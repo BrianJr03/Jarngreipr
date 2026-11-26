@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
+import jr.brian.frontend.look.JarnCoverGlow
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
 import jr.brian.frontend.look.JarnTabFocus
@@ -246,6 +247,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             librarySectionOrder = it.librarySectionOrder ?: shown?.librarySectionOrder,
             deckTabOrder = it.deckTabOrder ?: shown?.deckTabOrder,
             stickMute = it.stickMute ?: shown?.stickMute,
+            coverGlow = it.coverGlow?.takeIf { id -> JarnCoverGlow.fromId(id) != null } ?: shown?.coverGlow,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

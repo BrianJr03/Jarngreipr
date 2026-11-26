@@ -57,7 +57,7 @@ internal val LocalJarnAdaptiveText = staticCompositionLocalOf<JarnAdaptiveTextSt
  */
 @Composable
 internal fun rememberJarnAdaptiveText(
-    sampler: JarnBackdropSampler?,
+    sampler: JarnBackdropReader?,
     isNeeded: State<Boolean>,
     canSample: State<Boolean>,
 ): JarnAdaptiveTextState {

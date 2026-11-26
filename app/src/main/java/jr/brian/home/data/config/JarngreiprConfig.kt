@@ -252,6 +252,9 @@ data class JarngreiprConfig(
         //      unknown ids are dropped and missing tabs are added at the end when read.
         // v76: added JarnDisplayConfig.stickMute, whether L3 and R3 mute Jarn FE's jingles and music
         //      instead of swapping the screens. Null on older blobs keeps the current value (off).
-        const val CONFIG_VERSION = 76
+        // v77: added JarnDisplayConfig.coverGlow, whether the focused cover's light fills Jarn FE's
+        //      screen ("full") or is not drawn ("off"). Null on older blobs, or an unknown id, keeps
+        //      the current value (off on a fresh install).
+        const val CONFIG_VERSION = 77
     }
 }

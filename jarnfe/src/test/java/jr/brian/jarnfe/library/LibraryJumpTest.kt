@@ -81,7 +81,13 @@ class LibraryJumpTest {
     private fun jumpTo(gameId: String, spin: Boolean) {
         rule.waitForIdle()
         rule.runOnIdle { jump = LibraryJump("snes", gameId, spin, id = 1) }
+        rule.mainClock.advanceTimeBy(JUMP_RUN_MS)
         rule.waitForIdle()
+    }
+
+    /** A spin's steps wait on delays, which no frame drives once the shelf draws no wash. */
+    private companion object {
+        const val JUMP_RUN_MS = 2_000L
     }
 
     private fun assertLandedOn(gameId: String) {
