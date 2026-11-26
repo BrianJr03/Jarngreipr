@@ -64,6 +64,14 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     /** The Collections tab's Manage sheet, opened by Select on a tile. */
     internal var collectionSheet by mutableStateOf<CollectionSheet?>(null)
 
+    /** Grows when a closed sheet hands focus back to a collection tile, even from the tab strip. */
+    internal var collectionFocusTake by mutableIntStateOf(0)
+        private set
+
+    internal fun takeCollectionFocus() {
+        collectionFocusTake += 1
+    }
+
     /** Set when the Continue playing card should take focus once it is on screen. */
     var heroFocusPending by mutableStateOf(false)
         private set

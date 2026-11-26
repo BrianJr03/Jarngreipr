@@ -66,7 +66,7 @@ internal class CollectionSheetActions(
     fun close(collectionId: Long? = null) {
         library.collectionSheet = null
         collectionId?.let { id -> library.update { focusCollection(id) } }
-        library.requestStageRefocus()
+        library.takeCollectionFocus()
     }
 
     fun indexOf(collectionId: Long): Int = collections.indexOfFirst { it.id == collectionId }

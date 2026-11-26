@@ -137,6 +137,7 @@ private fun LibraryCollectionGrid(
             onFocused = { key -> key.toLongOrNull()?.let { id -> library.update { focusCollection(id) } } },
             cellMinSize = cellMinSize,
             refocusSignal = library.stageRefocus,
+            takeFocusSignal = library.collectionFocusTake,
             rowSpacing = LibraryGridRowSpacing,
             letterJumpEnabled = false,
         ) { collection, modifier ->
