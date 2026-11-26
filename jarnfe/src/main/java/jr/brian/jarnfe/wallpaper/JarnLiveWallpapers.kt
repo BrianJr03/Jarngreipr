@@ -33,6 +33,9 @@ internal object JarnLiveWallpapers {
         JarnLiveWallpaper("hearthrise", R.string.jarnfe_wallpaper_hearthrise) { modifier ->
             HearthriseWallpaper(modifier)
         },
+        JarnLiveWallpaper("tidemark", R.string.jarnfe_wallpaper_tidemark) { modifier ->
+            TidemarkWallpaper(modifier)
+        },
     )
 
     fun fromId(id: String?, catalog: List<JarnLiveWallpaper> = All): JarnLiveWallpaper? =
