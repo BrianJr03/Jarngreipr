@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -80,6 +81,8 @@ fun WhatsNewDialog(
     val showTryJarn = showJarnCard && rememberJarnFeOffered()
     var isTryJarnSheetOpen by remember { mutableStateOf(false) }
     val tryJarnFocusRequester = remember { FocusRequester() }
+    val closeFocusRequester = remember { FocusRequester() }
+    val headerFocusRequester = if (showTryJarn) tryJarnFocusRequester else closeFocusRequester
 
     AppBottomSheet(onDismissRequest = onDismiss) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -95,6 +98,7 @@ fun WhatsNewDialog(
                     onTryJarn = { isTryJarnSheetOpen = true },
                     onClose = onDismiss,
                     tryJarnFocusRequester = tryJarnFocusRequester,
+                    closeFocusRequester = closeFocusRequester,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -106,7 +110,8 @@ fun WhatsNewDialog(
                 GamepadScrollColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f, fill = false),
+                        .weight(1f, fill = false)
+                        .focusProperties { up = headerFocusRequester },
                     focusOnOpen = true,
                 ) {
                     MarkdownText(
@@ -185,6 +190,7 @@ private fun WhatsNewHeader(
     onTryJarn: () -> Unit,
     onClose: () -> Unit,
     tryJarnFocusRequester: FocusRequester,
+    closeFocusRequester: FocusRequester,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -210,7 +216,10 @@ private fun WhatsNewHeader(
                 modifier = Modifier.focusRequester(tryJarnFocusRequester),
             )
         }
-        IconButton(onClick = onClose) {
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.focusRequester(closeFocusRequester),
+        ) {
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = stringResource(R.string.whats_new_close),
