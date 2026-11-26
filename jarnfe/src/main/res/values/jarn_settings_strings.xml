@@ -19,6 +19,10 @@
     <string name="jarnfe_settings_system_names_hint">The name and game count under each system. Off gives the space to the cards.</string>
     <string name="jarnfe_browse_view_grid">Grid</string>
     <string name="jarnfe_browse_view_carousel">Carousel</string>
+    <string name="jarnfe_settings_cover_glow">Cover glow</string>
+    <string name="jarnfe_settings_cover_glow_hint">A soft light from the focused cover fills the screen. Header text switches between light and dark to stay readable.</string>
+    <string name="jarnfe_cover_glow_off">Off</string>
+    <string name="jarnfe_cover_glow_full">Full screen</string>
     <string name="jarnfe_settings_tiles_title">Tiles</string>
     <string name="jarnfe_settings_system_tile_size">System tile size</string>
     <string name="jarnfe_settings_game_tile_size">Game tile size</string>

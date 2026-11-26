@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -28,6 +30,9 @@ import jr.brian.core.ui.theme.JarnTheme
 
 private const val STATIC_SPINNER_PROGRESS = 0.75f
 
+/** A shadow for every [JarnText] below that has none of its own, so text over busy art stays legible. */
+val LocalJarnTextShadow = staticCompositionLocalOf<Shadow?> { null }
+
 @Composable
 fun JarnText(
     text: String,
@@ -40,7 +45,7 @@ fun JarnText(
     BasicText(
         text = text,
         modifier = modifier,
-        style = style.copy(color = color, textAlign = textAlign),
+        style = style.copy(color = color, textAlign = textAlign, shadow = style.shadow ?: LocalJarnTextShadow.current),
         overflow = TextOverflow.Ellipsis,
         maxLines = maxLines,
     )

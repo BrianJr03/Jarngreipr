@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +36,12 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.backdrop.JarnAdaptiveContent
+import jr.brian.jarnfe.backdrop.JarnBackdropSampler
+import jr.brian.jarnfe.backdrop.LocalJarnAdaptiveText
+import jr.brian.jarnfe.backdrop.jarnBackdropSource
+import jr.brian.jarnfe.backdrop.rememberJarnAdaptiveText
+import jr.brian.jarnfe.backdrop.rememberJarnBackdropSampler
 import jr.brian.jarnfe.canvas.CanvasStagePreview
 import jr.brian.jarnfe.canvas.tour.CanvasTourStagePreview
 import jr.brian.jarnfe.deck.DeckContent
@@ -44,6 +52,10 @@ import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.launch.JarnCompanionPanelContent
 import jr.brian.jarnfe.launch.offeredCompanionController
 import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryShelfGlow
+import jr.brian.jarnfe.library.libraryShelfGlowFor
+import jr.brian.jarnfe.library.LibraryShelfGlowLayer
+import jr.brian.jarnfe.library.LocalLibraryShelfGlow
 import jr.brian.jarnfe.library.collectionAnchorKey
 import jr.brian.jarnfe.library.LibraryCollectionList
 import jr.brian.jarnfe.library.LibraryCollectionListTitle
@@ -54,6 +66,7 @@ import jr.brian.jarnfe.library.LibraryOrphanGuard
 import jr.brian.jarnfe.library.LibrarySetupPanel
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
+import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.rss.JarnRssStageHost
 import jr.brian.jarnfe.search.JarnSearchResultsPanel
 import jr.brian.jarnfe.search.JarnSearchTabs
@@ -81,6 +94,7 @@ import jr.brian.jarnfe.splash.JarnStageSplash
 import jr.brian.jarnfe.splash.jarnSplashFade
 import jr.brian.jarnfe.splash.jarnSplashMark
 import jr.brian.jarnfe.wallpaper.JarnWallpaperBackdrop
+import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 import jr.brian.jarnfe.systems.JarnSystems
 import jr.brian.jarnfe.systems.JarnSystemsRoute
 
@@ -102,16 +116,27 @@ internal fun StageScreen(state: JarnSessionState) {
     val reducedMotion = JarnTheme.motion.reduced
     LaunchedEffect(Unit) { JarnSplash.play(reducedMotion) }
     JarnInputLayer(bindings = { stageBindings(state, JarnSession, JarnLibrary) }) {
+        val coverGlow = rememberJarnDisplay().coverGlow
+        val glow = remember(coverGlow) { libraryShelfGlowFor(coverGlow) }
+        val sampler = rememberJarnBackdropSampler()
+        val adaptive = rememberJarnAdaptiveText(
+            sampler = sampler,
+            isNeeded = remember(glow) { derivedStateOf { glow?.isShowing == true } },
+            canSample = remember { derivedStateOf { JarnWallpaperGate.allowsArtWork() } },
+        )
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            Box(Modifier.jarnSplashFade()) {
-                JarnWallpaperBackdrop(showWallpaper = true)
-            }
-            JarnScreenFrame(
-                header = { StageHeader(state) },
-                background = Color.Transparent,
+            StageBackdrop(glow, sampler)
+            CompositionLocalProvider(
+                LocalLibraryShelfGlow provides glow,
+                LocalJarnAdaptiveText provides adaptive,
             ) {
-                StageRouteContent(state)
-                JarnRssStageHost(state)
+                JarnScreenFrame(
+                    header = { StageHeader(state) },
+                    background = Color.Transparent,
+                ) {
+                    StageRouteContent(state)
+                    JarnRssStageHost(state)
+                }
             }
             CanvasStagePreview(state)
             CanvasTourStagePreview(state)
@@ -119,6 +144,21 @@ internal fun StageScreen(state: JarnSessionState) {
             JarnNoticeHost()
             JarnStageSplash()
         }
+    }
+}
+
+/**
+ * The wallpaper, plus the shelf's full-height glow when the cover glow is on. Only then is it
+ * recorded, so header text can adapt to it.
+ */
+@Composable
+private fun StageBackdrop(glow: LibraryShelfGlow?, sampler: JarnBackdropSampler) {
+    val recorded = if (glow != null) Modifier.jarnBackdropSource(sampler) else Modifier
+    Box(Modifier.fillMaxSize().then(recorded)) {
+        Box(Modifier.jarnSplashFade()) {
+            JarnWallpaperBackdrop(showWallpaper = true)
+        }
+        if (glow != null) LibraryShelfGlowLayer(glow, Modifier.fillMaxSize().jarnSplashFade())
     }
 }
 
@@ -130,10 +170,14 @@ private fun StageHeader(state: JarnSessionState) {
             .padding(horizontal = JarnTheme.space.stageMargin),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        JarnWordmark(Modifier.jarnSplashMark())
-        Box(Modifier.weight(1f).jarnSplashFade()) { StageHeaderTitle(state) }
+        JarnAdaptiveContent { JarnWordmark(Modifier.jarnSplashMark()) }
+        Box(Modifier.weight(1f).jarnSplashFade()) {
+            JarnAdaptiveContent { StageHeaderTitle(state) }
+        }
         NowPlayingHeaderPill(JarnScreen.Stage, Modifier.padding(start = JarnTheme.space.lg))
-        JarnTopScreenStatus(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade())
+        JarnAdaptiveContent {
+            JarnTopScreenStatus(Modifier.padding(start = JarnTheme.space.lg).jarnSplashFade())
+        }
     }
 }
 

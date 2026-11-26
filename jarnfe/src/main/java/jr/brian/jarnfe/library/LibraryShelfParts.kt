@@ -1,7 +1,6 @@
 package jr.brian.jarnfe.library
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -21,19 +20,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.theme.JarnTheme
 import kotlinx.coroutines.delay
 
-private const val SHELF_WASH_ALPHA = 0.22f
-private val ShelfWashBlur = 48.dp
 private const val SHELF_BADGE_SURFACE_ALPHA = 0.82f
 
 /** Above every shelf slot, whose z-index tops out at [SHELF_COMPOSED_REACH] for the centered card. */
@@ -55,23 +49,6 @@ internal fun LibraryShelfCard(slot: LibraryShelfSlotCard, art: @Composable BoxSc
         Box(Modifier.fillMaxSize().background(JarnTheme.colors.raised)) {
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = slot.artAlpha() }, content = art)
         }
-    }
-}
-
-/** A soft wash of the centered art behind the row. */
-@Composable
-internal fun <T> LibraryShelfWash(item: T, content: LibraryShelfContent<T>) {
-    Crossfade(
-        targetState = item,
-        animationSpec = JarnTheme.motion.art.spec(),
-        label = "shelfWash",
-    ) { shown ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .alpha(SHELF_WASH_ALPHA)
-                .blur(ShelfWashBlur),
-        ) { content.art(this, shown) }
     }
 }
 

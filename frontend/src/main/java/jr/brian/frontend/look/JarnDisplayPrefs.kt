@@ -54,6 +54,17 @@ enum class JarnTabFocus(val id: String) {
     }
 }
 
+/** The light from the focused cover. [Full] fills the screen and adapts the header text to it. */
+enum class JarnCoverGlow(val id: String) {
+    Off("off"),
+    Full("full"),
+    ;
+
+    companion object {
+        fun fromId(id: String?): JarnCoverGlow? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** Jarn FE display choices. The defaults match how Jarn FE looked before they existed. */
 data class JarnDisplayPrefs(
     val systemTileScale: Float = DEFAULT_TILE_SCALE,
@@ -89,6 +100,7 @@ data class JarnDisplayPrefs(
     val deckTabOrder: List<String> = emptyList(),
     /** L3 and R3 mute jingles and music instead of swapping the screens. */
     val stickMute: Boolean = false,
+    val coverGlow: JarnCoverGlow = JarnCoverGlow.Off,
 ) {
     fun coerced(): JarnDisplayPrefs = copy(
         systemTileScale = coercedScale(systemTileScale),

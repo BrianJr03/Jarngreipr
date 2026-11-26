@@ -49,6 +49,7 @@ private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
             store.updateDisplay { it.copy(gameView = it.gameView.next()) }
         }
         SystemNamesRow(store, display.systemNamesVisible)
+        JarnCoverGlowRow(display.coverGlow) { store.updateDisplay { it.copy(coverGlow = it.coverGlow.next()) } }
     }
 }
 

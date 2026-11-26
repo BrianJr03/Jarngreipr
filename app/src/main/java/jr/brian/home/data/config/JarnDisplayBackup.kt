@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.core.ui.motion.JarnPageTransition
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
+import jr.brian.frontend.look.JarnCoverGlow
 import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
@@ -41,6 +42,7 @@ internal fun JarnDisplayPrefs.toConfig() = JarnDisplayConfig(
     librarySectionOrder = librarySectionOrder,
     deckTabOrder = deckTabOrder,
     stickMute = stickMute,
+    coverGlow = coverGlow.id,
 )
 
 internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy(
@@ -74,4 +76,5 @@ internal fun JarnDisplayConfig.applyTo(current: JarnDisplayPrefs) = current.copy
     librarySectionOrder = librarySectionOrder ?: current.librarySectionOrder,
     deckTabOrder = deckTabOrder ?: current.deckTabOrder,
     stickMute = stickMute ?: current.stickMute,
+    coverGlow = JarnCoverGlow.fromId(coverGlow) ?: current.coverGlow,
 )
