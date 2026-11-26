@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnEmptyState
+import jr.brian.core.ui.components.JarnLoadingGate
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.focus.JarnRevealLazyItems
@@ -102,7 +103,9 @@ internal fun JarnAppsRoute() {
     }
     LaunchedEffect(data) { JarnApps.observe(data) }
     val commands = rememberJarnAppsCommands(data)
-    JarnApps.snapshot?.let { JarnAppsDrawer(it, commands) }
+    JarnLoadingGate(JarnApps.snapshot, stringResource(R.string.jarnfe_apps_loading)) {
+        JarnAppsDrawer(it, commands)
+    }
 }
 
 @Composable

@@ -13,6 +13,7 @@
     <string name="jarnfe_apps_action_unhide">Unhide</string>
     <string name="jarnfe_apps_empty_title">No apps found</string>
     <string name="jarnfe_apps_empty_message">Installed apps will appear here.</string>
+    <string name="jarnfe_apps_loading">Loading apps</string>
     <string name="jarnfe_app_options">App options</string>
     <string name="jarnfe_app_icon_title">App icon</string>
     <string name="jarnfe_app_icon_from_pack">Choose from icon pack</string>
