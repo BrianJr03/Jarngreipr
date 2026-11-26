@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
 import jr.brian.frontend.look.JarnLookStore
+import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.home.data.ExperienceStore
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.ScreenAssignmentStore
@@ -66,7 +67,7 @@ class JarnVideoPreviewConfigImportTest {
 
     @Test
     fun `schema version covers video previews`() {
-        assertEquals(70, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(71, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test
@@ -105,6 +106,20 @@ class JarnVideoPreviewConfigImportTest {
         assertFalse(store.display.videoPreviews)
         assertFalse(store.display.videoPreviewSound)
         assertFalse(store.videoHintShown)
+    }
+
+    @Test
+    fun `crop comes back from a backup and survives a restart`() = runTest {
+        importBackup("""{ "version": 71, "feature": { "jarnDisplay": { "videoFit": "crop" } } }""")
+        assertEquals(JarnVideoFit.Crop, store.display.videoFit)
+        assertEquals(JarnVideoFit.Crop, JarnLookStore(ApplicationProvider.getApplicationContext()).display.videoFit)
+    }
+
+    @Test
+    fun `an older backup on a fresh install gives fit`() = runTest {
+        importBackup(V69_BACKUP)
+
+        assertEquals(JarnVideoFit.Fit, store.display.videoFit)
     }
 
     @Test

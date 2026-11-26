@@ -65,7 +65,7 @@ class JarnMatchFontsConfigImportTest {
 
     @Test
     fun `schema version covers matching fonts`() {
-        assertEquals(70, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(71, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

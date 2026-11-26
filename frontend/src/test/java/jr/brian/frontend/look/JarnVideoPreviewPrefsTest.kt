@@ -2,6 +2,7 @@ package jr.brian.frontend.look
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,6 +34,15 @@ class JarnVideoPreviewPrefsTest {
 
         assertTrue(reloaded.videoPreviews)
         assertTrue(reloaded.videoPreviewSound)
+    }
+
+    @Test
+    fun `fit is the default and crop survives a restart`() {
+        assertEquals(JarnVideoFit.Fit, JarnLookStore(context).display.videoFit)
+
+        JarnLookStore(context).updateDisplay { it.copy(videoFit = JarnVideoFit.Crop) }
+
+        assertEquals(JarnVideoFit.Crop, JarnLookStore(context).display.videoFit)
     }
 
     @Test

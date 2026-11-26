@@ -5,6 +5,7 @@ import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnPlayingDim
 import jr.brian.frontend.look.JarnTapControl
+import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.core.model.Experience
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.jarnfe.backup.JarnBackupArea
@@ -236,6 +237,7 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
             playingScreenOff = it.playingScreenOff ?: shown?.playingScreenOff,
             videoPreviews = it.videoPreviews ?: shown?.videoPreviews,
             videoPreviewSound = it.videoPreviewSound ?: shown?.videoPreviewSound,
+            videoFit = it.videoFit?.takeIf { id -> JarnVideoFit.fromId(id) != null } ?: shown?.videoFit,
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&

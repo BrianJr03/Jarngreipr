@@ -13,10 +13,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.jarnfe.launch.GameActionsPage
 import jr.brian.jarnfe.launch.JarnGameActions
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -52,12 +55,14 @@ class NowSceneVideoTest {
         gameId: () -> String = { "g" },
         canPlay: () -> Boolean = { true },
         hold: NowVideoHold = NowVideoHold(),
+        crop: () -> Boolean = { false },
+        backdrop: NowVideoBackdrop? = null,
     ) {
         rule.setContent {
             JarnTheme {
                 CompositionLocalProvider(LocalNowVideoHold provides hold) {
                     Box(Modifier.size(538.dp, 380.dp)) {
-                        NowGameVideo(gameId(), path(), canPlay(), videos, muted = true)
+                        NowGameVideo(gameId(), path(), canPlay(), videos, muted = true, crop(), backdrop)
                     }
                 }
             }
@@ -86,7 +91,7 @@ class NowSceneVideoTest {
     }
 
     @Test
-    fun `one muted, cropped player starts only after the selection rests`() {
+    fun `one muted, fitted player starts only after the selection rests`() {
         showVideo(path = { CLIP_A })
         rule.mainClock.advanceTimeBy(NOW_VIDEO_START_DELAY_MILLIS - FRAME_SLACK_MILLIS)
         assertTrue(videos.created.isEmpty())
@@ -94,7 +99,7 @@ class NowSceneVideoTest {
         assertEquals(1, videos.created.size)
         val video = videos.created.single()
         assertEquals(CLIP_A, video.path)
-        assertTrue(video.crop)
+        assertFalse(video.crop)
         assertTrue(video.isMuted)
         rule.onNodeWithTag(NOW_VIDEO_TAG).assertExists()
     }
@@ -113,6 +118,59 @@ class NowSceneVideoTest {
         assertEquals(listOf(CLIP_A, CLIP_B), videos.created.map { it.path })
         assertTrue(videos.created.first().released)
         assertEquals(1, videos.live.size)
+    }
+
+    @Test
+    fun `switching to crop recreates the player once`() {
+        var crop by mutableStateOf(false)
+        showVideo(path = { CLIP_A }, crop = { crop })
+        waitForStart()
+        change { crop = true }
+        rule.mainClock.advanceTimeBy(FADE_SLACK_MILLIS)
+        assertEquals(listOf(false, true), videos.created.map { it.crop })
+        assertTrue(videos.created.first().released)
+        assertEquals(1, videos.live.size)
+    }
+
+    @Test
+    fun `a fitted preview blurs the art only once its first frame shows`() {
+        val backdrop = NowVideoBackdrop()
+        showVideo(path = { CLIP_A }, backdrop = backdrop)
+        waitForStart()
+        assertFalse(backdrop.blurred)
+        change { videos.created.single().state.value = JarnGameVideoState.Ready }
+        assertTrue(backdrop.blurred)
+        change { videos.created.single().state.value = JarnGameVideoState.Failed }
+        assertFalse(backdrop.blurred)
+    }
+
+    @Test
+    fun `a cropped preview never blurs the art`() {
+        val backdrop = NowVideoBackdrop()
+        showVideo(path = { CLIP_A }, crop = { true }, backdrop = backdrop)
+        waitForStart()
+        change { videos.created.single().state.value = JarnGameVideoState.Ready }
+        assertFalse(backdrop.blurred)
+    }
+
+    @Test
+    fun `leaving the game clears the blur`() {
+        var path by mutableStateOf<String?>(CLIP_A)
+        val backdrop = NowVideoBackdrop()
+        showVideo(path = { path }, backdrop = backdrop)
+        waitForStart()
+        change { videos.created.single().state.value = JarnGameVideoState.Ready }
+        change { path = null }
+        rule.mainClock.advanceTimeBy(FADE_SLACK_MILLIS)
+        assertFalse(backdrop.blurred)
+    }
+
+    @Test
+    fun `display prefs map to the preview`() {
+        val fitted = JarnDisplayPrefs(videoPreviews = true).nowVideoPreview()
+        assertEquals(NowVideoPreview(enabled = true, muted = true, crop = false), fitted)
+        val cropped = JarnDisplayPrefs(videoPreviewSound = true, videoFit = JarnVideoFit.Crop).nowVideoPreview()
+        assertEquals(NowVideoPreview(enabled = false, muted = false, crop = true), cropped)
     }
 
     @Test

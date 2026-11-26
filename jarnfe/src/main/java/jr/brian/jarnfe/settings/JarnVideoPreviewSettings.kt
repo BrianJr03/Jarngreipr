@@ -10,7 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnToggleRow
+import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
@@ -36,8 +38,41 @@ internal fun VideoPreviewGroup(
         PreviewSoundRow(display.videoPreviewSound, enabled = display.videoPreviews) { on ->
             onUpdate { it.copy(videoPreviewSound = on) }
         }
+        VideoFitRow(display.videoFit, enabled = display.videoPreviews) {
+            onUpdate { it.copy(videoFit = it.videoFit.next()) }
+        }
     }
 }
+
+@Composable
+private fun VideoFitRow(fit: JarnVideoFit, enabled: Boolean, onClick: () -> Unit) {
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_video_previews_fit),
+        value = stringResource(fit.labelRes),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().jarnDisabledRowBacking(enabled),
+        supporting = stringResource(fit.hintRes),
+        enabled = enabled,
+        focusableWhenDisabled = true,
+    )
+}
+
+@get:StringRes
+private val JarnVideoFit.labelRes: Int
+    get() = when (this) {
+        JarnVideoFit.Fit -> R.string.jarnfe_canvas_scale_fit
+        JarnVideoFit.Crop -> R.string.jarnfe_canvas_scale_crop
+    }
+
+@get:StringRes
+private val JarnVideoFit.hintRes: Int
+    get() = when (this) {
+        JarnVideoFit.Fit -> R.string.jarnfe_video_previews_fit_hint
+        JarnVideoFit.Crop -> R.string.jarnfe_video_previews_crop_hint
+    }
+
+internal fun JarnVideoFit.next(): JarnVideoFit =
+    JarnVideoFit.entries[(ordinal + 1) % JarnVideoFit.entries.size]
 
 @Composable
 private fun VideoPreviewsRow(on: Boolean, onChange: (Boolean) -> Unit) {

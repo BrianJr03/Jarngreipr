@@ -49,11 +49,12 @@ internal fun NowScene(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val hold = remember { NowVideoHold() }
+    val backdrop = remember { NowVideoBackdrop() }
     CompositionLocalProvider(LocalNowVideoHold provides hold) {
         Box(Modifier.fillMaxSize()) {
             NowVideoFill {
-                NowSceneArt(selection, systemNow)
-                NowSceneVideo(selection, preview)
+                NowSceneArt(selection, systemNow, backdrop)
+                NowSceneVideo(selection, preview, backdrop)
             }
             NowHiddenUiInput()
             Box(Modifier.matchParentSize().clipToBounds().nowHideableUi()) {
@@ -65,7 +66,7 @@ internal fun NowScene(
 }
 
 @Composable
-private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?) {
+private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSystemNow?, backdrop: NowVideoBackdrop) {
     val showsBackground = rememberJarnDisplay().systemBackgroundVisible
     val target = when (selection) {
         LibrarySelection.None -> emptyList()
@@ -75,8 +76,10 @@ private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSys
     NowRevealWhen(target != null)
     val paths = rememberHeldPaths(target)
     val wall = rememberHeldWall(systemNow).takeIf { nowShowsWall(selection, showsBackground) }
-    LibraryHeldArt(paths) {
-        wall?.let { LibraryCoverWall(it.systemId, it.covers, Modifier.matchParentSize()) }
+    Box(Modifier.matchParentSize().nowVideoBackdrop(backdrop.blurred)) {
+        LibraryHeldArt(paths) {
+            wall?.let { LibraryCoverWall(it.systemId, it.covers, Modifier.matchParentSize()) }
+        }
     }
 }
 

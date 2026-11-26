@@ -236,6 +236,8 @@ data class JarngreiprConfig(
         // v70: added JarnDisplayConfig.videoPreviews and videoPreviewSound, Jarn FE game video
         //      previews and their sound, and FeatureConfig.jarnVideoHintShown, the one-time hint.
         //      Null on older blobs keeps the current values. Import only sets the hint flag.
-        const val CONFIG_VERSION = 70
+        // v71: added JarnDisplayConfig.videoFit, Jarn FE video previews cropped or fitted. Null on
+        //      older blobs keeps the current value. An unknown id falls back to fit.
+        const val CONFIG_VERSION = 71
     }
 }

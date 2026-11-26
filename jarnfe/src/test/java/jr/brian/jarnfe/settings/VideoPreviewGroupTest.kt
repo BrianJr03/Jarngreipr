@@ -23,7 +23,9 @@ import androidx.compose.ui.test.pressKey
 import androidx.test.core.app.ApplicationProvider
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.look.JarnDisplayPrefs
+import jr.brian.frontend.look.JarnVideoFit
 import jr.brian.jarnfe.R
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -63,6 +65,7 @@ class VideoPreviewGroupTest {
     }
 
     private val previewsRow get() = rule.onNodeWithText(string(R.string.jarnfe_video_previews_play))
+    private val fitRow get() = rule.onNodeWithText(string(R.string.jarnfe_video_previews_fit))
     private val soundRow get() = rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound))
 
     @Test
@@ -106,6 +109,33 @@ class VideoPreviewGroupTest {
 
         rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint)).assertExists()
         rule.onNodeWithText(string(R.string.jarnfe_video_previews_sound_hint_off)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `video fit is dimmed and A leaves it alone while previews are off`() {
+        show()
+        fitRow.assertIsNotEnabled()
+
+        repeat(3) { press(Key.DirectionDown) }
+        press(Key.Enter)
+
+        assertEquals(JarnVideoFit.Fit, display.videoFit)
+    }
+
+    @Test
+    fun `with previews on A cycles the fit`() {
+        display = JarnDisplayPrefs(videoPreviews = true)
+        show()
+        fitRow.assertIsEnabled()
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_fit_hint)).assertExists()
+
+        repeat(3) { press(Key.DirectionDown) }
+        press(Key.Enter)
+        assertEquals(JarnVideoFit.Crop, display.videoFit)
+        rule.onNodeWithText(string(R.string.jarnfe_video_previews_crop_hint)).assertExists()
+
+        press(Key.Enter)
+        assertEquals(JarnVideoFit.Fit, display.videoFit)
     }
 
     @Test

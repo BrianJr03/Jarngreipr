@@ -30,6 +30,7 @@ import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.library.NowHiddenUiTouch
 import jr.brian.jarnfe.library.NowShortcutControls
 import jr.brian.jarnfe.library.NowVideoPreview
+import jr.brian.jarnfe.library.nowVideoPreview
 import jr.brian.jarnfe.library.nowHideableUi
 import jr.brian.jarnfe.library.nowShortcutGap
 import jr.brian.jarnfe.look.rememberJarnDisplay
@@ -117,7 +118,7 @@ private fun DeckBody(state: JarnSessionState) {
         else -> Column(Modifier.fillMaxSize()) {
             val display = rememberJarnDisplay()
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                DeckTabContent(state, NowVideoPreview(enabled = display.videoPreviews, muted = !display.videoPreviewSound))
+                DeckTabContent(state, display.nowVideoPreview())
             }
             JarnDockRow(Modifier.nowHideableUi())
         }
