@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnKey
 import jr.brian.core.ui.components.JarnKeyCap
 import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.library.JARN_GAME_TILE_ASPECT
+import jr.brian.core.ui.library.JARN_SYSTEM_TILE_ASPECT
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.library.JarnHeroPanel
 import jr.brian.core.ui.library.JarnSystemTile
@@ -115,6 +117,7 @@ private fun LibrarySystems(
             cellMinSize = cellMinSize,
             grid = { geometry -> LibrarySystemGrid(library, geometry, onFocused, onOpenSystem) },
             shelf = { geometry -> LibrarySystemShelf(library, onFocused, onOpenSystem, geometry) },
+            list = { geometry -> LibrarySystemRows(library, geometry, onFocused, onOpenSystem) },
         )
     }
 }
@@ -168,22 +171,15 @@ private fun LibrarySystemGrid(
     onOpenSystem: (String) -> Unit,
 ) {
     val state = library.state
-    val namesVisible = rememberJarnDisplay().systemNamesVisible
+    val namesVisible = rememberJarnDisplay().systemNamesVisible && geometry.showTitle
+    val aspect = geometry.itemAspect ?: JARN_SYSTEM_TILE_ASPECT
     LibraryFocusGrid(
         items = state.systems.items,
         itemKey = JarnLibrarySystem::id,
         focusedKey = state.focusedSystem?.id,
         onFocused = onFocused,
         geometry = geometry,
-        header = state.hero?.let { hero ->
-            {
-                LibraryHeroBanner(
-                    hero = hero,
-                    onPlay = library::play.takeIf { library.canPlay },
-                    onFocusChange = { library.heroFocused = it },
-                )
-            }
-        },
+        header = librarySystemsHeader(library),
     ) { system, modifier ->
         val tileModifier = modifier.librarySystemAnchor(system.id).fillMaxWidth()
         if (namesVisible) {
@@ -193,12 +189,25 @@ private fun LibrarySystemGrid(
                 onClick = { onOpenSystem(system.id) },
                 modifier = tileModifier,
                 focusBorder = true,
+                aspectRatio = aspect,
             ) { LibrarySystemArt(system) }
         } else {
-            LibrarySystemCard(system, onClick = { onOpenSystem(system.id) }, modifier = tileModifier)
+            LibrarySystemCard(system, onClick = { onOpenSystem(system.id) }, modifier = tileModifier, aspectRatio = aspect)
         }
     }
 }
+
+/** The Continue playing card above the systems grid or list, when there is one. */
+internal fun librarySystemsHeader(library: JarnLibraryStore): (@Composable () -> Unit)? =
+    library.state.hero?.let { hero ->
+        {
+            LibraryHeroBanner(
+                hero = hero,
+                onPlay = library::play.takeIf { library.canPlay },
+                onFocusChange = { library.heroFocused = it },
+            )
+        }
+    }
 
 private fun systemShelfContent(onOpenSystem: (String) -> Unit, namesVisible: Boolean) = LibraryShelfContent<JarnLibrarySystem>(
     itemKey = JarnLibrarySystem::id,
@@ -344,6 +353,7 @@ internal fun LibraryGames(
                         game = game,
                         onClick = { library.play(game) },
                         modifier = modifier.fillMaxWidth(),
+                        slotAspectRatio = geometry.itemAspect ?: JARN_GAME_TILE_ASPECT,
                     )
                 }
             },
@@ -360,6 +370,20 @@ internal fun LibraryGames(
                     letterJumpEnabled = letterJumpEnabled,
                     titleKey = letterJumpKey,
                     geometry = geometry,
+                )
+            },
+            list = { geometry ->
+                LibraryThemeList(
+                    items = feed.items,
+                    content = rememberGameListContent(library),
+                    geometry = geometry,
+                    focusedKey = focusedKey,
+                    onFocused = onFocused,
+                    refocusSignal = library.stageRefocus,
+                    jump = jump,
+                    onLanded = library::landJump,
+                    letterJumpEnabled = letterJumpEnabled,
+                    titleKey = letterJumpKey,
                 )
             },
         )

@@ -4,4 +4,7 @@
         <item quantity="one">%1$d favorite</item>
         <item quantity="other">%1$d favorites</item>
     </plurals>
+    <string name="jarnfe_theme_template_big_shelf">Big shelf</string>
+    <string name="jarnfe_theme_template_cover_grid">Cover grid</string>
+    <string name="jarnfe_theme_template_list_art">List with art</string>
 </resources>

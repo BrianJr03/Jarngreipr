@@ -33,7 +33,7 @@ internal fun LibraryBrowseSwitch(
 
 /**
  * Draws [kind]'s browse as the built-in theme for the saved [view], crossfading between them.
- * [grid] and [shelf] draw the list at the geometry the theme resolves to.
+ * [grid], [shelf] and [list] draw the browsable list at the geometry the theme resolves to.
  */
 @Composable
 internal fun LibraryThemedBrowse(
@@ -42,6 +42,7 @@ internal fun LibraryThemedBrowse(
     cellMinSize: Dp,
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
+    list: @Composable (LibraryListGeometry) -> Unit,
 ) {
     LibraryBrowseCrossfade(view) { shown ->
         val theme = LibraryBuiltInThemes.forView(shown)
@@ -49,7 +50,7 @@ internal fun LibraryThemedBrowse(
         val pins = theme.pinsFor(kind.themeView)
         JarnThemeLayout(
             view = spec,
-            primary = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf) },
+            primary = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf, list) },
             layer = {},
             insets = BrowseInsets,
         )
@@ -63,7 +64,6 @@ private fun LibraryBrowseCrossfade(view: JarnBrowseView, content: @Composable (J
     Crossfade(targetState = view, animationSpec = token.spec(), label = "browseView", content = content)
 }
 
-/** Lists the format has no Jarn component for yet fall back to the grid. */
 @Composable
 private fun LibraryThemePrimary(
     primary: ThemePrimary,
@@ -72,11 +72,12 @@ private fun LibraryThemePrimary(
     cellMinSize: Dp,
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
+    list: @Composable (LibraryListGeometry) -> Unit,
 ) {
     when (primary) {
         is ThemePrimary.Shelf -> shelf(libraryShelfGeometry(primary, kind, pins.shelf))
         is ThemePrimary.Grid -> LibraryThemeGrid(primary, pins.grid, cellMinSize, grid)
-        is ThemePrimary.List -> grid(LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing))
+        is ThemePrimary.List -> list(libraryListGeometry(primary))
     }
 }
 

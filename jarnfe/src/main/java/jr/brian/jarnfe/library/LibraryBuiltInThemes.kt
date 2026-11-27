@@ -70,9 +70,15 @@ private fun shelfPrimary(kind: LibraryShelfKind): ThemePrimary.Shelf {
 
 private fun builtInSpec(name: String, systems: ThemePrimary, games: ThemePrimary) = JarnThemeSpec(
     meta = ThemeMeta(name = name),
-    tokens = ThemeTokens(colors = JarnLooks.Forge.colors.toThemeColors()),
+    tokens = LibraryDefaultLookTokens,
     views = ThemeViews(systems = ViewSpec(systems), games = ViewSpec(games)),
 )
+
+/**
+ * Jarn's default Look as theme tokens. Code themes carry these only because the format requires
+ * tokens; they draw with the player's own Look.
+ */
+internal val LibraryDefaultLookTokens: ThemeTokens by lazy { ThemeTokens(colors = JarnLooks.Forge.colors.toThemeColors()) }
 
 private fun JarnColors.toThemeColors() = ThemeColors(
     bg = bg.toThemeColor(),

@@ -21,12 +21,17 @@ import jr.brian.core.ui.theme.JarnTheme
  * tile, with no name and count caption, so the logo takes the whole card.
  */
 @Composable
-internal fun LibrarySystemCard(system: JarnLibrarySystem, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LibrarySystemCard(
+    system: JarnLibrarySystem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    aspectRatio: Float = JARN_SYSTEM_TILE_ASPECT,
+) {
     val source = remember { MutableInteractionSource() }
     val shape = JarnTheme.tileShape
     Box(
         modifier = modifier
-            .aspectRatio(JARN_SYSTEM_TILE_ASPECT)
+            .aspectRatio(aspectRatio)
             .semantics { contentDescription = system.title }
             .jarnInteractive(shape, source, focusStyle = JarnFocusStyle.FloatBorder, onClick = onClick)
             .clip(shape)
