@@ -17,9 +17,11 @@ private val LATIN_CAPITALS = 'A'.code..'Z'.code
 
 internal enum class ThemeAssetKind { Image, Font }
 
+private const val SVG_EXTENSION = "svg"
+
 /** What a theme file holds, from its name. Anything else is never extracted, so nothing can point at it. */
 internal fun themeAssetKind(path: String): ThemeAssetKind? = when (path.substringAfterLast('.', "").lowercase()) {
-    in IMAGE_EXTENSIONS -> ThemeAssetKind.Image
+    in IMAGE_EXTENSIONS, SVG_EXTENSION -> ThemeAssetKind.Image
     in FONT_EXTENSIONS -> ThemeAssetKind.Font
     else -> null
 }
@@ -95,7 +97,7 @@ internal fun checkThemeAssets(root: File): Map<String, ThemeAssetKind> {
         val relative = file.relativeTo(root).invariantSeparatorsPath
         if (relative == THEME_FILE) return@forEach
         val ok = when (themeAssetKind(relative)) {
-            ThemeAssetKind.Image -> isImageWithinCaps(readImageSize(file.readHeader()))
+            ThemeAssetKind.Image -> if (file.isSvg) isSafeThemeSvgFile(file) else isImageWithinCaps(readImageSize(file.readHeader()))
             ThemeAssetKind.Font -> isUsableFont(file.readBytes())
             null -> false
         }
@@ -114,3 +116,9 @@ private fun File.readHeader(): ByteArray = inputStream().use { input ->
     }
     bytes.copyOf(filled)
 }
+
+internal val File.isSvg: Boolean get() = extension.equals(SVG_EXTENSION, ignoreCase = true)
+
+/** Checks the size first, so an oversized SVG is refused without reading it. */
+internal fun isSafeThemeSvgFile(file: File): Boolean =
+    file.length() <= MAX_THEME_SVG_BYTES && isSafeThemeSvg(file.readBytes())

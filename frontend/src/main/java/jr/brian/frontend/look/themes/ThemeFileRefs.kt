@@ -31,8 +31,8 @@ internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKi
         is ThemePrimary.List -> copy(art = art.checked())
     }
     fun ThemeLayer.checked(): ThemeLayer? = when (this) {
-        is ThemeLayer.Picture -> takeIf { source.checked() != null }
-        is ThemeLayer.Video -> copy(fallback = fallback.checked())
+        is ThemeLayer.Picture -> takeIf { source.checked() != null }?.copy(fallbacks = fallbacks.mapNotNull { it.checked() })
+        is ThemeLayer.Video -> copy(fallback = fallback.checked(), fallbacks = fallbacks.mapNotNull { it.checked() })
         else -> this
     }
     fun ViewSpec.checked() = copy(primary = primary.checked(), layers = layers.mapNotNull { it.checked() })

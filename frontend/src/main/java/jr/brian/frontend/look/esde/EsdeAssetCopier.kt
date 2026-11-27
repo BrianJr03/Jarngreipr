@@ -3,6 +3,8 @@ package jr.brian.frontend.look.esde
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import jr.brian.frontend.look.themes.isImageWithinCaps
+import jr.brian.frontend.look.themes.isSafeThemeSvgFile
+import jr.brian.frontend.look.themes.isSvg
 import jr.brian.frontend.look.themes.isUsableFont
 import jr.brian.frontend.look.themes.readImageSize
 import java.io.File
@@ -84,8 +86,8 @@ class EsdeAssetCopier(
     fun takeNotes(): List<EsdeFallbackNote> = notes.toList().also { notes.clear() }
 
     fun copyArt(art: List<EsdeSystemArtCandidates>): Map<String, EsdeSystemArtFiles> = art.associate { system ->
-        val logo = copyImage(system.logo, "$ASSET_DIR/logos/${system.jarnSystemId}.png", sizes.logo, keepAlpha = true, system.jarnSystemId)
-        val background = copyImage(system.background, "$ASSET_DIR/backgrounds/${system.jarnSystemId}.jpg", sizes.background, keepAlpha = false, system.jarnSystemId)
+        val logo = copyImage(system.logo, "$ASSET_DIR/logos/${system.jarnSystemId}", sizes.logo, keepAlpha = true, system.jarnSystemId)
+        val background = copyImage(system.background, "$ASSET_DIR/backgrounds/${system.jarnSystemId}", sizes.background, keepAlpha = false, system.jarnSystemId)
         if (logo == null && system.logo.isNotEmpty()) notes += EsdeFallbackNote.LogoNotCopied(system.jarnSystemId)
         if (background == null && system.background.isNotEmpty()) notes += EsdeFallbackNote.BackgroundNotCopied(system.jarnSystemId)
         system.jarnSystemId to EsdeSystemArtFiles(logo, background)
@@ -111,14 +113,22 @@ class EsdeAssetCopier(
         return relative.takeIf { place(relative) { file -> file.writeBytes(bytes); true } }
     }
 
-    private fun copyImage(candidates: List<String>, relative: String, size: EsdeAssetSizes.Size, keepAlpha: Boolean, systemId: String): String? {
+    /**
+     * The first candidate that exists, written as [base] plus an extension: SVGs as they are once
+     * they pass the shared safety check, pictures shrunk to [size].
+     */
+    private fun copyImage(candidates: List<String>, base: String, size: EsdeAssetSizes.Size, keepAlpha: Boolean, systemId: String): String? {
         val source = candidates.asSequence().mapNotNull(::inside).firstOrNull() ?: return null
-        val ext = source.extension.lowercase()
-        if (ext == "svg") {
-            notes += EsdeFallbackNote.SvgNotCopied(systemId)
-            return null
+        if (source.isSvg) {
+            if (!isSafeThemeSvgFile(source)) {
+                notes += EsdeFallbackNote.SvgRefused(systemId)
+                return null
+            }
+            val relative = "$base.svg"
+            return relative.takeIf { place(relative) { target -> source.copyTo(target, overwrite = true).isFile } }
         }
-        if (ext !in IMAGE_EXTENSIONS || !isImageWithinCaps(readImageSize(source.header()))) return null
+        if (source.extension.lowercase() !in IMAGE_EXTENSIONS || !isImageWithinCaps(readImageSize(source.header()))) return null
+        val relative = base + if (keepAlpha) ".png" else ".jpg"
         return relative.takeIf { place(relative) { scaler.scale(source, it, size.width, size.height, keepAlpha) } }
     }
 

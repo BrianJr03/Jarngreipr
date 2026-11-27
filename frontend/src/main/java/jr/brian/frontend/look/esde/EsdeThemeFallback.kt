@@ -25,8 +25,8 @@ sealed interface EsdeFallbackNote {
 
     data class BackgroundNotCopied(val systemId: String) : EsdeFallbackNote
 
-    /** SVG logos aren't kept in Jarn themes; Jarn's own logo for the system shows instead. */
-    data class SvgNotCopied(val systemId: String) : EsdeFallbackNote
+    /** An SVG that could reach outside itself (scripts, links, entities) or is too large; Jarn's own art shows instead. */
+    data class SvgRefused(val systemId: String) : EsdeFallbackNote
 
     /** Not a TrueType or OpenType font, too large, or missing Latin letters. */
     data class FontRefused(val path: String) : EsdeFallbackNote

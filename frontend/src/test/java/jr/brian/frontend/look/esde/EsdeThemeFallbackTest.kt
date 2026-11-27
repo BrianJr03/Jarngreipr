@@ -113,7 +113,8 @@ class EsdeThemeFallbackTest {
         assertEquals("esde/backgrounds/nes.jpg", result.systemArt["nes"]?.background)
         assertTrue(File(out, "esde/backgrounds/snes.jpg").isFile)
         assertFalse(File(out, "esde/backgrounds/megadrive.jpg").exists())
-        assertTrue(EsdeFallbackNote.SvgNotCopied("nes") in result.notes)
+        assertEquals("esde/logos/nes.svg", result.systemArt["nes"]?.logo)
+        assertEquals("<svg/>", File(out, "esde/logos/nes.svg").readText())
         assertTrue(EsdeFallbackNote.BackgroundNotCopied("n64") in result.notes)
     }
 
@@ -145,6 +146,23 @@ class EsdeThemeFallbackTest {
         val result = EsdeThemeFallback.build(model, dir, savedLook, catalog, out, copier = EsdeAssetCopier(dir, out, scaler = copyScaler))
         assertTrue(result.systemArt.isEmpty())
         assertTrue(EsdeFallbackNote.UnknownSystem("zxspectrum") in result.notes)
+    }
+
+    @Test
+    fun `a hostile SVG logo is refused and Jarn's own logo stays`() {
+        val dir = temp.newFolder("theme")
+        File(dir, "logos").mkdirs()
+        File(dir, "logos/nes.svg").writeText("<svg><script>fetch('https://x')</script></svg>")
+        File(dir, "theme.xml").writeText(
+            "<theme><view name=\"system\"><image name=\"logo\"><path>./logos/\${system.theme}.svg</path></image></view></theme>",
+        )
+        File(dir, "capabilities.xml").writeText("<themeCapabilities/>")
+        val model = parser.parse(dir, listOf(EsdeSystemRef("nes")))
+        val out = temp.newFolder()
+        val result = EsdeThemeFallback.build(model, dir, savedLook, catalog, out, copier = EsdeAssetCopier(dir, out, scaler = copyScaler))
+        assertTrue(result.systemArt.isEmpty())
+        assertTrue(EsdeFallbackNote.SvgRefused("nes") in result.notes)
+        assertFalse(File(out, "esde/logos/nes.svg").exists())
     }
 
     @Test
