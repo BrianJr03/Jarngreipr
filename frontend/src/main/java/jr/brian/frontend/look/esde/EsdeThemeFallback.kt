@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import jr.brian.core.model.theme.ThemeColor
 import jr.brian.core.model.theme.ThemeColors
+import jr.brian.core.model.theme.ThemeSystemArt
 import jr.brian.core.ui.theme.JarnColors
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnPaletteMatch
@@ -49,7 +50,11 @@ data class EsdeFallbackResult(
     val fonts: EsdeFontFiles,
     val assets: List<String>,
     val notes: List<EsdeFallbackNote>,
-)
+) {
+    /** [systemArt] in the theme format, for [jr.brian.core.model.theme.JarnThemeSpec.systemArt]. */
+    val themeSystemArt: Map<String, ThemeSystemArt>
+        get() = systemArt.mapValues { (_, files) -> ThemeSystemArt(logo = files.logo, background = files.background) }
+}
 
 object EsdeThemeFallback {
 

@@ -4,6 +4,7 @@ import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
+import jr.brian.core.model.theme.ThemeSystemArt
 import jr.brian.core.model.theme.ThemeTextStyle
 import jr.brian.core.model.theme.ViewSpec
 
@@ -13,7 +14,7 @@ internal data class CheckedTheme(val spec: JarnThemeSpec, val dropped: Int)
 /**
  * Every font and picture path must name a file that passed its check inside the theme folder.
  * A bad reference drops alone: a picture layer goes, a primary or video keeps Jarn's default art,
- * and a text style keeps its role's font.
+ * a text style keeps its role's font, and a system's art keeps only the files that passed.
  */
 internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKind>): CheckedTheme {
     var dropped = 0
@@ -48,9 +49,18 @@ internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKi
         caption = type.caption.checked(),
         captionStrong = type.captionStrong.checked(),
     )
+    val checkedArt = spec.systemArt
+        .mapValues { (_, art) ->
+            ThemeSystemArt(
+                logo = art.logo?.takeIf { ok(it, ThemeAssetKind.Image) },
+                background = art.background?.takeIf { ok(it, ThemeAssetKind.Image) },
+            )
+        }
+        .filterValues { it.logo != null || it.background != null }
     val checked = spec.copy(
         tokens = spec.tokens.copy(type = checkedType),
         views = spec.views.copy(systems = spec.views.systems?.checked(), games = spec.views.games?.checked()),
+        systemArt = checkedArt,
     )
     return CheckedTheme(checked, dropped)
 }
