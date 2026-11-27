@@ -161,6 +161,27 @@ class JarnThemeFormatCompatibilityTest {
         assertEquals(schema1SystemArt, JarnThemeFormat.encode(spec))
     }
 
+    /** Added with #578: panels fading at an edge. */
+    private val schema1Fade = """
+        {"schema":1,"meta":{"name":"Fades"},"tokens":{"colors":{"bg":"#000000","surface":"#111111",
+        "raised":"#222222","textHigh":"#FFFFFF","textMid":"#DDDDDD","textLow":"#BBBBBB",
+        "accent":"#FF8800","danger":"#FF4444","success":"#44FF44"}},
+        "views":{"games":{"primary":{"type":"shelf","box":{"x":0.0,"y":0.5,"width":1.0,"height":0.4}},
+        "layers":[{"type":"panel","id":"plate","rect":{"x":0.0,"y":0.4,"width":1.0,"height":0.6},"fade":{"edge":"top","length":0.3}},
+        {"type":"panel","id":"side","rect":{"x":0.0,"y":0.0,"width":0.3,"height":1.0},"outlined":true,"fade":{"edge":"end"}}]}}}
+    """.trimIndent().replace("\n", "")
+
+    @Test
+    fun `schema 1 panel fades decode and re-encode byte for byte`() {
+        val spec = (JarnThemeFormat.decode(schema1Fade) as JarnThemeDecodeResult.Decoded).spec
+        val panels = spec.views[ThemeView.Games]!!.layers.map { it as ThemeLayer.Panel }
+
+        assertEquals(ThemeFade(ThemeEdge.Top, 0.3f), panels[0].fade)
+        assertEquals(ThemeFade(ThemeEdge.End, ThemeFade.DEFAULT_LENGTH), panels[1].fade)
+        assertEquals(null, (decodeGolden().views[ThemeView.Systems]!!.layers.last() as ThemeLayer.Panel).fade)
+        assertEquals(schema1Fade, JarnThemeFormat.encode(spec))
+    }
+
     @Test
     fun `the golden schema 1 theme has no narrow patch`() {
         assertEquals(null, decodeGolden().views[ThemeView.Systems]?.narrow)

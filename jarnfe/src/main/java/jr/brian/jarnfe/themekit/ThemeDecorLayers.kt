@@ -14,7 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
@@ -57,12 +59,16 @@ internal fun ThemeRatingLayer(layer: ThemeLayer.Rating, focus: FocusedItem) {
     }
 }
 
-/** A filled plate, or only its outline when [ThemeLayer.Panel.outlined] is set. */
+/**
+ * A filled plate, or only its outline when [ThemeLayer.Panel.outlined] is set. With a
+ * [ThemeLayer.Panel.fade] one edge fades out to transparent.
+ */
 @Composable
 internal fun ThemePanelLayer(layer: ThemeLayer.Panel) {
     val shape = layer.corner.shape()
     val color = layer.color.color(JarnTheme.colors)
-    val drawn = if (layer.outlined) Modifier.border(PanelOutlineWidth, color, shape) else Modifier.background(color, shape)
+    val brush = layer.fade?.let { themeFadeBrush(color, it, LocalLayoutDirection.current) } ?: SolidColor(color)
+    val drawn = if (layer.outlined) Modifier.border(PanelOutlineWidth, brush, shape) else Modifier.background(brush, shape)
     Box(Modifier.fillMaxSize().then(drawn))
 }
 

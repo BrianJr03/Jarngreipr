@@ -99,6 +99,8 @@ sealed interface ThemeLayer {
         val color: ThemeColorRole = ThemeColorRole.Surface,
         val corner: ThemeCorner = ThemeCorner.Md,
         val outlined: Boolean = false,
+        /** Fades one edge out to transparent, so the panel melts into the art behind it. */
+        val fade: ThemeFade? = null,
     ) : ThemeLayer
 
     /** The focused game's video, with [fallback] shown before it starts or when there is none. */
@@ -117,6 +119,26 @@ sealed interface ThemeLayer {
         /** Tried in order after [fallback]. */
         val fallbacks: List<ThemePicture> = emptyList(),
     ) : ThemeLayer
+}
+
+/** A panel edge that fades from the panel's color to transparent over [length] of the panel, 0 to 1. */
+@Serializable
+data class ThemeFade(
+    val edge: ThemeEdge,
+    val length: Float = DEFAULT_LENGTH,
+) {
+    companion object {
+        const val DEFAULT_LENGTH = 0.25f
+    }
+}
+
+/** A side of a layer. Start and end follow the reading direction. */
+@Serializable
+enum class ThemeEdge {
+    @SerialName("top") Top,
+    @SerialName("bottom") Bottom,
+    @SerialName("start") Start,
+    @SerialName("end") End,
 }
 
 /**
