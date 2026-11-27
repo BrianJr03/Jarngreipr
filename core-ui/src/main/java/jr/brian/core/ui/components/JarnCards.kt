@@ -1,6 +1,7 @@
 package jr.brian.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -29,10 +30,10 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.R
-import jr.brian.core.ui.focus.JarnFocusStyle
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnColors
 import jr.brian.core.ui.theme.JarnLook
@@ -85,8 +86,9 @@ fun JarnLookCard(
 }
 
 /**
- * A pickable card in the look cards' style: [preview] on top, then [name] with a check when
- * [chosen], then an optional [supporting] line.
+ * A pickable card in the look cards' style: [preview] on top, then [name], then an optional
+ * [supporting] text that always takes [supportingLines] lines so cards in a row line up. Focus
+ * draws Jarn's focus ring; [chosen] shows only as a check badge, so the two never look alike.
  */
 @Composable
 fun JarnChoiceCard(
@@ -95,6 +97,7 @@ fun JarnChoiceCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     supporting: String? = null,
+    supportingLines: Int = 2,
     height: Dp = 156.dp,
     interactionSource: MutableInteractionSource? = null,
     preview: @Composable ColumnScope.() -> Unit,
@@ -104,24 +107,49 @@ fun JarnChoiceCard(
     val chosenState = stringResource(
         if (chosen) R.string.jarn_state_selected else R.string.jarn_state_not_selected,
     )
-    val chosenBorder = if (chosen) Modifier.border(2.dp, JarnTheme.colors.accent, shape) else Modifier
     Column(
         modifier = modifier
             .semantics {
                 selected = chosen
                 stateDescription = chosenState
             }
-            .jarnInteractive(shape, source, role = Role.RadioButton, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
+            .jarnInteractive(shape, source, role = Role.RadioButton, onClick = onClick)
             .height(height)
             .background(JarnTheme.colors.surface, shape)
-            .then(chosenBorder)
             .padding(JarnTheme.space.sm),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
     ) {
-        preview()
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.matchParentSize(), content = preview)
+            if (chosen) JarnChosenBadge(Modifier.align(Alignment.TopEnd).padding(JarnTheme.space.xs))
+        }
         JarnLookCardFooter(name, chosen)
-        supporting?.let { JarnText(it, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 2) }
+        supporting?.let { JarnChoiceSupporting(it, supportingLines) }
     }
+}
+
+@Composable
+private fun JarnChosenBadge(modifier: Modifier = Modifier) {
+    val colors = JarnTheme.colors
+    Box(
+        modifier = modifier
+            .size(24.dp)
+            .background(colors.accent, CircleShape)
+            .border(2.dp, colors.surface, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) { JarnCheckGlyph(colors.onAccent) }
+}
+
+@Composable
+private fun JarnChoiceSupporting(text: String, lines: Int) {
+    val style = JarnTheme.type.caption
+    BasicText(
+        text = text,
+        style = style.copy(color = JarnTheme.colors.textMid, shadow = style.shadow ?: LocalJarnTextShadow.current),
+        overflow = TextOverflow.Ellipsis,
+        minLines = lines,
+        maxLines = lines,
+    )
 }
 
 @Composable

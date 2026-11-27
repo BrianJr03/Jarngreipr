@@ -23,13 +23,13 @@ import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeOption
 import jr.brian.jarnfe.themes.JarnThemePreview
-import jr.brian.jarnfe.themes.activeTheme
 import jr.brian.jarnfe.themes.applyThemeChoice
 import jr.brian.jarnfe.themes.jarnThemeOptions
 import jr.brian.jarnfe.themes.nextOverride
 import jr.brian.jarnfe.themes.rememberSavedThemeChoice
 
-private val ThemeCardHeight = 196.dp
+private val ThemeCardHeight = 224.dp
+private const val THEME_BLURB_LINES = 3
 
 /**
  * Look > Layout: the layout cards, then a row per view that can override the layout. Both screens
@@ -61,15 +61,15 @@ internal fun JarnThemeSection(store: JarnLookStore) {
 
 @Composable
 private fun JarnThemeCard(option: JarnThemeOption, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val theme = remember(option.choice) { option.choice.activeTheme() }
     JarnChoiceCard(
         name = option.entry.displayName(),
         chosen = option.chosen,
         onClick = onClick,
         modifier = modifier,
         supporting = stringResource(option.entry.blurb),
+        supportingLines = THEME_BLURB_LINES,
         height = ThemeCardHeight,
-    ) { JarnThemeSketch(theme, Modifier.weight(1f)) }
+    ) { JarnThemeSketch(option.entry) }
 }
 
 @Composable

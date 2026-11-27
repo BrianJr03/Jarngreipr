@@ -13,6 +13,9 @@ import java.io.File
 
 internal enum class JarnThemeKind { BuiltIn, Template, Imported }
 
+/** The picture a layout card draws. Imports set none and draw their systems list's shape. */
+internal enum class JarnThemeSketchKind { Grid, Carousel, List, BigShelf, CoverGrid, ListWithArt }
+
 /**
  * A theme the player can pick: a layout plus where its colors come from. With [ownColors] off the
  * spec's colors are ignored and the theme follows the chosen Look. [nameRes] wins over the spec's
@@ -26,7 +29,15 @@ internal data class JarnThemeEntry(
     @param:StringRes val blurbRes: Int? = null,
     val ownColors: Boolean = false,
     val themeDir: File? = null,
+    val sketch: JarnThemeSketchKind? = null,
 ) {
+    val sketchKind: JarnThemeSketchKind
+        get() = sketch ?: when (viewSpec(ThemeView.Systems)?.primary) {
+            is ThemePrimary.Shelf -> JarnThemeSketchKind.Carousel
+            is ThemePrimary.List -> JarnThemeSketchKind.List
+            is ThemePrimary.Grid, null -> JarnThemeSketchKind.Grid
+        }
+
     fun viewSpec(view: ThemeView): ViewSpec? = theme.spec.views[view]
 
     /** The Jarn list closest to [view]'s primary, for previews and tile size settings. */
@@ -38,6 +49,12 @@ internal data class JarnThemeEntry(
  * Every layout this build ships. A null active id is a player from before layouts: the stored
  * systems view's built-in is their layout, and a different games view is an override.
  */
+private val TemplateSketches = mapOf(
+    LibraryTemplateThemes.BigShelf.id to JarnThemeSketchKind.BigShelf,
+    LibraryTemplateThemes.CoverGrid.id to JarnThemeSketchKind.CoverGrid,
+    LibraryTemplateThemes.ListWithArt.id to JarnThemeSketchKind.ListWithArt,
+)
+
 internal object JarnThemeRegistry {
     val Grid = JarnThemeEntry(
         id = "builtin-grid",
@@ -68,6 +85,7 @@ internal object JarnThemeRegistry {
             theme = LibraryBuiltInTheme(template.spec),
             nameRes = template.nameRes,
             blurbRes = template.blurbRes,
+            sketch = TemplateSketches[template.id],
         )
     }
 

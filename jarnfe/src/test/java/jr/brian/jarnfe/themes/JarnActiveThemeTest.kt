@@ -119,6 +119,13 @@ class JarnActiveThemeTest {
     }
 
     @Test
+    fun `every shipped layout has its own sketch`() {
+        val kinds = JarnThemeRegistry.installed.map { it.sketchKind }
+        assertEquals(kinds.distinct(), kinds)
+        assertEquals(JarnThemeSketchKind.Carousel, TemplateCarousel.sketchKind)
+    }
+
+    @Test
     fun `override rows step same, grid, carousel`() {
         assertEquals(JarnBrowseView.Grid, null.nextOverride())
         assertEquals(JarnBrowseView.Carousel, JarnBrowseView.Grid.nextOverride())
