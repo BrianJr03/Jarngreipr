@@ -1,0 +1,34 @@
+<theme>
+    <fontSize name="medium">
+        <variables>
+            <labelSize>0.03</labelSize>
+        </variables>
+    </fontSize>
+    <fontSize name="large">
+        <variables>
+            <labelSize>0.045</labelSize>
+        </variables>
+    </fontSize>
+    <view name="system, gamelist">
+        <image name="background">
+            <path>./bg/plain.webp</path>
+            <size>1 1</size>
+        </image>
+    </view>
+    <view name="gamelist">
+        <grid name="gamelistGrid">
+            <pos>0.03 0.12</pos>
+            <size>0.94 0.8</size>
+            <itemSize>0.15 0.33</itemSize>
+            <itemSpacing>0.012 0.03</itemSpacing>
+            <imageType>cover</imageType>
+            <fontSize>${labelSize}</fontSize>
+        </grid>
+    </view>
+    <view name="system">
+        <grid name="systemGrid">
+            <itemSize>0.2 0.2</itemSize>
+            <staticImage>./tiles/${system.name}.png</staticImage>
+        </grid>
+    </view>
+</theme>

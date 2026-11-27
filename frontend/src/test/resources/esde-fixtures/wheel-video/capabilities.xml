@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<themeCapabilities>
+    <themeName>Fixture Wheel</themeName>
+<variant name="withVideos">
+    <label>With videos</label>
+</variant>
+<variant name="noVideos">
+    <label>Without videos</label>
+</variant>
+</themeCapabilities>

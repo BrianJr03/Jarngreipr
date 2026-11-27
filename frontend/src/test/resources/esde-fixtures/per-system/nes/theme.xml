@@ -1,0 +1,8 @@
+<theme>
+    <include>../_inc/base.xml</include>
+    <view name="gamelist">
+        <image name="systemLogo">
+            <path>./logo.svg</path>
+        </image>
+    </view>
+</theme>

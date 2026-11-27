@@ -1,0 +1,27 @@
+# ES-DE parser golden: wheel-video
+themeName=Fixture Wheel
+variants=withVideos "With videos", noVideos "Without videos"
+colorSchemes=
+fontSizes=
+aspectRatios=
+selection=variant:withVideos colorScheme:null fontSize:null aspectRatio:null
+legacy=false
+[system nes]
+  view system
+    carousel systemCarousel: type=verticalWheel; pos=0.7 0.5; size=0.3 1; wheelHorizontalAlignment=right; maxItemCount=7; staticImage=./wheel/nes.png
+  view gamelist
+    carousel gamelistCarousel: type=verticalWheel; pos=0.7 0.5; imageType=marquee
+    video preview: pos=0.08 0.2; size=0.5 0.5; imageType=screenshot; delay=1.2
+[system snes]
+  view system
+    carousel systemCarousel: type=verticalWheel; pos=0.7 0.5; size=0.3 1; wheelHorizontalAlignment=right; maxItemCount=7; staticImage=./wheel/snes.png
+  view gamelist
+    carousel gamelistCarousel: type=verticalWheel; pos=0.7 0.5; imageType=marquee
+    video preview: pos=0.08 0.2; size=0.5 0.5; imageType=screenshot; delay=1.2
+[system n64]
+  view system
+    carousel systemCarousel: type=verticalWheel; pos=0.7 0.5; size=0.3 1; wheelHorizontalAlignment=right; maxItemCount=7; staticImage=./wheel/n64.png
+  view gamelist
+    carousel gamelistCarousel: type=verticalWheel; pos=0.7 0.5; imageType=marquee
+    video preview: pos=0.08 0.2; size=0.5 0.5; imageType=screenshot; delay=1.2
+[issues]

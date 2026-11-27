@@ -1,0 +1,38 @@
+<theme>
+    <view name="system">
+        <carousel name="systemCarousel">
+            <type>verticalWheel</type>
+            <pos>0.7 0.5</pos>
+            <size>0.3 1</size>
+            <wheelHorizontalAlignment>right</wheelHorizontalAlignment>
+            <maxItemCount>7</maxItemCount>
+            <staticImage>./wheel/${system.theme}.png</staticImage>
+        </carousel>
+    </view>
+    <view name="gamelist">
+        <carousel name="gamelistCarousel">
+            <type>verticalWheel</type>
+            <pos>0.7 0.5</pos>
+            <imageType>marquee</imageType>
+        </carousel>
+    </view>
+    <variant name="withVideos">
+        <view name="gamelist">
+            <video name="preview">
+                <pos>0.08 0.2</pos>
+                <size>0.5 0.5</size>
+                <imageType>screenshot</imageType>
+                <delay>1.2</delay>
+            </video>
+        </view>
+    </variant>
+    <variant name="noVideos">
+        <view name="gamelist">
+            <image name="preview">
+                <pos>0.08 0.2</pos>
+                <size>0.5 0.5</size>
+                <imageType>screenshot</imageType>
+            </image>
+        </view>
+    </variant>
+</theme>

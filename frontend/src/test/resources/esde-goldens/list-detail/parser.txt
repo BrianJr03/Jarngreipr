@@ -1,0 +1,36 @@
+# ES-DE parser golden: list-detail
+themeName=Fixture Detail
+variants=
+colorSchemes=
+fontSizes=
+aspectRatios=
+selection=variant:null colorScheme:null fontSize:null aspectRatio:null
+legacy=false
+[system nes]
+  view gamelist
+    textlist gamelistTextlist: pos=0.03 0.15; size=0.45 0.75; primaryColor=E8EEF2; secondaryColor=8A99A6
+    image art: pos=0.52 0.15; maxSize=0.44 0.4; imageType=miximage
+    rating stars: pos=0.52 0.6; size=0 0.04
+    datetime released: pos=0.75 0.6; metadata=releasedate; format=%Y; color=8A99A6
+    text summary: pos=0.52 0.68; size=0.44 0.22; metadata=description; container=true; color=E8EEF2
+  view system
+    textlist systemList: pos=0.05 0.2; size=0.4 0.7; primaryColor=E8EEF2
+[system snes]
+  view gamelist
+    textlist gamelistTextlist: pos=0.03 0.15; size=0.45 0.75; primaryColor=E8EEF2; secondaryColor=8A99A6
+    image art: pos=0.52 0.15; maxSize=0.44 0.4; imageType=miximage
+    rating stars: pos=0.52 0.6; size=0 0.04
+    datetime released: pos=0.75 0.6; metadata=releasedate; format=%Y; color=8A99A6
+    text summary: pos=0.52 0.68; size=0.44 0.22; metadata=description; container=true; color=E8EEF2
+  view system
+    textlist systemList: pos=0.05 0.2; size=0.4 0.7; primaryColor=E8EEF2
+[system n64]
+  view gamelist
+    textlist gamelistTextlist: pos=0.03 0.15; size=0.45 0.75; primaryColor=E8EEF2; secondaryColor=8A99A6
+    image art: pos=0.52 0.15; maxSize=0.44 0.4; imageType=miximage
+    rating stars: pos=0.52 0.6; size=0 0.04
+    datetime released: pos=0.75 0.6; metadata=releasedate; format=%Y; color=8A99A6
+    text summary: pos=0.52 0.68; size=0.44 0.22; metadata=description; container=true; color=E8EEF2
+  view system
+    textlist systemList: pos=0.05 0.2; size=0.4 0.7; primaryColor=E8EEF2
+[issues]

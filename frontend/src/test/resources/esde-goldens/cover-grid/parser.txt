@@ -1,0 +1,30 @@
+# ES-DE parser golden: cover-grid
+themeName=Fixture Grid
+variants=
+colorSchemes=
+fontSizes=medium, large
+aspectRatios=
+selection=variant:null colorScheme:null fontSize:large aspectRatio:null
+legacy=false
+[system nes]
+  view system
+    image background: path=./bg/plain.webp; size=1 1
+    grid systemGrid: itemSize=0.2 0.2; staticImage=./tiles/nes.png
+  view gamelist
+    image background: path=./bg/plain.webp; size=1 1
+    grid gamelistGrid: pos=0.03 0.12; size=0.94 0.8; itemSize=0.15 0.33; itemSpacing=0.012 0.03; imageType=cover; fontSize=0.045
+[system snes]
+  view system
+    image background: path=./bg/plain.webp; size=1 1
+    grid systemGrid: itemSize=0.2 0.2; staticImage=./tiles/snes.png
+  view gamelist
+    image background: path=./bg/plain.webp; size=1 1
+    grid gamelistGrid: pos=0.03 0.12; size=0.94 0.8; itemSize=0.15 0.33; itemSpacing=0.012 0.03; imageType=cover; fontSize=0.045
+[system n64]
+  view system
+    image background: path=./bg/plain.webp; size=1 1
+    grid systemGrid: itemSize=0.2 0.2; staticImage=./tiles/n64.png
+  view gamelist
+    image background: path=./bg/plain.webp; size=1 1
+    grid gamelistGrid: pos=0.03 0.12; size=0.94 0.8; itemSize=0.15 0.33; itemSpacing=0.012 0.03; imageType=cover; fontSize=0.045
+[issues]

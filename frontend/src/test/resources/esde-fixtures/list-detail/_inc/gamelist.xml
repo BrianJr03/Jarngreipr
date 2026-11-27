@@ -1,0 +1,32 @@
+<theme>
+    <view name="gamelist">
+        <textlist name="gamelistTextlist">
+            <pos>0.03 0.15</pos>
+            <size>0.45 0.75</size>
+            <primaryColor>${text}</primaryColor>
+            <secondaryColor>${muted}</secondaryColor>
+        </textlist>
+        <image name="art">
+            <pos>0.52 0.15</pos>
+            <maxSize>0.44 0.4</maxSize>
+            <imageType>miximage</imageType>
+        </image>
+        <rating name="stars">
+            <pos>0.52 0.6</pos>
+            <size>0 0.04</size>
+        </rating>
+        <datetime name="released">
+            <pos>0.75 0.6</pos>
+            <metadata>releasedate</metadata>
+            <format>%Y</format>
+            <color>${muted}</color>
+        </datetime>
+        <text name="summary">
+            <pos>0.52 0.68</pos>
+            <size>0.44 0.22</size>
+            <metadata>description</metadata>
+            <container>true</container>
+            <color>${text}</color>
+        </text>
+    </view>
+</theme>
