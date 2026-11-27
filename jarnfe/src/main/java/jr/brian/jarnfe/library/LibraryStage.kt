@@ -120,6 +120,7 @@ private fun LibrarySystems(
             grid = { geometry -> LibrarySystemGrid(library, geometry, onFocused, onOpenSystem) },
             shelf = { geometry -> LibrarySystemShelf(library, onFocused, onOpenSystem, geometry) },
             list = { geometry -> LibrarySystemRows(library, geometry, onFocused, onOpenSystem) },
+            header = (state.hero as? LibraryHero.ContinuePlaying)?.let { hero -> { LibraryContinueStrip(library, hero.game) } },
         )
     }
 }
@@ -137,7 +138,7 @@ internal fun LibrarySystemShelf(
 ) {
     val state = library.state
     Column(Modifier.fillMaxSize()) {
-        (state.hero as? LibraryHero.ContinuePlaying)?.let { hero ->
+        (state.hero as? LibraryHero.ContinuePlaying)?.takeIf { LocalLibraryHeaderInPrimary.current }?.let { hero ->
             Box(
                 Modifier.padding(
                     start = JarnTheme.space.stageMargin,
@@ -199,9 +200,13 @@ private fun LibrarySystemGrid(
     }
 }
 
-/** The Continue playing card above the systems grid or list, when there is one. */
+/**
+ * The card above the systems grid or list, when there is one and the list owns it (see
+ * [LocalLibraryHeaderInPrimary]).
+ */
+@Composable
 internal fun librarySystemsHeader(library: JarnLibraryStore): (@Composable () -> Unit)? =
-    library.state.hero?.let { hero ->
+    library.state.hero?.takeIf { LocalLibraryHeaderInPrimary.current }?.let { hero ->
         {
             LibraryHeroBanner(
                 hero = hero,
