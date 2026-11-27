@@ -9,6 +9,15 @@ import jr.brian.core.ui.components.JarnSheet
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.jarnfe.R
 
+/** Select on a piece: duplicate, delete and order. */
+@Composable
+internal fun ThemeEditorLayerSheet(editor: ThemeEditorState, visible: Boolean, onDismiss: () -> Unit) {
+    val id = (editor.selected as? ThemeEditorTarget.Layer)?.id
+    JarnSheet(visible = visible && id != null, onDismiss = onDismiss, title = stringResource(R.string.jarnfe_editor_layer_options)) {
+        id?.let { LayerOptionRows(it, onDone = onDismiss) }
+    }
+}
+
 /** Start on the canvas: redo and snapping, plus whatever later steps add. */
 @Composable
 internal fun ThemeEditorOptions(editor: ThemeEditorState, visible: Boolean, onDismiss: () -> Unit) {

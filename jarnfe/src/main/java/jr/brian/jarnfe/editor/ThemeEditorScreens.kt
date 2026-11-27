@@ -35,12 +35,20 @@ internal fun ThemeEditorStage(session: JarnSessionState) {
     }
     val toolsOnDeck = session.editorToolsOnDeck
     var optionsOpen by remember { mutableStateOf(false) }
-    ThemeEditorCanvasInput(editor, toolsOnDeck, paused = optionsOpen, onOptions = { optionsOpen = true })
+    var layerOptionsOpen by remember { mutableStateOf(false) }
+    ThemeEditorCanvasInput(
+        editor = editor,
+        toolsOnDeck = toolsOnDeck,
+        paused = optionsOpen || layerOptionsOpen,
+        onOptions = { optionsOpen = true },
+        onLayerOptions = { layerOptionsOpen = true },
+    )
     Row(Modifier.fillMaxSize()) {
         ThemeEditorCanvas(editor, Modifier.weight(CANVAS_WEIGHT).fillMaxHeight())
         if (!toolsOnDeck && editor.held == null) ThemeEditorSheet(editor, Modifier.weight(SHEET_WEIGHT).fillMaxHeight())
     }
     ThemeEditorOptions(editor, visible = optionsOpen, onDismiss = { optionsOpen = false })
+    ThemeEditorLayerSheet(editor, visible = layerOptionsOpen, onDismiss = { layerOptionsOpen = false })
 }
 
 /** The tools on the Deck, which the editor owns while it is open. */

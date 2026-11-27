@@ -47,6 +47,7 @@ internal fun ThemeEditorTools(editor: ThemeEditorState, modifier: Modifier = Mod
 private fun ThemeEditorTabBody(editor: ThemeEditorState) {
     when (editor.tab) {
         ThemeEditorTab.Layers -> ThemeEditorLayersTab(editor)
+        ThemeEditorTab.Inspect -> ThemeEditorInspectTab(editor)
         ThemeEditorTab.Preview -> ThemeEditorPreviewTab(editor)
     }
 }
@@ -62,7 +63,24 @@ private fun ThemeEditorLayersTab(editor: ThemeEditorState) {
             supporting = stringResource(R.string.jarnfe_editor_navigator_hint).takeIf { target == ThemeEditorTarget.Navigator },
         )
     }
+    ThemeEditorNewLayer.entries.forEach { kind ->
+        InspectActionRow(
+            label = stringResource(R.string.jarnfe_editor_add, stringResource(kind.labelRes)),
+            supporting = stringResource(R.string.jarnfe_editor_add_hint),
+        ) { JarnThemeEditor.edit { withNewLayer(kind) } }
+    }
 }
+
+@get:StringRes
+private val ThemeEditorNewLayer.labelRes: Int
+    get() = when (this) {
+        ThemeEditorNewLayer.Picture -> R.string.jarnfe_editor_layer_picture
+        ThemeEditorNewLayer.Text -> R.string.jarnfe_editor_layer_text
+        ThemeEditorNewLayer.Rating -> R.string.jarnfe_editor_layer_rating
+        ThemeEditorNewLayer.Date -> R.string.jarnfe_editor_layer_date
+        ThemeEditorNewLayer.Panel -> R.string.jarnfe_editor_layer_panel
+        ThemeEditorNewLayer.Video -> R.string.jarnfe_editor_layer_video
+    }
 
 @Composable
 private fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
@@ -88,6 +106,7 @@ internal fun ThemeEditorState.targetLabel(target: ThemeEditorTarget): String = w
 private val ThemeEditorTab.labelRes: Int
     get() = when (this) {
         ThemeEditorTab.Layers -> R.string.jarnfe_editor_tab_layers
+        ThemeEditorTab.Inspect -> R.string.jarnfe_editor_tab_inspect
         ThemeEditorTab.Preview -> R.string.jarnfe_editor_tab_preview
     }
 

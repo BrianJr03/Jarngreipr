@@ -19,12 +19,18 @@ internal fun ThemeEditorCanvasInput(
     toolsOnDeck: Boolean,
     paused: Boolean,
     onOptions: () -> Unit,
+    onLayerOptions: () -> Unit,
 ) {
     val canvasActive = !editor.sheetFocused && !paused
     JarnInputLayer(
         mode = JarnLayerMode.Capture,
         enabled = canvasActive && editor.held == null,
-        bindings = { browseBindings(toolsOnDeck, onOptions) },
+        bindings = {
+            browseBindings(toolsOnDeck, onOptions)
+            if (editor.selected is ThemeEditorTarget.Layer) {
+                on(JarnAction.Context, R.string.jarnfe_editor_layer_options, onPress = onLayerOptions)
+            }
+        },
     )
     JarnInputLayer(
         mode = JarnLayerMode.Capture,

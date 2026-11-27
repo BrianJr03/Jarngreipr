@@ -11,7 +11,7 @@ import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeKind
 
 /** The tools tabs, in the order L2 and R2 step through them. */
-internal enum class ThemeEditorTab { Layers, Preview }
+internal enum class ThemeEditorTab { Layers, Inspect, Preview }
 
 /** What the editor has selected: the view's list (the navigator) or one decor layer. */
 @Immutable
