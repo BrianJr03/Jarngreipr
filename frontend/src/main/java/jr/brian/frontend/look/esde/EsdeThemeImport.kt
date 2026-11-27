@@ -18,7 +18,12 @@ private const val THEME_XML = "theme.xml"
 private const val MAX_FALLBACK_SYSTEMS = 40
 
 /** The spec to install after the fallback, and what the fallback has to tell the player. */
-data class EsdeFallbackOutcome(val spec: JarnThemeSpec, val notes: List<EsdeFallbackNote> = emptyList())
+data class EsdeFallbackOutcome(
+    val spec: JarnThemeSpec,
+    val notes: List<EsdeFallbackNote> = emptyList(),
+    /** How many of the player's systems got theme art. */
+    val systemsWithArt: Int = 0,
+)
 
 /**
  * The colors, art and fonts step between translation and install. It may write files into
@@ -41,7 +46,7 @@ fun interface EsdeImportFallback {
             EsdeImportFallback { model, translation, themeDir, outDir, reparse ->
                 val result = EsdeThemeFallback.build(model, themeDir, savedLook, catalog, outDir, reparse)
                 val spec = translation.spec
-                EsdeFallbackOutcome(spec.copy(tokens = spec.tokens.copy(colors = result.colors)), result.notes)
+                EsdeFallbackOutcome(spec.copy(tokens = spec.tokens.copy(colors = result.colors)), result.notes, result.systemArt.size)
             }
     }
 }
@@ -54,6 +59,8 @@ sealed interface EsdeImportOutcome {
         val name: String,
         val report: EsdeTranslationReport,
         val fallbackNotes: List<EsdeFallbackNote>,
+        val systemsWithArt: Int,
+        val systemCount: Int,
         val unusableFiles: Int,
     ) : EsdeImportOutcome
 
@@ -105,7 +112,7 @@ class EsdeThemeImport(
             stamp = stamp,
             importedAtMs = now(),
         )
-        var notes = emptyList<EsdeFallbackNote>()
+        var fallbackOutcome = EsdeFallbackOutcome(translation.spec)
         val result = installer.installFiles(
             sourceRoot = source,
             assets = translation.assets,
@@ -113,11 +120,12 @@ class EsdeThemeImport(
             beforePlace = { folder -> writeEsdeImportRecord(folder, record) },
         ) { outDir ->
             val reparse = { scheme: String -> parser.parse(source, refs, model.selection.copy(colorScheme = scheme)) }
-            fallback.apply(model, translation, source, outDir, reparse).also { notes = it.notes }.spec
+            fallback.apply(model, translation, source, outDir, reparse).also { fallbackOutcome = it }.spec
         }
         return when (result) {
             is ThemeImportResult.Installed -> EsdeImportOutcome.Imported(
-                result.id, result.folder, result.spec.meta.name, translation.report, notes, result.dropped,
+                result.id, result.folder, result.spec.meta.name, translation.report, fallbackOutcome.notes,
+                fallbackOutcome.systemsWithArt, refs.size, result.dropped,
             )
             is ThemeImportResult.Rejected -> EsdeImportOutcome.Failed(result.problem)
             is ThemeImportResult.TooNew -> EsdeImportOutcome.Failed(ThemeImportProblem.Damaged)

@@ -9,6 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.core.model.theme.JarnThemeDecodeResult
 import jr.brian.core.model.theme.JarnThemeFormat
+import jr.brian.core.ui.theme.JarnLook
+import jr.brian.frontend.library.systems.SystemCatalog
+import jr.brian.frontend.look.esde.EsdeImportFallback
 import jr.brian.frontend.look.esde.EsdeThemeImport
 import jr.brian.frontend.look.themes.EsdeThemeLocator
 import jr.brian.frontend.look.themes.EsdeThemeUpdates
@@ -27,6 +30,7 @@ interface JarnThemeImportProvider {
     val jarnEsdeThemeLocator: EsdeThemeLocator
     val jarnEsdeThemeUpdates: EsdeThemeUpdates
     val jarnThemeFileImporter: JarnThemeImporter
+    val jarnSystemCatalog: SystemCatalog
 }
 
 internal fun Context.jarnThemeImportOrNull(): JarnThemeImportProvider? =
@@ -34,7 +38,12 @@ internal fun Context.jarnThemeImportOrNull(): JarnThemeImportProvider? =
 
 internal fun Context.jarnThemesRoot(): File = File(filesDir, THEMES_DIR)
 
-internal fun Context.jarnEsdeThemeImport(): EsdeThemeImport = EsdeThemeImport(jarnThemesRoot())
+/** The ES-DE import, with readable colors built on [savedLook] when the host provides the system catalog. */
+internal fun Context.jarnEsdeThemeImport(savedLook: JarnLook): EsdeThemeImport {
+    val catalog = jarnThemeImportOrNull()?.jarnSystemCatalog
+    val fallback = catalog?.let { EsdeImportFallback.readable(savedLook, it) } ?: EsdeImportFallback.None
+    return EsdeThemeImport(jarnThemesRoot(), fallback)
+}
 
 /**
  * Themes the player added (ES-DE imports and theme files), read from `filesDir/themes`. Each brings
