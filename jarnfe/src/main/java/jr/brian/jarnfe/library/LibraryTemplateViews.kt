@@ -17,6 +17,7 @@ import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeTextRole
 import jr.brian.core.model.theme.ThemeViewPatch
+import jr.brian.core.model.theme.ThemeVisibleWhen
 import jr.brian.core.model.theme.ViewSpec
 
 /*
@@ -54,6 +55,9 @@ private const val BIG_SHELF_VIDEO_DELAY_MS = 800
 private const val LIST_GAME_ROWS = 5
 private const val LIST_SYSTEM_ROWS = 4
 
+/** Big shelf shows a system's logo where its name goes, and the name only when there is no logo. */
+private val HasLogo = ThemeVisibleWhen(hasSystemArt = SystemArtKind.Logo)
+
 /** On a narrow screen a shelf shows one neighbor each side, so the centered card keeps its size. */
 private val ShelfOneNeighbor = ThemeViewPatch(ThemePrimaryPatch(itemsBefore = 1, itemsAfter = 1))
 
@@ -62,8 +66,15 @@ internal val BigShelfSystems = ViewSpec(
     layers = listOf(
         picture("background", FullScreen, z = -3, SystemArtKind.Background, ThemeFit.Crop),
         plate("plate", BigShelfSystemsPlate, ThemeColorRole.Bg, BIG_SHELF_PLATE_OPACITY, ThemeCorner.None),
-        picture("logo", ThemeRect(0.62f, SYSTEMS_TOP, 0.33f, 0.20f), z = 1, SystemArtKind.Logo, ThemeFit.Fit),
-        text("title", ThemeRect(0.05f, SYSTEMS_TOP, 0.55f, 0.125f), systemText(SystemTextField.Title), ThemeTextRole.Title),
+        ThemeLayer.Picture(
+            id = "logo",
+            rect = ThemeRect(0.05f, SYSTEMS_TOP, 0.40f, 0.125f),
+            z = 1,
+            visibleWhen = HasLogo,
+            source = ThemePicture.SystemArt(SystemArtKind.Logo),
+        ),
+        text("title", ThemeRect(0.05f, SYSTEMS_TOP, 0.55f, 0.125f), systemText(SystemTextField.Title), ThemeTextRole.Title)
+            .copy(visibleWhen = HasLogo.copy(missing = true)),
         text(
             "count",
             ThemeRect(0.05f, 0.34f, 0.40f, 0.075f),

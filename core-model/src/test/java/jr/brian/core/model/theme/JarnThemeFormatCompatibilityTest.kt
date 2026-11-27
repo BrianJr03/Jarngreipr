@@ -140,6 +140,27 @@ class JarnThemeFormatCompatibilityTest {
         assertEquals(null, games.layers.last().stack)
     }
 
+    /** Added with #577: a layer shown only when the system has no logo. */
+    private val schema1SystemArt = """
+        {"schema":1,"meta":{"name":"Logo or name"},"tokens":{"colors":{"bg":"#000000","surface":"#111111",
+        "raised":"#222222","textHigh":"#FFFFFF","textMid":"#DDDDDD","textLow":"#BBBBBB",
+        "accent":"#FF8800","danger":"#FF4444","success":"#44FF44"}},
+        "views":{"systems":{"primary":{"type":"shelf","box":{"x":0.0,"y":0.5,"width":1.0,"height":0.4}},
+        "layers":[{"type":"picture","id":"logo","rect":{"x":0.05,"y":0.1,"width":0.4,"height":0.2},
+        "visibleWhen":{"hasSystemArt":"logo"},"source":{"type":"system","kind":"logo"}},
+        {"type":"text","id":"name","rect":{"x":0.05,"y":0.1,"width":0.4,"height":0.2},
+        "visibleWhen":{"hasSystemArt":"logo","missing":true},"content":{"type":"system","field":"title"}}]}}}
+    """.trimIndent().replace("\n", "")
+
+    @Test
+    fun `schema 1 system art visibility decodes and re-encodes byte for byte`() {
+        val spec = (JarnThemeFormat.decode(schema1SystemArt) as JarnThemeDecodeResult.Decoded).spec
+        val name = spec.views[ThemeView.Systems]!!.layers.last()
+
+        assertEquals(ThemeVisibleWhen(hasSystemArt = SystemArtKind.Logo, missing = true), name.visibleWhen)
+        assertEquals(schema1SystemArt, JarnThemeFormat.encode(spec))
+    }
+
     @Test
     fun `the golden schema 1 theme has no narrow patch`() {
         assertEquals(null, decodeGolden().views[ThemeView.Systems]?.narrow)

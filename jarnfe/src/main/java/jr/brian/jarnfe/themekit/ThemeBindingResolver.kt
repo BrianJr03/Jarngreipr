@@ -149,14 +149,21 @@ private fun themeFile(themeDir: File?, path: String): String? {
     return file.path.takeIf { file.toPath().startsWith(dir.toPath()) && file != dir }
 }
 
-/** Every set condition must hold. With nothing set the layer always shows. */
+/**
+ * Every set condition must hold. With nothing set the layer always shows. [ThemeVisibleWhen.missing]
+ * flips the media, text and system art checks, and only when at least one of them is set.
+ */
 internal fun themeLayerVisible(rule: ThemeVisibleWhen?, focus: FocusedItem, media: ThemeFocusMedia): Boolean {
     if (rule == null) return true
     val game = focus.game
-    val mediaOk = rule.hasMedia?.let { kind -> game != null && gameMediaPath(game.id, game.artPath, kind, media) != null } ?: true
-    val textOk = rule.hasText?.let { field -> resolveThemeText(ThemeText.Game(field), focus) != null } ?: true
+    val mediaOk = rule.hasMedia?.let { kind -> game != null && gameMediaPath(game.id, game.artPath, kind, media) != null }
+    val textOk = rule.hasText?.let { field -> resolveThemeText(ThemeText.Game(field), focus) != null }
+    val artOk = rule.hasSystemArt?.let { kind -> resolveThemePicture(ThemePicture.SystemArt(kind), focus, media, null) != null }
+    val checks = listOfNotNull(mediaOk, textOk, artOk)
+    val present = checks.all { it }
+    val presenceOk = if (rule.missing && checks.isNotEmpty()) !present else present
     val systemOk = rule.systems.isEmpty() || (focus.system?.id ?: game?.systemId) in rule.systems
-    return mediaOk && textOk && systemOk
+    return presenceOk && systemOk
 }
 
 private fun String?.cleaned(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
