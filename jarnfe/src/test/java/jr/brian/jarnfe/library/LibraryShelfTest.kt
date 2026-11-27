@@ -148,7 +148,7 @@ class LibraryShelfTest {
                             itemKey = { it },
                             focusedKey = focused,
                             onFocused = { focused = it },
-                            cellMinSize = 80.dp,
+                            geometry = LibraryGridGeometry(80.dp),
                         ) { id, modifier -> Box(modifier.size(80.dp).testTag("grid-$id").focusable()) }
                     },
                     shelf = {
