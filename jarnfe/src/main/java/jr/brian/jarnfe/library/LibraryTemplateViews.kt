@@ -124,11 +124,11 @@ internal val CoverGridGames = ViewSpec(
             ThemeTextRole.Heading,
             maxLines = 2,
         ),
-        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.685f, 0.49f, 0.13f, 0.075f), z = 2),
-        year("year", ThemeRect(0.83f, 0.49f, 0.12f, 0.075f), ThemeAlign.End),
+        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.685f, 0.57f, 0.13f, 0.075f), z = 2),
+        year("year", ThemeRect(0.83f, 0.57f, 0.12f, 0.075f), ThemeAlign.End),
         text(
             "playtime",
-            ThemeRect(0.685f, 0.57f, 0.27f, 0.075f),
+            ThemeRect(0.685f, 0.49f, 0.27f, 0.075f),
             gameText(GameTextField.Playtime),
             ThemeTextRole.Label,
             ThemeColorRole.TextMid,
@@ -145,7 +145,7 @@ internal val CoverGridGames = ViewSpec(
 )
 
 internal val CoverGridSystems = ViewSpec(
-    primary = ThemePrimary.Grid(box = CoverGridSystemsBox, columns = 3, itemAspect = 1.33f, showTitle = true),
+    primary = ThemePrimary.Grid(box = CoverGridSystemsBox, columns = 3, itemAspect = 1.6f, showTitle = true),
     layers = listOf(
         plate("rail", CoverGridSystemsRail, ThemeColorRole.Surface, COVER_RAIL_OPACITY, ThemeCorner.Lg),
         picture(
