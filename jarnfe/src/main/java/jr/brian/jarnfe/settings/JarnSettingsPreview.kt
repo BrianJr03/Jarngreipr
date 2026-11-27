@@ -2,6 +2,7 @@ package jr.brian.jarnfe.settings
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.library.JarnSystemTile
@@ -48,19 +50,44 @@ import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.SystemCellMinSize
 import jr.brian.jarnfe.library.gameCountText
 import jr.brian.jarnfe.look.rememberJarnDisplay
+import jr.brian.jarnfe.themes.JarnThemeEntry
+import jr.brian.jarnfe.themes.JarnThemeKind
+import jr.brian.jarnfe.themes.rememberJarnActiveTheme
 
 private const val PREVIEW_TILE_COUNT = 8
+
+/** Two shelves, the heading and the gaps fit in what is left above the hint bar. */
+private const val SHELF_CARD_HEIGHT_FRACTION = 0.3f
+
+/** A template's scaled stage frame, two of which fit the same space as two shelves. */
+private const val FRAME_HEIGHT_FRACTION = 0.36f
 private val PreviewAppTileWidth = 88.dp
 private val PreviewAppIconSize = 48.dp
 
-/** Real tiles at the saved sizes. They can't take focus, so the preview never traps the controller. */
+/**
+ * Real tiles at the saved sizes. They can't take focus, so the preview never traps the controller.
+ * Each shelf's card is capped so both shelves stay above the hint bar.
+ */
 @Composable
 internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
+    val hintsVisible = rememberJarnDisplay().hintsVisible
+    BoxWithConstraints(modifier) {
+        val hintBar = if (hintsVisible) JarnTheme.space.hintBarHeight else 0.dp
+        JarnSettingsPreviewContent(availableHeight = maxHeight - hintBar)
+    }
+}
+
+@Composable
+private fun JarnSettingsPreviewContent(availableHeight: Dp) {
+    val shelfCardCap = availableHeight * SHELF_CARD_HEIGHT_FRACTION
+    val frameCap = availableHeight * FRAME_HEIGHT_FRACTION
     val display = rememberJarnDisplay()
+    val theme = rememberJarnActiveTheme()
     val state = JarnLibrary.state
     val games = (state.recent.items + state.favorites.items).distinctBy { it.id }
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState(), enabled = false)
             .padding(horizontal = JarnTheme.space.stageMargin, vertical = JarnTheme.space.focusEdge),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
@@ -69,23 +96,40 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
         if (JarnSession.state.settingsSection == SettingsSection.Apps) {
             PreviewAppRow()
         } else {
-            LibraryBrowseSwitch(
-                view = display.systemView,
-                grid = {
-                    PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
-                },
-                shelf = { PreviewSystemShelf(state.systems.items) },
-            )
-            LibraryBrowseSwitch(
-                view = display.gameView,
-                grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
-                shelf = { PreviewGameShelf(games) },
-            )
+            val templateItems = JarnTemplatePreviewItems(state.systems.items, games)
+            PreviewView(theme.systems, ThemeView.Systems, templateItems, frameCap) {
+                LibraryBrowseSwitch(
+                    view = theme.systems.browseView(ThemeView.Systems),
+                    grid = {
+                        PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
+                    },
+                    shelf = { PreviewSystemShelf(state.systems.items, shelfCardCap) },
+                )
+            }
+            PreviewView(theme.games, ThemeView.Games, templateItems, frameCap) {
+                LibraryBrowseSwitch(
+                    view = theme.games.browseView(ThemeView.Games),
+                    grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
+                    shelf = { PreviewGameShelf(games, shelfCardCap) },
+                )
+            }
             if (JarnSession.state.settingsSection == SettingsSection.Display) {
                 PreviewPageTransition(display.pageTransition)
             }
         }
     }
+}
+
+/** A template or import draws its own stage; the built-ins keep Jarn's own preview rows. */
+@Composable
+private fun PreviewView(
+    entry: JarnThemeEntry,
+    view: ThemeView,
+    items: JarnTemplatePreviewItems,
+    frameCap: Dp,
+    builtIn: @Composable () -> Unit,
+) {
+    if (entry.kind == JarnThemeKind.BuiltIn) builtIn() else JarnTemplatePreview(entry, view, items, frameCap)
 }
 
 @Composable
@@ -189,22 +233,24 @@ private fun previewSystems(systems: List<JarnLibrarySystem>): List<JarnLibrarySy
 }
 
 @Composable
-private fun PreviewSystemShelf(systems: List<JarnLibrarySystem>) {
+private fun PreviewSystemShelf(systems: List<JarnLibrarySystem>, maxCardHeight: Dp) {
     val placeholder = stringResource(R.string.jarnfe_settings_preview_system)
     LibraryShelfPreview(
         items = systems,
         kind = LibraryShelfKind.Systems,
         description = { it?.title ?: placeholder },
+        maxCardHeight = maxCardHeight,
     ) { system -> system?.let { LibrarySystemArt(it) } }
 }
 
 @Composable
-private fun PreviewGameShelf(games: List<JarnLibraryGame>) {
+private fun PreviewGameShelf(games: List<JarnLibraryGame>, maxCardHeight: Dp) {
     val placeholder = stringResource(R.string.jarnfe_settings_preview_game)
     LibraryShelfPreview(
         items = games,
         kind = LibraryShelfKind.Games,
         description = { it?.title ?: placeholder },
+        maxCardHeight = maxCardHeight,
     ) { game -> game?.let { LibraryCoverArt(it) } }
 }
 

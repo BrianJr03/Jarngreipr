@@ -11,10 +11,6 @@
     <string name="jarnfe_settings_refresh_hint">Checks your folders and reloads art.</string>
     <string name="jarnfe_settings_refresh_started">Refreshing library</string>
     <string name="jarnfe_settings_browsing_title">Browsing</string>
-    <string name="jarnfe_settings_system_view">Systems view</string>
-    <string name="jarnfe_settings_system_view_hint">Swipe through systems one at a time.</string>
-    <string name="jarnfe_settings_game_view">Games view</string>
-    <string name="jarnfe_settings_game_view_hint">Browse games as a grid or a carousel.</string>
     <string name="jarnfe_settings_system_names">Show system names</string>
     <string name="jarnfe_settings_system_names_hint">The name and game count under each system. Off gives the space to the cards.</string>
     <string name="jarnfe_browse_view_grid">Grid</string>
@@ -54,7 +50,7 @@
     <string name="jarnfe_wallpaper_title">Wallpaper</string>
     <string name="jarnfe_wallpaper_choose">Choose image or GIF</string>
     <string name="jarnfe_wallpaper_custom">Custom</string>
-    <string name="jarnfe_wallpaper_theme">Theme</string>
+    <string name="jarnfe_wallpaper_theme">Look</string>
     <string name="jarnfe_wallpaper_live">Live wallpaper</string>
     <string name="jarnfe_wallpaper_live_hint">Plays an animated background.</string>
     <string name="jarnfe_wallpaper_live_off">Off</string>
@@ -62,8 +58,8 @@
     <string name="jarnfe_wallpaper_ironweave">Ironweave</string>
     <string name="jarnfe_wallpaper_hearthrise">Hearthrise</string>
     <string name="jarnfe_wallpaper_tidemark">Face Buttons</string>
-    <string name="jarnfe_wallpaper_use_theme">Use theme background</string>
-    <string name="jarnfe_wallpaper_use_theme_hint">Goes back to the theme\'s own background.</string>
+    <string name="jarnfe_wallpaper_use_theme">Use look background</string>
+    <string name="jarnfe_wallpaper_use_theme_hint">Goes back to the look\'s own background.</string>
     <string name="jarnfe_wallpaper_failed">That file can\'t be used as a wallpaper</string>
     <string name="jarnfe_wallpaper_no_picker">No file picker is available</string>
     <string name="jarnfe_switch_classic_title">Switch to Classic</string>

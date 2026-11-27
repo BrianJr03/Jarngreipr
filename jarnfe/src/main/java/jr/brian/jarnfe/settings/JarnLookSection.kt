@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -39,7 +40,8 @@ internal fun JarnLookSection() {
     val matchCard = rememberJarnMatchCard(store, savedLook)
     val fontOffer by rememberCommandPanelFontOffer()
     val fontRow = rememberJarnFontMatchRow(store, fontOffer.availability)
-    SettingsGroup(R.string.jarnfe_look_theme_title) {
+    JarnThemeSection(store)
+    SettingsGroup(R.string.jarnfe_look_colors_title) {
         JarnLookPicker(
             chosen = savedLook.takeUnless { matchCard.state.isMatching },
             onChoose = { store.setLookId(it.id) },
@@ -56,29 +58,34 @@ internal fun JarnLookPicker(chosen: JarnLook?, onChoose: (JarnLook) -> Unit) {
     val store = remember(context) { context.jarnLookStoreOrNull() }
     var focusedId by remember { mutableStateOf<String?>(null) }
     LiveLookPreview(focusedId)
+    JarnChoiceGrid(JarnLooks.All) { look, cellModifier ->
+        JarnLookCard(
+            look = look,
+            chosen = look == chosen,
+            onClick = {
+                store?.setMatchCommandPanel(false)
+                onChoose(look)
+            },
+            modifier = cellModifier.onFocusChanged { state ->
+                focusedId = nextFocusedLook(focusedId, look.id, state.isFocused)
+            },
+        )
+    }
+}
+
+/** Cards in rows of four, or two on a narrow screen. A short last row keeps the same card width. */
+@Composable
+internal fun <T> JarnChoiceGrid(items: List<T>, card: @Composable (T, Modifier) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val columns = if (maxWidth < TwoColumnMaxWidth) COMPACT_COLUMNS else WIDE_COLUMNS
         Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
-            JarnLooks.All.chunked(columns).forEach { row ->
+            items.chunked(columns).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
                 ) {
-                    row.forEach { look ->
-                        JarnLookCard(
-                            look = look,
-                            chosen = look == chosen,
-                            onClick = {
-                                store?.setMatchCommandPanel(false)
-                                onChoose(look)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .onFocusChanged { state ->
-                                    focusedId = nextFocusedLook(focusedId, look.id, state.isFocused)
-                                },
-                        )
-                    }
+                    row.forEach { item -> card(item, Modifier.weight(1f)) }
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }

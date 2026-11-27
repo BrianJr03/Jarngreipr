@@ -5,6 +5,7 @@ import jr.brian.core.model.CommandPanelPalette
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.resolvedColors
 import jr.brian.jarnfe.settings.nextFocusedLook
+import jr.brian.jarnfe.themes.themeColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -71,5 +72,25 @@ class JarnAppearanceTest {
     @Test
     fun `leaving the picker clears the preview`() {
         assertNull(nextFocusedLook("forge", "forge", false))
+    }
+
+    @Test
+    fun `a theme's own colors win over the matched palette and keep the look's id`() {
+        val own = themeColors(bg = 0xFF201010.toInt(), text = 0xFFF2F5F8.toInt())
+        val look = resolveJarnLook("grove", null, DarkPalette, own)
+        assertEquals("grove", look.id)
+        assertEquals(Color(0xFF201010), look.resolvedColors.bg)
+    }
+
+    @Test
+    fun `unreadable theme colors keep the saved look with the theme's accent`() {
+        val unreadable = themeColors(bg = 0xFF101418.toInt(), text = 0xFF101418.toInt())
+        val look = resolveJarnLook("grove", null, null, unreadable)
+        assertEquals(JarnLooks.Grove.resolvedColors.bg, look.resolvedColors.bg)
+    }
+
+    @Test
+    fun `a theme that follows the look leaves it alone`() {
+        assertSame(JarnLooks.Grove, resolveJarnLook("grove", null, null, null))
     }
 }

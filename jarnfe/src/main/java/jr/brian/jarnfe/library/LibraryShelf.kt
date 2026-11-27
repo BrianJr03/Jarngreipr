@@ -166,13 +166,14 @@ internal fun <T : Any> LibraryShelf(
             .focusGroup(),
     ) {
         val narrow = maxWidth < SHELF_NARROW_WIDTH
+        val showsCaption = content.showsCaption && geometry.showsCaption
         val fit = shelfFit(
             width = maxWidth.value,
             height = maxHeight.value,
             geometry = geometry,
             narrow = narrow,
             topMargin = JarnTheme.space.focusEdge.value,
-            captionReserve = if (content.showsCaption) geometry.captionReserve else SHELF_NO_CAPTION,
+            captionReserve = if (showsCaption) geometry.captionReserve else SHELF_NO_CAPTION,
         )
         val metrics = ShelfMetrics(geometry, maxWidth, fit)
         val cardWidth = metrics.cardWidth
@@ -191,7 +192,7 @@ internal fun <T : Any> LibraryShelf(
                 ) { slot -> content.card(item, slot) }
             }
         }
-        if (content.showsCaption) LibraryShelfCaption(items[center], content, metrics)
+        if (showsCaption) LibraryShelfCaption(items[center], content, metrics)
         LibraryShelfBadge(titleKey(content.itemTitle(items[center])), badgeTick, fast)
     }
 }

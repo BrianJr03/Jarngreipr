@@ -4,4 +4,18 @@
         <item quantity="one">%1$d favorite</item>
         <item quantity="other">%1$d favorites</item>
     </plurals>
+    <string name="jarnfe_look_colors_title">Colors</string>
+    <string name="jarnfe_theme_grid_blurb">Rows of covers. Uses your colors.</string>
+    <string name="jarnfe_theme_carousel_blurb">One big cover at a time. Uses your colors.</string>
+    <string name="jarnfe_theme_games_override">Games</string>
+    <string name="jarnfe_theme_same_as_layout">Same as layout</string>
+    <string name="jarnfe_theme_override_hint">Overrides the layout for this screen.</string>
+    <string name="jarnfe_theme_follows_look_blurb">Uses your colors.</string>
+    <string name="jarnfe_theme_own_colors_blurb">Has its own colors. Command Panel colors won\'t match.</string>
+    <string name="jarnfe_theme_template_big_shelf">Big shelf</string>
+    <string name="jarnfe_theme_template_cover_grid">Cover grid</string>
+    <string name="jarnfe_theme_template_list_art">List with art</string>
+    <string name="jarnfe_theme_template_big_shelf_blurb">One large cover, no names.</string>
+    <string name="jarnfe_theme_template_cover_grid_blurb">Covers with details on the side.</string>
+    <string name="jarnfe_theme_template_list_art_blurb">Names in a list, art beside them.</string>
 </resources>
