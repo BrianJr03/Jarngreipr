@@ -12,10 +12,11 @@ import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
+import jr.brian.core.model.theme.ThemePrimaryPatch
 import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeTextRole
-import jr.brian.core.model.theme.ThemeVisibleWhen
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ViewSpec
 
 /*
@@ -53,6 +54,9 @@ private const val BIG_SHELF_VIDEO_DELAY_MS = 800
 private const val LIST_GAME_ROWS = 5
 private const val LIST_SYSTEM_ROWS = 4
 
+/** On a narrow screen a shelf shows one neighbor each side, so the centered card keeps its size. */
+private val ShelfOneNeighbor = ThemeViewPatch(ThemePrimaryPatch(itemsBefore = 1, itemsAfter = 1))
+
 internal val BigShelfSystems = ViewSpec(
     primary = ThemePrimary.Shelf(box = BigShelfSystemsBox, focusedScale = 1.35f, showTitle = false),
     layers = listOf(
@@ -68,6 +72,7 @@ internal val BigShelfSystems = ViewSpec(
             ThemeColorRole.TextMid,
         ),
     ),
+    narrow = ShelfOneNeighbor,
 )
 
 internal val BigShelfGames = ViewSpec(
@@ -97,6 +102,7 @@ internal val BigShelfGames = ViewSpec(
             ThemeColorRole.TextMid,
         ),
     ),
+    narrow = ShelfOneNeighbor,
 )
 
 internal val CoverGridGames = ViewSpec(
@@ -116,6 +122,7 @@ internal val CoverGridGames = ViewSpec(
             z = 1,
             fallback = ThemePicture.GameMedia(MediaKind.Fanart),
             corner = ThemeCorner.Md,
+            fallbacks = listOf(ThemePicture.GameMedia(MediaKind.Screenshot), ThemePicture.GameMedia(MediaKind.Titlescreen)),
         ),
         text(
             "title",
@@ -123,15 +130,17 @@ internal val CoverGridGames = ViewSpec(
             gameText(GameTextField.Title),
             ThemeTextRole.Heading,
             maxLines = 2,
+            stack = INFO_STACK,
         ),
-        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.685f, 0.57f, 0.13f, 0.075f), z = 2),
-        year("year", ThemeRect(0.83f, 0.57f, 0.12f, 0.075f), ThemeAlign.End),
+        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.685f, 0.57f, 0.13f, 0.075f), z = 2, stack = INFO_STACK),
+        year("year", ThemeRect(0.83f, 0.57f, 0.12f, 0.075f), ThemeAlign.End, INFO_STACK),
         text(
             "playtime",
             ThemeRect(0.685f, 0.49f, 0.27f, 0.075f),
             gameText(GameTextField.Playtime),
             ThemeTextRole.Label,
             ThemeColorRole.TextMid,
+            stack = INFO_STACK,
         ),
         text(
             "description",
@@ -140,8 +149,10 @@ internal val CoverGridGames = ViewSpec(
             ThemeTextRole.Body,
             ThemeColorRole.TextMid,
             maxLines = 3,
+            stack = INFO_STACK,
         ),
     ),
+    narrow = ThemeViewPatch(ThemePrimaryPatch(columns = 3)),
 )
 
 internal val CoverGridSystems = ViewSpec(
@@ -162,6 +173,7 @@ internal val CoverGridSystems = ViewSpec(
             systemText(SystemTextField.Title),
             ThemeTextRole.Heading,
             maxLines = 2,
+            stack = INFO_STACK,
         ),
         text(
             "count",
@@ -169,6 +181,7 @@ internal val CoverGridSystems = ViewSpec(
             systemText(SystemTextField.GameCount),
             ThemeTextRole.Label,
             ThemeColorRole.TextMid,
+            stack = INFO_STACK,
         ),
         text(
             "playtime",
@@ -176,8 +189,10 @@ internal val CoverGridSystems = ViewSpec(
             systemText(SystemTextField.Playtime),
             ThemeTextRole.Caption,
             ThemeColorRole.TextLow,
+            stack = INFO_STACK,
         ),
     ),
+    narrow = ThemeViewPatch(ThemePrimaryPatch(columns = 2, itemAspect = 1.4f)),
 )
 
 internal val ListArtGames = ViewSpec(
@@ -196,8 +211,8 @@ internal val ListArtGames = ViewSpec(
             id = "miximage",
             rect = ThemeRect(0.50f, 0.08f, 0.46f, 0.38f),
             z = 1,
-            visibleWhen = ThemeVisibleWhen(hasMedia = MediaKind.Miximage),
             source = ThemePicture.GameMedia(MediaKind.Miximage),
+            fallbacks = listOf(ThemePicture.GameMedia(MediaKind.Screenshot), ThemePicture.GameMedia(MediaKind.Fanart)),
         ),
         text(
             "title",
@@ -205,8 +220,9 @@ internal val ListArtGames = ViewSpec(
             gameText(GameTextField.Title),
             ThemeTextRole.Heading,
             maxLines = 2,
+            stack = INFO_STACK,
         ),
-        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.50f, 0.65f, 0.14f, 0.06f), z = 2),
+        ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.50f, 0.65f, 0.14f, 0.06f), z = 2, stack = INFO_STACK),
         text(
             "description",
             ThemeRect(0.50f, 0.72f, 0.46f, 0.18f),
@@ -214,6 +230,7 @@ internal val ListArtGames = ViewSpec(
             ThemeTextRole.Body,
             ThemeColorRole.TextMid,
             maxLines = 2,
+            stack = INFO_STACK,
         ),
     ),
 )
@@ -237,6 +254,7 @@ internal val ListArtSystems = ViewSpec(
             systemText(SystemTextField.FavoriteCount),
             ThemeTextRole.Label,
             ThemeColorRole.TextMid,
+            stack = INFO_STACK,
         ),
         text(
             "playtime",
@@ -244,6 +262,7 @@ internal val ListArtSystems = ViewSpec(
             systemText(SystemTextField.Playtime),
             ThemeTextRole.Label,
             ThemeColorRole.TextLow,
+            stack = INFO_STACK,
         ),
     ),
 )
@@ -272,7 +291,21 @@ private fun text(
     style: ThemeTextRole,
     color: ThemeColorRole = ThemeColorRole.TextHigh,
     maxLines: Int = 1,
-) = ThemeLayer.Text(id = id, rect = rect, z = 2, content = content, style = style, color = color, maxLines = maxLines)
+    stack: String? = null,
+) = ThemeLayer.Text(
+    id = id,
+    rect = rect,
+    z = 2,
+    content = content,
+    style = style,
+    color = color,
+    maxLines = maxLines,
+    verticalAlign = if (stack != null) ThemeAlign.Start else ThemeAlign.Center,
+    stack = stack,
+)
 
-private fun year(id: String, rect: ThemeRect, align: ThemeAlign = ThemeAlign.Start) =
-    ThemeLayer.Date(id = id, rect = rect, z = 2, field = ThemeDateField.ReleaseDate, align = align)
+private fun year(id: String, rect: ThemeRect, align: ThemeAlign = ThemeAlign.Start, stack: String? = null) =
+    ThemeLayer.Date(id = id, rect = rect, z = 2, field = ThemeDateField.ReleaseDate, align = align, stack = stack)
+
+/** The rail and side details stack, so a missing rating, year or description leaves no hole. */
+private const val INFO_STACK = "info"

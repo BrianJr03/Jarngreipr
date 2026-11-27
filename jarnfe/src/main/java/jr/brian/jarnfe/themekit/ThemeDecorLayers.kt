@@ -5,10 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -39,13 +40,13 @@ private val PanelOutlineWidth = 1.dp
 @Composable
 internal fun ThemeTextLayer(layer: ThemeLayer.Text, focus: FocusedItem) {
     val value = resolveThemeText(layer.content, focus) ?: return
-    ThemePlatedText(layer.id, value.asString(), layer.style, layer.color, layer.align, layer.maxLines)
+    ThemePlatedText(layer.id, value.asString(), layer.style, layer.color, layer.align, layer.verticalAlign, layer.maxLines)
 }
 
 @Composable
 internal fun ThemeDateLayer(layer: ThemeLayer.Date, focus: FocusedItem) {
     val value = resolveThemeDate(layer.field, focus) ?: return
-    ThemePlatedText(layer.id, themeDateText(value, layer.format), layer.style, layer.color, layer.align, maxLines = 1)
+    ThemePlatedText(layer.id, themeDateText(value, layer.format), layer.style, layer.color, layer.align, layer.verticalAlign, maxLines = 1)
 }
 
 @Composable
@@ -65,11 +66,14 @@ internal fun ThemePanelLayer(layer: ThemeLayer.Panel) {
     Box(Modifier.fillMaxSize().then(drawn))
 }
 
-/** Decodes at most at [decodeCap]. A file that fails to load hides the layer rather than showing a broken image. */
+/**
+ * The first of [paths] that loads, decoded at most at [decodeCap]. A file that fails moves on to
+ * the next, and when none load the layer hides rather than showing a broken image.
+ */
 @Composable
-internal fun ThemePictureLayer(path: String, fit: ThemeFit, corner: ThemeCorner, decodeCap: ThemePxSize?) {
-    var failed by remember(path) { mutableStateOf(false) }
-    if (failed) return
+internal fun ThemePictureLayer(paths: List<String>, fit: ThemeFit, corner: ThemeCorner, decodeCap: ThemePxSize?) {
+    var index by remember(paths) { mutableIntStateOf(0) }
+    val path = paths.getOrNull(index) ?: return
     val context = LocalContext.current
     val request = remember(context, path, decodeCap) {
         stillImageBuilder(context, path)
@@ -81,7 +85,7 @@ internal fun ThemePictureLayer(path: String, fit: ThemeFit, corner: ThemeCorner,
         contentDescription = null,
         modifier = Modifier.fillMaxSize().clip(corner.shape()),
         contentScale = fit.contentScale,
-        onError = { failed = true },
+        onError = { index++ },
     )
 }
 
@@ -92,9 +96,10 @@ private fun ThemePlatedText(
     style: ThemeTextRole,
     color: ThemeColorRole,
     align: ThemeAlign,
+    verticalAlign: ThemeAlign,
     maxLines: Int,
 ) {
-    ThemeReadablePlate(align) {
+    ThemeReadablePlate(align, verticalAlign) {
         JarnText(
             text = text,
             style = style.style(),
@@ -106,10 +111,18 @@ private fun ThemePlatedText(
     }
 }
 
-/** The art scrim from Jarn's color repair, which keeps text readable over any art behind it. */
+/**
+ * The art scrim from Jarn's color repair, which keeps text readable over any art behind it. In a
+ * stack the plate only takes the height it needs, so the rows below can move up.
+ */
 @Composable
-internal fun ThemeReadablePlate(align: ThemeAlign, content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = align.plateAlignment) {
+internal fun ThemeReadablePlate(
+    align: ThemeAlign,
+    verticalAlign: ThemeAlign = ThemeAlign.Center,
+    content: @Composable () -> Unit,
+) {
+    val area = if (LocalThemeStacked.current) Modifier.fillMaxWidth() else Modifier.fillMaxSize()
+    Box(area, contentAlignment = plateAlignment(align, verticalAlign)) {
         Box(
             Modifier
                 .background(JarnTheme.colors.artScrim, JarnTheme.radius.smShape)

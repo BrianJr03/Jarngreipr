@@ -1,0 +1,16 @@
+<theme>
+    <variables>
+        <panel>101820</panel>
+    </variables>
+    <view name="system, gamelist">
+        <image name="background">
+            <path>./backgrounds/${system.theme}.jpg</path>
+        </image>
+    </view>
+    <view name="gamelist">
+        <textlist name="gamelistTextlist">
+            <pos>0.05 0.2</pos>
+            <backgroundColor>${panel}</backgroundColor>
+        </textlist>
+    </view>
+</theme>

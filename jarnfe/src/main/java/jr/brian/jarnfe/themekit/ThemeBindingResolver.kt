@@ -132,6 +132,14 @@ internal fun resolveThemePicture(
     is ThemePicture.File -> themeFile(themeDir, source.path)
 }
 
+/** Every file [sources] has for the focused item, in order and without repeats, for a picture to try one by one. */
+internal fun resolveThemePictures(
+    sources: List<ThemePicture>,
+    focus: FocusedItem,
+    media: ThemeFocusMedia,
+    themeDir: File?,
+): List<String> = sources.mapNotNull { resolveThemePicture(it, focus, media, themeDir) }.distinct()
+
 private fun gameMediaPath(gameId: String, artPath: String?, kind: MediaKind, media: ThemeFocusMedia): String? =
     media.pathFor(gameId, kind) ?: artPath.cleaned()?.takeIf { kind == MediaKind.Cover }
 

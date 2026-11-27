@@ -1,0 +1,8 @@
+<theme>
+    <formatVersion>7</formatVersion>
+    <view name="basic, detailed">
+        <image name="logo">
+            <path>./logo.png</path>
+        </image>
+    </view>
+</theme>

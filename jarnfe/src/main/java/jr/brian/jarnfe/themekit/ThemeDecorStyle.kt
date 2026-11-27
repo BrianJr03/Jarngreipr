@@ -2,6 +2,7 @@ package jr.brian.jarnfe.themekit
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -73,12 +74,14 @@ internal val ThemeAlign.textAlign: TextAlign
         ThemeAlign.End -> TextAlign.End
     }
 
-/** Where the plate sits in the layer's rect: on the aligned edge, centered vertically. */
-internal val ThemeAlign.plateAlignment: Alignment
+/** Where the plate sits in the layer's rect: [align] across, [verticalAlign] top (start) to bottom (end). */
+internal fun plateAlignment(align: ThemeAlign, verticalAlign: ThemeAlign): Alignment = BiasAlignment(align.bias, verticalAlign.bias)
+
+private val ThemeAlign.bias: Float
     get() = when (this) {
-        ThemeAlign.Start -> Alignment.CenterStart
-        ThemeAlign.Center -> Alignment.Center
-        ThemeAlign.End -> Alignment.CenterEnd
+        ThemeAlign.Start -> -1f
+        ThemeAlign.Center -> 0f
+        ThemeAlign.End -> 1f
     }
 
 internal val ThemeFit.contentScale: ContentScale
