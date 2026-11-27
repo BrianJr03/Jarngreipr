@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -40,11 +42,16 @@ fun ProvideJarnInput(
 /**
  * Registers an input layer while in composition. Layers nested in [content] sit above this one,
  * whatever order their effects run in. Among siblings, the most recently enabled is on top.
+ *
+ * Passing [onSticks] opts this layer in to analog sticks: while it is the top stick layer on the
+ * active screen (no non-passive layer above it), it gets every change of both sticks and Android
+ * no longer turns the left stick into D-pad presses. Leave it null to keep the stick as a D-pad.
  */
 @Composable
 fun JarnInputLayer(
     mode: JarnLayerMode = JarnLayerMode.Passive,
     enabled: Boolean = true,
+    onSticks: ((JarnSticks) -> Unit)? = null,
     bindings: JarnBindingsBuilder.() -> Unit,
     content: @Composable () -> Unit = {},
 ) {
@@ -53,9 +60,12 @@ fun JarnInputLayer(
     val depth = LocalJarnLayerDepth.current
     val layer = remember(router, screen, mode, depth) { router.createLayer(screen, mode, depth) }
     val declared = jarnBindings(bindings)
+    val latestSticks by rememberUpdatedState(onSticks)
+    val takesSticks = onSticks != null
     SideEffect { layer.update(declared) }
-    DisposableEffect(router, layer, enabled) {
+    DisposableEffect(router, layer, enabled, takesSticks) {
         layer.update(declared)
+        layer.onSticks = if (takesSticks) { sticks -> latestSticks?.invoke(sticks) } else null
         if (enabled) router.attach(layer)
         onDispose { router.detach(layer) }
     }

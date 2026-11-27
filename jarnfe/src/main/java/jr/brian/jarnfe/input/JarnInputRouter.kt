@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.input
 
 import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,9 @@ class JarnInputLayerHandle internal constructor(
     internal var longPressLabels by mutableStateOf<Map<JarnAction, Int>>(emptyMap())
     internal var sequence = 0L
     internal var attached = false
+
+    /** Set when the layer opts in to analog sticks. See [JarnInputRouter.dispatch] for MotionEvent. */
+    internal var onSticks: ((JarnSticks) -> Unit)? = null
 
     fun update(bindings: JarnBindings) {
         entries = bindings.entries
@@ -83,6 +87,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     var sticksMute = false
 
     fun activate(screen: JarnScreen) {
+        if (screen != activeScreen) centerSticks()
         activeScreen = screen
     }
 
@@ -106,8 +111,58 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     }
 
     fun detach(layer: JarnInputLayerHandle) {
+        val wasReceiving = layer === stickReceiver()
         layer.attached = false
         layers.remove(layer)
+        if (wasReceiving) {
+            lastSticks = JarnSticks()
+            layer.onSticks?.invoke(lastSticks)
+        }
+    }
+
+    private val leftStick = JarnStickFilter()
+    private val rightStick = JarnStickFilter()
+    private var lastSticks = JarnSticks()
+
+    /**
+     * Joystick motion from each activity's `dispatchGenericMotionEvent`. Returns true, so Android
+     * doesn't also turn the stick into D-pad keys, only while a layer that opted in to sticks
+     * receives it. Otherwise it returns false and the stick acts as a D-pad exactly as before.
+     */
+    fun dispatch(event: MotionEvent): Boolean = event.jarnStickRaw()?.let(::dispatchSticks) ?: false
+
+    fun dispatchSticks(raw: JarnStickRaw): Boolean {
+        val sticks = JarnSticks(
+            left = leftStick.update(raw.leftX, raw.leftY),
+            right = rightStick.update(raw.rightX, raw.rightY),
+            eventTimeMs = raw.eventTimeMs,
+        )
+        val receiver = stickReceiver() ?: return false
+        if (sticks.left != lastSticks.left || sticks.right != lastSticks.right) {
+            lastSticks = sticks
+            receiver.onSticks?.invoke(sticks)
+        }
+        return !raw.hatPressed
+    }
+
+    /** The top layer on the active screen that takes sticks, unless a non-passive layer sits above it. */
+    private fun stickReceiver(): JarnInputLayerHandle? {
+        for (index in layers.indices.reversed()) {
+            val layer = layers[index]
+            if (layer.screen != activeScreen) continue
+            if (layer.onSticks != null) return layer
+            if (layer.mode != JarnLayerMode.Passive) return null
+        }
+        return null
+    }
+
+    private fun centerSticks() {
+        leftStick.reset()
+        rightStick.reset()
+        if (!lastSticks.isCentered) {
+            lastSticks = JarnSticks()
+            stickReceiver()?.onSticks?.invoke(lastSticks)
+        }
     }
 
     fun dispatch(event: KeyEvent): Boolean {
@@ -154,6 +209,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     /** Call when a window loses focus. Pending presses end without firing. */
     fun cancelPresses() {
         presses.entries.removeAll { it.value.route != Route.PassThrough }
+        centerSticks()
     }
 
     /** True while a sheet, keyboard, grab or other non-passive layer is open on [screen]. */
