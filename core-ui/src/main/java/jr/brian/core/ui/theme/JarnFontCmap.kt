@@ -10,7 +10,7 @@ private const val ENCODING_RECORD_BYTES = 8
  * The code points a TrueType/OpenType font maps, read from its cmap table (formats 4 and 12).
  * Paint.hasGlyph also counts system fallback fonts, so it cannot tell a Latin subset from a full face.
  */
-internal fun jarnCmapCoverage(bytes: ByteArray): (Int) -> Boolean {
+fun jarnCmapCoverage(bytes: ByteArray): (Int) -> Boolean {
     val buf = ByteBuffer.wrap(bytes)
     val tables = buf.getShort(4).toInt() and 0xFFFF
     val cmap = (0 until tables)
