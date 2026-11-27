@@ -13,10 +13,7 @@ private const val DEFAULT_ROMS_DIR = "ROMs"
 private const val HOME_TOKEN = "~"
 private const val ESPATH_TOKEN = "%ESPATH%"
 private const val PRIMARY_VOLUME = "primary"
-private val SETTINGS_FILES = listOf("settings/es_settings.xml", "es_settings.xml")
 private val VIRTUAL_VOLUMES = setOf("emulated", "self")
-
-private val RomDirectoryEntry = Regex("""<string\s+name\s*=\s*"ROMDirectory"\s+value\s*=\s*"([^"]*)"""")
 
 /** Where ES-DE keeps its games, and whether ES-DE's own settings said so. */
 data class EsdeRomsFolder(val path: String, val fromSettings: Boolean)
@@ -31,8 +28,7 @@ interface EsdeRomsFolderSource {
 }
 
 /** The raw `ROMDirectory` value in an `es_settings.xml`, or null when it is missing or blank. */
-internal fun parseEsdeRomDirectory(xml: String): String? =
-    RomDirectoryEntry.find(xml)?.groupValues?.get(1)?.let(::unescapeXml)?.trim()?.takeIf { it.isNotEmpty() }
+internal fun parseEsdeRomDirectory(xml: String): String? = parseEsdeSetting(xml, EsdeSettingKey.ROMDirectory)
 
 /**
  * ES-DE writes `~` for the home folder and `%ESPATH%` for its own folder. On Android the home
@@ -60,13 +56,6 @@ fun storageDocumentId(path: String): String? {
     if (!clean.startsWith("$STORAGE_ROOT/") || segments.first() in VIRTUAL_VOLUMES) return null
     return segments.first() + ":" + segments.drop(1).joinToString("/")
 }
-
-private fun unescapeXml(value: String): String = value
-    .replace("&quot;", "\"")
-    .replace("&apos;", "'")
-    .replace("&lt;", "<")
-    .replace("&gt;", ">")
-    .replace("&amp;", "&")
 
 /**
  * Looks in ES-DE's folder next to the configured media folder, then in `ES-DE` on each volume.
@@ -99,7 +88,7 @@ class EsdeRomsFolderFinder internal constructor(
     }
 
     private fun fromSettings(): String? = esdeDirs().firstNotNullOfOrNull { dir ->
-        SETTINGS_FILES.firstNotNullOfOrNull { name -> readText(File(dir, name)) }
+        ESDE_SETTINGS_FILES.firstNotNullOfOrNull { name -> readText(File(dir, name)) }
             ?.let(::parseEsdeRomDirectory)
             ?.let { resolveEsdeRomDirectory(it, INTERNAL_STORAGE, dir.path) }
             ?.takeIf { isDirectory(File(it)) }
@@ -118,4 +107,4 @@ private fun storageVolumes(): List<File> {
     return listOf(File(INTERNAL_STORAGE)) + removable.sortedBy { it.name }
 }
 
-private fun readTextOrNull(file: File): String? = runCatching { file.readText() }.getOrNull()
+internal fun readTextOrNull(file: File): String? = runCatching { file.readText() }.getOrNull()
