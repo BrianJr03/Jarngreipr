@@ -49,7 +49,7 @@ class LibraryJumpTest {
                 itemKey = { it },
                 focusedKey = focused,
                 onFocused = { focused = it },
-                cellMinSize = 80.dp,
+                geometry = LibraryGridGeometry(80.dp),
                 refocusSignal = refocus,
                 jump = jump,
                 onLanded = ::land,

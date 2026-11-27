@@ -27,6 +27,7 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryFocusGrid
+import jr.brian.jarnfe.library.LibraryGridGeometry
 import jr.brian.jarnfe.library.LibrarySelection
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.settings.rememberJarnLauncherPrefs
@@ -78,7 +79,7 @@ private fun SearchAppTiles(
         itemKey = JarnDockApp::packageName,
         focusedKey = search.focusedApp?.takeIf { key -> apps.any { it.packageName == key } },
         onFocused = { search.focusedApp = it },
-        cellMinSize = SearchAppCellMinSize,
+        geometry = LibraryGridGeometry(SearchAppCellMinSize),
         modifier = modifier,
         refocusSignal = JarnLibrary.stageRefocus,
     ) { app, modifier ->

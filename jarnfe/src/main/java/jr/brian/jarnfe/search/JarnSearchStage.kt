@@ -22,6 +22,7 @@ import jr.brian.jarnfe.library.JarnLibraryGame
 import jr.brian.jarnfe.library.JarnLibrarySystem
 import jr.brian.jarnfe.library.LibraryCoverArt
 import jr.brian.jarnfe.library.LibraryFocusGrid
+import jr.brian.jarnfe.library.LibraryGridGeometry
 import jr.brian.jarnfe.library.LibrarySelection
 import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.gameCountText
@@ -96,7 +97,7 @@ private fun SearchGameGrid(games: List<JarnLibraryGame>) {
                 JarnLibrary.update { focusSearchResult(LibrarySelection.Game(game)) }
             }
         },
-        cellMinSize = SearchGameCellMinSize,
+        geometry = LibraryGridGeometry(SearchGameCellMinSize),
         refocusSignal = JarnLibrary.stageRefocus,
     ) { game, modifier ->
         JarnGameTile(
@@ -119,7 +120,7 @@ private fun SearchSystemGrid(systems: List<JarnLibrarySystem>) {
                 JarnLibrary.update { focusSearchResult(LibrarySelection.System(system)) }
             }
         },
-        cellMinSize = SearchSystemCellMinSize,
+        geometry = LibraryGridGeometry(SearchSystemCellMinSize),
         refocusSignal = JarnLibrary.stageRefocus,
     ) { system, modifier ->
         JarnSystemTile(

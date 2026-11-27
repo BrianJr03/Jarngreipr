@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
 import jr.brian.core.ui.focus.JarnTabsFocus
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
@@ -50,12 +51,26 @@ private const val FIRST_ROW_BELOW_HEADER = 1
 internal val LibraryGridColumnSpacing = 12.dp
 
 /**
+ * How a grid sizes and spaces its cells. Columns fit as many [cellMinSize] cells as there is room
+ * for, unless [columns] fixes the count. An unspecified [rowSpacing] takes the theme's medium space.
+ */
+internal data class LibraryGridGeometry(
+    val cellMinSize: Dp,
+    val rowSpacing: Dp = Dp.Unspecified,
+    val columnSpacing: Dp = LibraryGridColumnSpacing,
+    val columns: Int? = null,
+) {
+    val cells: GridCells get() = columns?.let { GridCells.Fixed(it) } ?: GridCells.Adaptive(cellMinSize)
+}
+
+/**
  * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
  * the focused item disappears in a refresh. After a Library tab switch it focuses that remembered
  * item once the tab has slid open, or its first item when the remembered one is gone (see
  * [rememberedOrFirst]). With [itemTitle] and [letterJumpEnabled], holding Up
  * or Down jumps by letter (see [gridLetterJumpKeys]) and shows the letter badge. Each change of
- * [takeFocusSignal] focuses [focusedKey] even when the tab strip holds focus.
+ * [takeFocusSignal] focuses [focusedKey] even when the tab strip holds focus. [geometry] sizes and
+ * spaces the cells.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -64,11 +79,10 @@ internal fun <T : Any> LibraryFocusGrid(
     itemKey: (T) -> String,
     focusedKey: String?,
     onFocused: (String) -> Unit,
-    cellMinSize: Dp,
+    geometry: LibraryGridGeometry,
     modifier: Modifier = Modifier,
     refocusSignal: Int = 0,
     takeFocusSignal: Int = 0,
-    rowSpacing: Dp = JarnTheme.space.md,
     header: (@Composable () -> Unit)? = null,
     jump: LibraryJump? = null,
     onLanded: (String) -> Unit = {},
@@ -121,7 +135,7 @@ internal fun <T : Any> LibraryFocusGrid(
     CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
         Box(modifier.fillMaxSize()) {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(cellMinSize),
+                columns = geometry.cells,
                 state = gridState,
                 modifier = Modifier
                     .fillMaxSize()
@@ -134,8 +148,8 @@ internal fun <T : Any> LibraryFocusGrid(
                             ?.let { itemKey(items[it]) }
                     },
                 contentPadding = libraryGridPadding(),
-                horizontalArrangement = Arrangement.spacedBy(LibraryGridColumnSpacing),
-                verticalArrangement = Arrangement.spacedBy(rowSpacing),
+                horizontalArrangement = Arrangement.spacedBy(geometry.columnSpacing),
+                verticalArrangement = Arrangement.spacedBy(geometry.rowSpacing.takeOrElse { JarnTheme.space.md }),
             ) {
                 header?.let { content ->
                     item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {

@@ -33,21 +33,22 @@ internal fun <T : Any> LibraryShelfPreview(
 ) {
     val shown: List<T?> = items.take(PREVIEW_SHELF_ITEMS).ifEmpty { List(PREVIEW_SHELF_ITEMS) { null } }
     val center = (shown.size - 1) / 2
+    val geometry = kind.geometry
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val cardWidth = maxWidth * kind.widthFraction
+        val cardWidth = maxWidth * geometry.widthFraction
         val widthPx = with(LocalDensity.current) { maxWidth.toPx() }
         val cardPx = with(LocalDensity.current) { cardWidth.toPx() }
-        Box(Modifier.fillMaxWidth().height(cardWidth / kind.aspectRatio)) {
+        Box(Modifier.fillMaxWidth().height(cardWidth / geometry.aspectRatio)) {
             shown.forEachIndexed { index, item ->
                 val distance = index - center
-                val x = shelfSlotX(distance, widthPx, kind, cardPx).roundToInt()
+                val x = shelfSlotX(distance, widthPx, geometry, cardPx).roundToInt()
                 Box(
                     Modifier
                         .align(Alignment.Center)
                         .offset { IntOffset(x, 0) }
                         .zIndex((SHELF_COMPOSED_REACH - abs(distance)).toFloat())
                         .graphicsLayer {
-                            scaleX = shelfSlotScale(distance, kind)
+                            scaleX = shelfSlotScale(distance, geometry)
                             scaleY = scaleX
                             alpha = shelfSlotVisibility(shelfSlotAlpha(distance))
                         }
@@ -55,7 +56,7 @@ internal fun <T : Any> LibraryShelfPreview(
                 ) {
                     LibraryShelfCard(
                         LibraryShelfSlotCard(
-                            aspectRatio = kind.aspectRatio,
+                            aspectRatio = geometry.aspectRatio,
                             modifier = Modifier.focusProperties { canFocus = false },
                             onClick = {},
                             description = description(item),
