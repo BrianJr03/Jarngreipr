@@ -79,7 +79,7 @@ class LibraryTabRevealTest {
                     itemKey = { it },
                     focusedKey = remembered(tab),
                     onFocused = {},
-                    cellMinSize = 80.dp,
+                    geometry = LibraryGridGeometry(80.dp),
                 ) { id, modifier -> Box(modifier.size(80.dp).recordFocus(id).focusable()) }
             }
         }
@@ -269,7 +269,7 @@ class LibraryTabRevealTest {
                         itemKey = { it },
                         focusedKey = "${tab}9",
                         onFocused = {},
-                        cellMinSize = 80.dp,
+                        geometry = LibraryGridGeometry(80.dp),
                     ) { id, modifier -> Box(modifier.size(80.dp).recordFocus(id).focusable()) }
                 }
             }

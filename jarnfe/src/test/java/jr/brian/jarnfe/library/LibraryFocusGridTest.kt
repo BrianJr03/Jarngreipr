@@ -39,7 +39,7 @@ class LibraryFocusGridTest {
                             itemKey = { it },
                             focusedKey = "item30",
                             onFocused = {},
-                            cellMinSize = 80.dp,
+                            geometry = LibraryGridGeometry(80.dp),
                         ) { id, modifier ->
                             Box(modifier.size(80.dp).testTag(id).focusable())
                         }

@@ -85,7 +85,7 @@ internal class LibraryShelfContent<T>(
  * shows and [onFocused] waits [SHELF_SETTLE_MS] for the row to settle, so the Deck doesn't
  * flicker through every cover. With [letterJumpEnabled], a hold past [LETTER_JUMP_HOLD_MS] jumps
  * by letter instead (see [letterJumpTarget]). Groups and the badge read [titleKey], the list's
- * sort key.
+ * sort key. [geometry] sizes and spaces the cards, by default [kind]'s own.
  */
 @Composable
 internal fun <T : Any> LibraryShelf(
@@ -100,6 +100,7 @@ internal fun <T : Any> LibraryShelf(
     onLanded: (String) -> Unit = {},
     letterJumpEnabled: Boolean = true,
     titleKey: (String) -> String = { it },
+    geometry: LibraryShelfGeometry = kind.geometry,
 ) {
     if (items.isEmpty()) return
     var chosenKey by remember { mutableStateOf(focusedKey) }
@@ -168,16 +169,16 @@ internal fun <T : Any> LibraryShelf(
         val fit = shelfFit(
             width = maxWidth.value,
             height = maxHeight.value,
-            kind = kind,
+            geometry = geometry,
             narrow = narrow,
             topMargin = JarnTheme.space.focusEdge.value,
-            captionReserve = if (content.showsCaption) kind.captionReserve else SHELF_NO_CAPTION,
+            captionReserve = if (content.showsCaption) geometry.captionReserve else SHELF_NO_CAPTION,
         )
-        val metrics = ShelfMetrics(kind, maxWidth, fit)
+        val metrics = ShelfMetrics(geometry, maxWidth, fit)
         val cardWidth = metrics.cardWidth
-        swipeStepPx = with(LocalDensity.current) { (cardWidth * kind.neighborScale).toPx() }
+        swipeStepPx = with(LocalDensity.current) { (cardWidth * geometry.neighborScale).toPx() }
         LibraryShelfWash(items[center], content)
-        shelfComposedIndices(center, items.size).forEach { index ->
+        shelfComposedIndices(center, items.size, geometry.neighborsBefore, geometry.neighborsAfter).forEach { index ->
             val item = items[index]
             val itemKey = content.itemKey(item)
             key(itemKey) {
@@ -197,7 +198,7 @@ internal fun <T : Any> LibraryShelf(
 
 internal val SHELF_NARROW_WIDTH = 600.dp
 
-internal class ShelfMetrics(val kind: LibraryShelfKind, val width: Dp, fit: ShelfFit) {
+internal class ShelfMetrics(val geometry: LibraryShelfGeometry, val width: Dp, fit: ShelfFit) {
     val cardWidth: Dp = fit.cardWidth.dp
     val cardHeight: Dp = fit.cardHeight.dp
     val centerY: Dp = fit.centerY.dp
@@ -299,9 +300,10 @@ private fun BoxScope.ShelfSlot(
     val widthPx = with(density) { metrics.width.toPx() }
     val cardPx = with(density) { metrics.cardWidth.toPx() }
     val minGapPx = with(density) { metrics.minGap.toPx() }
-    val targetX = shelfSlotX(distance, widthPx, metrics.kind, cardPx, minGapPx)
-    val targetScale = shelfSlotScale(distance, metrics.kind)
-    val targetAlpha = shelfSlotAlpha(distance)
+    val geometry = metrics.geometry
+    val targetX = shelfSlotX(distance, widthPx, geometry, cardPx, minGapPx)
+    val targetScale = shelfSlotScale(distance, geometry)
+    val targetAlpha = shelfSlotAlpha(distance, geometry.neighborsBefore, geometry.neighborsAfter)
     val x = remember { Animatable(targetX) }
     val scale = remember { Animatable(targetScale) }
     val alpha = remember { Animatable(targetAlpha) }
@@ -330,7 +332,7 @@ private fun BoxScope.ShelfSlot(
     ) {
         card(
             LibraryShelfSlotCard(
-                aspectRatio = metrics.kind.aspectRatio,
+                aspectRatio = geometry.aspectRatio,
                 modifier = modifier,
                 onClick = onClick,
                 description = description,

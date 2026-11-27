@@ -5,6 +5,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+private val SystemsShelf = LibraryShelfKind.Systems.geometry
+private val GamesShelf = LibraryShelfKind.Games.geometry
+
 class LibraryShelfLayoutTest {
     @Test
     fun `four or more items wrap both ways`() {
@@ -45,7 +48,7 @@ class LibraryShelfLayoutTest {
 
     @Test
     fun `neighbors sit beside the center card, smaller and dimmer`() {
-        val kind = LibraryShelfKind.Games
+        val kind = LibraryShelfKind.Games.geometry
         assertEquals(0f, shelfSlotX(0, 1000f, kind, card = 170f), 0f)
         val first = shelfSlotX(1, 1000f, kind, card = 170f)
         assertEquals(85f + 16f + 59.5f, first, 0.01f)
@@ -57,7 +60,7 @@ class LibraryShelfLayoutTest {
 
     @Test
     fun `a tall shelf keeps the mockup width and sits near the mockup center`() {
-        val fit = shelfFit(1000f, 600f, LibraryShelfKind.Games, narrow = false, topMargin = 20f, captionReserve = 72f)
+        val fit = shelfFit(1000f, 600f, GamesShelf, narrow = false, topMargin = 20f, captionReserve = 72f)
         assertEquals(170f, fit.cardWidth, 0.01f)
         assertEquals(600f * SHELF_CENTER_Y, fit.centerY, 0.01f)
     }
@@ -65,15 +68,15 @@ class LibraryShelfLayoutTest {
     @Test
     fun `a short shelf under the continue card shrinks so card and caption stay inside`() {
         val height = 200f
-        val fit = shelfFit(1000f, height, LibraryShelfKind.Systems, narrow = false, topMargin = 20f, captionReserve = 72f)
+        val fit = shelfFit(1000f, height, SystemsShelf, narrow = false, topMargin = 20f, captionReserve = 72f)
         assertTrue(fit.centerY - fit.cardHeight / 2 >= 20f - 0.01f)
         assertTrue(fit.centerY + fit.cardHeight / 2 + 72f <= height + 0.01f)
-        assertEquals(fit.cardHeight * LibraryShelfKind.Systems.aspectRatio, fit.cardWidth, 0.01f)
+        assertEquals(fit.cardHeight * LibraryShelfKind.Systems.geometry.aspectRatio, fit.cardWidth, 0.01f)
     }
 
     @Test
     fun `no room at all leaves an empty card rather than overlapping`() {
-        val fit = shelfFit(1000f, 60f, LibraryShelfKind.Games, narrow = false, topMargin = 20f, captionReserve = 72f)
+        val fit = shelfFit(1000f, 60f, GamesShelf, narrow = false, topMargin = 20f, captionReserve = 72f)
         assertEquals(0f, fit.cardHeight, 0f)
     }
 
