@@ -1,0 +1,13 @@
+# ES-DE translator report: wheel-video
+[translated]
+  system carousel systemCarousel
+  gamelist carousel gamelistCarousel
+  gamelist video preview
+[adjusted]
+  system carousel systemCarousel: WheelAsShelf
+  system carousel systemCarousel: PerSystemFileAsSystemArt
+  gamelist carousel gamelistCarousel: WheelAsShelf
+[notUsed]
+  theme -: TransitionsAndTriggers
+[assets]
+[colors]

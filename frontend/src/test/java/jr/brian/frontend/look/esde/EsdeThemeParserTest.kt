@@ -161,6 +161,17 @@ class EsdeThemeParserTest {
     }
 
     @Test
+    fun `later variables replace earlier ones and empty values are ignored`() {
+        fixture.theme(
+            body = "<variables><panel>111111</panel><keep>AAAAAA</keep></variables><include>./inc.xml</include>" +
+                fixture.element("gamelist", "text", "t", "color" to "\${panel}", "background" to "\${keep}"),
+        )
+        fixture.theme("inc.xml", body = "<variables><panel>222222</panel><keep></keep></variables>")
+
+        assertEquals(mapOf("color" to "222222", "background" to "AAAAAA"), parse().props("text", "t"))
+    }
+
+    @Test
     fun `unknown variables are reported per system and read as empty`() {
         fixture.theme(body = fixture.element("gamelist", "text", "t", "color" to "\${missing}"))
 

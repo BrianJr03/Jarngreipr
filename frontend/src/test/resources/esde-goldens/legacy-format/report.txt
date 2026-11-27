@@ -1,0 +1,7 @@
+# ES-DE translator report: legacy-format
+[translated]
+[adjusted]
+[notUsed]
+  theme -: LegacyTheme
+[assets]
+[colors]

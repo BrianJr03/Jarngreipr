@@ -1,0 +1,94 @@
+{
+    "schema": 1,
+    "meta": {
+        "name": "Fixture Grid",
+        "source": "es-de"
+    },
+    "tokens": {
+        "colors": {
+            "bg": "#000000",
+            "surface": "#111111",
+            "raised": "#222222",
+            "textHigh": "#FFFFFF",
+            "textMid": "#DDDDDD",
+            "textLow": "#BBBBBB",
+            "accent": "#FF8800",
+            "danger": "#FF4444",
+            "success": "#44FF44"
+        }
+    },
+    "views": {
+        "systems": {
+            "primary": {
+                "type": "grid",
+                "box": {
+                    "x": 0.05,
+                    "y": 0.2,
+                    "width": 0.9,
+                    "height": 0.70000005
+                },
+                "art": {
+                    "type": "system",
+                    "kind": "logo"
+                },
+                "columns": 4,
+                "itemAspect": 1.7777778,
+                "spacing": 0.022222223
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-background",
+                    "rect": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 1.0,
+                        "height": 1.0
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "file",
+                        "path": "bg/plain.webp"
+                    },
+                    "fit": "fill"
+                }
+            ]
+        },
+        "games": {
+            "primary": {
+                "type": "grid",
+                "box": {
+                    "x": 0.03,
+                    "y": 0.12,
+                    "width": 0.94,
+                    "height": 0.8
+                },
+                "art": {
+                    "type": "media",
+                    "kind": "Cover"
+                },
+                "columns": 6,
+                "itemAspect": 0.8080808,
+                "spacing": 0.012765958
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-background",
+                    "rect": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 1.0,
+                        "height": 1.0
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "file",
+                        "path": "bg/plain.webp"
+                    },
+                    "fit": "fill"
+                }
+            ]
+        }
+    }
+}
