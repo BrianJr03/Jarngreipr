@@ -1,0 +1,11 @@
+tier=AccentOnSavedLook darkVersion=null
+colors=ThemeColors(bg=#141211, surface=#1F1B19, raised=#2B2522, textHigh=#F6EFE8, textMid=#C9BDB2, textLow=#A39689, accent=#5AB4FF, danger=#FF7A6B, success=#7FD99A, line=#4A403A, focus=#A0D3FF)
+fonts=EsdeFontFiles(display=null, body=null)
+assets=
+note Colors(tier=AccentOnSavedLook, darkVersion=null)
+note LogoNotCopied(systemId=nes)
+note BackgroundNotCopied(systemId=nes)
+note LogoNotCopied(systemId=snes)
+note BackgroundNotCopied(systemId=snes)
+note LogoNotCopied(systemId=n64)
+note BackgroundNotCopied(systemId=n64)
