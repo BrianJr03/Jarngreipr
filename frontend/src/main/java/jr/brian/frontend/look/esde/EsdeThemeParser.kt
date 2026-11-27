@@ -182,9 +182,11 @@ class EsdeThemeParser(
         private fun EsdeXmlNode.selected(tag: String, chosen: String?): List<EsdeXmlNode> =
             childrenNamed(tag).filter { block -> block.names().any { it == ALL_OPTIONS || it == chosen } }
 
+        /** Like ES-DE, a later definition replaces an earlier one and an empty value is ignored. */
         private fun defineVariables(node: EsdeXmlNode, file: File) {
             node.children.forEach { variable ->
-                variables[variable.name] = substitute(variable.text, file, variable.line)
+                val value = substitute(variable.text, file, variable.line)
+                if (value.isNotEmpty()) variables[variable.name] = value
             }
         }
 

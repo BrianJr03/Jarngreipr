@@ -35,6 +35,8 @@ sealed interface ThemeLayer {
         val source: ThemePicture,
         val fit: ThemeFit = ThemeFit.Fit,
         val corner: ThemeCorner = ThemeCorner.None,
+        /** Tried in order when [source] has nothing for the focused item or fails to load. */
+        val fallbacks: List<ThemePicture> = emptyList(),
     ) : ThemeLayer
 
     @Serializable
@@ -50,7 +52,10 @@ sealed interface ThemeLayer {
         val color: ThemeColorRole = ThemeColorRole.TextHigh,
         val align: ThemeAlign = ThemeAlign.Start,
         val maxLines: Int = 1,
-    ) : ThemeLayer
+        /** Where the text sits in its rect: start is the top, end the bottom. */
+        val verticalAlign: ThemeAlign = ThemeAlign.Center,
+        override val stack: String? = null,
+    ) : ThemeLayer, ThemeStackable
 
     /** The focused game's rating as stars. */
     @Serializable
@@ -62,7 +67,8 @@ sealed interface ThemeLayer {
         override val opacity: Float = 1f,
         override val visibleWhen: ThemeVisibleWhen? = null,
         val color: ThemeColorRole = ThemeColorRole.Accent,
-    ) : ThemeLayer
+        override val stack: String? = null,
+    ) : ThemeLayer, ThemeStackable
 
     @Serializable
     @SerialName("date")
@@ -77,7 +83,9 @@ sealed interface ThemeLayer {
         val style: ThemeTextRole = ThemeTextRole.Label,
         val color: ThemeColorRole = ThemeColorRole.TextMid,
         val align: ThemeAlign = ThemeAlign.Start,
-    ) : ThemeLayer
+        val verticalAlign: ThemeAlign = ThemeAlign.Center,
+        override val stack: String? = null,
+    ) : ThemeLayer, ThemeStackable
 
     /** A plain filled plate, for backing text or framing art. */
     @Serializable
@@ -91,6 +99,8 @@ sealed interface ThemeLayer {
         val color: ThemeColorRole = ThemeColorRole.Surface,
         val corner: ThemeCorner = ThemeCorner.Md,
         val outlined: Boolean = false,
+        /** Fades one edge out to transparent, so the panel melts into the art behind it. */
+        val fade: ThemeFade? = null,
     ) : ThemeLayer
 
     /** The focused game's video, with [fallback] shown before it starts or when there is none. */
@@ -106,8 +116,42 @@ sealed interface ThemeLayer {
         val audio: Boolean = false,
         val fallback: ThemePicture? = ThemePicture.GameMedia(MediaKind.Screenshot),
         val corner: ThemeCorner = ThemeCorner.None,
+        /** Tried in order after [fallback]. */
+        val fallbacks: List<ThemePicture> = emptyList(),
     ) : ThemeLayer
 }
+
+/** A panel edge that fades from the panel's color to transparent over [length] of the panel, 0 to 1. */
+@Serializable
+data class ThemeFade(
+    val edge: ThemeEdge,
+    val length: Float = DEFAULT_LENGTH,
+) {
+    companion object {
+        const val DEFAULT_LENGTH = 0.25f
+    }
+}
+
+/** A side of a layer. Start and end follow the reading direction. */
+@Serializable
+enum class ThemeEdge {
+    @SerialName("top") Top,
+    @SerialName("bottom") Bottom,
+    @SerialName("start") Start,
+    @SerialName("end") End,
+}
+
+/**
+ * Text, dates and ratings that share a [stack] name draw as one column: rows (members with the same
+ * top) keep their order, and a member with nothing to show, or less text than its rect holds,
+ * gives its room to the rows below instead of leaving a hole.
+ */
+interface ThemeStackable {
+    val stack: String?
+}
+
+/** The layer's stack name, or null when it draws on its own. */
+val ThemeLayer.stack: String? get() = (this as? ThemeStackable)?.stack
 
 /** Drops layers of a type this build doesn't know, so a newer theme's extra layers don't refuse the theme. */
 internal object ThemeLayerListSerializer :

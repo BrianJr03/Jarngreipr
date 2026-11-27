@@ -25,14 +25,14 @@ import kotlinx.coroutines.delay
  */
 @Composable
 internal fun ThemeVideoLayer(layer: ThemeLayer.Video, decor: ThemeDecorFocus, decodeCap: ThemePxSize?) {
-    val fallback = layer.fallback?.let { resolveThemePicture(it, decor.settled, decor.media, decor.themeDir) }
+    val fallbacks = resolveThemePictures(layer.pictures, decor.settled, decor.media, decor.themeDir)
     val game = rememberDelayedGame(decor.settled.game, layer.delayMs.toLong())
     val display = rememberJarnDisplay()
     val preview = remember(display, layer.audio) {
         display.nowVideoPreview().let { it.copy(muted = it.muted || !layer.audio, crop = true) }
     }
     Box(Modifier.fillMaxSize().clip(layer.corner.shape())) {
-        if (fallback != null) ThemePictureLayer(fallback, ThemeFit.Crop, ThemeCorner.None, decodeCap)
+        if (fallbacks.isNotEmpty()) ThemePictureLayer(fallbacks, ThemeFit.Crop, ThemeCorner.None, decodeCap)
         if (game != null) NowSceneVideo(LibrarySelection.Game(game), preview)
     }
 }

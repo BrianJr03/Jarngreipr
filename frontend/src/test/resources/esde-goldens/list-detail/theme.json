@@ -1,0 +1,103 @@
+{
+    "schema": 1,
+    "meta": {
+        "name": "Fixture Detail",
+        "source": "es-de"
+    },
+    "tokens": {
+        "colors": {
+            "bg": "#000000",
+            "surface": "#111111",
+            "raised": "#222222",
+            "textHigh": "#FFFFFF",
+            "textMid": "#DDDDDD",
+            "textLow": "#BBBBBB",
+            "accent": "#FF8800",
+            "danger": "#FF4444",
+            "success": "#44FF44"
+        }
+    },
+    "views": {
+        "systems": {
+            "primary": {
+                "type": "list",
+                "box": {
+                    "x": 0.05,
+                    "y": 0.2,
+                    "width": 0.4,
+                    "height": 0.7
+                }
+            }
+        },
+        "games": {
+            "primary": {
+                "type": "list",
+                "box": {
+                    "x": 0.03,
+                    "y": 0.15,
+                    "width": 0.45,
+                    "height": 0.75
+                },
+                "rows": 11
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-art",
+                    "rect": {
+                        "x": 0.52,
+                        "y": 0.15,
+                        "width": 0.44,
+                        "height": 0.4
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "media",
+                        "kind": "Miximage"
+                    }
+                },
+                {
+                    "type": "date",
+                    "id": "datetime-released",
+                    "rect": {
+                        "x": 0.75,
+                        "y": 0.6,
+                        "width": 0.4,
+                        "height": 0.0675
+                    },
+                    "z": -10,
+                    "field": "releaseDate",
+                    "style": "title"
+                },
+                {
+                    "type": "text",
+                    "id": "text-summary",
+                    "rect": {
+                        "x": 0.52,
+                        "y": 0.68,
+                        "width": 0.44,
+                        "height": 0.22
+                    },
+                    "z": -10,
+                    "content": {
+                        "type": "game",
+                        "field": "description"
+                    },
+                    "style": "title",
+                    "maxLines": 3
+                },
+                {
+                    "type": "rating",
+                    "id": "rating-stars",
+                    "rect": {
+                        "x": 0.52,
+                        "y": 0.6,
+                        "width": 0.2,
+                        "height": 0.04
+                    },
+                    "z": -5
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,12 @@
+# ES-DE translator report: hostile
+[translated]
+  gamelist textlist gamelistTextlist
+[adjusted]
+[notUsed]
+  system -: NoPrimary
+  gamelist image escape: NothingReadable
+  gamelist image home: NothingReadable
+  gamelist text unknown: NothingReadable
+  theme -: TransitionsAndTriggers
+[assets]
+[colors]

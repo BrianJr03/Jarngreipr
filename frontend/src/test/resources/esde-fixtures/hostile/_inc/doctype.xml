@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE theme [ <!ENTITY boom "boom"> ]>
+<theme>
+    <view name="system">
+        <text name="entity">
+            <text>&boom;</text>
+        </text>
+    </view>
+</theme>

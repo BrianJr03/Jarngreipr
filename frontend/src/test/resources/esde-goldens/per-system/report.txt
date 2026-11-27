@@ -1,0 +1,17 @@
+# ES-DE translator report: per-system
+[translated]
+  gamelist textlist gamelistTextlist
+  gamelist image background
+  gamelist image systemLogo
+[adjusted]
+  gamelist image background: PerSystemFileAsSystemArt
+  gamelist image background: SizeGuessed
+  gamelist image systemLogo: SizeGuessed
+  gamelist image systemLogo: ShownOnSomeSystems
+[notUsed]
+  system -: NoPrimary
+  theme -: TransitionsAndTriggers
+[assets]
+  nes/logo.svg
+[colors]
+  gamelist textlist gamelistTextlist backgroundColor=101820

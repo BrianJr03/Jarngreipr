@@ -1,0 +1,27 @@
+# ES-DE parser golden: color-schemes
+themeName=Fixture Schemes
+variants=
+colorSchemes=dusk "Dusk", paper "Paper", debug "Debug" (hidden)
+fontSizes=
+aspectRatios=
+selection=variant:null colorScheme:paper fontSize:null aspectRatio:null
+legacy=false
+[system nes]
+  view system
+    image background: color=F6F3EC; size=1 1
+  view gamelist
+    image background: color=F6F3EC; size=1 1
+    textlist gamelistTextlist: primaryColor=1E2227; selectorColor=B24A2E
+[system snes]
+  view system
+    image background: color=F6F3EC; size=1 1
+  view gamelist
+    image background: color=F6F3EC; size=1 1
+    textlist gamelistTextlist: primaryColor=1E2227; selectorColor=B24A2E
+[system n64]
+  view system
+    image background: color=F6F3EC; size=1 1
+  view gamelist
+    image background: color=F6F3EC; size=1 1
+    textlist gamelistTextlist: primaryColor=1E2227; selectorColor=B24A2E
+[issues]

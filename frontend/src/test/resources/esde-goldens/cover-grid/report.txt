@@ -1,0 +1,14 @@
+# ES-DE translator report: cover-grid
+[translated]
+  system grid systemGrid
+  system image background
+  gamelist grid gamelistGrid
+  gamelist image background
+[adjusted]
+  system grid systemGrid: PerSystemFileAsSystemArt
+  system -: MovedBelowHeaderBand
+[notUsed]
+  theme -: TransitionsAndTriggers
+[assets]
+  bg/plain.webp
+[colors]

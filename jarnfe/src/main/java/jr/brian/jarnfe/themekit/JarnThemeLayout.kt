@@ -68,9 +68,9 @@ private fun PlacedThemeChildren(
 ) {
     Layout(
         content = {
-            placed.below.forEach { key(it.layer.id) { ThemeSlot(it.bounds) { layer(it) } } }
+            ThemeSlots(placed.below, layer)
             key(PRIMARY_KEY) { ThemeSlot(placed.primary, primary) }
-            placed.above.forEach { key(it.layer.id) { ThemeSlot(it.bounds) { layer(it) } } }
+            ThemeSlots(placed.above, layer)
         },
     ) { measurables, constraints ->
         val placeables = measurables.mapNotNull { measurable ->
@@ -79,6 +79,21 @@ private fun PlacedThemeChildren(
         }
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeables.forEach { (placeable, rect) -> placeable.place(rect.left, rect.top) }
+        }
+    }
+}
+
+/** Each layer in its own slot, and each stack in one slot spanning its members. */
+@Composable
+private fun ThemeSlots(layers: List<PlacedThemeLayer>, layer: @Composable (PlacedThemeLayer) -> Unit) {
+    layers.slotItems().forEach { item ->
+        key(item.key) {
+            ThemeSlot(item.bounds) {
+                when (item) {
+                    is ThemeSlotItem.Single -> layer(item.placed)
+                    is ThemeSlotItem.Stack -> ThemeStack(item, layer)
+                }
+            }
         }
     }
 }

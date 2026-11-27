@@ -2,7 +2,9 @@ package jr.brian.jarnfe.themekit
 
 import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
+import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ViewSpec
+import jr.brian.core.model.theme.forArea
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,7 +39,8 @@ internal const val COVER_AREA_FRACTION = 0.5f
 internal const val COVER_OPACITY = 0.5f
 
 /**
- * Places [view] on [screen] and enforces the theme guardrails:
+ * Places [spec] on [screen], with its narrow patch when the screen is narrow (see [forArea]), and
+ * enforces the theme guardrails:
  * - The primary is grown to [MIN_PRIMARY_FRACTION] and clamped into the safe area, so it can't be hidden or off-screen.
  * - Layers above the primary that would mostly cover it are moved below it.
  * - Only the first video plays; later ones show their fallback picture or are dropped.
@@ -46,7 +49,8 @@ internal const val COVER_OPACITY = 0.5f
  * - Pictures decode at most at [DECODE_CAP_MULTIPLIER] times their on-screen size.
  * Layers with z of 0 or less draw below the primary, ties keeping their order in the theme.
  */
-internal fun resolveThemeView(view: ViewSpec, screen: ThemeScreen): PlacedThemeView {
+internal fun resolveThemeView(spec: ViewSpec, screen: ThemeScreen): PlacedThemeView {
+    val view = spec.forArea(screen.width, screen.height)
     val issues = mutableListOf<ThemeLayoutIssue>()
     val primary = placePrimary(view, screen, issues)
     val below = mutableListOf<PlacedThemeLayer>()
@@ -95,9 +99,9 @@ private fun growToMinimum(rect: ThemePxRect, safe: ThemePxRect): ThemePxRect {
 
 private fun limitVideos(layer: ThemeLayer, playingId: String?, issues: MutableList<ThemeLayoutIssue>): ThemeLayer? {
     if (layer !is ThemeLayer.Video || playingId == null) return layer
-    val fallback = layer.fallback
-    issues += ThemeLayoutIssue.ExtraVideo(layer.id, playingId, fallbackShown = fallback != null)
-    return fallback?.let {
+    val pictures = layer.pictures
+    issues += ThemeLayoutIssue.ExtraVideo(layer.id, playingId, fallbackShown = pictures.isNotEmpty())
+    return pictures.firstOrNull()?.let {
         ThemeLayer.Picture(
             id = layer.id,
             rect = layer.rect,
@@ -107,6 +111,7 @@ private fun limitVideos(layer: ThemeLayer, playingId: String?, issues: MutableLi
             source = it,
             fit = ThemeFit.Crop,
             corner = layer.corner,
+            fallbacks = pictures.drop(1),
         )
     }
 }
@@ -143,10 +148,13 @@ private fun coversPrimary(layer: ThemeLayer, bounds: ThemePxRect, primary: Theme
 }
 
 private fun decodeCapFor(layer: ThemeLayer, bounds: ThemePxRect, screen: ThemeScreen): ThemePxSize? {
-    val hasPicture = layer is ThemeLayer.Picture || (layer is ThemeLayer.Video && layer.fallback != null)
+    val hasPicture = layer is ThemeLayer.Picture || (layer is ThemeLayer.Video && layer.pictures.isNotEmpty())
     if (!hasPicture) return null
     return ThemePxSize(
         width = min(bounds.width, screen.width) * DECODE_CAP_MULTIPLIER,
         height = min(bounds.height, screen.height) * DECODE_CAP_MULTIPLIER,
     )
 }
+
+/** What a video shows before it plays or when it has none: [ThemeLayer.Video.fallback], then its fallbacks. */
+internal val ThemeLayer.Video.pictures: List<ThemePicture> get() = listOfNotNull(fallback) + fallbacks
