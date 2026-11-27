@@ -7,7 +7,10 @@ import androidx.compose.ui.unit.Dp
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.look.JarnBrowseView
+import jr.brian.jarnfe.themekit.FocusedItem
+import jr.brian.jarnfe.themekit.JarnThemeDecorView
 import jr.brian.jarnfe.themekit.JarnThemeLayout
+import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themekit.ThemeInsets
 
 /** Browse sits inside the stage, which already keeps clear of the bars and the hint bar. */
@@ -32,35 +35,36 @@ internal fun LibraryBrowseSwitch(
 }
 
 /**
- * Draws [kind]'s browse as the built-in theme for the saved [view], crossfading between them.
- * [grid] and [shelf] draw the list at the geometry the theme resolves to.
+ * Draws [kind]'s browse as [theme], crossfading when the theme changes. [grid] and [shelf] draw
+ * the list at the geometry the theme resolves to. Decor layers follow [focused], which is only
+ * read when the view has layers, so a theme without layers draws exactly as the built-ins did.
  */
 @Composable
 internal fun LibraryThemedBrowse(
-    view: JarnBrowseView,
+    theme: JarnThemeEntry,
     kind: LibraryShelfKind,
     cellMinSize: Dp,
+    focused: () -> FocusedItem,
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
 ) {
-    LibraryBrowseCrossfade(view) { shown ->
-        val theme = LibraryBuiltInThemes.forView(shown)
-        val spec = theme.spec.views[kind.themeView] ?: return@LibraryBrowseCrossfade
-        val pins = theme.pinsFor(kind.themeView)
-        JarnThemeLayout(
-            view = spec,
-            primary = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf) },
-            layer = {},
-            insets = BrowseInsets,
-        )
+    LibraryBrowseCrossfade(theme) { shown ->
+        val spec = shown.viewSpec(kind.themeView) ?: return@LibraryBrowseCrossfade
+        val pins = shown.theme.pinsFor(kind.themeView)
+        val primary: @Composable () -> Unit = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf) }
+        if (spec.layers.isEmpty()) {
+            JarnThemeLayout(view = spec, primary = primary, layer = {}, insets = BrowseInsets)
+        } else {
+            JarnThemeDecorView(view = spec, focused = focused(), primary = primary, themeDir = shown.themeDir, insets = BrowseInsets)
+        }
     }
 }
 
 @Composable
-private fun LibraryBrowseCrossfade(view: JarnBrowseView, content: @Composable (JarnBrowseView) -> Unit) {
+private fun <T> LibraryBrowseCrossfade(target: T, content: @Composable (T) -> Unit) {
     val motion = JarnTheme.motion
     val token = if (motion.reduced) motion.panel else motion.small
-    Crossfade(targetState = view, animationSpec = token.spec(), label = "browseView", content = content)
+    Crossfade(targetState = target, animationSpec = token.spec(), label = "browseView", content = content)
 }
 
 /** Lists the format has no Jarn component for yet fall back to the grid. */
@@ -93,4 +97,13 @@ private fun LibraryThemeGrid(
         return
     }
     BoxWithConstraints { grid(libraryGridGeometry(primary, cellMinSize, maxWidth)) }
+}
+
+internal fun JarnLibraryState.focusedSystemItem(): FocusedItem =
+    focusedSystem?.let(FocusedItem::System) ?: FocusedItem.None
+
+/** The game at [focusedKey] in [games], with its own system for system fields beside it. */
+internal fun JarnLibraryState.focusedGameItem(games: List<JarnLibraryGame>, focusedKey: String?): FocusedItem {
+    val game = games.firstOrNull { it.id == focusedKey } ?: return FocusedItem.None
+    return FocusedItem.Game(game, systems.items.firstOrNull { it.id == game.systemId })
 }

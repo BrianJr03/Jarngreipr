@@ -39,6 +39,7 @@ import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.launch.JarnGameFileStatus
 import jr.brian.jarnfe.look.rememberJarnDisplay
 import jr.brian.jarnfe.session.LibrarySection
+import jr.brian.jarnfe.themes.rememberJarnActiveTheme
 import jr.brian.jarnfe.transition.JarnSystemSlide
 
 internal val SystemCellMinSize = 148.dp
@@ -110,9 +111,10 @@ private fun LibrarySystems(
         empty = { LibraryEmptyMessage(systemsEmptyCopy(state.systems.hiddenCount), emptyActions) },
     ) {
         LibraryThemedBrowse(
-            view = display.systemView,
+            theme = rememberJarnActiveTheme().systems,
             kind = LibraryShelfKind.Systems,
             cellMinSize = cellMinSize,
+            focused = { library.state.focusedSystemItem() },
             grid = { geometry -> LibrarySystemGrid(library, geometry, onFocused, onOpenSystem) },
             shelf = { geometry -> LibrarySystemShelf(library, onFocused, onOpenSystem, geometry) },
         )
@@ -323,9 +325,10 @@ internal fun LibraryGames(
         empty = empty,
     ) {
         LibraryThemedBrowse(
-            view = display.gameView,
+            theme = rememberJarnActiveTheme().games,
             kind = LibraryShelfKind.Games,
             cellMinSize = cellMinSize,
+            focused = { library.state.focusedGameItem(feed.items, focusedKey) },
             grid = { geometry ->
                 LibraryFocusGrid(
                     items = feed.items,

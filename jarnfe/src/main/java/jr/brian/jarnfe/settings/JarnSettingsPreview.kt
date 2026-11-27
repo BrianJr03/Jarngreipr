@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnGameTile
 import jr.brian.core.ui.library.JarnSystemTile
@@ -48,6 +49,7 @@ import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.SystemCellMinSize
 import jr.brian.jarnfe.library.gameCountText
 import jr.brian.jarnfe.look.rememberJarnDisplay
+import jr.brian.jarnfe.themes.rememberJarnActiveTheme
 
 private const val PREVIEW_TILE_COUNT = 8
 private val PreviewAppTileWidth = 88.dp
@@ -57,6 +59,7 @@ private val PreviewAppIconSize = 48.dp
 @Composable
 internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
     val display = rememberJarnDisplay()
+    val theme = rememberJarnActiveTheme()
     val state = JarnLibrary.state
     val games = (state.recent.items + state.favorites.items).distinctBy { it.id }
     Column(
@@ -70,14 +73,14 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
             PreviewAppRow()
         } else {
             LibraryBrowseSwitch(
-                view = display.systemView,
+                view = theme.systems.browseView(ThemeView.Systems),
                 grid = {
                     PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
                 },
                 shelf = { PreviewSystemShelf(state.systems.items) },
             )
             LibraryBrowseSwitch(
-                view = display.gameView,
+                view = theme.games.browseView(ThemeView.Games),
                 grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
                 shelf = { PreviewGameShelf(games) },
             )

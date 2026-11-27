@@ -68,6 +68,7 @@ private fun shelfPrimary(kind: LibraryShelfKind): ThemePrimary.Shelf {
     )
 }
 
+/** The format needs colors, but built-ins follow the chosen Look, so these are never shown. */
 private fun builtInSpec(name: String, systems: ThemePrimary, games: ThemePrimary) = JarnThemeSpec(
     meta = ThemeMeta(name = name),
     tokens = ThemeTokens(colors = JarnLooks.Forge.colors.toThemeColors()),

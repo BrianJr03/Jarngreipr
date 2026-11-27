@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.R
 import jr.brian.core.ui.focus.JarnFocusStyle
@@ -73,9 +75,32 @@ fun JarnLookCard(
     interactionSource: MutableInteractionSource? = null,
     art: (@Composable BoxScope.() -> Unit)? = null,
 ) {
+    JarnChoiceCard(
+        name = look.displayName(),
+        chosen = chosen,
+        onClick = onClick,
+        modifier = modifier,
+        interactionSource = interactionSource,
+    ) { JarnLookPreview(look.resolvedColors, art, Modifier.weight(1f)) }
+}
+
+/**
+ * A pickable card in the look cards' style: [preview] on top, then [name] with a check when
+ * [chosen], then an optional [supporting] line.
+ */
+@Composable
+fun JarnChoiceCard(
+    name: String,
+    chosen: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    supporting: String? = null,
+    height: Dp = 156.dp,
+    interactionSource: MutableInteractionSource? = null,
+    preview: @Composable ColumnScope.() -> Unit,
+) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val shape = JarnTheme.radius.mdShape
-    val preview = look.resolvedColors
     val chosenState = stringResource(
         if (chosen) R.string.jarn_state_selected else R.string.jarn_state_not_selected,
     )
@@ -87,14 +112,15 @@ fun JarnLookCard(
                 stateDescription = chosenState
             }
             .jarnInteractive(shape, source, role = Role.RadioButton, focusStyle = JarnFocusStyle.Scale, onClick = onClick)
-            .height(156.dp)
+            .height(height)
             .background(JarnTheme.colors.surface, shape)
             .then(chosenBorder)
             .padding(JarnTheme.space.sm),
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
     ) {
-        JarnLookPreview(preview, art, Modifier.weight(1f))
-        JarnLookCardFooter(look.displayName(), chosen)
+        preview()
+        JarnLookCardFooter(name, chosen)
+        supporting?.let { JarnText(it, JarnTheme.type.caption, JarnTheme.colors.textMid, maxLines = 2) }
     }
 }
 

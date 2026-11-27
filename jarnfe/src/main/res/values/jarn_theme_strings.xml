@@ -4,4 +4,12 @@
         <item quantity="one">%1$d favorite</item>
         <item quantity="other">%1$d favorites</item>
     </plurals>
+    <string name="jarnfe_look_colors_title">Colors</string>
+    <string name="jarnfe_theme_grid_blurb">Rows of tiles. Uses your colors.</string>
+    <string name="jarnfe_theme_carousel_blurb">One row at a time. Uses your colors.</string>
+    <string name="jarnfe_theme_mixed">Mixed</string>
+    <string name="jarnfe_theme_mixed_grid_systems">Grid for systems, Carousel for games.</string>
+    <string name="jarnfe_theme_mixed_carousel_systems">Carousel for systems, Grid for games.</string>
+    <string name="jarnfe_theme_follows_look_blurb">Uses your colors.</string>
+    <string name="jarnfe_theme_own_colors_blurb">Has its own colors. Command Panel matching turns off.</string>
 </resources>
