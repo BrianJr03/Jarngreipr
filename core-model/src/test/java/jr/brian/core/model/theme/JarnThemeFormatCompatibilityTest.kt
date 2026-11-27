@@ -104,6 +104,42 @@ class JarnThemeFormatCompatibilityTest {
         assertEquals(schema1Narrow, JarnThemeFormat.encode(spec))
     }
 
+    /** Added with #569: picture fallbacks, text vertical alignment and stacks, all in schema 1. */
+    private val schema1Stacks = """
+        {"schema":1,"meta":{"name":"Stacks"},"tokens":{"colors":{"bg":"#000000","surface":"#111111",
+        "raised":"#222222","textHigh":"#FFFFFF","textMid":"#DDDDDD","textLow":"#BBBBBB",
+        "accent":"#FF8800","danger":"#FF4444","success":"#44FF44"}},
+        "views":{"games":{"primary":{"type":"list","box":{"x":0.05,"y":0.1,"width":0.4,"height":0.8}},
+        "layers":[{"type":"picture","id":"art","rect":{"x":0.5,"y":0.1,"width":0.45,"height":0.4},
+        "source":{"type":"media","kind":"Miximage"},"fallbacks":[{"type":"media","kind":"Screenshot"},{"type":"file","path":"art/none.png"}]},
+        {"type":"video","id":"clip","rect":{"x":0.5,"y":0.1,"width":0.45,"height":0.4},"fallbacks":[{"type":"media","kind":"Fanart"}]},
+        {"type":"text","id":"title","rect":{"x":0.5,"y":0.55,"width":0.45,"height":0.1},
+        "content":{"type":"game","field":"title"},"verticalAlign":"start","stack":"info"},
+        {"type":"rating","id":"stars","rect":{"x":0.5,"y":0.66,"width":0.2,"height":0.05},"stack":"info"},
+        {"type":"date","id":"year","rect":{"x":0.75,"y":0.66,"width":0.2,"height":0.05},"field":"releaseDate",
+        "verticalAlign":"end","stack":"info"}]}}}
+    """.trimIndent().replace("\n", "")
+
+    @Test
+    fun `schema 1 fallbacks and stacks decode and re-encode byte for byte`() {
+        val spec = (JarnThemeFormat.decode(schema1Stacks) as JarnThemeDecodeResult.Decoded).spec
+        val layers = spec.views[ThemeView.Games]!!.layers
+
+        assertEquals(ThemePicture.GameMedia(MediaKind.Screenshot), (layers[0] as ThemeLayer.Picture).fallbacks.first())
+        assertEquals(listOf(ThemePicture.GameMedia(MediaKind.Fanart)), (layers[1] as ThemeLayer.Video).fallbacks)
+        assertEquals(ThemeAlign.Start, (layers[2] as ThemeLayer.Text).verticalAlign)
+        assertEquals(listOf("info", "info", "info"), layers.drop(2).map { it.stack })
+        assertEquals(schema1Stacks, JarnThemeFormat.encode(spec))
+    }
+
+    @Test
+    fun `the golden schema 1 theme keeps its defaults for fallbacks and stacks`() {
+        val games = decodeGolden().views[ThemeView.Games]!!
+        assertEquals(emptyList<ThemePicture>(), (games.layers.first() as ThemeLayer.Video).fallbacks)
+        assertEquals(ThemeAlign.Center, (games.layers.last() as ThemeLayer.Text).verticalAlign)
+        assertEquals(null, games.layers.last().stack)
+    }
+
     @Test
     fun `the golden schema 1 theme has no narrow patch`() {
         assertEquals(null, decodeGolden().views[ThemeView.Systems]?.narrow)

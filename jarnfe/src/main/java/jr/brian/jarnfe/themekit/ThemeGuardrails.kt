@@ -2,6 +2,7 @@ package jr.brian.jarnfe.themekit
 
 import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
+import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ViewSpec
 import jr.brian.core.model.theme.forArea
 import kotlin.math.max
@@ -98,9 +99,9 @@ private fun growToMinimum(rect: ThemePxRect, safe: ThemePxRect): ThemePxRect {
 
 private fun limitVideos(layer: ThemeLayer, playingId: String?, issues: MutableList<ThemeLayoutIssue>): ThemeLayer? {
     if (layer !is ThemeLayer.Video || playingId == null) return layer
-    val fallback = layer.fallback
-    issues += ThemeLayoutIssue.ExtraVideo(layer.id, playingId, fallbackShown = fallback != null)
-    return fallback?.let {
+    val pictures = layer.pictures
+    issues += ThemeLayoutIssue.ExtraVideo(layer.id, playingId, fallbackShown = pictures.isNotEmpty())
+    return pictures.firstOrNull()?.let {
         ThemeLayer.Picture(
             id = layer.id,
             rect = layer.rect,
@@ -110,6 +111,7 @@ private fun limitVideos(layer: ThemeLayer, playingId: String?, issues: MutableLi
             source = it,
             fit = ThemeFit.Crop,
             corner = layer.corner,
+            fallbacks = pictures.drop(1),
         )
     }
 }
@@ -146,10 +148,13 @@ private fun coversPrimary(layer: ThemeLayer, bounds: ThemePxRect, primary: Theme
 }
 
 private fun decodeCapFor(layer: ThemeLayer, bounds: ThemePxRect, screen: ThemeScreen): ThemePxSize? {
-    val hasPicture = layer is ThemeLayer.Picture || (layer is ThemeLayer.Video && layer.fallback != null)
+    val hasPicture = layer is ThemeLayer.Picture || (layer is ThemeLayer.Video && layer.pictures.isNotEmpty())
     if (!hasPicture) return null
     return ThemePxSize(
         width = min(bounds.width, screen.width) * DECODE_CAP_MULTIPLIER,
         height = min(bounds.height, screen.height) * DECODE_CAP_MULTIPLIER,
     )
 }
+
+/** What a video shows before it plays or when it has none: [ThemeLayer.Video.fallback], then its fallbacks. */
+internal val ThemeLayer.Video.pictures: List<ThemePicture> get() = listOfNotNull(fallback) + fallbacks
