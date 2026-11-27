@@ -5,6 +5,7 @@ import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ViewSpec
 import jr.brian.core.ui.theme.JarnSpacing
+import jr.brian.core.ui.theme.JarnType
 import jr.brian.jarnfe.themekit.ThemePxRect
 import jr.brian.jarnfe.themekit.ThemeScreen
 import jr.brian.jarnfe.themekit.resolveThemeView
@@ -25,6 +26,31 @@ class LibraryTemplateBrowseFitTest {
     private val widths = listOf(1920, 1240)
 
     private val stripBottomPx = ((space.md + LibraryContinueStripHeight).value * density).toInt()
+
+    /**
+     * A captioned grid's last row either shows whole or stops above its caption, so no name is cut
+     * in half. Checked on the Thor's top screen, under the tabs (183px measured, 157px on device);
+     * the 4:3 bottom screen squeezes until views can vary per screen.
+     */
+    @Test
+    fun `captioned grid rows never cut a caption on the Thor top screen`() {
+        val type = JarnType()
+        val caption = space.sm.value + type.captionStrong.lineHeight.value + type.caption.lineHeight.value + space.xs.value
+        LibraryTemplateThemes.All.flatMap { listOfNotNull(it.spec.views.systems, it.spec.views.games) }
+            .mapNotNull { it.primary as? ThemePrimary.Grid }
+            .filter { it.showTitle }
+            .forEach { primary ->
+                listOf(systemsHeight, 988 - 157).forEach { height ->
+                    val view = ViewSpec(primary)
+                    val box = resolveThemeView(view, ThemeScreen(1920, height)).primary.toDp()
+                    val gap = box.w * primary.spacing
+                    val cell = (box.w - space.stageMargin.value * 2 - gap * (primary.columns - 1)) / primary.columns
+                    val tile = cell / primary.itemAspect
+                    val shown = (box.h - space.focusEdge.value) % (tile + gap)
+                    assertTrue("$height px: last row shows ${shown}dp of a ${tile}dp tile", shown <= tile - caption || shown >= tile)
+                }
+            }
+    }
 
     @Test
     fun `the Continue playing strip fits the band systems views keep clear`() {
