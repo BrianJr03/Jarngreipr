@@ -35,9 +35,10 @@ internal fun LibraryBrowseSwitch(
 }
 
 /**
- * Draws [kind]'s browse as [theme], crossfading when the theme changes. [grid] and [shelf] draw
- * the list at the geometry the theme resolves to. Decor layers follow [focused], which is only
- * read when the view has layers, so a theme without layers draws exactly as the built-ins did.
+ * Draws [kind]'s browse as [theme], crossfading when the theme changes. [grid], [shelf] and
+ * [list] draw the browsable list at the geometry the theme resolves to. Decor layers follow
+ * [focused], which is only read when the view has layers, so a theme without layers draws
+ * exactly as the built-ins did.
  */
 @Composable
 internal fun LibraryThemedBrowse(
@@ -47,11 +48,12 @@ internal fun LibraryThemedBrowse(
     focused: () -> FocusedItem,
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
+    list: @Composable (LibraryListGeometry) -> Unit,
 ) {
     LibraryBrowseCrossfade(theme) { shown ->
         val spec = shown.viewSpec(kind.themeView) ?: return@LibraryBrowseCrossfade
         val pins = shown.theme.pinsFor(kind.themeView)
-        val primary: @Composable () -> Unit = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf) }
+        val primary: @Composable () -> Unit = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf, list) }
         if (spec.layers.isEmpty()) {
             JarnThemeLayout(view = spec, primary = primary, layer = {}, insets = BrowseInsets)
         } else {
@@ -67,7 +69,6 @@ private fun <T> LibraryBrowseCrossfade(target: T, content: @Composable (T) -> Un
     Crossfade(targetState = target, animationSpec = token.spec(), label = "browseView", content = content)
 }
 
-/** Lists the format has no Jarn component for yet fall back to the grid. */
 @Composable
 private fun LibraryThemePrimary(
     primary: ThemePrimary,
@@ -76,11 +77,12 @@ private fun LibraryThemePrimary(
     cellMinSize: Dp,
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
+    list: @Composable (LibraryListGeometry) -> Unit,
 ) {
     when (primary) {
         is ThemePrimary.Shelf -> shelf(libraryShelfGeometry(primary, kind, pins.shelf))
         is ThemePrimary.Grid -> LibraryThemeGrid(primary, pins.grid, cellMinSize, grid)
-        is ThemePrimary.List -> grid(LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing))
+        is ThemePrimary.List -> list(libraryListGeometry(primary))
     }
 }
 

@@ -8,6 +8,7 @@ import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.library.LibraryBuiltInTheme
 import jr.brian.jarnfe.library.LibraryBuiltInThemes
+import jr.brian.jarnfe.library.LibraryTemplateThemes
 import java.io.File
 
 internal enum class JarnThemeKind { BuiltIn, Template, Imported }
@@ -60,7 +61,14 @@ internal object JarnThemeRegistry {
      * Templates that ship in code (#558). Each is [JarnThemeKind.Template], follows the Look
      * (ownColors = false) and keeps a stable id forever, since the id is what backups save.
      */
-    val templates: List<JarnThemeEntry> = emptyList()
+    val templates: List<JarnThemeEntry> = LibraryTemplateThemes.All.map { template ->
+        JarnThemeEntry(
+            id = template.id,
+            kind = JarnThemeKind.Template,
+            theme = LibraryBuiltInTheme(template.spec),
+            nameRes = template.nameRes,
+        )
+    }
 
     /** Themes that can be saved as the active theme. Imports join these at runtime (M2). */
     val installed: List<JarnThemeEntry> get() = templates

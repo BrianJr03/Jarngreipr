@@ -101,6 +101,15 @@ class JarnActiveThemeTest {
     }
 
     @Test
+    fun `the shipped templates are pickable and follow the look`() {
+        val templates = JarnThemeRegistry.installed
+        assertEquals(listOf("template.big-shelf", "template.cover-grid", "template.list-art"), templates.map { it.id })
+        assertTrue(templates.all { it.kind == JarnThemeKind.Template && !it.ownColors && it.nameRes != null })
+        val saved = resolveJarnThemeChoice("template.list-art", JarnDisplayPrefs())
+        assertNull(saved.activeTheme(JarnDisplayPrefs()).ownColors)
+    }
+
+    @Test
     fun `browse view follows the primary`() {
         assertEquals(JarnBrowseView.Carousel, JarnThemeRegistry.Carousel.browseView(ThemeView.Games))
         assertEquals(JarnBrowseView.Grid, JarnThemeRegistry.Grid.browseView(ThemeView.Systems))

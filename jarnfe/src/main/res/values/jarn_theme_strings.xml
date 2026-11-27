@@ -12,4 +12,7 @@
     <string name="jarnfe_theme_mixed_carousel_systems">Carousel for systems, Grid for games.</string>
     <string name="jarnfe_theme_follows_look_blurb">Uses your colors.</string>
     <string name="jarnfe_theme_own_colors_blurb">Has its own colors. Command Panel matching turns off.</string>
+    <string name="jarnfe_theme_template_big_shelf">Big shelf</string>
+    <string name="jarnfe_theme_template_cover_grid">Cover grid</string>
+    <string name="jarnfe_theme_template_list_art">List with art</string>
 </resources>

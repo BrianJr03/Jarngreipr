@@ -119,7 +119,7 @@ internal fun ThemeReadablePlate(align: ThemeAlign, content: @Composable () -> Un
 }
 
 @Composable
-private fun ThemeTextValue.asString(): String = when (this) {
+internal fun ThemeTextValue.asString(): String = when (this) {
     is ThemeTextValue.Plain -> text
     is ThemeTextValue.GameCount -> pluralStringResource(R.plurals.jarnfe_library_game_count, count, count)
     is ThemeTextValue.FavoriteCount -> pluralStringResource(R.plurals.jarnfe_theme_favorite_count, count, count)
