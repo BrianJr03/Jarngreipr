@@ -21,7 +21,7 @@ internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKi
         if (!it) dropped++
     }
     fun ThemePicture?.checked(): ThemePicture? =
-        if (this is ThemePicture.File && !ok(path, ThemeAssetKind.Image, ThemeAssetKind.Vector)) null else this
+        if (this is ThemePicture.File && !ok(path, ThemeAssetKind.Image)) null else this
     fun List<ThemePicture>.checked(): List<ThemePicture> = mapNotNull { it.checked() }
     fun ThemeTextStyle?.checked(): ThemeTextStyle? =
         this?.let { style -> style.font?.let { if (ok(it, ThemeAssetKind.Font)) style else style.copy(font = null) } ?: style }

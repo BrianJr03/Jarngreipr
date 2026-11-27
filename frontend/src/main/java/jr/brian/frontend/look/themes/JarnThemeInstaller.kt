@@ -71,15 +71,17 @@ class JarnThemeInstaller(
      * relative to [sourceRoot], under the same caps and checks as a theme file. Files that are missing,
      * too big, or reach outside [sourceRoot] (a symlink, say) are left out, and what pointed at them
      * drops. [replaceId] installs over that id, for a re-import. [beforePlace] adds files of its own
-     * to the checked folder just before it moves into place.
+     * to the checked folder just before it moves into place. [prepare] runs on the unchecked folder
+     * after the copy and returns the spec, so a step that writes its own files there (the ES-DE
+     * fallback's art and fonts) goes through the same checks.
      */
     @Synchronized
     fun installFiles(
-        spec: JarnThemeSpec,
         sourceRoot: File,
         assets: Collection<String>,
         replaceId: String? = null,
         beforePlace: (File) -> Unit = {},
+        prepare: (File) -> JarnThemeSpec,
     ): ThemeImportResult {
         themesRoot.mkdirs()
         clearLeftovers()
@@ -87,12 +89,14 @@ class JarnThemeInstaller(
         return try {
             incoming.mkdirs()
             copyAssets(sourceRoot, assets, incoming)
-            File(incoming, THEME_FILE).writeText(JarnThemeFormat.encode(spec))
+            File(incoming, THEME_FILE).writeText(JarnThemeFormat.encode(prepare(incoming)))
             val id = replaceId?.takeIf { isSafeThemePath(it) && '/' !in it && !it.startsWith(".") }
             checkAndPlace(incoming, ThemeIdClash.Replace.takeIf { id != null } ?: ThemeIdClash.KeepBoth, id, beforePlace)
         } catch (e: ThemeImportException) {
             ThemeImportResult.Rejected(e.problem)
         } catch (e: java.io.IOException) {
+            ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
+        } catch (e: IllegalArgumentException) {
             ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
         } finally {
             incoming.deleteRecursively()

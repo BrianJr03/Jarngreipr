@@ -6,7 +6,10 @@ import jr.brian.core.model.theme.JarnThemeFormat
 import jr.brian.core.model.theme.ThemeColor
 import jr.brian.core.model.theme.ThemeColors
 import jr.brian.core.model.theme.ThemeSource
+import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.frontend.library.setup.EsdeSettings
+import jr.brian.frontend.library.scan.StubSystemCatalog
+import jr.brian.frontend.library.systems.SystemDef
 import jr.brian.frontend.look.themes.EsdeThemeFolder
 import jr.brian.frontend.look.themes.readEsdeImportRecord
 import org.junit.Assert.assertEquals
@@ -101,11 +104,27 @@ class EsdeThemeImportTest {
     @Test
     fun `the fallback hook sees every translation before install`() {
         var seen = 0
-        val fallback = EsdeImportFallback { _, t -> seen++; t.copy(spec = t.spec.copy(meta = t.spec.meta.copy(name = "Fixed"))) }
+        val fallback = EsdeImportFallback { _, t, _, outDir, _ ->
+            seen++
+            assertTrue(outDir.path.contains(".incoming-"))
+            EsdeFallbackOutcome(t.spec.copy(meta = t.spec.meta.copy(name = "Fixed")))
+        }
         val source = EsdeSyntheticTheme.ListDetail.install(temp.newFolder())
         val outcome = EsdeThemeImport(themes, fallback = fallback).run(source, EsdeFixtureSystems, EsdeThemeSelection(), options)
         assertEquals(1, seen)
         assertEquals("fixed", (outcome as EsdeImportOutcome.Imported).themeId)
+    }
+
+    @Test
+    fun `the readable fallback sets the theme's colors and reports what it did`() {
+        val catalog = StubSystemCatalog(SystemDef("nes", "NES"), SystemDef("snes", "SNES"), SystemDef("n64", "N64"))
+        val source = EsdeSyntheticTheme.ColorSchemes.install(temp.newFolder())
+        val outcome = EsdeThemeImport(themes, EsdeImportFallback.readable(JarnLooks.Forge, catalog))
+            .run(source, EsdeFixtureSystems, EsdeSyntheticTheme.ColorSchemes.selection, options) as EsdeImportOutcome.Imported
+
+        val saved = JarnThemeFormat.decode(File(outcome.folder, "theme.json").readText()) as JarnThemeDecodeResult.Decoded
+        assertTrue(saved.spec.tokens.colors != options.fallbackColors)
+        assertTrue(outcome.fallbackNotes.any { it is EsdeFallbackNote.Colors || it is EsdeFallbackNote.LightThemeAccentOnly })
     }
 
     @Test
