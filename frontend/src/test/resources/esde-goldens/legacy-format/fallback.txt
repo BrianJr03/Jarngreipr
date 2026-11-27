@@ -1,0 +1,5 @@
+tier=SavedLook darkVersion=null
+colors=ThemeColors(bg=#141211, surface=#1F1B19, raised=#2B2522, textHigh=#F6EFE8, textMid=#C9BDB2, textLow=#A39689, accent=#FF8B3D, danger=#FF7A6B, success=#7FD99A, line=#4A403A, focus=#FFB070)
+fonts=EsdeFontFiles(display=null, body=null)
+assets=
+note Colors(tier=SavedLook, darkVersion=null)
