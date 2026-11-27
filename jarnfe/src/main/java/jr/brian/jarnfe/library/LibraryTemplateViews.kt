@@ -12,9 +12,11 @@ import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
+import jr.brian.core.model.theme.ThemePrimaryPatch
 import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeTextRole
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ThemeVisibleWhen
 import jr.brian.core.model.theme.ViewSpec
 
@@ -53,6 +55,9 @@ private const val BIG_SHELF_VIDEO_DELAY_MS = 800
 private const val LIST_GAME_ROWS = 5
 private const val LIST_SYSTEM_ROWS = 4
 
+/** On a narrow screen a shelf shows one neighbor each side, so the centered card keeps its size. */
+private val ShelfOneNeighbor = ThemeViewPatch(ThemePrimaryPatch(itemsBefore = 1, itemsAfter = 1))
+
 internal val BigShelfSystems = ViewSpec(
     primary = ThemePrimary.Shelf(box = BigShelfSystemsBox, focusedScale = 1.35f, showTitle = false),
     layers = listOf(
@@ -68,6 +73,7 @@ internal val BigShelfSystems = ViewSpec(
             ThemeColorRole.TextMid,
         ),
     ),
+    narrow = ShelfOneNeighbor,
 )
 
 internal val BigShelfGames = ViewSpec(
@@ -97,6 +103,7 @@ internal val BigShelfGames = ViewSpec(
             ThemeColorRole.TextMid,
         ),
     ),
+    narrow = ShelfOneNeighbor,
 )
 
 internal val CoverGridGames = ViewSpec(
@@ -142,6 +149,7 @@ internal val CoverGridGames = ViewSpec(
             maxLines = 3,
         ),
     ),
+    narrow = ThemeViewPatch(ThemePrimaryPatch(columns = 3)),
 )
 
 internal val CoverGridSystems = ViewSpec(
@@ -178,6 +186,7 @@ internal val CoverGridSystems = ViewSpec(
             ThemeColorRole.TextLow,
         ),
     ),
+    narrow = ThemeViewPatch(ThemePrimaryPatch(columns = 2, itemAspect = 1.4f)),
 )
 
 internal val ListArtGames = ViewSpec(

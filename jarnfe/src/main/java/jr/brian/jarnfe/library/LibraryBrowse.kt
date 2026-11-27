@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import jr.brian.core.model.theme.ThemePrimary
+import jr.brian.core.model.theme.ViewSpec
+import jr.brian.core.model.theme.forArea
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.jarnfe.themekit.FocusedItem
@@ -63,17 +66,33 @@ internal fun LibraryThemedBrowse(
         val spec = shown.viewSpec(kind.themeView) ?: return@LibraryBrowseCrossfade
         val pins = shown.theme.pinsFor(kind.themeView)
         val headerInPrimary = shown.theme.pins.containsKey(kind.themeView)
-        val primary: @Composable () -> Unit = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf, list) }
         CompositionLocalProvider(LocalLibraryHeaderInPrimary provides headerInPrimary) {
             Box(Modifier.fillMaxSize()) {
-                if (spec.layers.isEmpty()) {
-                    JarnThemeLayout(view = spec, primary = primary, layer = {}, insets = BrowseInsets)
-                } else {
-                    JarnThemeDecorView(view = spec, focused = focused(), primary = primary, themeDir = shown.themeDir, insets = BrowseInsets)
+                LibraryAreaView(spec) { view ->
+                    val primary: @Composable () -> Unit = { LibraryThemePrimary(view.primary, pins, kind, cellMinSize, grid, shelf, list) }
+                    if (view.layers.isEmpty()) {
+                        JarnThemeLayout(view = view, primary = primary, layer = {}, insets = BrowseInsets)
+                    } else {
+                        JarnThemeDecorView(view = view, focused = focused(), primary = primary, themeDir = shown.themeDir, insets = BrowseInsets)
+                    }
                 }
                 if (!headerInPrimary) header?.let { LibraryHeaderStrip(it) }
             }
         }
+    }
+}
+
+/** [spec] as it lays out on this area, with its narrow patch on a narrow one. Views without a patch skip measuring. */
+@Composable
+private fun LibraryAreaView(spec: ViewSpec, content: @Composable (ViewSpec) -> Unit) {
+    if (spec.narrow == null) {
+        content(spec)
+        return
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        content(remember(spec, width, height) { spec.forArea(width, height) })
     }
 }
 

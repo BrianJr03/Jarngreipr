@@ -79,6 +79,37 @@ class JarnThemeFormatCompatibilityTest {
         assertEquals(schema1, JarnThemeFormat.encode(decodeGolden()))
     }
 
+    /** Added with #568: a schema 1 theme with a narrow screen patch. The golden above stays as it was. */
+    private val schema1Narrow = """
+        {"schema":1,"meta":{"name":"Narrow"},"tokens":{"colors":{"bg":"#000000","surface":"#111111",
+        "raised":"#222222","textHigh":"#FFFFFF","textMid":"#DDDDDD","textLow":"#BBBBBB",
+        "accent":"#FF8800","danger":"#FF4444","success":"#44FF44"}},
+        "views":{"games":{"primary":{"type":"grid","box":{"x":0.05,"y":0.1,"width":0.6,"height":0.8},"columns":4},
+        "layers":[{"type":"panel","id":"rail","rect":{"x":0.7,"y":0.1,"width":0.25,"height":0.8}},
+        {"type":"panel","id":"strip","rect":{"x":0.0,"y":0.9,"width":1.0,"height":0.1}}],
+        "narrow":{"primary":{"box":{"x":0.05,"y":0.1,"width":0.5,"height":0.8},"columns":3},
+        "layers":[{"type":"panel","id":"rail","rect":{"x":0.6,"y":0.1,"width":0.35,"height":0.8},"corner":"lg"}],
+        "hide":["strip"]}}}}
+    """.trimIndent().replace("\n", "")
+
+    @Test
+    fun `schema 1 narrow patch decodes and re-encodes byte for byte`() {
+        val spec = (JarnThemeFormat.decode(schema1Narrow) as JarnThemeDecodeResult.Decoded).spec
+        val games = spec.views[ThemeView.Games]!!
+
+        assertEquals(1, spec.schema)
+        assertEquals(3, games.narrow?.primary?.columns)
+        assertEquals(listOf("strip"), games.narrow?.hide)
+        assertEquals(ThemeCorner.Lg, (games.narrow?.layers?.single() as ThemeLayer.Panel).corner)
+        assertEquals(schema1Narrow, JarnThemeFormat.encode(spec))
+    }
+
+    @Test
+    fun `the golden schema 1 theme has no narrow patch`() {
+        assertEquals(null, decodeGolden().views[ThemeView.Systems]?.narrow)
+        assertEquals(null, decodeGolden().views[ThemeView.Games]?.narrow)
+    }
+
     @Test
     fun `minimal schema 1 theme keeps unchanged defaults`() {
         val minimal = """

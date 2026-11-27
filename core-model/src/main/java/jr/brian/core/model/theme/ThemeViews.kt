@@ -20,12 +20,16 @@ data class ThemeViews(
     }
 }
 
-/** Exactly one [primary] (the browsable list) plus decor [layers], drawn in [ThemeLayer.z] order. */
+/**
+ * Exactly one [primary] (the browsable list) plus decor [layers], drawn in [ThemeLayer.z] order.
+ * [narrow] adjusts the view for a narrow screen (see [forArea]).
+ */
 @Serializable
 data class ViewSpec(
     val primary: ThemePrimary,
     @Serializable(with = ThemeLayerListSerializer::class)
     val layers: List<ThemeLayer> = emptyList(),
+    val narrow: ThemeViewPatch? = null,
 )
 
 /**
