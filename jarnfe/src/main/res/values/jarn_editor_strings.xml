@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_editor_title">Editing %1$s</string>
+    <string name="jarnfe_editor_tab_layers">Layers</string>
+    <string name="jarnfe_editor_tab_preview">Preview</string>
+    <string name="jarnfe_editor_navigator">List</string>
+    <string name="jarnfe_editor_navigator_hint">What players move through. It can move and resize, but not be removed.</string>
+    <string name="jarnfe_editor_view">Screen</string>
+    <string name="jarnfe_editor_layer_picture">Picture</string>
+    <string name="jarnfe_editor_layer_text">Text</string>
+    <string name="jarnfe_editor_layer_rating">Rating</string>
+    <string name="jarnfe_editor_layer_date">Date</string>
+    <string name="jarnfe_editor_layer_panel">Panel</string>
+    <string name="jarnfe_editor_layer_video">Video</string>
+    <string name="jarnfe_editor_layer_named">%1$s: %2$s</string>
+    <string name="jarnfe_editor_hint_tools">Tools</string>
+    <string name="jarnfe_editor_hint_canvas">Canvas</string>
+    <string name="jarnfe_editor_hint_leave">Leave</string>
+    <string name="jarnfe_editor_hint_select">Select</string>
+    <string name="jarnfe_editor_hint_tab">Tab</string>
+</resources>

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnTabs
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.editor.ThemeEditorDeck
 import jr.brian.jarnfe.apps.JarnAppsRoute
 import jr.brian.jarnfe.canvas.CanvasHeaderControls
 import jr.brian.jarnfe.canvas.CanvasHeaderEditBanner
@@ -84,8 +85,11 @@ private fun deckShowsSearch(state: JarnSessionState) =
 private fun deckShowsSettings(state: JarnSessionState) =
     state.stageRoute == StageRoute.Settings && state.settingsOnDeck
 
+private fun deckShowsEditor(state: JarnSessionState) =
+    state.stageRoute == StageRoute.ThemeEditor && state.editorToolsOnDeck
+
 private fun deckShowsTabs(state: JarnSessionState) =
-    !deckShowsSearch(state) && !deckShowsSettings(state)
+    !deckShowsSearch(state) && !deckShowsSettings(state) && !deckShowsEditor(state)
 
 /**
  * The label only lives in the tab strip, so Search and Settings leave the Deck without one.
@@ -121,6 +125,7 @@ private fun DeckBody(state: JarnSessionState) {
     when {
         deckShowsSearch(state) -> JarnSearchDeck()
         deckShowsSettings(state) -> JarnSettingsControls(state.settingsSection, JarnTheme.space.deckMargin)
+        deckShowsEditor(state) -> ThemeEditorDeck()
         else -> Column(Modifier.fillMaxSize()) {
             val display = rememberJarnDisplay()
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {

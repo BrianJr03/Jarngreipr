@@ -36,6 +36,8 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.editor.ThemeEditorStage
+import jr.brian.jarnfe.editor.ThemeEditorTitle
 import jr.brian.jarnfe.backdrop.JarnAdaptiveContent
 import jr.brian.jarnfe.backdrop.JarnBackdropSampler
 import jr.brian.jarnfe.backdrop.LocalJarnAdaptiveText
@@ -197,6 +199,7 @@ private fun StageRouteTitleFor(state: JarnSessionState, route: StageRoute) {
         StageRoute.Settings -> StageRouteTitle(R.string.jarnfe_route_settings)
         StageRoute.Search -> JarnSearchTabs()
         StageRoute.Systems -> StageRouteTitle(R.string.jarnfe_systems_title)
+        StageRoute.ThemeEditor -> ThemeEditorTitle()
     }
 }
 
@@ -258,6 +261,7 @@ private fun StageRouteBody(state: JarnSessionState, route: StageRoute) {
         StageRoute.Settings -> StageSettings(state)
         StageRoute.Search -> JarnSearchResultsPanel(state)
         StageRoute.Systems -> StageSystems()
+        StageRoute.ThemeEditor -> ThemeEditorStage(state)
     }
 }
 

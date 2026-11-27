@@ -11,7 +11,7 @@ import jr.brian.jarnfe.library.LibraryBuiltInThemes
 import jr.brian.jarnfe.library.LibraryTemplateThemes
 import java.io.File
 
-internal enum class JarnThemeKind { BuiltIn, Template, Imported }
+internal enum class JarnThemeKind { BuiltIn, Template, Imported, User }
 
 /** The picture a layout card draws. Imports set none and draw their systems list's shape. */
 internal enum class JarnThemeSketchKind { Grid, Carousel, List, BigShelf, CoverGrid, ListWithArt }

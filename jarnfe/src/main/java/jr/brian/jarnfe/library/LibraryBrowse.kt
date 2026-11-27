@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +43,8 @@ internal fun LibraryBrowseSwitch(
 }
 
 /**
- * Draws [kind]'s browse as [theme], crossfading when the theme changes. [grid], [shelf] and
+ * Draws [kind]'s browse as [theme], crossfading when a different theme is chosen (an edit to the
+ * same theme redraws in place). [grid], [shelf] and
  * [list] draw the browsable list at the geometry the theme resolves to. Decor layers follow
  * [focused], which is only read when the view has layers, so a theme without layers draws
  * exactly as the built-ins did. Built-ins keep [header] inside their list; spec-driven themes get it
@@ -59,7 +61,10 @@ internal fun LibraryThemedBrowse(
     list: @Composable (LibraryListGeometry) -> Unit,
     header: (@Composable () -> Unit)? = null,
 ) {
-    LibraryBrowseCrossfade(theme) { shown ->
+    val seen = remember { mutableMapOf<String, JarnThemeEntry>() }
+    seen[theme.id] = theme
+    LibraryBrowseCrossfade(theme.id) { shownId ->
+        val shown = seen[shownId] ?: theme
         val spec = shown.viewSpec(kind.themeView) ?: return@LibraryBrowseCrossfade
         val pins = shown.theme.pinsFor(kind.themeView)
         val headerInPrimary = shown.theme.pins.containsKey(kind.themeView)

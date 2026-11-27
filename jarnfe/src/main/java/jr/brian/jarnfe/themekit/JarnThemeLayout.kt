@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -35,10 +38,18 @@ internal fun JarnThemeLayout(
     insets: ThemeInsets = rememberJarnThemeInsets(),
     onIssues: (List<ThemeLayoutIssue>) -> Unit = {},
 ) {
-    BoxWithConstraints(modifier) {
+    val probe = LocalThemeLayoutProbe.current
+    val probed = if (probe != null) Modifier.onGloballyPositioned { probe.origin = it.positionInRoot() } else Modifier
+    BoxWithConstraints(modifier.then(probed)) {
         val screen = ThemeScreen(constraints.maxWidth, constraints.maxHeight, insets)
         val placed = remember(view, screen) { resolveThemeView(view, screen) }
         ThemeIssuesEffect(placed.issues, onIssues)
+        if (probe != null) {
+            SideEffect {
+                probe.placed = placed
+                probe.screen = screen
+            }
+        }
         PlacedThemeChildren(placed, primary, layer)
     }
 }

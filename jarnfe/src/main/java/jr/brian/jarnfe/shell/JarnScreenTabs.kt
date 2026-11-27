@@ -61,11 +61,12 @@ private fun JarnSessionState.stageTabStrip(): JarnTabStrip? = when (stageRoute) 
     StageRoute.Collection -> JarnTabStrip.CollectionLists
     StageRoute.Search -> JarnTabStrip.SearchTabs
     StageRoute.Settings -> JarnTabStrip.SettingsSections.takeUnless { settingsOnDeck }
-    StageRoute.Systems -> null
+    StageRoute.Systems, StageRoute.ThemeEditor -> null
 }
 
 private fun JarnSessionState.deckTabStrip(searchActionsOnDeck: Boolean): JarnTabStrip? = when {
     stageRoute == StageRoute.Settings -> JarnTabStrip.SettingsSections
+    stageRoute == StageRoute.ThemeEditor -> null
     stageRoute == StageRoute.Search && !searchActionsOnDeck -> null
     else -> JarnTabStrip.DeckTabs
 }
