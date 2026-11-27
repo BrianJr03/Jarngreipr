@@ -99,11 +99,16 @@ enum class ThemeFit {
 
 /**
  * A layer shows only when every set condition holds. [hasMedia] / [hasText] look at the
- * focused game; [systems] limits the layer to those system ids.
+ * focused game, [hasSystemArt] at the focused system (or the focused game's system), and
+ * [systems] limits the layer to those system ids. With [missing] the layer shows when any of the
+ * media, text or art asked for is absent instead, so a theme can swap a logo for a name;
+ * [systems] still applies as written.
  */
 @Serializable
 data class ThemeVisibleWhen(
     val hasMedia: MediaKind? = null,
     val hasText: GameTextField? = null,
     val systems: List<String> = emptyList(),
+    val hasSystemArt: SystemArtKind? = null,
+    val missing: Boolean = false,
 )

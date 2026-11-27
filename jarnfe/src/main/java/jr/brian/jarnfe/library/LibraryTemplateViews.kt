@@ -8,6 +8,8 @@ import jr.brian.core.model.theme.ThemeAlign
 import jr.brian.core.model.theme.ThemeColorRole
 import jr.brian.core.model.theme.ThemeCorner
 import jr.brian.core.model.theme.ThemeDateField
+import jr.brian.core.model.theme.ThemeEdge
+import jr.brian.core.model.theme.ThemeFade
 import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
@@ -17,6 +19,7 @@ import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeTextRole
 import jr.brian.core.model.theme.ThemeViewPatch
+import jr.brian.core.model.theme.ThemeVisibleWhen
 import jr.brian.core.model.theme.ViewSpec
 
 /*
@@ -54,6 +57,12 @@ private const val BIG_SHELF_VIDEO_DELAY_MS = 800
 private const val LIST_GAME_ROWS = 5
 private const val LIST_SYSTEM_ROWS = 4
 
+/** Big shelf's plate fades up into the art above it instead of ending on a hard line. */
+private val BigShelfFade = ThemeFade(ThemeEdge.Top, length = 0.3f)
+
+/** Big shelf shows a system's logo where its name goes, and the name only when there is no logo. */
+private val HasLogo = ThemeVisibleWhen(hasSystemArt = SystemArtKind.Logo)
+
 /** On a narrow screen a shelf shows one neighbor each side, so the centered card keeps its size. */
 private val ShelfOneNeighbor = ThemeViewPatch(ThemePrimaryPatch(itemsBefore = 1, itemsAfter = 1))
 
@@ -61,9 +70,16 @@ internal val BigShelfSystems = ViewSpec(
     primary = ThemePrimary.Shelf(box = BigShelfSystemsBox, focusedScale = 1.35f, showTitle = false),
     layers = listOf(
         picture("background", FullScreen, z = -3, SystemArtKind.Background, ThemeFit.Crop),
-        plate("plate", BigShelfSystemsPlate, ThemeColorRole.Bg, BIG_SHELF_PLATE_OPACITY, ThemeCorner.None),
-        picture("logo", ThemeRect(0.62f, SYSTEMS_TOP, 0.33f, 0.20f), z = 1, SystemArtKind.Logo, ThemeFit.Fit),
-        text("title", ThemeRect(0.05f, SYSTEMS_TOP, 0.55f, 0.125f), systemText(SystemTextField.Title), ThemeTextRole.Title),
+        plate("plate", BigShelfSystemsPlate, ThemeColorRole.Bg, BIG_SHELF_PLATE_OPACITY, ThemeCorner.None, BigShelfFade),
+        ThemeLayer.Picture(
+            id = "logo",
+            rect = ThemeRect(0.05f, SYSTEMS_TOP, 0.40f, 0.125f),
+            z = 1,
+            visibleWhen = HasLogo,
+            source = ThemePicture.SystemArt(SystemArtKind.Logo),
+        ),
+        text("title", ThemeRect(0.05f, SYSTEMS_TOP, 0.55f, 0.125f), systemText(SystemTextField.Title), ThemeTextRole.Title)
+            .copy(visibleWhen = HasLogo.copy(missing = true)),
         text(
             "count",
             ThemeRect(0.05f, 0.34f, 0.40f, 0.075f),
@@ -90,7 +106,7 @@ internal val BigShelfGames = ViewSpec(
             delayMs = BIG_SHELF_VIDEO_DELAY_MS,
             fallback = ThemePicture.GameMedia(MediaKind.Fanart),
         ),
-        plate("plate", BigShelfGamesPlate,ThemeColorRole.Bg, BIG_SHELF_PLATE_OPACITY, ThemeCorner.None),
+        plate("plate", BigShelfGamesPlate, ThemeColorRole.Bg, BIG_SHELF_PLATE_OPACITY, ThemeCorner.None, BigShelfFade),
         text("title", ThemeRect(0.05f, 0.06f, 0.60f, 0.125f), gameText(GameTextField.Title), ThemeTextRole.Title),
         ThemeLayer.Rating(id = "rating", rect = ThemeRect(0.05f, 0.19f, 0.14f, 0.075f), z = 2),
         year("year", ThemeRect(0.20f, 0.19f, 0.10f, 0.075f)),
@@ -280,8 +296,8 @@ private fun picture(
     corner: ThemeCorner = ThemeCorner.None,
 ) = ThemeLayer.Picture(id = id, rect = rect, z = z, source = ThemePicture.SystemArt(kind), fit = fit, corner = corner)
 
-private fun plate(id: String, rect: ThemeRect, color: ThemeColorRole, opacity: Float, corner: ThemeCorner) =
-    ThemeLayer.Panel(id = id, rect = rect, z = -1, opacity = opacity, color = color, corner = corner)
+private fun plate(id: String, rect: ThemeRect, color: ThemeColorRole, opacity: Float, corner: ThemeCorner, fade: ThemeFade? = null) =
+    ThemeLayer.Panel(id = id, rect = rect, z = -1, opacity = opacity, color = color, corner = corner, fade = fade)
 
 /** Text and dates sit above the primary at z 2, as the spec draws them. */
 private fun text(
