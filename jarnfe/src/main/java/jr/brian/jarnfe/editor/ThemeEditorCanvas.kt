@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ private const val HELD_FILL_ALPHA = 0.16f
 internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Modifier) {
     DraftPreviewEffect(editor)
     val probe = remember { ThemeLayoutProbe() }
+    LaunchedEffect(probe.placed) { JarnThemeEditor.layoutIssues = probe.placed?.issues.orEmpty() }
     Box(modifier) {
         CompositionLocalProvider(LocalThemeLayoutProbe provides probe) {
             LibraryHome(
@@ -50,7 +52,8 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
                 emptyActions = {},
             )
         }
-        ThemeEditorSelection(probe, editor.selected, held = editor.held != null, Modifier.matchParentSize())
+        val flagged = probe.placed?.issues.orEmpty().mapNotNull { it.layerId }.toSet()
+        ThemeEditorSelection(probe, editor.selected, held = editor.held != null, flagged, Modifier.matchParentSize())
     }
 }
 
@@ -71,7 +74,13 @@ private val ThemeView.librarySection: LibrarySection
 
 /** Every piece's outline, the selected one in the accent, and a tint while it is held. */
 @Composable
-internal fun ThemeEditorSelection(probe: ThemeLayoutProbe, selectedTarget: ThemeEditorTarget, held: Boolean, modifier: Modifier) {
+internal fun ThemeEditorSelection(
+    probe: ThemeLayoutProbe,
+    selectedTarget: ThemeEditorTarget,
+    held: Boolean,
+    flagged: Set<String>,
+    modifier: Modifier,
+) {
     val placed = probe.placed ?: return
     var origin by remember { mutableStateOf(Offset.Zero) }
     val colors = JarnTheme.colors
@@ -79,7 +88,11 @@ internal fun ThemeEditorSelection(probe: ThemeLayoutProbe, selectedTarget: Theme
         val shift = probe.origin - origin
         placed.pieces().forEach { (target, rect) ->
             val selected = target == selectedTarget
-            val color = if (selected) colors.accent else colors.textLow.copy(alpha = OUTLINE_ALPHA)
+            val color = when {
+                selected -> colors.accent
+                (target as? ThemeEditorTarget.Layer)?.id in flagged -> colors.danger
+                else -> colors.textLow.copy(alpha = OUTLINE_ALPHA)
+            }
             val width = if (selected) 3.dp.toPx() else 1.dp.toPx()
             if (selected && held) drawPiece(rect, shift, colors.accent.copy(alpha = HELD_FILL_ALPHA), null)
             drawPiece(rect, shift, color, Stroke(width))

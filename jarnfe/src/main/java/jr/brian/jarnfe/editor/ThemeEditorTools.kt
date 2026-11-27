@@ -40,6 +40,7 @@ internal fun ThemeEditorTools(editor: ThemeEditorState, modifier: Modifier = Mod
                 verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
             ) { ThemeEditorTabBody(editor) }
         }
+        ThemeEditorFooter(editor)
     }
 }
 
@@ -55,6 +56,7 @@ private fun ThemeEditorTabBody(editor: ThemeEditorState) {
 
 @Composable
 private fun ThemeEditorLayersTab(editor: ThemeEditorState) {
+    ThemeEditorIssues(editor)
     editor.targets.forEach { target ->
         JarnChoiceRow(
             label = editor.targetLabel(target),

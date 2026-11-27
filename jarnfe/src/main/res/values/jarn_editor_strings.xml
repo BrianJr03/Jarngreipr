@@ -135,4 +135,25 @@
     <string name="jarnfe_editor_hard_to_read">Hard to read. Jarn would show your Look\'s colors instead.</string>
     <string name="jarnfe_editor_fix">Fix</string>
     <string name="jarnfe_editor_fix_hint">Darkens the backgrounds and lightens text just enough.</string>
+
+    <string name="jarnfe_editor_load">Load: %1$s</string>
+    <string name="jarnfe_editor_load_light">Light</string>
+    <string name="jarnfe_editor_load_ok">OK</string>
+    <string name="jarnfe_editor_load_heavy">Heavy</string>
+    <plurals name="jarnfe_editor_issue_count">
+        <item quantity="one">%1$d issue</item>
+        <item quantity="other">%1$d issues</item>
+    </plurals>
+    <string name="jarnfe_editor_no_issues">No issues</string>
+    <string name="jarnfe_editor_colors_target">Colors</string>
+    <string name="jarnfe_editor_issue_list_invalid">The list has no size, so it fills the screen.</string>
+    <string name="jarnfe_editor_issue_list_small">The list is too small, so it was enlarged.</string>
+    <string name="jarnfe_editor_issue_list_clamped">The list reached past the screen edge and was pulled in.</string>
+    <string name="jarnfe_editor_issue_no_size">Has no size, so it is hidden.</string>
+    <string name="jarnfe_editor_issue_off_screen">Off the screen, so it is hidden.</string>
+    <string name="jarnfe_editor_issue_two_videos">Two videos at once can stutter and drain battery. Only the first plays.</string>
+    <string name="jarnfe_editor_issue_text_moved">Was under the hint bar and was moved out.</string>
+    <string name="jarnfe_editor_issue_text_covered">Covered by the hint bar.</string>
+    <string name="jarnfe_editor_issue_under_bars">Runs under the bars at the screen edge.</string>
+    <string name="jarnfe_editor_issue_covers_list">Covers the list, so it draws behind it.</string>
 </resources>

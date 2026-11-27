@@ -7,6 +7,7 @@ import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.jarnfe.library.LibraryBuiltInThemes
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.themekit.ThemeLayoutIssue
 
 private const val UNDO_LIMIT = 100
 
@@ -25,6 +26,9 @@ internal object JarnThemeEditor {
         private set
     var canRedo by mutableStateOf(false)
         private set
+
+    /** What the layout engine flagged on the canvas, published by the canvas for the tools. */
+    var layoutIssues by mutableStateOf<List<ThemeLayoutIssue>>(emptyList())
 
     /** How many repeats the current held direction or shoulder has run, so it speeds up. */
     private var holdRepeat = 0
