@@ -11,6 +11,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+private val SystemsShelf = LibraryShelfKind.Systems.geometry
+
 /**
  * Proves the focus border rule at real Stage sizes: each focused item's border sits outside its
  * own art and never touches a neighbor, the tabs or the screen edge. All sizes are in dp.
@@ -56,7 +58,7 @@ class LibraryFocusBorderGeometryTest {
     fun `carousel systems with names off grow into the freed room and stay clear`() {
         stages.forEach { stage ->
             val shelfHeight = stage.height - FOCUS_EDGE - HERO_HEIGHT
-            val named = shelfFit(stage.width, shelfHeight, LibraryShelfKind.Systems, false, FOCUS_EDGE, SHELF_ONE_LINE_CAPTION)
+            val named = shelfFit(stage.width, shelfHeight, SystemsShelf, false, FOCUS_EDGE, SHELF_ONE_LINE_CAPTION)
             val fit = assertShelf(stage, LibraryShelfKind.Systems, shelfHeight, captioned = false)
             assertTrue("cards grow with names off on ${stage.width}dp", fit.cardHeight > named.cardHeight)
         }
@@ -69,8 +71,9 @@ class LibraryFocusBorderGeometryTest {
         captioned: Boolean = true,
     ): ShelfFit {
         val isNarrow = stage.width < SHELF_NARROW_WIDTH.value
-        val reserve = if (captioned) kind.captionReserve else SHELF_NO_CAPTION
-        val fit = shelfFit(stage.width, shelfHeight, kind, isNarrow, FOCUS_EDGE, reserve)
+        val geometry = kind.geometry
+        val reserve = if (captioned) geometry.captionReserve else SHELF_NO_CAPTION
+        val fit = shelfFit(stage.width, shelfHeight, geometry, isNarrow, FOCUS_EDGE, reserve)
         assertTrue("card must have room on ${stage.width}dp", fit.cardHeight > 0f)
         val center = centered(stage.width / 2, fit.centerY, fit.cardWidth, fit.cardHeight)
         val reach = jarnFocusBorderReach(fit.cardWidth, fit.cardHeight)
@@ -78,12 +81,12 @@ class LibraryFocusBorderGeometryTest {
         assertBorderOutsideArt(center, reach)
         val minGap = shelfMinGap(fit.cardWidth, fit.cardHeight)
         listOf(-1, 1).forEach { side ->
-            val x = shelfSlotX(side, stage.width, kind, fit.cardWidth, minGap)
+            val x = shelfSlotX(side, stage.width, geometry, fit.cardWidth, minGap)
             val neighbor = centered(
                 stage.width / 2 + x,
                 fit.centerY,
-                fit.cardWidth * kind.neighborScale,
-                fit.cardHeight * kind.neighborScale,
+                fit.cardWidth * geometry.neighborScale,
+                fit.cardHeight * geometry.neighborScale,
             )
             assertTrue("$kind border hits a neighbor on ${stage.width}dp", border.clearOf(neighbor))
         }
@@ -107,7 +110,7 @@ class LibraryFocusBorderGeometryTest {
             assertTrue("banner border reaches the tabs", border.top >= 0f)
             assertTrue("banner border leaves the screen", border.left >= 0f && border.right <= stage.width)
             val shelfHeight = stage.height - hero.bottom
-            val fit = shelfFit(stage.width, shelfHeight, LibraryShelfKind.Systems, false, FOCUS_EDGE, SHELF_ONE_LINE_CAPTION)
+            val fit = shelfFit(stage.width, shelfHeight, SystemsShelf, false, FOCUS_EDGE, SHELF_ONE_LINE_CAPTION)
             val card = centered(stage.width / 2, hero.bottom + fit.centerY, fit.cardWidth, fit.cardHeight)
             assertTrue("banner border hits the shelf card", border.clearOf(card))
             val gridFirstRow = hero.bottom + LibraryGridRowSpacing.value
