@@ -109,10 +109,12 @@ private fun LibrarySystems(
         onRetry = library::retry,
         empty = { LibraryEmptyMessage(systemsEmptyCopy(state.systems.hiddenCount), emptyActions) },
     ) {
-        LibraryBrowseSwitch(
+        LibraryThemedBrowse(
             view = display.systemView,
-            grid = { LibrarySystemGrid(library, cellMinSize, onFocused, onOpenSystem) },
-            shelf = { LibrarySystemShelf(library, onFocused, onOpenSystem) },
+            kind = LibraryShelfKind.Systems,
+            cellMinSize = cellMinSize,
+            grid = { geometry -> LibrarySystemGrid(library, geometry, onFocused, onOpenSystem) },
+            shelf = { geometry -> LibrarySystemShelf(library, onFocused, onOpenSystem, geometry) },
         )
     }
 }
@@ -126,6 +128,7 @@ internal fun LibrarySystemShelf(
     library: JarnLibraryStore,
     onFocused: (String) -> Unit,
     onOpenSystem: (String) -> Unit,
+    geometry: LibraryShelfGeometry = LibraryShelfKind.Systems.geometry,
 ) {
     val state = library.state
     Column(Modifier.fillMaxSize()) {
@@ -152,6 +155,7 @@ internal fun LibrarySystemShelf(
             onFocused = onFocused,
             modifier = Modifier.weight(1f),
             letterJumpEnabled = false,
+            geometry = geometry,
         )
     }
 }
@@ -159,7 +163,7 @@ internal fun LibrarySystemShelf(
 @Composable
 private fun LibrarySystemGrid(
     library: JarnLibraryStore,
-    cellMinSize: Dp,
+    geometry: LibraryGridGeometry,
     onFocused: (String) -> Unit,
     onOpenSystem: (String) -> Unit,
 ) {
@@ -170,7 +174,7 @@ private fun LibrarySystemGrid(
         itemKey = JarnLibrarySystem::id,
         focusedKey = state.focusedSystem?.id,
         onFocused = onFocused,
-        geometry = LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing),
+        geometry = geometry,
         header = state.hero?.let { hero ->
             {
                 LibraryHeroBanner(
@@ -318,15 +322,17 @@ internal fun LibraryGames(
         onRetry = library::retry,
         empty = empty,
     ) {
-        LibraryBrowseSwitch(
+        LibraryThemedBrowse(
             view = display.gameView,
-            grid = {
+            kind = LibraryShelfKind.Games,
+            cellMinSize = cellMinSize,
+            grid = { geometry ->
                 LibraryFocusGrid(
                     items = feed.items,
                     itemKey = JarnLibraryGame::id,
                     focusedKey = focusedKey,
                     onFocused = onFocused,
-                    geometry = LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing),
+                    geometry = geometry,
                     refocusSignal = library.stageRefocus,
                     jump = jump,
                     onLanded = library::landJump,
@@ -341,7 +347,7 @@ internal fun LibraryGames(
                     )
                 }
             },
-            shelf = {
+            shelf = { geometry ->
                 LibraryShelf(
                     items = feed.items,
                     kind = LibraryShelfKind.Games,
@@ -353,6 +359,7 @@ internal fun LibraryGames(
                     onLanded = library::landJump,
                     letterJumpEnabled = letterJumpEnabled,
                     titleKey = letterJumpKey,
+                    geometry = geometry,
                 )
             },
         )
