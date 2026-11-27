@@ -15,18 +15,28 @@ import jr.brian.frontend.look.JarnDisplayPrefs
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 
-/** The theme a player has picked, as the picker shows it. */
+/**
+ * The player's layout plus a per-view override. A null override means the view is the same as
+ * the layout; Grid or Carousel draws that built-in for the view instead.
+ */
 @Immutable
-internal sealed interface JarnThemeChoice {
-    /** The built-ins, per view. Equal views read as that one built-in, different ones as a mix. */
-    data class BuiltIn(val systems: JarnBrowseView, val games: JarnBrowseView) : JarnThemeChoice {
-        val mixed: Boolean get() = systems != games
+internal data class JarnThemeChoice(
+    val layout: JarnThemeEntry,
+    val systems: JarnBrowseView? = null,
+    val games: JarnBrowseView? = null,
+) {
+    fun override(view: ThemeView): JarnBrowseView? = when (view) {
+        ThemeView.Systems -> systems
+        ThemeView.Games -> games
     }
 
-    data class Installed(val entry: JarnThemeEntry) : JarnThemeChoice
+    fun withOverride(view: ThemeView, override: JarnBrowseView?): JarnThemeChoice = when (view) {
+        ThemeView.Systems -> copy(systems = override)
+        ThemeView.Games -> copy(games = override)
+    }
 }
 
-/** The theme each browse view draws. Both are the same entry unless the built-ins are mixed. */
+/** The theme each browse view draws. */
 @Immutable
 internal data class JarnActiveTheme(val systems: JarnThemeEntry, val games: JarnThemeEntry) {
     fun forView(view: ThemeView): JarnThemeEntry = when (view) {
@@ -40,49 +50,54 @@ internal data class JarnActiveTheme(val systems: JarnThemeEntry, val games: Jarn
 }
 
 /**
- * The saved choice. A null or unknown [activeId] (a theme not on this device yet) reads as the
- * built-ins from the stored Grid or Carousel views, so existing players keep what they had.
+ * The saved choice. A saved layout reads both stored views as overrides. A null or unknown
+ * [activeId] (from before layouts, or a theme not on this device yet) takes the stored systems
+ * view's built-in as the layout and a different games view as its override, so existing players
+ * keep exactly what they had.
  */
 internal fun resolveJarnThemeChoice(
     activeId: String?,
     display: JarnDisplayPrefs,
     installed: List<JarnThemeEntry> = JarnThemeRegistry.installed,
-): JarnThemeChoice = installed.firstOrNull { it.id == activeId }?.let(JarnThemeChoice::Installed)
-    ?: JarnThemeChoice.BuiltIn(display.systemView, display.gameView)
-
-/** A view the chosen theme leaves out keeps the built-in its stored view picks. */
-internal fun JarnThemeChoice.activeTheme(display: JarnDisplayPrefs): JarnActiveTheme = when (this) {
-    is JarnThemeChoice.BuiltIn -> JarnActiveTheme(
-        systems = JarnThemeRegistry.builtInFor(systems),
-        games = JarnThemeRegistry.builtInFor(games),
-    )
-    is JarnThemeChoice.Installed -> JarnActiveTheme(
-        systems = entry.takeIf { it.viewSpec(ThemeView.Systems) != null } ?: JarnThemeRegistry.builtInFor(display.systemView),
-        games = entry.takeIf { it.viewSpec(ThemeView.Games) != null } ?: JarnThemeRegistry.builtInFor(display.gameView),
-    )
+): JarnThemeChoice {
+    installed.firstOrNull { it.id == activeId }?.let { saved ->
+        return JarnThemeChoice(saved, display.systemView.asOverride(), display.gameView.asOverride())
+    }
+    val layout = JarnThemeRegistry.builtInFor(display.systemView)
+    val layoutView = layout.browseView(ThemeView.Games)
+    return JarnThemeChoice(layout, games = display.gameView.asOverride()?.takeUnless { it == layoutView })
 }
 
+/** A view the layout leaves out, and isn't overridden, draws the grid. */
+internal fun JarnThemeChoice.activeTheme(): JarnActiveTheme {
+    fun entryFor(view: ThemeView): JarnThemeEntry = override(view)?.let(JarnThemeRegistry::builtInFor)
+        ?: layout.takeIf { it.viewSpec(view) != null }
+        ?: JarnThemeRegistry.Grid
+    return JarnActiveTheme(entryFor(ThemeView.Systems), entryFor(ThemeView.Games))
+}
+
+private fun JarnBrowseView.asOverride(): JarnBrowseView? = takeUnless { it == JarnBrowseView.SameAsLayout }
+
 /**
- * Saves [choice]. A built-in clears the active id and sets both views; a theme with its own colors
- * turns off both Command Panel matches, since it replaces those colors.
+ * Saves [choice]: the layout id and both views, so a player from before layouts moves to the new
+ * form on their first change. A layout with its own colors turns off both Command Panel matches,
+ * since it replaces those colors.
  */
 internal fun JarnLookStore.applyThemeChoice(choice: JarnThemeChoice) {
-    when (choice) {
-        is JarnThemeChoice.BuiltIn -> {
-            setActiveThemeId(null)
-            updateDisplay { it.copy(systemView = choice.systems, gameView = choice.games) }
-        }
-        is JarnThemeChoice.Installed -> {
-            setActiveThemeId(choice.entry.id)
-            if (choice.entry.ownColors) {
-                setMatchCommandPanel(false)
-                setMatchCommandPanelFonts(false)
-            }
-        }
+    setActiveThemeId(choice.layout.id)
+    updateDisplay {
+        it.copy(
+            systemView = choice.systems ?: JarnBrowseView.SameAsLayout,
+            gameView = choice.games ?: JarnBrowseView.SameAsLayout,
+        )
+    }
+    if (choice.layout.ownColors) {
+        setMatchCommandPanel(false)
+        setMatchCommandPanelFonts(false)
     }
 }
 
-/** An unsaved theme shown on both screens while its card has focus. */
+/** An unsaved layout shown on both screens while its card has focus. */
 internal object JarnThemePreview {
     var choice by mutableStateOf<JarnThemeChoice?>(null)
 }
@@ -99,10 +114,7 @@ internal fun rememberSavedThemeChoice(): JarnThemeChoice {
 /** The live preview wins, then the saved choice. */
 @Composable
 internal fun rememberJarnActiveTheme(): JarnActiveTheme {
-    val context = LocalContext.current
-    val store = remember(context) { context.jarnLookStoreOrNull() }
-    val display = store?.displayState?.collectAsState()?.value ?: JarnDisplayPrefs()
     val saved = rememberSavedThemeChoice()
     val choice = JarnThemePreview.choice ?: saved
-    return remember(choice, display.systemView, display.gameView) { choice.activeTheme(display) }
+    return remember(choice) { choice.activeTheme() }
 }

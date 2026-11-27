@@ -35,8 +35,8 @@ internal data class JarnThemeEntry(
 }
 
 /**
- * Every theme this build ships. Built-ins are never saved as the active theme: a null id means
- * the built-in each view's stored Grid or Carousel picks, so systems and games can still differ.
+ * Every layout this build ships. A null active id is a player from before layouts: the stored
+ * systems view's built-in is their layout, and a different games view is an override.
  */
 internal object JarnThemeRegistry {
     val Grid = JarnThemeEntry(
@@ -70,11 +70,11 @@ internal object JarnThemeRegistry {
         )
     }
 
-    /** Themes that can be saved as the active theme. Imports join these at runtime (M2). */
-    val installed: List<JarnThemeEntry> get() = templates
+    /** Layouts that can be saved as the active theme. Imports join these at runtime (M2). */
+    val installed: List<JarnThemeEntry> get() = builtIns + templates
 
     fun builtInFor(view: JarnBrowseView): JarnThemeEntry = when (view) {
-        JarnBrowseView.Grid -> Grid
+        JarnBrowseView.Grid, JarnBrowseView.SameAsLayout -> Grid
         JarnBrowseView.Carousel -> Carousel
     }
 }

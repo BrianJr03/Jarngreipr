@@ -28,7 +28,7 @@ internal fun LibraryBrowseSwitch(
 ) {
     LibraryBrowseCrossfade(view) { shown ->
         when (shown) {
-            JarnBrowseView.Grid -> grid()
+            JarnBrowseView.Grid, JarnBrowseView.SameAsLayout -> grid()
             JarnBrowseView.Carousel -> shelf()
         }
     }

@@ -27,7 +27,7 @@ internal val OwnColorsTheme = JarnThemeEntry(
     ownColors = true,
 )
 
-/** Only a systems view, so games keep the stored built-in. */
+/** Only a systems view, so games fall back unless overridden. */
 private val SystemsOnly = TemplateCarousel.copy(
     id = "systems-only",
     theme = LibraryBuiltInThemes.Carousel.copy(
@@ -37,76 +37,92 @@ private val SystemsOnly = TemplateCarousel.copy(
     ),
 )
 
+internal val TestThemes = JarnThemeRegistry.builtIns + listOf(TemplateCarousel, OwnColorsTheme, SystemsOnly)
+
 private fun display(systems: JarnBrowseView, games: JarnBrowseView) =
     JarnDisplayPrefs(systemView = systems, gameView = games)
 
 class JarnActiveThemeTest {
-    private val installed = listOf(TemplateCarousel, OwnColorsTheme, SystemsOnly)
-
     @Test
-    fun `no saved theme lands on the stored grid or carousel`() {
-        val choice = resolveJarnThemeChoice(null, display(JarnBrowseView.Carousel, JarnBrowseView.Carousel), installed)
-        assertEquals(JarnThemeChoice.BuiltIn(JarnBrowseView.Carousel, JarnBrowseView.Carousel), choice)
-        val theme = choice.activeTheme(JarnDisplayPrefs())
+    fun `a player from before layouts lands on their stored built-in`() {
+        val choice = resolveJarnThemeChoice(null, display(JarnBrowseView.Carousel, JarnBrowseView.Carousel), TestThemes)
+        assertEquals(JarnThemeChoice(JarnThemeRegistry.Carousel), choice)
+        val theme = choice.activeTheme()
         assertSame(JarnThemeRegistry.Carousel, theme.systems)
         assertSame(JarnThemeRegistry.Carousel, theme.games)
     }
 
     @Test
-    fun `different stored views keep their mix`() {
-        val prefs = display(JarnBrowseView.Grid, JarnBrowseView.Carousel)
-        val choice = resolveJarnThemeChoice(null, prefs, installed) as JarnThemeChoice.BuiltIn
-        assertTrue(choice.mixed)
-        val theme = choice.activeTheme(prefs)
+    fun `an old mix becomes the systems layout with a games override`() {
+        val choice = resolveJarnThemeChoice(null, display(JarnBrowseView.Grid, JarnBrowseView.Carousel), TestThemes)
+        assertEquals(JarnThemeChoice(JarnThemeRegistry.Grid, games = JarnBrowseView.Carousel), choice)
+        val theme = choice.activeTheme()
         assertSame(JarnThemeRegistry.Grid, theme.forView(ThemeView.Systems))
         assertSame(JarnThemeRegistry.Carousel, theme.forView(ThemeView.Games))
     }
 
     @Test
     fun `a theme not on this device falls back to the built-ins`() {
-        val prefs = display(JarnBrowseView.Grid, JarnBrowseView.Carousel)
+        val prefs = display(JarnBrowseView.SameAsLayout, JarnBrowseView.SameAsLayout)
+        assertEquals(JarnThemeChoice(JarnThemeRegistry.Grid), resolveJarnThemeChoice("not-installed", prefs, TestThemes))
+    }
+
+    @Test
+    fun `a saved layout draws both views unless one is overridden`() {
+        val same = display(JarnBrowseView.SameAsLayout, JarnBrowseView.SameAsLayout)
+        val plain = resolveJarnThemeChoice("template-shelf", same, TestThemes).activeTheme()
+        assertSame(TemplateCarousel, plain.systems)
+        assertSame(TemplateCarousel, plain.games)
+
+        val overridden = display(JarnBrowseView.SameAsLayout, JarnBrowseView.Grid)
+        val mixed = resolveJarnThemeChoice("template-shelf", overridden, TestThemes).activeTheme()
+        assertSame(TemplateCarousel, mixed.systems)
+        assertSame(JarnThemeRegistry.Grid, mixed.games)
+    }
+
+    @Test
+    fun `with a saved layout a matching override is still an override`() {
+        val prefs = display(JarnBrowseView.Grid, JarnBrowseView.SameAsLayout)
         assertEquals(
-            JarnThemeChoice.BuiltIn(JarnBrowseView.Grid, JarnBrowseView.Carousel),
-            resolveJarnThemeChoice("not-installed", prefs, installed),
+            JarnThemeChoice(JarnThemeRegistry.Grid, systems = JarnBrowseView.Grid),
+            resolveJarnThemeChoice(JarnThemeRegistry.Grid.id, prefs, TestThemes),
         )
     }
 
     @Test
-    fun `an installed theme draws both views`() {
-        val choice = resolveJarnThemeChoice("template-shelf", JarnDisplayPrefs(), installed)
-        assertEquals(JarnThemeChoice.Installed(TemplateCarousel), choice)
-        val theme = choice.activeTheme(JarnDisplayPrefs())
-        assertSame(TemplateCarousel, theme.systems)
-        assertSame(TemplateCarousel, theme.games)
-    }
-
-    @Test
-    fun `a view the theme leaves out keeps the stored built-in`() {
-        val prefs = display(JarnBrowseView.Grid, JarnBrowseView.Carousel)
-        val theme = JarnThemeChoice.Installed(SystemsOnly).activeTheme(prefs)
+    fun `a view the layout leaves out draws the grid`() {
+        val theme = JarnThemeChoice(SystemsOnly).activeTheme()
         assertSame(SystemsOnly, theme.systems)
-        assertSame(JarnThemeRegistry.Carousel, theme.games)
+        assertSame(JarnThemeRegistry.Grid, theme.games)
     }
 
     @Test
     fun `built-ins and templates follow the look`() {
-        assertNull(JarnThemeChoice.BuiltIn(JarnBrowseView.Grid, JarnBrowseView.Carousel).activeTheme(JarnDisplayPrefs()).ownColors)
-        assertNull(JarnThemeChoice.Installed(TemplateCarousel).activeTheme(JarnDisplayPrefs()).ownColors)
+        assertNull(JarnThemeChoice(JarnThemeRegistry.Grid, games = JarnBrowseView.Carousel).activeTheme().ownColors)
+        assertNull(JarnThemeChoice(TemplateCarousel).activeTheme().ownColors)
     }
 
     @Test
     fun `a theme with its own colors hands them over`() {
-        val theme = JarnThemeChoice.Installed(OwnColorsTheme).activeTheme(JarnDisplayPrefs())
-        assertEquals(OwnColorsTheme.theme.spec.tokens.colors, theme.ownColors)
+        assertEquals(OwnColorsTheme.theme.spec.tokens.colors, JarnThemeChoice(OwnColorsTheme).activeTheme().ownColors)
     }
 
     @Test
-    fun `the shipped templates are pickable and follow the look`() {
-        val templates = JarnThemeRegistry.installed
-        assertEquals(listOf("template.big-shelf", "template.cover-grid", "template.list-art"), templates.map { it.id })
-        assertTrue(templates.all { it.kind == JarnThemeKind.Template && !it.ownColors && it.nameRes != null })
-        val saved = resolveJarnThemeChoice("template.list-art", JarnDisplayPrefs())
-        assertNull(saved.activeTheme(JarnDisplayPrefs()).ownColors)
+    fun `the shipped layouts are pickable and follow the look`() {
+        val ids = JarnThemeRegistry.installed.map { it.id }
+        assertEquals(
+            listOf("builtin-grid", "builtin-carousel", "template.big-shelf", "template.cover-grid", "template.list-art"),
+            ids,
+        )
+        assertTrue(JarnThemeRegistry.templates.all { it.kind == JarnThemeKind.Template && !it.ownColors && it.nameRes != null })
+        assertNull(resolveJarnThemeChoice("template.list-art", JarnDisplayPrefs()).activeTheme().ownColors)
+    }
+
+    @Test
+    fun `override rows step same, grid, carousel`() {
+        assertEquals(JarnBrowseView.Grid, null.nextOverride())
+        assertEquals(JarnBrowseView.Carousel, JarnBrowseView.Grid.nextOverride())
+        assertNull(JarnBrowseView.Carousel.nextOverride())
     }
 
     @Test

@@ -52,7 +52,7 @@ internal object LibraryBuiltInThemes {
     )
 
     fun forView(view: JarnBrowseView): LibraryBuiltInTheme = when (view) {
-        JarnBrowseView.Grid -> Grid
+        JarnBrowseView.Grid, JarnBrowseView.SameAsLayout -> Grid
         JarnBrowseView.Carousel -> Carousel
     }
 }
