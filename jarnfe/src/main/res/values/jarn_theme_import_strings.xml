@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="jarnfe_esde_theme_howto">Copy the theme folder to ES-DE/themes, then come back.</string>
+    <string name="jarnfe_esde_theme_updated">Your ES-DE theme updated. Re-import?</string>
+    <string name="jarnfe_esde_theme_reimport">Re-import</string>
     <string name="jarnfe_theme_import_too_new">This theme needs a newer Jarn. Update, then try again.</string>
     <string name="jarnfe_theme_import_unreadable">Couldn\'t open that file.</string>
     <string name="jarnfe_theme_import_not_a_theme">That file isn\'t a Jarn theme.</string>
