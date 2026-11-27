@@ -123,7 +123,7 @@ fun JarnChoiceCard(
             Column(Modifier.matchParentSize(), content = preview)
             if (chosen) JarnChosenBadge(Modifier.align(Alignment.TopEnd).padding(JarnTheme.space.xs))
         }
-        JarnLookCardFooter(name, chosen)
+        JarnChoiceCardName(name)
         supporting?.let { JarnChoiceSupporting(it, supportingLines) }
     }
 }
@@ -193,15 +193,8 @@ private fun JarnSwatch(color: Color, outline: Color) {
 }
 
 @Composable
-private fun JarnLookCardFooter(name: String, chosen: Boolean) {
-    val colors = JarnTheme.colors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        JarnText(name, JarnTheme.type.labelStrong, colors.textHigh, Modifier.weight(1f), maxLines = 1)
-        if (chosen) JarnCheckGlyph(colors.accent)
-    }
+private fun JarnChoiceCardName(name: String) {
+    JarnText(name, JarnTheme.type.labelStrong, JarnTheme.colors.textHigh, Modifier.fillMaxWidth(), maxLines = 1)
 }
 
 @Composable

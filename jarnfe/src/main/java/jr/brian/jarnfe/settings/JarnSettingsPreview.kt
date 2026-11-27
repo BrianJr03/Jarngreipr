@@ -50,12 +50,17 @@ import jr.brian.jarnfe.library.LibrarySystemArt
 import jr.brian.jarnfe.library.SystemCellMinSize
 import jr.brian.jarnfe.library.gameCountText
 import jr.brian.jarnfe.look.rememberJarnDisplay
+import jr.brian.jarnfe.themes.JarnThemeEntry
+import jr.brian.jarnfe.themes.JarnThemeKind
 import jr.brian.jarnfe.themes.rememberJarnActiveTheme
 
 private const val PREVIEW_TILE_COUNT = 8
 
 /** Two shelves, the heading and the gaps fit in what is left above the hint bar. */
 private const val SHELF_CARD_HEIGHT_FRACTION = 0.3f
+
+/** A template's scaled stage frame, two of which fit the same space as two shelves. */
+private const val FRAME_HEIGHT_FRACTION = 0.36f
 private val PreviewAppTileWidth = 88.dp
 private val PreviewAppIconSize = 48.dp
 
@@ -68,12 +73,14 @@ internal fun JarnSettingsPreview(modifier: Modifier = Modifier.fillMaxSize()) {
     val hintsVisible = rememberJarnDisplay().hintsVisible
     BoxWithConstraints(modifier) {
         val hintBar = if (hintsVisible) JarnTheme.space.hintBarHeight else 0.dp
-        JarnSettingsPreviewContent(shelfCardCap = (maxHeight - hintBar) * SHELF_CARD_HEIGHT_FRACTION)
+        JarnSettingsPreviewContent(availableHeight = maxHeight - hintBar)
     }
 }
 
 @Composable
-private fun JarnSettingsPreviewContent(shelfCardCap: Dp) {
+private fun JarnSettingsPreviewContent(availableHeight: Dp) {
+    val shelfCardCap = availableHeight * SHELF_CARD_HEIGHT_FRACTION
+    val frameCap = availableHeight * FRAME_HEIGHT_FRACTION
     val display = rememberJarnDisplay()
     val theme = rememberJarnActiveTheme()
     val state = JarnLibrary.state
@@ -89,23 +96,40 @@ private fun JarnSettingsPreviewContent(shelfCardCap: Dp) {
         if (JarnSession.state.settingsSection == SettingsSection.Apps) {
             PreviewAppRow()
         } else {
-            LibraryBrowseSwitch(
-                view = theme.systems.browseView(ThemeView.Systems),
-                grid = {
-                    PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
-                },
-                shelf = { PreviewSystemShelf(state.systems.items, shelfCardCap) },
-            )
-            LibraryBrowseSwitch(
-                view = theme.games.browseView(ThemeView.Games),
-                grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
-                shelf = { PreviewGameShelf(games, shelfCardCap) },
-            )
+            val templateItems = JarnTemplatePreviewItems(state.systems.items, games)
+            PreviewView(theme.systems, ThemeView.Systems, templateItems, frameCap) {
+                LibraryBrowseSwitch(
+                    view = theme.systems.browseView(ThemeView.Systems),
+                    grid = {
+                        PreviewSystemRow(state.systems.items, SystemCellMinSize * display.systemTileScale, display.systemNamesVisible)
+                    },
+                    shelf = { PreviewSystemShelf(state.systems.items, shelfCardCap) },
+                )
+            }
+            PreviewView(theme.games, ThemeView.Games, templateItems, frameCap) {
+                LibraryBrowseSwitch(
+                    view = theme.games.browseView(ThemeView.Games),
+                    grid = { PreviewGameRow(games, GameCellMinSize * display.gameTileScale) },
+                    shelf = { PreviewGameShelf(games, shelfCardCap) },
+                )
+            }
             if (JarnSession.state.settingsSection == SettingsSection.Display) {
                 PreviewPageTransition(display.pageTransition)
             }
         }
     }
+}
+
+/** A template or import draws its own stage; the built-ins keep Jarn's own preview rows. */
+@Composable
+private fun PreviewView(
+    entry: JarnThemeEntry,
+    view: ThemeView,
+    items: JarnTemplatePreviewItems,
+    frameCap: Dp,
+    builtIn: @Composable () -> Unit,
+) {
+    if (entry.kind == JarnThemeKind.BuiltIn) builtIn() else JarnTemplatePreview(entry, view, items, frameCap)
 }
 
 @Composable

@@ -25,7 +25,7 @@ private const val PREVIEW_SHELF_ITEMS = SHELF_NEIGHBORS * 2 + 1
 /**
  * A still shelf at the real sizes and dimming, for the Settings preview. It never takes focus or
  * input. [items] may be empty, in which case [art] draws placeholders for null. The centered card
- * shrinks to stay within [maxCardHeight] when one is given.
+ * shrinks to stay within [maxCardHeight] when one is given, and a theme passes its own [geometry].
  */
 @Composable
 internal fun <T : Any> LibraryShelfPreview(
@@ -33,11 +33,11 @@ internal fun <T : Any> LibraryShelfPreview(
     kind: LibraryShelfKind,
     description: (T?) -> String,
     maxCardHeight: Dp = Dp.Unspecified,
+    geometry: LibraryShelfGeometry = kind.geometry,
     art: @Composable BoxScope.(T?) -> Unit,
 ) {
     val shown: List<T?> = items.take(PREVIEW_SHELF_ITEMS).ifEmpty { List(PREVIEW_SHELF_ITEMS) { null } }
     val center = (shown.size - 1) / 2
-    val geometry = kind.geometry
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val fullWidth = maxWidth * geometry.widthFraction
         val cardWidth = if (maxCardHeight.isSpecified) minOf(fullWidth, maxCardHeight * geometry.aspectRatio) else fullWidth
