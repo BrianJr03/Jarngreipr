@@ -99,7 +99,7 @@ class LibraryTemplateThemesTest {
 
         val grid = CoverGridGames.primary as ThemePrimary.Grid
         val gridGeometry = libraryGridGeometry(grid, GameCellMinSize, 500.dp)
-        assertEquals(LibraryGridGeometry(GameCellMinSize, 500.dp * 0.012f, 500.dp * 0.012f, columns = 5, itemAspect = 0.7f, showTitle = false), gridGeometry)
+        assertEquals(LibraryGridGeometry(GameCellMinSize, 500.dp * 0.012f, 500.dp * 0.012f, columns = 4, itemAspect = 0.7f, showTitle = false), gridGeometry)
 
         val list = libraryListGeometry(ListArtGames.primary as ThemePrimary.List)
         assertEquals(LibraryListGeometry(rows = 5, secondary = (ListArtGames.primary as ThemePrimary.List).secondary), list)

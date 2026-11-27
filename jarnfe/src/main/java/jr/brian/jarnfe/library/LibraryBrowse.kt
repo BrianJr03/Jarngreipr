@@ -1,8 +1,15 @@
 package jr.brian.jarnfe.library
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.ui.theme.JarnTheme
@@ -38,7 +45,8 @@ internal fun LibraryBrowseSwitch(
  * Draws [kind]'s browse as [theme], crossfading when the theme changes. [grid], [shelf] and
  * [list] draw the browsable list at the geometry the theme resolves to. Decor layers follow
  * [focused], which is only read when the view has layers, so a theme without layers draws
- * exactly as the built-ins did.
+ * exactly as the built-ins did. Built-ins keep [header] inside their list; spec-driven themes get it
+ * as its own strip over the top [LIBRARY_HEADER_BAND] of the view (see [LocalLibraryHeaderInPrimary]).
  */
 @Composable
 internal fun LibraryThemedBrowse(
@@ -49,17 +57,34 @@ internal fun LibraryThemedBrowse(
     grid: @Composable (LibraryGridGeometry) -> Unit,
     shelf: @Composable (LibraryShelfGeometry) -> Unit,
     list: @Composable (LibraryListGeometry) -> Unit,
+    header: (@Composable () -> Unit)? = null,
 ) {
     LibraryBrowseCrossfade(theme) { shown ->
         val spec = shown.viewSpec(kind.themeView) ?: return@LibraryBrowseCrossfade
         val pins = shown.theme.pinsFor(kind.themeView)
+        val headerInPrimary = shown.theme.pins.containsKey(kind.themeView)
         val primary: @Composable () -> Unit = { LibraryThemePrimary(spec.primary, pins, kind, cellMinSize, grid, shelf, list) }
-        if (spec.layers.isEmpty()) {
-            JarnThemeLayout(view = spec, primary = primary, layer = {}, insets = BrowseInsets)
-        } else {
-            JarnThemeDecorView(view = spec, focused = focused(), primary = primary, themeDir = shown.themeDir, insets = BrowseInsets)
+        CompositionLocalProvider(LocalLibraryHeaderInPrimary provides headerInPrimary) {
+            Box(Modifier.fillMaxSize()) {
+                if (spec.layers.isEmpty()) {
+                    JarnThemeLayout(view = spec, primary = primary, layer = {}, insets = BrowseInsets)
+                } else {
+                    JarnThemeDecorView(view = spec, focused = focused(), primary = primary, themeDir = shown.themeDir, insets = BrowseInsets)
+                }
+                if (!headerInPrimary) header?.let { LibraryHeaderStrip(it) }
+            }
         }
     }
+}
+
+/** A spec-driven view's header, at the top of the band the theme keeps clear for it. */
+@Composable
+private fun BoxScope.LibraryHeaderStrip(header: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .align(Alignment.TopStart)
+            .padding(start = JarnTheme.space.stageMargin, end = JarnTheme.space.stageMargin, top = JarnTheme.space.md),
+    ) { header() }
 }
 
 @Composable
