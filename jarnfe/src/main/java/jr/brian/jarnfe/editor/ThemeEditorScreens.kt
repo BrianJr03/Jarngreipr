@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnText
@@ -30,11 +34,13 @@ internal fun ThemeEditorStage(session: JarnSessionState) {
         return
     }
     val toolsOnDeck = session.editorToolsOnDeck
-    ThemeEditorCanvasInput(editor, toolsOnDeck)
+    var optionsOpen by remember { mutableStateOf(false) }
+    ThemeEditorCanvasInput(editor, toolsOnDeck, paused = optionsOpen, onOptions = { optionsOpen = true })
     Row(Modifier.fillMaxSize()) {
         ThemeEditorCanvas(editor, Modifier.weight(CANVAS_WEIGHT).fillMaxHeight())
-        if (!toolsOnDeck) ThemeEditorSheet(editor, Modifier.weight(SHEET_WEIGHT).fillMaxHeight())
+        if (!toolsOnDeck && editor.held == null) ThemeEditorSheet(editor, Modifier.weight(SHEET_WEIGHT).fillMaxHeight())
     }
+    ThemeEditorOptions(editor, visible = optionsOpen, onDismiss = { optionsOpen = false })
 }
 
 /** The tools on the Deck, which the editor owns while it is open. */

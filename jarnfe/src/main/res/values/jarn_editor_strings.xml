@@ -18,4 +18,10 @@
     <string name="jarnfe_editor_hint_leave">Leave</string>
     <string name="jarnfe_editor_hint_select">Select</string>
     <string name="jarnfe_editor_hint_tab">Tab</string>
+    <string name="jarnfe_editor_hint_pick_up">Pick up</string>
+    <string name="jarnfe_editor_hint_put_back">Put back</string>
+    <string name="jarnfe_editor_options">Options</string>
+    <string name="jarnfe_editor_redo">Redo</string>
+    <string name="jarnfe_editor_snap">Snap to guides</string>
+    <string name="jarnfe_editor_snap_hint">Lines up with the grid, the center and other pieces. Off moves in finer steps.</string>
 </resources>

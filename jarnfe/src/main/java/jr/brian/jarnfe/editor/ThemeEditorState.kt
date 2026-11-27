@@ -21,6 +21,13 @@ internal sealed interface ThemeEditorTarget {
     data class Layer(val id: String) : ThemeEditorTarget
 }
 
+/** Which side L1 and R1 resize while a piece is held. Select flips it. */
+internal enum class ThemeEditorAxis { Width, Height }
+
+/** A picked up piece. [before] is the draft as it was, for B to put it back. */
+@Immutable
+internal data class ThemeEditorHold(val before: JarnThemeSpec)
+
 /**
  * One editing session. [spec] is the live draft, shown on the canvas as it changes. [sheetFocused]
  * is the single screen case, where X moves control between the canvas and the tools sheet.
@@ -33,6 +40,9 @@ internal data class ThemeEditorState(
     val selected: ThemeEditorTarget = ThemeEditorTarget.Navigator,
     val tab: ThemeEditorTab = ThemeEditorTab.Layers,
     val sheetFocused: Boolean = false,
+    val held: ThemeEditorHold? = null,
+    val axis: ThemeEditorAxis = ThemeEditorAxis.Width,
+    val snap: Boolean = true,
 ) {
     val viewSpec: ViewSpec? get() = spec.views[view]
 

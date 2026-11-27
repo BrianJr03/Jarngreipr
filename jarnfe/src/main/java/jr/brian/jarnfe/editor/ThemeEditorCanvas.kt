@@ -50,7 +50,7 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
                 emptyActions = {},
             )
         }
-        ThemeEditorSelection(probe, editor.selected, held = false, Modifier.matchParentSize())
+        ThemeEditorSelection(probe, editor.selected, held = editor.held != null, Modifier.matchParentSize())
     }
 }
 
