@@ -67,7 +67,7 @@ class JarnVideoPreviewConfigImportTest {
 
     @Test
     fun `schema version covers video previews`() {
-        assertEquals(77, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(78, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

@@ -32,22 +32,44 @@ internal const val SHELF_BORDER_CLEARANCE = 2f
 private const val SHELF_NARROW_GROWTH = 1.8f
 
 /**
- * Sizes from the approved "Carousel A, Shelf" mockup, as fractions of the shelf width. The
- * centered card is [widthFraction] wide, neighbors are scaled by [neighborScale].
+ * How a shelf sizes and spaces its cards, as fractions of the shelf width. The centered card is
+ * [widthFraction] wide, neighbors are scaled by [neighborScale], [neighborsBefore] and
+ * [neighborsAfter] show on each side, and the card sits near [centerY] of the shelf height.
  */
-internal enum class LibraryShelfKind(
+internal data class LibraryShelfGeometry(
     val widthFraction: Float,
     val aspectRatio: Float,
     val neighborScale: Float,
     val gapFraction: Float,
     val captionReserve: Float,
+    val neighborsBefore: Int = SHELF_NEIGHBORS,
+    val neighborsAfter: Int = SHELF_NEIGHBORS,
+    val centerY: Float = SHELF_CENTER_Y,
 ) {
-    Systems(0.30f, aspectRatio = 16f / 10f, neighborScale = 0.62f, gapFraction = 0.02f, captionReserve = SHELF_ONE_LINE_CAPTION),
-    Games(0.17f, aspectRatio = 3f / 4f, neighborScale = 0.70f, gapFraction = 0.016f, captionReserve = SHELF_TWO_LINE_CAPTION),
-    ;
-
     fun cardWidthFraction(narrow: Boolean): Float =
         if (narrow) widthFraction * SHELF_NARROW_GROWTH else widthFraction
+}
+
+/** Jarn's own shelf geometry, from the approved "Carousel A, Shelf" mockup. */
+internal enum class LibraryShelfKind(val geometry: LibraryShelfGeometry) {
+    Systems(
+        LibraryShelfGeometry(
+            widthFraction = 0.30f,
+            aspectRatio = 16f / 10f,
+            neighborScale = 0.62f,
+            gapFraction = 0.02f,
+            captionReserve = SHELF_ONE_LINE_CAPTION,
+        ),
+    ),
+    Games(
+        LibraryShelfGeometry(
+            widthFraction = 0.17f,
+            aspectRatio = 3f / 4f,
+            neighborScale = 0.70f,
+            gapFraction = 0.016f,
+            captionReserve = SHELF_TWO_LINE_CAPTION,
+        ),
+    ),
 }
 
 /** Signed slots from [center] to [index], taking the short way round when the shelf wraps. */
@@ -65,10 +87,18 @@ internal fun shelfStep(center: Int, delta: Int, count: Int): Int = when {
     else -> (center + delta).coerceIn(0, count - 1)
 }
 
-/** The indices worth composing around [center], each listed once even on a short wrapped shelf. */
-internal fun shelfComposedIndices(center: Int, count: Int): List<Int> {
+/**
+ * The indices worth composing around [center], each listed once even on a short wrapped shelf.
+ * One slot past [before] and [after] stays composed, so an item can slide out.
+ */
+internal fun shelfComposedIndices(
+    center: Int,
+    count: Int,
+    before: Int = SHELF_NEIGHBORS,
+    after: Int = SHELF_NEIGHBORS,
+): List<Int> {
     if (count <= 0) return emptyList()
-    return (-SHELF_COMPOSED_REACH..SHELF_COMPOSED_REACH)
+    return (-(before + 1)..(after + 1))
         .map { offset ->
             if (count >= SHELF_WRAP_MIN_ITEMS) Math.floorMod(center + offset, count) else center + offset
         }
@@ -80,23 +110,28 @@ internal fun shelfComposedIndices(center: Int, count: Int): List<Int> {
 internal fun shelfSlotX(
     distance: Int,
     shelfWidth: Float,
-    kind: LibraryShelfKind,
+    geometry: LibraryShelfGeometry,
     card: Float,
     minGap: Float = 0f,
 ): Float {
     if (distance == 0) return 0f
-    val side = card * kind.neighborScale
-    val gap = maxOf(kind.gapFraction * shelfWidth, minGap)
+    val side = card * geometry.neighborScale
+    val gap = maxOf(geometry.gapFraction * shelfWidth, minGap)
     val steps = abs(distance)
     return distance.sign * (card / 2 + gap + side / 2 + (steps - 1) * (side + gap))
 }
 
-internal fun shelfSlotScale(distance: Int, kind: LibraryShelfKind): Float =
-    if (distance == 0) 1f else kind.neighborScale
+internal fun shelfSlotScale(distance: Int, geometry: LibraryShelfGeometry): Float =
+    if (distance == 0) 1f else geometry.neighborScale
 
-internal fun shelfSlotAlpha(distance: Int): Float = when (abs(distance)) {
+/** Full for the centered card, dimmed for the [before] and [after] neighbors, hidden past them. */
+internal fun shelfSlotAlpha(
+    distance: Int,
+    before: Int = SHELF_NEIGHBORS,
+    after: Int = SHELF_NEIGHBORS,
+): Float = when (distance) {
     0 -> 1f
-    in 1..SHELF_NEIGHBORS -> SHELF_NEIGHBOR_ALPHA
+    in -before..after -> SHELF_NEIGHBOR_ALPHA
     else -> 0f
 }
 
@@ -128,21 +163,21 @@ internal data class ShelfFit(val cardWidth: Float, val cardHeight: Float, val ce
 /**
  * Fits the card into whatever height is left, for example under the Continue playing card.
  * [topMargin] leaves room for the focus float, and [captionReserve] keeps the title and its gap
- * inside the shelf. The card keeps the mockup's width when there is room and sits near
- * [SHELF_CENTER_Y], and otherwise shrinks and centers in the space it has.
+ * inside the shelf. The card keeps [geometry]'s width when there is room and sits near its
+ * [LibraryShelfGeometry.centerY], and otherwise shrinks and centers in the space it has.
  */
 internal fun shelfFit(
     width: Float,
     height: Float,
-    kind: LibraryShelfKind,
+    geometry: LibraryShelfGeometry,
     narrow: Boolean,
     topMargin: Float,
     captionReserve: Float,
 ): ShelfFit {
     val area = (height - topMargin - captionReserve).coerceAtLeast(0f)
-    val cardHeight = minOf(width * kind.cardWidthFraction(narrow) / kind.aspectRatio, area)
+    val cardHeight = minOf(width * geometry.cardWidthFraction(narrow) / geometry.aspectRatio, area)
     val highest = topMargin + cardHeight / 2
     val lowest = topMargin + area - cardHeight / 2
-    val centerY = (height * SHELF_CENTER_Y).coerceIn(highest, maxOf(highest, lowest))
-    return ShelfFit(cardHeight * kind.aspectRatio, cardHeight, centerY)
+    val centerY = (height * geometry.centerY).coerceIn(highest, maxOf(highest, lowest))
+    return ShelfFit(cardHeight * geometry.aspectRatio, cardHeight, centerY)
 }

@@ -170,8 +170,7 @@ private fun LibrarySystemGrid(
         itemKey = JarnLibrarySystem::id,
         focusedKey = state.focusedSystem?.id,
         onFocused = onFocused,
-        cellMinSize = cellMinSize,
-        rowSpacing = LibraryGridRowSpacing,
+        geometry = LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing),
         header = state.hero?.let { hero ->
             {
                 LibraryHeroBanner(
@@ -327,9 +326,8 @@ internal fun LibraryGames(
                     itemKey = JarnLibraryGame::id,
                     focusedKey = focusedKey,
                     onFocused = onFocused,
-                    cellMinSize = cellMinSize,
+                    geometry = LibraryGridGeometry(cellMinSize, rowSpacing = LibraryGridRowSpacing),
                     refocusSignal = library.stageRefocus,
-                    rowSpacing = LibraryGridRowSpacing,
                     jump = jump,
                     onLanded = library::landJump,
                     itemTitle = JarnLibraryGame::title,
