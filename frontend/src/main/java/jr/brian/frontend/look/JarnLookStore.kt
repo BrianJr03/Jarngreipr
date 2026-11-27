@@ -31,6 +31,23 @@ class JarnLookStore @Inject constructor(
     val lookIdState: StateFlow<String> = _lookId.asStateFlow()
     val lookId: String get() = _lookId.value
 
+    private val _activeThemeId = MutableStateFlow(prefs.getString(KEY_ACTIVE_THEME, null))
+
+    /**
+     * The chosen Jarn theme, or null for the built-in one. Kept as written even when the theme
+     * isn't on this device, so a restored choice returns once it is; until then the built-in shows.
+     */
+    val activeThemeIdState: StateFlow<String?> = _activeThemeId.asStateFlow()
+    val activeThemeId: String? get() = _activeThemeId.value
+
+    fun setActiveThemeId(id: String?) {
+        val next = id?.takeIf(String::isNotBlank)
+        _activeThemeId.value = next
+        prefs.edit {
+            if (next == null) remove(KEY_ACTIVE_THEME) else putString(KEY_ACTIVE_THEME, next)
+        }
+    }
+
     private val _reducedMotion = MutableStateFlow(prefs.getBoolean(KEY_REDUCED_MOTION, false))
     val reducedMotionState: StateFlow<Boolean> = _reducedMotion.asStateFlow()
     val reducedMotion: Boolean get() = _reducedMotion.value
@@ -241,6 +258,7 @@ class JarnLookStore @Inject constructor(
     private companion object {
         const val PREFS_NAME = "jarnfe_look_prefs"
         const val KEY_LOOK = "look_id"
+        const val KEY_ACTIVE_THEME = "active_theme_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
         const val KEY_MATCH_COMMAND_PANEL = "match_command_panel"
         const val KEY_MATCH_COMMAND_PANEL_FONTS = "match_command_panel_fonts"

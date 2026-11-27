@@ -84,4 +84,6 @@ data class FeatureConfig(
     val jarnCollections: List<JarnCollectionConfig>? = null,
     /** v72: Jarn FE favorites. Null on pre-v72 exports keeps them. Import never unfavorites a game. */
     val jarnFavorites: List<JarnGameKeyConfig>? = null,
+    /** v78: Jarn FE active theme, never its files. Null on pre-v78 exports keeps the current theme. */
+    val jarnTheme: JarnThemeConfig? = null,
 )

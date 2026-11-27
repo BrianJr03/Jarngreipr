@@ -255,6 +255,9 @@ data class JarngreiprConfig(
         // v77: added JarnDisplayConfig.coverGlow, whether the focused cover's light fills Jarn FE's
         //      screen ("full") or is not drawn ("off"). Null on older blobs, or an unknown id, keeps
         //      the current value (off on a fresh install).
-        const val CONFIG_VERSION = 77
+        // v78: added FeatureConfig.jarnTheme, the active Jarn theme id (null id is the built-in
+        //      theme). Theme files are never exported. Null on older blobs keeps the current theme,
+        //      and an id this device doesn't have is kept so the built-in shows until it is added.
+        const val CONFIG_VERSION = 78
     }
 }
