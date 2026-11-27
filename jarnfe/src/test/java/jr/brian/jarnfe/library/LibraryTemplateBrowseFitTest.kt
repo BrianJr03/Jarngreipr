@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ViewSpec
+import jr.brian.core.model.theme.forArea
 import jr.brian.core.ui.theme.JarnSpacing
 import jr.brian.core.ui.theme.JarnType
 import jr.brian.jarnfe.themekit.ThemePxRect
@@ -29,27 +30,39 @@ class LibraryTemplateBrowseFitTest {
 
     /**
      * A captioned grid's last row either shows whole or stops above its caption, so no name is cut
-     * in half. Checked on the Thor's top screen, under the tabs (183px measured, 157px on device);
-     * the 4:3 bottom screen squeezes until views can vary per screen.
+     * in half. Checked on both Thor screens, under the tabs (183px measured, 157px on device), each
+     * with the layout its own shape picks.
      */
     @Test
-    fun `captioned grid rows never cut a caption on the Thor top screen`() {
+    fun `captioned grid rows never cut a caption on either Thor screen`() {
         val type = JarnType()
         val caption = space.sm.value + type.captionStrong.lineHeight.value + type.caption.lineHeight.value + space.xs.value
-        LibraryTemplateThemes.All.flatMap { listOfNotNull(it.spec.views.systems, it.spec.views.games) }
-            .mapNotNull { it.primary as? ThemePrimary.Grid }
-            .filter { it.showTitle }
-            .forEach { primary ->
+        val views = LibraryTemplateThemes.All.flatMap { listOfNotNull(it.spec.views.systems, it.spec.views.games) }
+        views.forEach { spec ->
+            widths.forEach { width ->
                 listOf(systemsHeight, 988 - 157).forEach { height ->
-                    val view = ViewSpec(primary)
-                    val box = resolveThemeView(view, ThemeScreen(1920, height)).primary.toDp()
+                    val primary = spec.forArea(width, height).primary as? ThemePrimary.Grid ?: return@forEach
+                    if (!primary.showTitle) return@forEach
+                    val box = resolveThemeView(spec, ThemeScreen(width, height)).primary.toDp()
                     val gap = box.w * primary.spacing
                     val cell = (box.w - space.stageMargin.value * 2 - gap * (primary.columns - 1)) / primary.columns
                     val tile = cell / primary.itemAspect
                     val shown = (box.h - space.focusEdge.value) % (tile + gap)
-                    assertTrue("$height px: last row shows ${shown}dp of a ${tile}dp tile", shown <= tile - caption || shown >= tile)
+                    assertTrue("${width}x$height: last row shows ${shown}dp of a ${tile}dp tile", shown <= tile - caption || shown >= tile)
                 }
             }
+        }
+    }
+
+    @Test
+    fun `the bottom screen gets the narrow layouts and the top keeps the wide ones`() {
+        val bottomShelf = BigShelfGames.forArea(1240, gamesHeight).primary as ThemePrimary.Shelf
+        val topShelf = BigShelfGames.forArea(1920, gamesHeight).primary as ThemePrimary.Shelf
+        assertTrue(bottomShelf.itemsBefore == 1 && bottomShelf.itemsAfter == 1)
+        assertTrue(topShelf.itemsBefore == 2 && topShelf.itemsAfter == 2)
+        assertTrue((CoverGridGames.forArea(1240, gamesHeight).primary as ThemePrimary.Grid).columns == 3)
+        assertTrue((CoverGridSystems.forArea(1240, systemsHeight).primary as ThemePrimary.Grid).columns == 2)
+        assertTrue((CoverGridSystems.forArea(1920, systemsHeight).primary as ThemePrimary.Grid).columns == 3)
     }
 
     @Test
@@ -83,7 +96,7 @@ class LibraryTemplateBrowseFitTest {
 
     private fun checkUsable(name: String, view: ViewSpec, width: Int, height: Int, kind: LibraryShelfKind) {
         val box = resolveThemeView(view, ThemeScreen(width, height)).primary.toDp()
-        when (val primary = view.primary) {
+        when (val primary = view.forArea(width, height).primary) {
             is ThemePrimary.Shelf -> {
                 val geometry = libraryShelfGeometry(primary, kind)
                 val fit = shelfFit(box.w, box.h, geometry, box.w < SHELF_NARROW_WIDTH.value, space.focusEdge.value, SHELF_NO_CAPTION)
