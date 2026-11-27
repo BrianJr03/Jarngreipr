@@ -288,6 +288,7 @@ class ImportExportManager @Inject constructor(
             artSource = artSourceStore.savedSource?.name,
             systemArtSource = artSourceStore.systemSource.name,
             jarnLook = jarnLookStore.lookId,
+            jarnTheme = jarnLookStore.themeBackup(),
             jarnReducedMotion = jarnLookStore.reducedMotion,
             jarnArtChoices = artChoiceStore.choices.toConfig(),
             jarnPinnedApps = appPinStore.pinned,
@@ -585,6 +586,7 @@ class ImportExportManager @Inject constructor(
 
         // Null means the blob predates v41, so keep the current appearance.
         config.jarnLook?.let(jarnLookStore::setLookId)
+        jarnLookStore.restoreTheme(config.jarnTheme)
         config.jarnReducedMotion?.let(jarnLookStore::setReducedMotion)
         config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
         config.jarnPinnedApps?.let(appPinStore::restore)
