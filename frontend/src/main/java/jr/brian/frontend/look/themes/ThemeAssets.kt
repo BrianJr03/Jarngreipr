@@ -13,13 +13,17 @@ private const val MAX_IMAGE_PIXELS = 32L * 1024 * 1024
 private const val FONT_HEADER_BYTES = 12
 private val IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "gif")
 private val FONT_EXTENSIONS = setOf("ttf", "otf")
+private const val SVG_EXTENSION = "svg"
+private const val MAX_SVG_BYTES = 2 * 1024 * 1024
+private val SvgUnsafeMarkers = listOf("<!DOCTYPE", "<!ENTITY", "<script", "href=\"http", "href=\"//")
 private val LATIN_CAPITALS = 'A'.code..'Z'.code
 
-internal enum class ThemeAssetKind { Image, Font }
+internal enum class ThemeAssetKind { Image, Vector, Font }
 
 /** What a theme file holds, from its name. Anything else is never extracted, so nothing can point at it. */
 internal fun themeAssetKind(path: String): ThemeAssetKind? = when (path.substringAfterLast('.', "").lowercase()) {
     in IMAGE_EXTENSIONS -> ThemeAssetKind.Image
+    SVG_EXTENSION -> ThemeAssetKind.Vector
     in FONT_EXTENSIONS -> ThemeAssetKind.Font
     else -> null
 }
@@ -75,6 +79,16 @@ internal fun isImageWithinCaps(size: ImageSize?): Boolean =
     size != null && size.width in 1..MAX_IMAGE_SIDE && size.height in 1..MAX_IMAGE_SIDE &&
         size.width.toLong() * size.height <= MAX_IMAGE_PIXELS
 
+/**
+ * An SVG Jarn's decoder can draw safely: small, no DOCTYPE or entities (so no expansion bombs),
+ * no scripts and no remote links. ES-DE themes draw most logos and frames this way.
+ */
+internal fun isSafeSvg(bytes: ByteArray): Boolean {
+    if (bytes.isEmpty() || bytes.size > MAX_SVG_BYTES) return false
+    val text = bytes.decodeToString()
+    return text.contains("<svg", ignoreCase = true) && SvgUnsafeMarkers.none { text.contains(it, ignoreCase = true) }
+}
+
 /** A TrueType or OpenType file whose cmap maps at least the Latin capitals. */
 internal fun isUsableFont(bytes: ByteArray): Boolean {
     if (bytes.size < FONT_HEADER_BYTES) return false
@@ -96,6 +110,7 @@ internal fun checkThemeAssets(root: File): Map<String, ThemeAssetKind> {
         if (relative == THEME_FILE) return@forEach
         val ok = when (themeAssetKind(relative)) {
             ThemeAssetKind.Image -> isImageWithinCaps(readImageSize(file.readHeader()))
+            ThemeAssetKind.Vector -> file.length() <= MAX_SVG_BYTES && isSafeSvg(file.readBytes())
             ThemeAssetKind.Font -> isUsableFont(file.readBytes())
             null -> false
         }
