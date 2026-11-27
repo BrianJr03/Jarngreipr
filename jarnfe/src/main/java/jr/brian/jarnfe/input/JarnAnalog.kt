@@ -40,7 +40,7 @@ data class JarnStickRaw(
     val rightX: Float,
     val rightY: Float,
     val eventTimeMs: Long,
-    /** The D-pad as a hat. Android turns it into D-pad keys, so an event carrying it is never consumed. */
+    /** The D-pad as a hat (the Thor reports its D-pad this way). Events pressing or releasing it are never consumed. */
     val hatPressed: Boolean = false,
 )
 
