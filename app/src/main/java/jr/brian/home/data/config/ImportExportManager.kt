@@ -5,7 +5,6 @@ import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.util.UnstableApi
-import androidx.annotation.VisibleForTesting
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
@@ -19,12 +18,6 @@ import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.data.SnapMode
 import jr.brian.core.model.Experience
 import jr.brian.core.model.ScreenAssignment
-import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
-import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
-import jr.brian.home.esde.model.ESDEPrefsState
-import jr.brian.home.esde.model.FrontendLayout
-import jr.brian.home.esde.model.FrontendRowAlignment
-import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.core.model.MainScreen
 import jr.brian.home.model.PageType
@@ -295,6 +288,7 @@ class ImportExportManager @Inject constructor(
             artSource = artSourceStore.savedSource?.name,
             systemArtSource = artSourceStore.systemSource.name,
             jarnLook = jarnLookStore.lookId,
+            jarnTheme = jarnLookStore.themeBackup(),
             jarnReducedMotion = jarnLookStore.reducedMotion,
             jarnArtChoices = artChoiceStore.choices.toConfig(),
             jarnPinnedApps = appPinStore.pinned,
@@ -308,60 +302,7 @@ class ImportExportManager @Inject constructor(
             jarnVideoHintShown = jarnLookStore.videoHintShown,
             jarnWallpaperScreens = jarnLookStore.wallpaperScreensBackup(),
             jarnPreview = jarnPreviewStore.previewBackup(),
-            romSearch = RomSearchConfig(
-                frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
-                companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
-                secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
-                jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
-                // Legacy field — kept populated with the primary-display value
-                // so an older app version restoring this config still gets a
-                // sensible single-layout setting.
-                systemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
-                primarySystemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
-                secondarySystemLayout = f.esdePreferencesManager.state.value.secondarySystemLayout.name,
-                // Legacy field — kept populated with the primary-display game
-                // layout so an older app version restoring this config still
-                // gets a sensible single-layout setting.
-                gameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
-                primaryGameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
-                secondaryGameLayout = f.esdePreferencesManager.state.value.secondaryGameLayout.name,
-                systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
-                systemOrder = f.esdePreferencesManager.state.value.systemOrder,
-                frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
-                frontendFloatIntensity = f.esdePreferencesManager.state.value.frontendFloatIntensity,
-                canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
-                gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
-                systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
-                // Legacy field intentionally retained in the export payload so a
-                // pre-v36 build still restores the first companion per ROM. Seeded
-                // from the new list by taking the first entry.
-                gameCompanionMap = f.esdePreferencesManager.state.value.gameCompanionsMap
-                    .mapNotNull { (k, v) -> v.firstOrNull()?.let { k to it } }
-                    .toMap(),
-                gameCompanionsMap = f.esdePreferencesManager.state.value.gameCompanionsMap,
-                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
-                frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
-                frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
-                frontendFocusBackgroundGames = f.esdePreferencesManager.state.value.frontendFocusBackgroundGames,
-                // Legacy field is intentionally kept in the export payload so a config
-                // exported by this build can still be read by pre-split builds; seed it
-                // from the systems value as a reasonable single-value approximation.
-                frontendFocusBackgroundDim = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimSystems,
-                frontendFocusBackgroundDimSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimSystems,
-                frontendFocusBackgroundDimGames = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimGames,
-                frontendTransition = f.esdePreferencesManager.state.value.frontendTransition.name,
-                frontendTransitionMs = f.esdePreferencesManager.state.value.frontendTransitionMs,
-                frontendSystemRowAlignment = f.esdePreferencesManager.state.value.frontendSystemRowAlignment.name,
-                frontendGameRowAlignment = f.esdePreferencesManager.state.value.frontendGameRowAlignment.name,
-                frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
-                frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
-                gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
-                gameEmulatorMap = f.esdePreferencesManager.state.value.gameEmulatorMap,
-                systemEmulatorMap = f.esdePreferencesManager.state.value.systemEmulatorMap,
-                gameCommandMap = f.esdePreferencesManager.state.value.gameCommandMap,
-                gameCoreMap = f.esdePreferencesManager.state.value.gameCoreMap,
-                scraper = buildScraperConfigForExport(f.esdePreferencesManager.state.value)
-            )
+            romSearch = f.esdePreferencesManager.state.value.toRomSearchConfig(),
         )
     }
 
@@ -607,82 +548,7 @@ class ImportExportManager @Inject constructor(
             muted = bgMusic.isMuted
         )
 
-        // config.romSearch.hintsKbVisible intentionally ignored — the feature it
-        // gated was removed. The field stays on RomSearchConfig so older exports
-        // still decode without error.
-        f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
-        f.esdePreferencesManager.setCompanionLaunchWatchdogEnabled(config.romSearch.companionLaunchWatchdogEnabled)
-        f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
-        f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
-        // New per-display fields fall back to the legacy single value when
-        // restoring a config written by an older app version.
-        val legacySystemLayout = runCatching {
-            FrontendLayout.valueOf(config.romSearch.systemLayout)
-        }.getOrNull()
-        (runCatching { FrontendLayout.valueOf(config.romSearch.primarySystemLayout) }.getOrNull()
-            ?: legacySystemLayout)
-            ?.let { f.esdePreferencesManager.setPrimarySystemLayout(it) }
-        (runCatching { FrontendLayout.valueOf(config.romSearch.secondarySystemLayout) }.getOrNull()
-            ?: legacySystemLayout)
-            ?.let { f.esdePreferencesManager.setSecondarySystemLayout(it) }
-        val legacyGameLayout = runCatching {
-            FrontendLayout.valueOf(config.romSearch.gameLayout)
-        }.getOrNull()
-        (runCatching { FrontendLayout.valueOf(config.romSearch.primaryGameLayout) }.getOrNull()
-            ?: legacyGameLayout)
-            ?.let { f.esdePreferencesManager.setPrimaryGameLayout(it) }
-        (runCatching { FrontendLayout.valueOf(config.romSearch.secondaryGameLayout) }.getOrNull()
-            ?: legacyGameLayout)
-            ?.let { f.esdePreferencesManager.setSecondaryGameLayout(it) }
-        f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)
-        f.esdePreferencesManager.setSystemOrder(config.romSearch.systemOrder)
-        f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
-        f.esdePreferencesManager.setFrontendFloatIntensity(config.romSearch.frontendFloatIntensity)
-        f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
-        f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
-        f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
-        // Prefer the v36 list field; fall back to converting the legacy single-
-        // value map so pre-v36 configs still restore companions.
-        @Suppress("DEPRECATION")
-        val companions = config.romSearch.gameCompanionsMap.takeIf { it.isNotEmpty() }
-            ?: config.romSearch.gameCompanionMap.mapValues { listOf(it.value) }
-        f.esdePreferencesManager.setAllGameCompanionsMap(companions)
-        f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
-        f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
-        f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)
-        f.esdePreferencesManager.setFrontendFocusBackgroundGames(config.romSearch.frontendFocusBackgroundGames)
-        // Pre-split configs carry only the deprecated combined field; new configs
-        // carry the per-scope fields. When the per-scope field is at its default and
-        // the legacy field differs, prefer the legacy — that's the case where a v17
-        // (or older) config was exported before the split existed.
-        @Suppress("DEPRECATION")
-        val legacyDim = config.romSearch.frontendFocusBackgroundDim
-        val systemsDim = config.romSearch.frontendFocusBackgroundDimSystems.let { new ->
-            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
-        }
-        val gamesDim = config.romSearch.frontendFocusBackgroundDimGames.let { new ->
-            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
-        }
-        f.esdePreferencesManager.setFrontendFocusBackgroundDimSystems(systemsDim)
-        f.esdePreferencesManager.setFrontendFocusBackgroundDimGames(gamesDim)
-        f.esdePreferencesManager.setFrontendTransition(
-            FrontendTransition.fromStoredName(config.romSearch.frontendTransition)
-        )
-        f.esdePreferencesManager.setFrontendTransitionMs(config.romSearch.frontendTransitionMs)
-        f.esdePreferencesManager.setFrontendSystemRowAlignment(
-            resolveRowAlignment(config.romSearch.frontendSystemRowAlignment)
-        )
-        f.esdePreferencesManager.setFrontendGameRowAlignment(
-            resolveRowAlignment(config.romSearch.frontendGameRowAlignment)
-        )
-        f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
-        f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
-        f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
-        config.romSearch.run {
-            f.esdePreferencesManager.restoreLaunchChoices(gameEmulatorMap, systemEmulatorMap, gameCommandMap, gameCoreMap)
-        }
-
-        applyScraperConfigImport(config.romSearch.scraper, f.esdePreferencesManager)
+        f.esdePreferencesManager.applyRomSearchConfig(config.romSearch)
 
         f.recentlyPlayedManager.restore(config.recentlyPlayed)
 
@@ -720,6 +586,7 @@ class ImportExportManager @Inject constructor(
 
         // Null means the blob predates v41, so keep the current appearance.
         config.jarnLook?.let(jarnLookStore::setLookId)
+        jarnLookStore.restoreTheme(config.jarnTheme)
         config.jarnReducedMotion?.let(jarnLookStore::setReducedMotion)
         config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
         config.jarnPinnedApps?.let(appPinStore::restore)
@@ -734,10 +601,6 @@ class ImportExportManager @Inject constructor(
         jarnLookStore.restoreWallpaperScreens(config.jarnWallpaperScreens)
         jarnPreviewStore.restorePreview(config.jarnPreview)
     }
-
-    private fun resolveRowAlignment(stored: String): FrontendRowAlignment =
-        FrontendRowAlignment.entries.firstOrNull { it.name == stored }
-            ?: FrontendRowAlignment.Center
 
     private fun applySystemConfig(config: SystemConfig) {
         val sys = managers.system
@@ -778,64 +641,4 @@ class ImportExportManager @Inject constructor(
     private object PageCountRange {
         const val MAX = FOLDER_BACKUP_PAGE_COUNT
     }
-}
-
-/**
- * Builds the [ScraperConfig] slice of an export. Secrets (dev ID / password,
- * user ID / password, SteamGridDB key) are intentionally emitted as empty
- * strings so a user who shares their config.json never leaks credentials to
- * the recipient. The empty strings keep the on-disk schema stable so a
- * pre-v26 build can still decode the config.
- */
-@VisibleForTesting
-internal fun buildScraperConfigForExport(prefs: ESDEPrefsState): ScraperConfig = ScraperConfig(
-    screenScraperEnabled = prefs.screenScraperEnabled,
-    screenScraperDevId = "",
-    screenScraperDevPassword = "",
-    screenScraperUserId = "",
-    screenScraperUserPassword = "",
-    screenScraperMediaTypes = prefs.screenScraperMediaTypes,
-    steamGridDbEnabled = prefs.steamGridDbEnabled,
-    steamGridDbApiKey = "",
-    steamGridDbMediaTypes = prefs.steamGridDbMediaTypes,
-    concurrencyOverride = prefs.scraperConcurrencyOverride,
-)
-
-/**
- * Applies a [ScraperConfig] from an import to [prefs]. Credential fields are
- * only written when non-empty: a config produced by [buildScraperConfigForExport]
- * carries empty strings, meaning "the exporter chose not to share this";
- * clobbering the user's stored secrets in that case would log them out of
- * ScreenScraper on every import. Older configs that still carry credentials
- * import normally.
- */
-@VisibleForTesting
-internal fun applyScraperConfigImport(
-    scraper: ScraperConfig,
-    prefs: ESDEPreferencesManager,
-) {
-    prefs.setScreenScraperEnabled(scraper.screenScraperEnabled)
-    if (scraper.screenScraperDevId.isNotEmpty()) {
-        prefs.setScreenScraperDevId(scraper.screenScraperDevId)
-    }
-    if (scraper.screenScraperDevPassword.isNotEmpty()) {
-        prefs.setScreenScraperDevPassword(scraper.screenScraperDevPassword)
-    }
-    if (scraper.screenScraperUserId.isNotEmpty()) {
-        prefs.setScreenScraperUserId(scraper.screenScraperUserId)
-    }
-    if (scraper.screenScraperUserPassword.isNotEmpty()) {
-        prefs.setScreenScraperUserPassword(scraper.screenScraperUserPassword)
-    }
-    prefs.setScreenScraperMediaTypes(
-        scraper.screenScraperMediaTypes.ifEmpty { DEFAULT_SCREENSCRAPER_MEDIA_TYPES }
-    )
-    prefs.setSteamGridDbEnabled(scraper.steamGridDbEnabled)
-    if (scraper.steamGridDbApiKey.isNotEmpty()) {
-        prefs.setSteamGridDbApiKey(scraper.steamGridDbApiKey)
-    }
-    prefs.setSteamGridDbMediaTypes(
-        scraper.steamGridDbMediaTypes.ifEmpty { DEFAULT_STEAMGRIDDB_MEDIA_TYPES }
-    )
-    prefs.setScraperConcurrencyOverride(scraper.concurrencyOverride)
 }
