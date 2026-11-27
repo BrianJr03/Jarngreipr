@@ -48,6 +48,7 @@ private fun ThemeEditorTabBody(editor: ThemeEditorState) {
     when (editor.tab) {
         ThemeEditorTab.Layers -> ThemeEditorLayersTab(editor)
         ThemeEditorTab.Inspect -> ThemeEditorInspectTab(editor)
+        ThemeEditorTab.Colors -> ThemeEditorColorsTab(editor)
         ThemeEditorTab.Preview -> ThemeEditorPreviewTab(editor)
     }
 }
@@ -107,6 +108,7 @@ private val ThemeEditorTab.labelRes: Int
     get() = when (this) {
         ThemeEditorTab.Layers -> R.string.jarnfe_editor_tab_layers
         ThemeEditorTab.Inspect -> R.string.jarnfe_editor_tab_inspect
+        ThemeEditorTab.Colors -> R.string.jarnfe_look_colors_title
         ThemeEditorTab.Preview -> R.string.jarnfe_editor_tab_preview
     }
 

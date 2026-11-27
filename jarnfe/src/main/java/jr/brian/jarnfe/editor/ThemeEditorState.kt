@@ -11,7 +11,7 @@ import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeKind
 
 /** The tools tabs, in the order L2 and R2 step through them. */
-internal enum class ThemeEditorTab { Layers, Inspect, Preview }
+internal enum class ThemeEditorTab { Layers, Inspect, Colors, Preview }
 
 /** What the editor has selected: the view's list (the navigator) or one decor layer. */
 @Immutable
@@ -55,7 +55,12 @@ internal data class ThemeEditorState(
 
     /** The draft as a theme the browse screens can draw. */
     val entry: JarnThemeEntry
-        get() = JarnThemeEntry(id = themeId, kind = JarnThemeKind.User, theme = LibraryBuiltInTheme(spec))
+        get() = JarnThemeEntry(
+            id = themeId,
+            kind = JarnThemeKind.User,
+            theme = LibraryBuiltInTheme(spec),
+            ownColors = !spec.meta.followsLook,
+        )
 
     fun withTab(step: Int): ThemeEditorState {
         val tabs = ThemeEditorTab.entries

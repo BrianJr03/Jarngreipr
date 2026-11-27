@@ -126,4 +126,13 @@
     <string name="jarnfe_editor_color_accent">Accent</string>
     <string name="jarnfe_editor_color_danger">Warning</string>
     <string name="jarnfe_editor_color_success">Success</string>
+
+    <string name="jarnfe_editor_follow_look">Use my Look\'s colors</string>
+    <string name="jarnfe_editor_follow_look_hint">Off gives this layout colors of its own, starting from the Look you see now.</string>
+    <string name="jarnfe_editor_hue">Hue</string>
+    <string name="jarnfe_editor_saturation">Saturation</string>
+    <string name="jarnfe_editor_lightness">Lightness</string>
+    <string name="jarnfe_editor_hard_to_read">Hard to read. Jarn would show your Look\'s colors instead.</string>
+    <string name="jarnfe_editor_fix">Fix</string>
+    <string name="jarnfe_editor_fix_hint">Darkens the backgrounds and lightens text just enough.</string>
 </resources>

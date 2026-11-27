@@ -32,6 +32,8 @@ data class ThemeMeta(
     val version: String? = null,
     val license: String? = null,
     val source: ThemeSource = ThemeSource.Jarn,
+    /** True draws with the player's chosen Look and ignores the theme's own colors. */
+    val followsLook: Boolean = false,
 )
 
 /** Where a theme came from. Imports keep their source so sharing can honour the original license. */
