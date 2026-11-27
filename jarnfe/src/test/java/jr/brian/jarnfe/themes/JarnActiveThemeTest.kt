@@ -114,7 +114,7 @@ class JarnActiveThemeTest {
             listOf("builtin-grid", "builtin-carousel", "template.big-shelf", "template.cover-grid", "template.list-art"),
             ids,
         )
-        assertTrue(JarnThemeRegistry.templates.all { it.kind == JarnThemeKind.Template && !it.ownColors && it.nameRes != null })
+        assertTrue(JarnThemeRegistry.templates.all { it.kind == JarnThemeKind.Template && !it.ownColors && it.nameRes != null && it.blurbRes != null })
         assertNull(resolveJarnThemeChoice("template.list-art", JarnDisplayPrefs()).activeTheme().ownColors)
     }
 

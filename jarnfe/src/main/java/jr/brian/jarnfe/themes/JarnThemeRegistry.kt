@@ -67,6 +67,7 @@ internal object JarnThemeRegistry {
             kind = JarnThemeKind.Template,
             theme = LibraryBuiltInTheme(template.spec),
             nameRes = template.nameRes,
+            blurbRes = template.blurbRes,
         )
     }
 
