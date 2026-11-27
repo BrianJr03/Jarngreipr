@@ -1,0 +1,28 @@
+# ES-DE parser golden: per-system
+themeName=Fixture Folders
+variants=
+colorSchemes=
+fontSizes=
+aspectRatios=
+selection=variant:null colorScheme:null fontSize:null aspectRatio:null
+legacy=false
+[system nes]
+  view system
+    image background: path=./_inc/backgrounds/nes.jpg
+  view gamelist
+    image background: path=./_inc/backgrounds/nes.jpg
+    textlist gamelistTextlist: pos=0.05 0.2; backgroundColor=101820
+    image systemLogo: path=./nes/logo.svg
+[system snes]
+  view system
+    image background: path=./_inc/backgrounds/snes.jpg
+  view gamelist
+    image background: path=./_inc/backgrounds/snes.jpg
+    textlist gamelistTextlist: pos=0.5 0.2; backgroundColor=101820
+[system n64]
+  view system
+    image background: path=./_inc/backgrounds/n64.jpg
+  view gamelist
+    image background: path=./_inc/backgrounds/n64.jpg
+    textlist gamelistTextlist: pos=0.05 0.2; backgroundColor=101820
+[issues]

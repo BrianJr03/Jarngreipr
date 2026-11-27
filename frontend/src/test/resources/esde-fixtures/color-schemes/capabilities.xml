@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<themeCapabilities>
+    <themeName>Fixture Schemes</themeName>
+<colorScheme name="dusk">
+    <label>Dusk</label>
+</colorScheme>
+<colorScheme name="paper">
+    <label>Paper</label>
+</colorScheme>
+<colorScheme name="debug">
+    <label>Debug</label>
+    <selectable>false</selectable>
+</colorScheme>
+</themeCapabilities>

@@ -1,0 +1,24 @@
+<theme>
+    <include>./_inc/a.xml</include>
+    <include>../outside.xml</include>
+    <include>./_inc/doctype.xml</include>
+    <include>./_inc/huge.xml</include>
+    <include>./_inc/missing.xml</include>
+    <view name="gamelist">
+        <image name="escape">
+            <path>../../../../etc/hosts</path>
+        </image>
+        <image name="home">
+            <path>~/secret.png</path>
+        </image>
+        <text name="unknown">
+            <color>${notDefined}</color>
+        </text>
+        <image>
+            <path>./unnamed.png</path>
+        </image>
+        <textlist name="gamelistTextlist">
+            <pos>0.1 0.1</pos>
+        </textlist>
+    </view>
+</theme>

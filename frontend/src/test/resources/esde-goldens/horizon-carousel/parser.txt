@@ -1,0 +1,33 @@
+# ES-DE parser golden: horizon-carousel
+themeName=Fixture Horizon
+variants=
+colorSchemes=
+fontSizes=
+aspectRatios=16:9, 4:3
+selection=variant:null colorScheme:null fontSize:null aspectRatio:16:9
+legacy=false
+[system nes]
+  view system
+    image backdrop: pos=0 0; size=1 1; path=./art/nes/backdrop.webp
+    carousel systemCarousel: type=horizontal; pos=0 0.62; size=1 0.24; maxItemCount=5; itemScale=1.3; staticImage=./logos/nes.svg; color=5AB4FF33
+    text systemInfo: pos=0.5 0.9; origin=0.5 0; systemdata=gamecount; color=5AB4FF
+  view gamelist
+    textlist gamelistTextlist: pos=0.04 0.18; size=0.44 0.7; selectorColor=5AB4FF
+    image cover: pos=0.74 0.5; origin=0.5 0.5; maxSize=0.4 0.6; imageType=cover
+[system snes]
+  view system
+    image backdrop: pos=0 0; size=1 1; path=./art/snes/backdrop.webp
+    carousel systemCarousel: type=horizontal; pos=0 0.62; size=1 0.24; maxItemCount=5; itemScale=1.3; staticImage=./logos/snes.svg; color=5AB4FF33
+    text systemInfo: pos=0.5 0.9; origin=0.5 0; systemdata=gamecount; color=5AB4FF
+  view gamelist
+    textlist gamelistTextlist: pos=0.04 0.18; size=0.44 0.7; selectorColor=5AB4FF
+    image cover: pos=0.74 0.5; origin=0.5 0.5; maxSize=0.4 0.6; imageType=cover
+[system n64]
+  view system
+    image backdrop: pos=0 0; size=1 1; path=./art/n64/backdrop.webp
+    carousel systemCarousel: type=horizontal; pos=0 0.62; size=1 0.24; maxItemCount=5; itemScale=1.3; staticImage=./logos/n64.svg; color=5AB4FF33
+    text systemInfo: pos=0.5 0.9; origin=0.5 0; systemdata=gamecount; color=5AB4FF
+  view gamelist
+    textlist gamelistTextlist: pos=0.04 0.18; size=0.44 0.7; selectorColor=5AB4FF
+    image cover: pos=0.74 0.5; origin=0.5 0.5; maxSize=0.4 0.6; imageType=cover
+[issues]

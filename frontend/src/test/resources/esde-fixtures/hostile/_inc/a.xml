@@ -1,0 +1,8 @@
+<theme>
+    <include>./b.xml</include>
+    <view name="system">
+        <text name="fromA">
+            <text>A</text>
+        </text>
+    </view>
+</theme>

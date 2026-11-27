@@ -1,0 +1,11 @@
+<theme>
+    <variables>
+        <panel>201018</panel>
+    </variables>
+    <include>../_inc/base.xml</include>
+    <view name="gamelist">
+        <textlist name="gamelistTextlist">
+            <pos>0.5 0.2</pos>
+        </textlist>
+    </view>
+</theme>
