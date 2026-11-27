@@ -1,0 +1,72 @@
+{
+    "schema": 1,
+    "meta": {
+        "name": "Fixture Wheel",
+        "source": "es-de"
+    },
+    "tokens": {
+        "colors": {
+            "bg": "#000000",
+            "surface": "#111111",
+            "raised": "#222222",
+            "textHigh": "#FFFFFF",
+            "textMid": "#DDDDDD",
+            "textLow": "#BBBBBB",
+            "accent": "#FF8800",
+            "danger": "#FF4444",
+            "success": "#44FF44"
+        }
+    },
+    "views": {
+        "systems": {
+            "primary": {
+                "type": "shelf",
+                "box": {
+                    "x": 0.7,
+                    "y": 0.5,
+                    "width": 0.3,
+                    "height": 1.0
+                },
+                "art": {
+                    "type": "system",
+                    "kind": "logo"
+                },
+                "axis": "vertical",
+                "itemsBefore": 3,
+                "itemsAfter": 3
+            }
+        },
+        "games": {
+            "primary": {
+                "type": "shelf",
+                "box": {
+                    "x": 0.7,
+                    "y": 0.5,
+                    "width": 1.0,
+                    "height": 0.24
+                },
+                "art": {
+                    "type": "media",
+                    "kind": "Marquee"
+                },
+                "axis": "vertical",
+                "itemsBefore": 1,
+                "itemsAfter": 1
+            },
+            "layers": [
+                {
+                    "type": "video",
+                    "id": "video-preview",
+                    "rect": {
+                        "x": 0.08,
+                        "y": 0.2,
+                        "width": 0.5,
+                        "height": 0.5
+                    },
+                    "z": -20,
+                    "delayMs": 1200
+                }
+            ]
+        }
+    }
+}

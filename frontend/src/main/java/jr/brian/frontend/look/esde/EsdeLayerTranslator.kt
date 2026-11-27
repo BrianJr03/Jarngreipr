@@ -19,6 +19,7 @@ import kotlin.math.roundToInt
 internal const val ESDE_PRIMARY_Z = 50f
 private val DEFAULT_Z = mapOf("image" to 30f, "video" to 30f, "text" to 40f, "datetime" to 40f, "rating" to 45f)
 private const val OTHER_DEFAULT_Z = 35f
+private val LAYER_TYPES = setOf("image", "video", "text", "rating", "datetime")
 private const val DEFAULT_FONT_SIZE = 0.045f
 private const val DEFAULT_LINE_SPACING = 1.5f
 private const val GUESSED_SIDE = 0.2f
@@ -36,14 +37,15 @@ internal class EsdeLayerTranslator(
 ) {
 
     fun translate(element: EsdeElementAcrossSystems): ThemeLayer? {
+        if (element.key.type !in LAYER_TYPES) return notUsed(element, EsdeTranslationNote.UnsupportedElement)
+        if (element.props.values.all { it.isBlank() }) return notUsed(element, EsdeTranslationNote.NothingReadable)
         if (element.bool("visible") == false) return notUsed(element, EsdeTranslationNote.Hidden)
         val layer = when (element.key.type) {
             "image" -> image(element)
             "video" -> video(element)
             "text" -> text(element)
             "rating" -> rating(element)
-            "datetime" -> date(element)
-            else -> return notUsed(element, EsdeTranslationNote.UnsupportedElement)
+            else -> date(element)
         } ?: return null
         report.collectColors(view, element)
         if (!element.onEverySystem) report.adjusted(view, element.key, EsdeTranslationNote.ShownOnSomeSystems)

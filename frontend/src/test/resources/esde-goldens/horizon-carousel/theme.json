@@ -1,0 +1,103 @@
+{
+    "schema": 1,
+    "meta": {
+        "name": "Fixture Horizon",
+        "source": "es-de"
+    },
+    "tokens": {
+        "colors": {
+            "bg": "#000000",
+            "surface": "#111111",
+            "raised": "#222222",
+            "textHigh": "#FFFFFF",
+            "textMid": "#DDDDDD",
+            "textLow": "#BBBBBB",
+            "accent": "#FF8800",
+            "danger": "#FF4444",
+            "success": "#44FF44"
+        }
+    },
+    "views": {
+        "systems": {
+            "primary": {
+                "type": "shelf",
+                "box": {
+                    "x": 0.0,
+                    "y": 0.62,
+                    "width": 1.0,
+                    "height": 0.24
+                },
+                "art": {
+                    "type": "system",
+                    "kind": "logo"
+                },
+                "focusedScale": 1.3
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-backdrop",
+                    "rect": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 1.0,
+                        "height": 1.0
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "system",
+                        "kind": "background"
+                    },
+                    "fit": "fill"
+                },
+                {
+                    "type": "text",
+                    "id": "text-systemInfo",
+                    "rect": {
+                        "x": 0.5,
+                        "y": 0.9,
+                        "width": 0.4,
+                        "height": 0.0675,
+                        "originX": 0.5
+                    },
+                    "z": -10,
+                    "content": {
+                        "type": "system",
+                        "field": "gameCount"
+                    },
+                    "style": "title"
+                }
+            ]
+        },
+        "games": {
+            "primary": {
+                "type": "list",
+                "box": {
+                    "x": 0.04,
+                    "y": 0.18,
+                    "width": 0.44,
+                    "height": 0.7
+                }
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-cover",
+                    "rect": {
+                        "x": 0.74,
+                        "y": 0.5,
+                        "width": 0.4,
+                        "height": 0.6,
+                        "originX": 0.5,
+                        "originY": 0.5
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "media",
+                        "kind": "Cover"
+                    }
+                }
+            ]
+        }
+    }
+}

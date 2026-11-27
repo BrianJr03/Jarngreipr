@@ -245,6 +245,22 @@ class EsdeThemeTranslatorTest {
     }
 
     @Test
+    fun `elements left empty by escaped paths or unknown values are skipped and listed`() {
+        val result = translate(
+            fixture.element("gamelist", "carousel", "c", "color" to "\${missing}") +
+                fixture.element("gamelist", "image", "escaped", "path" to "../../outside.png") +
+                fixture.element("gamelist", "rating", "blank", "color" to "\${missing}"),
+        )
+
+        assertTrue(result.games().layers.isEmpty())
+        assertEquals(
+            listOf(EsdeTranslationNote.NothingReadable, EsdeTranslationNote.NothingReadable),
+            result.report.notUsed.filter { it.view == EsdeView.Gamelist }.map { it.note },
+        )
+        assertTrue(result.colorCandidates.isEmpty())
+    }
+
+    @Test
     fun `a view with no primary keeps Jarn's layout`() {
         val result = translate(fixture.element("gamelist", "image", "bg", "path" to "./bg.png"))
 
@@ -260,6 +276,7 @@ class EsdeThemeTranslatorTest {
         assertNull(result.spec.views.games)
         assertEquals("Fixture", result.spec.meta.name)
         assertEquals(ThemeSource.EsDe, result.spec.meta.source)
+        assertEquals(listOf(EsdeTranslationNote.LegacyTheme), result.notes { it.notUsed })
     }
 
     @Test

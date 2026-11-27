@@ -73,10 +73,14 @@ enum class EsdeTranslationNote {
     DiffersPerSystem,
     /** Game or system info Jarn doesn't show. */
     UnsupportedField,
+    /** Everything the element set was unreadable, unknown or outside the theme folder. */
+    NothingReadable,
     /** Hidden by the theme. */
     Hidden,
     /** The view has no carousel, grid or text list, so Jarn keeps its own layout. */
     NoPrimary,
+    /** A theme in the format from before ES-DE, which Jarn doesn't read. */
+    LegacyTheme,
     /** Transitions and variant triggers (no videos, no media) aren't read from ES-DE themes yet. */
     TransitionsAndTriggers,
 }

@@ -48,7 +48,8 @@ object EsdeThemeTranslator {
             systems = translateView(model, EsdeView.System, aspect, report)?.clearOfBand(options.systemsTopClear, report),
             games = translateView(model, EsdeView.Gamelist, aspect, report),
         )
-        report.notUsed(null, null, EsdeTranslationNote.TransitionsAndTriggers)
+        val themeNote = if (model.isLegacy) EsdeTranslationNote.LegacyTheme else EsdeTranslationNote.TransitionsAndTriggers
+        report.notUsed(null, null, themeNote)
         val spec = JarnThemeSpec(
             meta = ThemeMeta(
                 name = model.capabilities.themeName?.ifBlank { null } ?: options.fallbackName,

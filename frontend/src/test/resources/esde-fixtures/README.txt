@@ -13,5 +13,5 @@ videos that don't exist; the parser and translator must cope with that anyway.
   hostile            include cycle, path escapes, DOCTYPE, oversize file (written by the test),
                      missing include, unknown variable, unnamed element
 
-Goldens live in ../esde-goldens/<fixture>/: parser.txt now; translator.json and report.txt are
-picked up automatically once the translator (#574) adds them.
+Goldens live in ../esde-goldens/<fixture>/: parser.txt for the parser, theme.json and report.txt
+for the translator (#574).

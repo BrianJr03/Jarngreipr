@@ -30,7 +30,7 @@ internal class EsdeReportBuilder {
     /** Every `color` / `...Color` property, raw, for the M2 fallback ticket to repair into tokens. */
     fun collectColors(view: EsdeView, element: EsdeElementAcrossSystems) {
         element.props.forEach { (property, value) ->
-            if (property == "color" || property.endsWith("Color")) {
+            if ((property == "color" || property.endsWith("Color")) && value.isNotBlank()) {
                 colors += EsdeColorCandidate(view, element.key, property, value.trim())
             }
         }
