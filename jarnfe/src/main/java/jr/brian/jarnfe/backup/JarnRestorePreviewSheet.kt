@@ -133,6 +133,7 @@ private fun JarnBackupArea.labelRes(): Int = when (this) {
     JarnBackupArea.Collections -> R.string.jarnfe_section_collections
     JarnBackupArea.Favorites -> R.string.jarnfe_section_favorites
     JarnBackupArea.RecentlyPlayed -> R.string.jarnfe_backup_area_recent
+    JarnBackupArea.Layout -> R.string.jarnfe_backup_area_layout
     JarnBackupArea.Look -> R.string.jarnfe_backup_area_look
     JarnBackupArea.Wallpaper -> R.string.jarnfe_backup_area_wallpaper
     JarnBackupArea.Scraper -> R.string.jarnfe_backup_area_scraper

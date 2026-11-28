@@ -56,6 +56,7 @@
     <string name="jarnfe_backup_area_hidden_games">Hidden games</string>
     <string name="jarnfe_backup_area_art">Art choices</string>
     <string name="jarnfe_backup_area_recent">Recently played</string>
+    <string name="jarnfe_backup_area_layout">Layout</string>
     <string name="jarnfe_backup_area_look">Look and display</string>
     <string name="jarnfe_backup_area_wallpaper">Wallpapers</string>
     <string name="jarnfe_backup_area_scraper">Scraper options</string>
