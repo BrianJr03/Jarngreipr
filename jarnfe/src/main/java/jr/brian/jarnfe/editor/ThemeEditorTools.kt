@@ -85,17 +85,6 @@ private val ThemeEditorNewLayer.labelRes: Int
         ThemeEditorNewLayer.Video -> R.string.jarnfe_editor_layer_video
     }
 
-@Composable
-private fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
-    JarnValueRow(
-        label = stringResource(R.string.jarnfe_editor_view),
-        value = stringResource(editor.view.labelRes),
-        onClick = { JarnThemeEditor.update { withView(ThemeView.entries[(view.ordinal + 1) % ThemeView.entries.size]) } },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    ThemeEditorHistory()
-}
-
 /** "List" for the navigator, else the layer's kind and its id, so two pictures can be told apart. */
 @Composable
 internal fun ThemeEditorState.targetLabel(target: ThemeEditorTarget): String = when (target) {

@@ -29,6 +29,10 @@ internal fun ThemeEditorOptions(editor: ThemeEditorState, visible: Boolean, onDi
             scope.launch { JarnThemeEditor.saveVersion() }
             onDismiss()
         }
+        InspectActionRow(stringResource(R.string.jarnfe_editor_try), stringResource(R.string.jarnfe_editor_try_hint)) {
+            onDismiss()
+            ThemeEditorTryIt.start()
+        }
         if (JarnThemeEditor.canRedo) {
             JarnNavigateRow(
                 label = stringResource(R.string.jarnfe_editor_redo),

@@ -37,6 +37,7 @@ import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.editor.ThemeEditorStage
+import jr.brian.jarnfe.editor.ThemeEditorTryItHost
 import jr.brian.jarnfe.editor.ThemeEditorTitle
 import jr.brian.jarnfe.backdrop.JarnAdaptiveContent
 import jr.brian.jarnfe.backdrop.JarnBackdropSampler
@@ -143,6 +144,7 @@ internal fun StageScreen(state: JarnSessionState) {
             CanvasStagePreview(state)
             CanvasTourStagePreview(state)
             SingleScreenDeckPanel(state)
+            ThemeEditorTryItHost()
             JarnNoticeHost()
             JarnStageSplash()
         }

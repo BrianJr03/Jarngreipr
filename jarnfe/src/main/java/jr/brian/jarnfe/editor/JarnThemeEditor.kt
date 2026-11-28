@@ -90,6 +90,12 @@ internal object JarnThemeEditor {
 
     fun redo() = step(from = redoStack, to = undoStack)
 
+    /** Ends the session without touching the routes, as when Try it uses the theme. */
+    fun close() {
+        state = null
+        store = null
+    }
+
     /** Back on the canvas, or the tools: the editor closes and the route underneath returns. */
     fun leave() {
         state = null

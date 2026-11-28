@@ -160,5 +160,14 @@
     <string name="jarnfe_editor_save">Save</string>
     <string name="jarnfe_editor_save_hint">Keeps this version. Your last 20 saves are listed below.</string>
     <string name="jarnfe_editor_version">Saved %1$s</string>
+    <string name="jarnfe_editor_try">Try it</string>
+    <string name="jarnfe_editor_try_hint">Browse your library with this layout on both screens.</string>
+    <string name="jarnfe_editor_try_strip">Trying a layout. Press Start for choices.</string>
+    <string name="jarnfe_editor_try_options">Choices</string>
+    <string name="jarnfe_editor_try_title">Trying %1$s</string>
+    <string name="jarnfe_editor_try_back">Back to editing</string>
+    <string name="jarnfe_editor_try_use">Use this layout</string>
+    <string name="jarnfe_editor_try_use_hint">Saves it and makes it your layout.</string>
+    <string name="jarnfe_editor_try_no_games">Games don\'t start in Try it.</string>
     <string name="jarnfe_editor_restore_hint">Restore this version. Undo brings back what you had.</string>
 </resources>
