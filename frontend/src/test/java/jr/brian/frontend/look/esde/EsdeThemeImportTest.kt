@@ -7,12 +7,14 @@ import jr.brian.core.model.theme.ThemeColor
 import jr.brian.core.model.theme.ThemeColors
 import jr.brian.core.model.theme.ThemeSource
 import jr.brian.core.ui.theme.JarnLooks
+import jr.brian.core.ui.theme.JarnPaletteMatch
 import jr.brian.frontend.library.setup.EsdeSettings
 import jr.brian.frontend.library.scan.StubSystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
 import jr.brian.frontend.look.themes.EsdeThemeFolder
 import jr.brian.frontend.look.themes.readEsdeImportRecord
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -125,6 +127,39 @@ class EsdeThemeImportTest {
         val saved = JarnThemeFormat.decode(File(outcome.folder, "theme.json").readText()) as JarnThemeDecodeResult.Decoded
         assertTrue(saved.spec.tokens.colors != options.fallbackColors)
         assertTrue(outcome.fallbackNotes.any { it is EsdeFallbackNote.Colors || it is EsdeFallbackNote.LightThemeAccentOnly })
+    }
+
+    @Test
+    fun `only a theme with no readable colors follows the Look`() {
+        assertTrue(followsLookFor(JarnPaletteMatch.SavedLook))
+        assertFalse(followsLookFor(JarnPaletteMatch.AccentOnSavedLook))
+        assertFalse(followsLookFor(JarnPaletteMatch.FullPalette))
+    }
+
+    @Test
+    fun `every installed import agrees with its color report`() {
+        val catalog = StubSystemCatalog(SystemDef("nes", "NES"), SystemDef("snes", "SNES"), SystemDef("n64", "N64"))
+        val tiers = mutableSetOf<JarnPaletteMatch>()
+        listOf(JarnLooks.Forge, JarnLooks.Fjord).forEach { look ->
+            EsdeSyntheticTheme.entries.filter { it != EsdeSyntheticTheme.LegacyFormat }.forEach { theme ->
+                val root = temp.newFolder()
+                val source = theme.install(temp.newFolder())
+                val outcome = EsdeThemeImport(root, EsdeImportFallback.readable(look, catalog))
+                    .run(source, theme.systems, theme.selection, options) as EsdeImportOutcome.Imported
+                val tier = outcome.fallbackNotes.filterIsInstance<EsdeFallbackNote.Colors>().single().tier
+                tiers += tier
+                val saved = JarnThemeFormat.decode(File(outcome.folder, "theme.json").readText()) as JarnThemeDecodeResult.Decoded
+                assertEquals("$theme on ${look.id}", tier == JarnPaletteMatch.SavedLook, saved.spec.meta.followsLook)
+            }
+        }
+        assertTrue("fixtures should cover more than one tier: $tiers", tiers.size > 1)
+    }
+
+    @Test
+    fun `without a fallback the import follows the Look`() {
+        val (outcome, _) = import(EsdeSyntheticTheme.HorizonCarousel)
+        val saved = JarnThemeFormat.decode(File((outcome as EsdeImportOutcome.Imported).folder, "theme.json").readText())
+        assertTrue((saved as JarnThemeDecodeResult.Decoded).spec.meta.followsLook)
     }
 
     @Test
