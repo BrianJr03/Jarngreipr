@@ -46,14 +46,14 @@ internal fun ThemeEditorCanvasInput(
 
 private fun JarnBindingsBuilder.browseBindings(toolsOnDeck: Boolean, onOptions: () -> Unit) {
     on(JarnAction.Confirm, R.string.jarnfe_editor_hint_pick_up, onPress = JarnThemeEditor::pickUp)
-    on(JarnAction.MoveUp, R.string.jarnfe_editor_hint_select) { JarnThemeEditor.update { jumped(0, -1) } }
+    on(JarnAction.MoveUp, R.string.jarnfe_canvas_hint_select) { JarnThemeEditor.update { jumped(0, -1) } }
     on(JarnAction.MoveDown) { JarnThemeEditor.update { jumped(0, 1) } }
     on(JarnAction.MoveLeft) { JarnThemeEditor.update { jumped(-1, 0) } }
     on(JarnAction.MoveRight) { JarnThemeEditor.update { jumped(1, 0) } }
     on(JarnAction.TabPrevious) { JarnThemeEditor.update { withSelectionStep(-1) } }
     on(JarnAction.TabNext) { JarnThemeEditor.update { withSelectionStep(1) } }
     if (JarnThemeEditor.canUndo) on(JarnAction.Search, R.string.jarnfe_canvas_undo, onPress = JarnThemeEditor::undo)
-    on(JarnAction.Menu, R.string.jarnfe_editor_options, onPress = onOptions)
+    on(JarnAction.Menu, R.string.jarnfe_hint_context, onPress = onOptions)
     toolsTabBindings()
     on(JarnAction.SwitchScreen, R.string.jarnfe_editor_hint_tools) {
         if (toolsOnDeck) {

@@ -63,8 +63,9 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
     }
 }
 
+/** The whole app follows [editor]'s draft while this is in composition: the canvas and Try it. */
 @Composable
-private fun DraftPreviewEffect(editor: ThemeEditorState) {
+internal fun DraftPreviewEffect(editor: ThemeEditorState) {
     val choice = JarnThemeChoice(editor.entry)
     DisposableEffect(choice) {
         JarnThemePreview.choice = choice

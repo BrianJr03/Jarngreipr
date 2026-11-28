@@ -88,7 +88,7 @@ private fun ColorSwatch(value: ThemeColor) {
 private fun HslRows(value: ThemeColor, onChange: (ThemeColor) -> Unit) {
     val hsl = value.hsl
     JarnSliderRow(
-        label = stringResource(R.string.jarnfe_editor_hue),
+        label = stringResource(R.string.jarnfe_systems_color_hue),
         value = hsl.hue,
         valueText = hsl.hue.roundToInt().toString(),
         onValueChange = { onChange(hsl.copy(hue = it).toThemeColor()) },
@@ -96,7 +96,7 @@ private fun HslRows(value: ThemeColor, onChange: (ThemeColor) -> Unit) {
         valueRange = 0f..HUE_MAX,
         steps = HUE_STEPS,
     )
-    ShadeRow(R.string.jarnfe_editor_saturation, hsl.saturation) { onChange(hsl.copy(saturation = it).toThemeColor()) }
+    ShadeRow(R.string.jarnfe_systems_color_saturation, hsl.saturation) { onChange(hsl.copy(saturation = it).toThemeColor()) }
     ShadeRow(R.string.jarnfe_editor_lightness, hsl.lightness) { onChange(hsl.copy(lightness = it).toThemeColor()) }
 }
 

@@ -49,7 +49,7 @@ internal fun JarnThemeCardOptions(entry: JarnThemeEntry?, onDismiss: () -> Unit)
         val copyName = stringResource(R.string.jarnfe_editor_copy_name, shown.displayName())
         if (shown.editableInPlace) {
             JarnNavigateRow(
-                label = stringResource(R.string.jarnfe_editor_edit),
+                label = stringResource(R.string.jarnfe_game_edit),
                 onClick = {
                     onDismiss()
                     launch(shown, null)

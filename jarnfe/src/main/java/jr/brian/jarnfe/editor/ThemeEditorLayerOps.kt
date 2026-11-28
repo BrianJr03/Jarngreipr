@@ -91,7 +91,9 @@ internal fun ThemePrimary.nextType(): ThemePrimary {
 }
 
 private fun ThemeEditorState.freeId(base: String): String {
-    val taken = viewSpec?.layers?.mapTo(HashSet()) { it.id }.orEmpty()
+    val written = wideViewSpec
+    val taken = (viewSpec?.layers.orEmpty() + written?.layers.orEmpty() + written?.narrow?.layers.orEmpty())
+        .mapTo(HashSet()) { it.id }
     return generateSequence(1) { it + 1 }.map { "$base-$it" }.first { it !in taken }
 }
 

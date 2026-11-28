@@ -3,6 +3,7 @@ package jr.brian.core.model.theme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ThemeViewPatchTest {
@@ -67,5 +68,38 @@ class ThemeViewPatchTest {
         """.trimIndent().replace("\n", "")
         val decoded = JarnThemeFormat.json.decodeFromString(ViewSpec.serializer(), text)
         assertEquals(ThemeViewPatch(ThemePrimaryPatch(itemsBefore = 1)), decoded.narrow)
+    }
+
+    @Test
+    fun `a narrow edit becomes the smallest patch`() {
+        val wide = ViewSpec(ThemePrimary.Grid(box, columns = 5), layers = listOf(panel("a"), panel("b")))
+        val edited = wide.narrowView().copy(
+            primary = ThemePrimary.Grid(narrowBox, columns = 3),
+            layers = listOf(panel("a", y = 0.4f), panel("c")),
+        )
+        val patched = wide.withNarrowEdit(edited)
+        assertEquals(wide.primary, patched.primary)
+        assertEquals(wide.layers, patched.layers)
+        assertEquals(ThemeViewPatch(ThemePrimaryPatch(box = narrowBox, columns = 3), listOf(panel("a", y = 0.4f), panel("c")), listOf("b")), patched.narrow)
+        assertEquals(edited.layers.toSet(), patched.narrowView().layers.toSet())
+        assertNull(wide.withNarrowEdit(wide.narrowView()).narrow)
+    }
+
+    @Test
+    fun `settings one screen can't hold apply to both`() {
+        val wide = ViewSpec(ThemePrimary.Grid(box, columns = 5))
+        val asShelf = wide.withNarrowEdit(ViewSpec(ThemePrimary.Shelf(narrowBox)))
+        assertEquals(ThemePrimary.Shelf(box), asShelf.primary)
+        assertEquals(ThemePrimaryPatch(box = narrowBox), asShelf.narrow?.primary)
+    }
+
+    @Test
+    fun `resetting drops one piece's entries, or the list's`() {
+        val patched = view.withoutNarrowLayer("b").withoutNarrowLayer("c")
+        assertEquals(listOf(panel("d")), patched.narrow?.layers)
+        assertEquals(emptyList<String>(), patched.narrow?.hide)
+        assertTrue(view.narrowChanges("c") && view.narrowChanges("b") && !view.narrowChanges("a"))
+        assertNull(view.withoutNarrowPrimary().narrow?.primary)
+        assertNull(ViewSpec(ThemePrimary.Shelf(box), narrow = ThemeViewPatch(hide = listOf("x"))).withoutNarrowLayer("x").narrow)
     }
 }

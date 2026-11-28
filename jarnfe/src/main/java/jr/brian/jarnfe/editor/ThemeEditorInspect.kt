@@ -30,6 +30,7 @@ internal fun ThemeEditorInspectTab(editor: ThemeEditorState) {
         return
     }
     JarnText(editor.targetLabel(target), JarnTheme.type.heading, JarnTheme.colors.textHigh, maxLines = 1)
+    if (editor.narrow) NarrowEditRows(editor, target)
     PlacementRows(rect) { next -> JarnThemeEditor.edit { withSelectedRect(next) } }
     when (target) {
         ThemeEditorTarget.Navigator -> editor.viewSpec?.primary?.let { NavigatorRows(it) }
@@ -56,7 +57,23 @@ private fun NavigatorRows(primary: ThemePrimary) {
             JarnThemeEditor.edit { withPrimary { (it as? ThemePrimary.List)?.copy(rows = rows) ?: it } }
         }
     }
-    NarrowRows()
+    if (!(JarnThemeEditor.state?.narrow ?: false)) NarrowRows()
+}
+
+/** While the narrow canvas is on: whether this piece differs there, and putting it back to wide. */
+@Composable
+private fun NarrowEditRows(editor: ThemeEditorState, target: ThemeEditorTarget) {
+    if (editor.differsOnNarrow(target)) {
+        JarnText(stringResource(R.string.jarnfe_editor_narrow_only), JarnTheme.type.captionStrong, JarnTheme.colors.accent, maxLines = 1)
+        InspectActionRow(stringResource(R.string.jarnfe_editor_narrow_reset_piece), stringResource(R.string.jarnfe_editor_narrow_reset_piece_hint)) {
+            JarnThemeEditor.edit { withNarrowReset(target) }
+        }
+    }
+    if (editor.wideViewSpec?.narrow != null) {
+        InspectActionRow(stringResource(R.string.jarnfe_editor_narrow_reset_view), stringResource(R.string.jarnfe_editor_narrow_reset_view_hint)) {
+            JarnThemeEditor.edit { withNarrowCleared() }
+        }
+    }
 }
 
 @Composable
@@ -106,7 +123,7 @@ private fun NarrowRows() {
 
 @Composable
 private fun LayerRows(layer: ThemeLayer) {
-    InspectFractionRow(R.string.jarnfe_editor_opacity, layer.opacity) { o -> JarnThemeEditor.edit { withLayer(layer.id) { it.withOpacity(o) } } }
+    InspectFractionRow(R.string.jarnfe_systems_color_opacity, layer.opacity) { o -> JarnThemeEditor.edit { withLayer(layer.id) { it.withOpacity(o) } } }
     LayerKindRows(layer)
     ThisSystemRow(layer)
     LayerOptionRows(layer.id)

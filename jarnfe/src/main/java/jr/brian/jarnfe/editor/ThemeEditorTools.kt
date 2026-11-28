@@ -79,10 +79,10 @@ private val ThemeEditorNewLayer.labelRes: Int
     get() = when (this) {
         ThemeEditorNewLayer.Picture -> R.string.jarnfe_editor_layer_picture
         ThemeEditorNewLayer.Text -> R.string.jarnfe_editor_layer_text
-        ThemeEditorNewLayer.Rating -> R.string.jarnfe_editor_layer_rating
+        ThemeEditorNewLayer.Rating -> R.string.jarnfe_library_meta_rating
         ThemeEditorNewLayer.Date -> R.string.jarnfe_editor_layer_date
         ThemeEditorNewLayer.Panel -> R.string.jarnfe_editor_layer_panel
-        ThemeEditorNewLayer.Video -> R.string.jarnfe_editor_layer_video
+        ThemeEditorNewLayer.Video -> R.string.jarnfe_rss_badge_video
     }
 
 /** "List" for the navigator, else the layer's kind and its id, so two pictures can be told apart. */
@@ -116,8 +116,8 @@ internal val ThemeLayer.kindRes: Int
     get() = when (this) {
         is ThemeLayer.Picture -> R.string.jarnfe_editor_layer_picture
         is ThemeLayer.Text -> R.string.jarnfe_editor_layer_text
-        is ThemeLayer.Rating -> R.string.jarnfe_editor_layer_rating
+        is ThemeLayer.Rating -> R.string.jarnfe_library_meta_rating
         is ThemeLayer.Date -> R.string.jarnfe_editor_layer_date
         is ThemeLayer.Panel -> R.string.jarnfe_editor_layer_panel
-        is ThemeLayer.Video -> R.string.jarnfe_editor_layer_video
+        is ThemeLayer.Video -> R.string.jarnfe_rss_badge_video
     }

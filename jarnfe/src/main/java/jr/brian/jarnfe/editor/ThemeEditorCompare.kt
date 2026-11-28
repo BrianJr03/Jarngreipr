@@ -65,6 +65,7 @@ private fun DiffLines(diff: ThemeVersionDiff) {
         if (diff.removed > 0) add(pluralStringResource(R.plurals.jarnfe_editor_diff_removed, diff.removed, diff.removed))
         if (diff.changed > 0) add(pluralStringResource(R.plurals.jarnfe_editor_diff_changed, diff.changed, diff.changed))
         if (diff.listChanged) add(stringResource(R.string.jarnfe_editor_diff_list))
+        if (diff.narrowChanged > 0) add(pluralStringResource(R.plurals.jarnfe_editor_diff_narrow, diff.narrowChanged, diff.narrowChanged))
         if (diff.colorsChanged) add(stringResource(R.string.jarnfe_editor_diff_colors))
         if (diff.same) add(stringResource(R.string.jarnfe_editor_diff_same))
     }

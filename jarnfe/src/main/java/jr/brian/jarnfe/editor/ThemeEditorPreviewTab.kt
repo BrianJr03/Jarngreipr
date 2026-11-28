@@ -24,7 +24,7 @@ internal fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
     JarnValueRow(
         label = stringResource(R.string.jarnfe_editor_preview_shape),
         value = stringResource(if (editor.narrow) R.string.jarnfe_editor_preview_shape_narrow else R.string.jarnfe_editor_preview_shape_wide),
-        onClick = { JarnThemeEditor.update { copy(narrow = !narrow) } },
+        onClick = { JarnThemeEditor.update { withNarrowCanvas(!narrow) } },
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_editor_preview_shape_hint),
     )
@@ -45,13 +45,13 @@ private fun PreviewPickRows() {
     val system = library.systems.items.firstOrNull { it.id == settings.systemId } ?: library.focusedSystem
     val game = library.allGames.items.firstOrNull { it.id == settings.gameId } ?: library.focusedAllGame
     JarnValueRow(
-        label = stringResource(R.string.jarnfe_editor_preview_system),
+        label = stringResource(R.string.jarnfe_settings_preview_system),
         value = system?.title ?: none,
         onClick = { ThemeEditorPreview.update { copy(systemId = ThemeEditorPreview.next(library.systems.items, system?.id, JarnLibrarySystem::id)) } },
         modifier = Modifier.fillMaxWidth(),
     )
     JarnValueRow(
-        label = stringResource(R.string.jarnfe_editor_preview_game),
+        label = stringResource(R.string.jarnfe_settings_preview_game),
         value = game?.title ?: none,
         onClick = { ThemeEditorPreview.update { copy(gameId = ThemeEditorPreview.next(library.allGames.items, game?.id, JarnLibraryGame::id)) } },
         modifier = Modifier.fillMaxWidth(),
