@@ -47,6 +47,7 @@ internal object JarnThemeEditor {
         versions = emptyList()
         state = ThemeEditorState(themeId, spec.withBothViews(LibraryBuiltInThemes.Grid.spec))
         undoStack.clear()
+        resetHoldSteps()
         redoStack.clear()
         syncHistory()
         JarnSession.update { openThemeEditor() }
@@ -65,15 +66,57 @@ internal object JarnThemeEditor {
         state = next
     }
 
-    fun pickUp() = update { pickedUp() }
-
-    fun drop() {
-        val before = state?.held?.before ?: return
-        update { dropped() }
-        if (state?.spec != before) remember(before)
+    fun pickUp() {
+        resetHoldSteps()
+        update { pickedUp() }
     }
 
-    fun cancel() = update { cancelled() }
+    /** One undo step for whatever changed since the hold began, or since its last stick push. */
+    fun drop() {
+        endStickGesture()
+        val before = holdCommitted ?: state?.held?.before ?: return
+        update { dropped() }
+        if (state?.spec != before) remember(before)
+        resetHoldSteps()
+    }
+
+    /** Puts the piece back where it was picked up, stick pushes included. */
+    fun cancel() {
+        repeat(holdSteps) { undoStack.removeLastOrNull() }
+        resetHoldSteps()
+        update { cancelled() }
+        syncHistory()
+    }
+
+    /** Where the current stick push began, while one is under way. */
+    private var stickStart: JarnThemeSpec? = null
+
+    /** The draft after the hold's last stick push, which [drop] measures from. */
+    private var holdCommitted: JarnThemeSpec? = null
+
+    /** Undo steps the current hold's stick pushes added, which [cancel] takes back. */
+    private var holdSteps = 0
+
+    fun beginStickGesture() {
+        if (stickStart == null && state?.held != null) stickStart = state?.spec
+    }
+
+    /** A stick push that moved the held piece becomes one undo step. */
+    fun endStickGesture() {
+        val start = stickStart ?: return
+        stickStart = null
+        val spec = state?.spec ?: return
+        if (state?.held == null || spec == start) return
+        remember(start)
+        holdSteps += 1
+        holdCommitted = spec
+    }
+
+    private fun resetHoldSteps() {
+        stickStart = null
+        holdCommitted = null
+        holdSteps = 0
+    }
 
     /** A [fresh] press moves one step; each repeat of a held press moves a little further. */
     fun nudge(dx: Int, dy: Int, fresh: Boolean) {
