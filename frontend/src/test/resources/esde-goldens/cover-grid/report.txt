@@ -7,6 +7,7 @@
 [adjusted]
   system grid systemGrid: PerSystemFileAsSystemArt
   system -: MovedBelowHeaderBand
+  gamelist -: FittedAboveHints
 [notUsed]
   theme -: TransitionsAndTriggers
 [assets]

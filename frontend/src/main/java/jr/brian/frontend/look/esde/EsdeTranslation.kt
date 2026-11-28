@@ -17,13 +17,18 @@ data class EsdeTranslation(
 
 /**
  * [systemsTopClear] is the top band of the Systems view that stays free for the Continue playing
- * strip (the frontend's library header band). [fallbackColors] fill the spec's tokens.
+ * strip (the frontend's library header band). [safeBottom] is where the button hints start, so a
+ * layout ending lower is fitted above it. [fallbackColors] fill the spec's tokens.
  */
 data class EsdeTranslateOptions(
     val fallbackColors: ThemeColors,
     val fallbackName: String,
     val systemsTopClear: Float,
+    val safeBottom: Float = ESDE_SAFE_BOTTOM,
 )
+
+/** Jarn's own layouts end here so the hint bar stays clear. */
+const val ESDE_SAFE_BOTTOM = 0.90f
 
 /** A raw ES-DE color (`RRGGBB` or `RRGGBBAA`) and where it was set. */
 data class EsdeColorCandidate(
@@ -51,6 +56,8 @@ enum class EsdeTranslationNote {
     WheelAsShelf,
     /** Moved down so the Continue playing strip stays clear. */
     MovedBelowHeaderBand,
+    /** The layout was squeezed a little so nothing sits under the button hints. */
+    FittedAboveHints,
     /** The theme left the size to the image; Jarn picked one. */
     SizeGuessed,
     /** Tiled images draw cropped instead. */

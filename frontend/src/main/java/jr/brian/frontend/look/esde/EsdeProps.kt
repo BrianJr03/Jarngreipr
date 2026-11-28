@@ -69,7 +69,8 @@ internal fun EsdeElementAcrossSystems.rect(fallbackSize: Pair<Float, Float>): Es
         rect = ThemeRect(
             x = x,
             y = y,
-            width = (width ?: fallbackSize.first).coerceAtLeast(MIN_EXTENT),
+            // A guessed width never runs past the screen's right edge.
+            width = (width ?: fallbackSize.first.coerceAtMost(1f - x + originX * fallbackSize.first)).coerceAtLeast(MIN_EXTENT),
             height = (height ?: fallbackSize.second).coerceAtLeast(MIN_EXTENT),
             originX = originX,
             originY = originY,

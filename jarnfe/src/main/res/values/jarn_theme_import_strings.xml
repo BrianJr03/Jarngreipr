@@ -51,6 +51,7 @@
     <!-- What each translation note means for the player -->
     <string name="jarnfe_esde_note_wheel_as_shelf">A wheel became a straight shelf.</string>
     <string name="jarnfe_esde_note_moved_below_header">Moved down to keep Continue playing clear.</string>
+    <string name="jarnfe_esde_note_fitted_above_hints">Squeezed a little to keep the button hints clear.</string>
     <string name="jarnfe_esde_note_size_guessed">Jarn picked a size the theme left open.</string>
     <string name="jarnfe_esde_note_tile_as_crop">Tiled pictures fill the space instead.</string>
     <string name="jarnfe_esde_note_per_system_art">A per-system picture became the system\'s own art.</string>

@@ -20,7 +20,8 @@ import kotlin.math.min
 
 private const val SAME_ROW = 0.005f
 private const val MAX_STACK_GAP = 0.03f
-private const val MAX_STACK_OVERLAP = 0.005f
+/** Rows may reach this far into the next one and still stack; the stack then cuts them to fit. */
+private const val MAX_STACK_OVERLAP = 0.08f
 private const val MAX_ROW_GAP = 0.1f
 private const val MIN_STACK_ROWS = 2
 private const val PAIR_OVERLAP = 0.5f
@@ -43,13 +44,19 @@ fun narrowAspectRatioOf(capabilities: EsdeThemeCapabilities): String? {
 internal fun List<ThemeLayer>.stacked(view: EsdeView, report: EsdeReportBuilder): List<ThemeLayer> {
     val candidates = filter { it.isStackable() }.sortedBy { it.rect.top() }
     val stackOf = HashMap<String, String>()
+    val heightCap = HashMap<String, Float>()
     var group = mutableListOf<ThemeLayer>()
     fun close() {
         val rows = group.map { it.rect.top() }.fold(mutableListOf<Float>()) { tops, top ->
             if (tops.none { abs(it - top) <= SAME_ROW }) tops += top
             tops
         }
-        if (rows.size >= MIN_STACK_ROWS) group.forEach { stackOf[it.id] = "stack-${group.first().id}" }
+        if (rows.size >= MIN_STACK_ROWS) {
+            group.forEach { member ->
+                stackOf[member.id] = "stack-${group.first().id}"
+                rows.filter { it > member.rect.top() + SAME_ROW }.minOrNull()?.let { heightCap[member.id] = it - member.rect.top() }
+            }
+        }
         group = mutableListOf()
     }
     candidates.forEach { layer ->
@@ -58,7 +65,7 @@ internal fun List<ThemeLayer>.stacked(view: EsdeView, report: EsdeReportBuilder)
     }
     close()
     if (stackOf.isNotEmpty()) report.adjusted(view, null, EsdeTranslationNote.StackedDetails)
-    return map { layer -> stackOf[layer.id]?.let { layer.inStack(it) } ?: layer }
+    return map { layer -> stackOf[layer.id]?.let { layer.inStack(it, heightCap[layer.id]) } ?: layer }
 }
 
 private fun ThemeLayer.isStackable(): Boolean =
@@ -77,11 +84,19 @@ private fun List<ThemeLayer>.canTake(layer: ThemeLayer): Boolean {
 }
 
 /** Stack members sit at the top of their rect, so the room they don't use flows to the rows below. */
-private fun ThemeLayer.inStack(name: String): ThemeLayer = when (this) {
-    is ThemeLayer.Text -> copy(stack = name, verticalAlign = ThemeAlign.Start)
-    is ThemeLayer.Date -> copy(stack = name, verticalAlign = ThemeAlign.Start)
-    is ThemeLayer.Rating -> copy(stack = name)
-    else -> this
+/**
+ * Stack members sit at the top of their rect, so the room they don't use flows to the rows below.
+ * A member that reaches into the next row is cut to end where it starts ([maxHeight]), with its
+ * text stepping down to a role that still fits, so rows never draw over each other.
+ */
+private fun ThemeLayer.inStack(name: String, maxHeight: Float?): ThemeLayer {
+    val rect = maxHeight?.takeIf { it < rect.height }?.let { rect.copy(y = rect.top() + rect.originY * it, height = it) } ?: rect
+    return when (this) {
+        is ThemeLayer.Text -> copy(rect = rect, stack = name, verticalAlign = ThemeAlign.Start, style = fittedRole(style, rect.height))
+        is ThemeLayer.Date -> copy(rect = rect, stack = name, verticalAlign = ThemeAlign.Start, style = fittedRole(style, rect.height))
+        is ThemeLayer.Rating -> copy(rect = rect, stack = name)
+        else -> this
+    }
 }
 
 /**

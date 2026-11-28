@@ -8,6 +8,7 @@
   gamelist image background: SizeGuessed
   gamelist image systemLogo: SizeGuessed
   gamelist image systemLogo: ShownOnSomeSystems
+  gamelist -: FittedAboveHints
 [notUsed]
   system -: NoPrimary
   theme -: TransitionsAndTriggers

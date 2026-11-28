@@ -21,6 +21,7 @@ import jr.brian.core.model.theme.ThemePrimaryPatch
 import jr.brian.core.model.theme.ThemeStackable
 import jr.brian.core.model.theme.ThemeSource
 import jr.brian.core.model.theme.ThemeText
+import jr.brian.core.model.theme.ThemeTextRole
 import jr.brian.core.model.theme.ThemeVisibleWhen
 import jr.brian.frontend.look.esde.EsdeTranslationNote.ExtraPrimary
 import jr.brian.frontend.look.esde.EsdeTranslationNote.Hidden
@@ -157,7 +158,8 @@ class EsdeThemeTranslatorTest {
         assertEquals(ThemePicture.GameMedia(MediaKind.Cover), grid.art)
 
         val list = result.systems().primary as ThemePrimary.List
-        assertEquals(10, list.rows)
+        // Ten ES-DE lines fit, but rows stay readable: 0.6 of the 349dp stage holds five 40dp rows.
+        assertEquals(5, list.rows)
         assertEquals(ThemeAlign.End, list.align)
     }
 
@@ -338,7 +340,7 @@ class EsdeThemeTranslatorTest {
         fixture.theme(
             body = """
                 <view name="gamelist">
-                  <carousel name="c"><pos>0 0.6</pos><size>1 0.3</size><maxItemCount>5</maxItemCount></carousel>
+                  <carousel name="c"><pos>0 0.6</pos><size>1 0.3</size><maxItemCount>5</maxItemCount><imageType>cover</imageType></carousel>
                   <image name="art"><pos>0.6 0.1</pos><size>0.3 0.3</size><imageType>cover</imageType></image>
                   <text name="title"><pos>0.1 0.1</pos><size>0.4 0.05</size><metadata>name</metadata></text>
                 </view>
@@ -371,6 +373,65 @@ class EsdeThemeTranslatorTest {
         assertNull(EsdeThemeParser().translate(fixture.root, listOf(nes), EsdeThemeSelection(), options).games().narrow)
         assertEquals("4:3", narrowAspectRatioOf(EsdeThemeCapabilities(aspectRatios = listOf("16:10", "4:3", "5:4"))))
         assertEquals("16:10", narrowAspectRatioOf(EsdeThemeCapabilities(aspectRatios = listOf("16:9", "16:10"))))
+    }
+
+    @Test
+    fun `an art carousel has no captions and room for its focused item`() {
+        val result = translate(
+            fixture.element(
+                "system", "carousel", "c", "pos" to "0 0.62", "size" to "1 0.2",
+                "itemSize" to "0.2 0.16", "itemScale" to "1.25", "staticImage" to "./logo.png",
+            ) +
+                fixture.element("system", "carousel", "unused", "pos" to "0 0.2") +
+                fixture.element("gamelist", "carousel", "names", "pos" to "0 0.4", "size" to "1 0.2"),
+        )
+
+        val shelf = result.systems().primary as ThemePrimary.Shelf
+        assertEquals(false, shelf.showTitle)
+        assertEquals(0.16f * 1.25f + 0.06f, shelf.box.height, EPSILON)
+        assertEquals(0.72f, shelf.box.top() + shelf.box.height / 2, EPSILON)
+        val names = result.games().primary as ThemePrimary.Shelf
+        assertEquals(true, names.showTitle)
+        assertEquals(0.155f * 1.2f + 0.06f + 0.14f, names.box.height, EPSILON)
+    }
+
+    @Test
+    fun `a layout ending under the hint bar is squeezed above it`() {
+        val result = translate(
+            fixture.element("system", "carousel", "c", "pos" to "0 0.6", "size" to "1 0.28", "staticImage" to "./logo.png") +
+                fixture.element("system", "image", "bg", "size" to "1 1", "path" to "./bg.png") +
+                fixture.element("system", "text", "count", "pos" to "0.5 0.9", "origin" to "0.5 0", "systemdata" to "gamecount"),
+        )
+
+        val systems = result.systems()
+        val count = systems.layers.first { it.id == "text-count" } as ThemeLayer.Text
+        val shelf = systems.primary
+        assertEquals(ESDE_SAFE_BOTTOM, count.rect.top() + count.rect.height, EPSILON)
+        assertTrue(shelf.box.top() + shelf.box.height <= count.rect.top() + EPSILON)
+        assertEquals(1f, systems.layers.first { it.id == "image-bg" }.rect.height, EPSILON)
+        assertTrue(EsdeTranslationNote.FittedAboveHints in result.notes { it.adjusted })
+    }
+
+    @Test
+    fun `a stack row reaching into the next one is cut to fit`() {
+        val result = translate(
+            fixture.element("gamelist", "carousel", "c", "imageType" to "cover") +
+                fixture.element("gamelist", "datetime", "year", "pos" to "0.5 0.2", "size" to "0.2 0.1", "fontSize" to "0.09") +
+                fixture.element("gamelist", "text", "desc", "pos" to "0.5 0.26", "size" to "0.4 0.3", "metadata" to "description"),
+        )
+
+        val year = result.gameLayer<ThemeLayer.Date>("datetime-year")
+        assertEquals(0.06f, year.rect.height, EPSILON)
+        assertEquals(ThemeTextRole.Label, year.style)
+        assertEquals(year.stack, result.gameLayer<ThemeLayer.Text>("text-desc").stack)
+    }
+
+    @Test
+    fun `font sizes land on the nearest role that fits its box`() {
+        assertEquals(ThemeTextRole.Body, textRoleFor(0.045f, 0.0675f))
+        assertEquals(ThemeTextRole.Title, textRoleFor(0.09f, 0.12f))
+        assertEquals(ThemeTextRole.Label, textRoleFor(0.09f, 0.055f))
+        assertEquals(ThemeTextRole.Caption, textRoleFor(0.03f, 0.01f))
     }
 
     @Test

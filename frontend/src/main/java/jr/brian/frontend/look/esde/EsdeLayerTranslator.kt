@@ -13,6 +13,7 @@ import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeTextRole
 import jr.brian.core.model.theme.ThemeVisibleWhen
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /** ES-DE's default zIndex per element type; primaries draw at 50. */
@@ -178,7 +179,7 @@ internal class EsdeLayerTranslator(
             opacity = common.opacity,
             visibleWhen = common.visibleWhen,
             content = content,
-            style = textRoleFor(fontSize),
+            style = textRoleFor(fontSize, common.rect.height),
             align = alignOf(element.props["horizontalAlignment"]),
             maxLines = linesThatFit(common.rect.height, lineHeight).coerceAtLeast(1),
         )
@@ -237,7 +238,7 @@ internal class EsdeLayerTranslator(
             visibleWhen = common.visibleWhen,
             field = field,
             format = dateFormatOf(element, field),
-            style = textRoleFor(fontSize),
+            style = textRoleFor(fontSize, common.rect.height),
             align = alignOf(element.props["horizontalAlignment"]),
         )
     }
@@ -281,14 +282,37 @@ internal fun systemFieldOf(field: String): SystemTextField? = when (field.trim()
     else -> null
 }
 
-/** ES-DE font sizes are fractions of the screen height; these bands land on Jarn's nearest role. */
-internal fun textRoleFor(fontSize: Float): ThemeTextRole = when {
-    fontSize >= 0.06f -> ThemeTextRole.Display
-    fontSize >= 0.035f -> ThemeTextRole.Title
-    fontSize >= 0.026f -> ThemeTextRole.Heading
-    fontSize >= 0.018f -> ThemeTextRole.Body
-    fontSize >= 0.015f -> ThemeTextRole.Label
-    else -> ThemeTextRole.Caption
+/**
+ * Jarn's roles, largest first, as font size and line height in dp. Captions and labels have
+ * strong twins with the same metrics, so only the plain ones are picked.
+ */
+private val ROLE_METRICS = listOf(
+    Triple(ThemeTextRole.Display, 56f, 58f),
+    Triple(ThemeTextRole.Title, 32f, 34f),
+    Triple(ThemeTextRole.Heading, 24f, 26f),
+    Triple(ThemeTextRole.Body, 16f, 22f),
+    Triple(ThemeTextRole.Label, 14f, 18f),
+    Triple(ThemeTextRole.Caption, 12f, 16f),
+)
+
+/** The Thor's Library stage height in dp (805px at 369 dpi), the screen Jarn's own layouts are sized for. */
+internal const val ESDE_REFERENCE_STAGE_DP = 349f
+
+/**
+ * ES-DE font sizes are fractions of the screen height. On the reference stage that is a size in
+ * dp; this picks Jarn's nearest role, then steps down until one line fits [rectHeight].
+ */
+internal fun textRoleFor(fontSize: Float, rectHeight: Float): ThemeTextRole {
+    val sizeDp = fontSize * ESDE_REFERENCE_STAGE_DP
+    val nearest = ROLE_METRICS.indexOf(ROLE_METRICS.minBy { abs(it.second - sizeDp) })
+    return fittedRole(ROLE_METRICS[nearest].first, rectHeight)
+}
+
+/** [role], or the next smaller role whose line fits [rectHeight] of the reference stage. */
+internal fun fittedRole(role: ThemeTextRole, rectHeight: Float): ThemeTextRole {
+    val roomDp = rectHeight * ESDE_REFERENCE_STAGE_DP
+    val start = ROLE_METRICS.indexOfFirst { it.first == role }.takeIf { it >= 0 } ?: return role
+    return ROLE_METRICS.drop(start).firstOrNull { it.third <= roomDp }?.first ?: ThemeTextRole.Caption
 }
 
 /** Whole lines of [lineHeight] in [height], forgiving float error just under a whole line. */

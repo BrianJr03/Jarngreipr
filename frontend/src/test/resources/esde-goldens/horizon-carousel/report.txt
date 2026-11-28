@@ -9,6 +9,7 @@
   system carousel systemCarousel: PerSystemFileAsSystemArt
   system image backdrop: PerSystemFileAsSystemArt
   system text systemInfo: SizeGuessed
+  system -: FittedAboveHints
   system -: NarrowScreenLayout
 [notUsed]
   theme -: TransitionsAndTriggers

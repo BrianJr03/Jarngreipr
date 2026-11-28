@@ -26,7 +26,8 @@
                     "y": 0.2,
                     "width": 0.4,
                     "height": 0.7
-                }
+                },
+                "rows": 6
             }
         },
         "games": {
@@ -38,7 +39,7 @@
                     "width": 0.45,
                     "height": 0.75
                 },
-                "rows": 11
+                "rows": 6
             },
             "layers": [
                 {
@@ -62,12 +63,12 @@
                     "rect": {
                         "x": 0.75,
                         "y": 0.6,
-                        "width": 0.4,
+                        "width": 0.25,
                         "height": 0.0675
                     },
                     "z": -10,
                     "field": "releaseDate",
-                    "style": "title",
+                    "style": "body",
                     "verticalAlign": "start",
                     "stack": "stack-rating-stars"
                 },
@@ -85,7 +86,6 @@
                         "type": "game",
                         "field": "description"
                     },
-                    "style": "title",
                     "maxLines": 3,
                     "verticalAlign": "start",
                     "stack": "stack-rating-stars"
