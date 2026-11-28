@@ -2,8 +2,11 @@ package jr.brian.jarnfe.session
 
 import jr.brian.jarnfe.input.JarnScreen
 
-/** [Collection] is one collection's games, opened from the Collections tab. */
-enum class StageRoute { Library, GameList, Settings, Search, Systems, Collection }
+/**
+ * [Collection] is one collection's games, opened from the Collections tab. [ThemeEditor] owns both
+ * screens: the canvas on Stage and the tools on the Deck, or a sheet beside the canvas on one screen.
+ */
+enum class StageRoute { Library, GameList, Settings, Search, Systems, Collection, ThemeEditor }
 
 /** Saved by name, so adding a section never changes what an older session restores. */
 enum class LibrarySection { Systems, AllGames, Favorites, Recent, Collections }
@@ -134,6 +137,14 @@ data class JarnSessionState(
     fun stepSettingsSection(delta: Int): JarnSessionState =
         copy(settingsSection = VisibleSettingsSections.stepped(settingsSection, delta))
 
+    /** The editor starts on its canvas, which lives on Stage. */
+    fun openThemeEditor(): JarnSessionState =
+        openRoute(StageRoute.ThemeEditor).copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
+
+    /** The editor's tools need a real Deck window, like Settings controls. */
+    val editorToolsOnDeck: Boolean
+        get() = settingsOnDeck
+
     /** System management always runs on Stage, so a Deck entry hands control back to it. */
     fun openSystems(): JarnSessionState =
         openRoute(StageRoute.Systems).copy(activeScreen = JarnScreen.Stage, deckPanelOpen = false)
@@ -262,7 +273,9 @@ data class JarnSessionState(
 
         fun decode(encoded: String?): JarnSessionState? {
             val fields = encoded?.split(FIELD_SEPARATOR)?.takeIf { it.size == FIELD_COUNT } ?: return null
-            val routes = fields[1].split(ROUTE_SEPARATOR).map { enumOrNull<StageRoute>(it) ?: return null }
+            val routes = fields[1].split(ROUTE_SEPARATOR)
+                .map { enumOrNull<StageRoute>(it) ?: return null }
+                .takeWhile { it != StageRoute.ThemeEditor }
             if (routes.firstOrNull() != StageRoute.Library || routes.distinct().size != routes.size) return null
             return JarnSessionState(
                 activeScreen = enumOrNull<JarnScreen>(fields[0]) ?: return null,

@@ -130,7 +130,14 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     var launches by mutableIntStateOf(0)
         private set
 
+    /** While set, Play runs this instead of launching, as when the player is trying a theme. */
+    internal var playGuard: (() -> Unit)? = null
+
     fun play(game: JarnLibraryGame) {
+        playGuard?.let {
+            it()
+            return
+        }
         launches += 1
         onPlay?.invoke(game)
     }

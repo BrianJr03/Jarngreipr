@@ -108,7 +108,7 @@ data class JarnLibraryState(
         }
         StageRoute.GameList -> focusedOpenGame?.let(LibrarySelection::Game) ?: openSystem.asSelection()
         StageRoute.Collection -> focusedCollectionGame?.let(LibrarySelection::Game) ?: openCollection.asSelection()
-        StageRoute.Settings, StageRoute.Systems -> LibrarySelection.None
+        StageRoute.Settings, StageRoute.Systems, StageRoute.ThemeEditor -> LibrarySelection.None
         StageRoute.Search -> searchSelection
     }
 
@@ -121,7 +121,7 @@ data class JarnLibraryState(
                 is LibrarySelection.System, is LibrarySelection.Collection -> LibraryConfirm.Open
                 is LibrarySelection.Game -> play
             }
-            StageRoute.Systems -> LibraryConfirm.None
+            StageRoute.Systems, StageRoute.ThemeEditor -> LibraryConfirm.None
             StageRoute.GameList -> openGames.listConfirm(play)
             StageRoute.Collection -> openCollectionGames.listConfirm(play)
             StageRoute.Library -> when (section) {

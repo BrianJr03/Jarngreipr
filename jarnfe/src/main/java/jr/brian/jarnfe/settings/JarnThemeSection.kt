@@ -24,6 +24,7 @@ import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeOption
 import jr.brian.jarnfe.themes.JarnThemePreview
+import jr.brian.jarnfe.themes.JarnThemeRegistry
 import jr.brian.jarnfe.themes.applyThemeChoice
 import jr.brian.jarnfe.themes.jarnThemeOptions
 import jr.brian.jarnfe.themes.nextOverride
@@ -39,10 +40,14 @@ private const val THEME_BLURB_LINES = 3
 @Composable
 internal fun JarnThemeSection(store: JarnLookStore) {
     val saved = rememberSavedThemeChoice()
-    val imports = JarnImportedThemes.entries
-    val options = remember(saved, imports) { jarnThemeOptions(saved) }
+    val installed = JarnThemeRegistry.installed
+    val options = remember(saved, installed) { jarnThemeOptions(saved, installed) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
-    LiveThemePreview(options.firstOrNull { it.key == focusedKey }?.choice)
+    var optionsFor by remember { mutableStateOf<JarnThemeEntry?>(null) }
+    val focused = options.firstOrNull { it.key == focusedKey }
+    LiveThemePreview(focused?.choice)
+    JarnThemeCardOptionsInput(focused?.entry) { optionsFor = it }
+    JarnThemeCardOptions(optionsFor) { optionsFor = null }
     SettingsGroup(R.string.jarnfe_look_theme_title) {
         JarnChoiceGrid(options) { option, cellModifier ->
             JarnThemeCard(
@@ -58,6 +63,7 @@ internal fun JarnThemeSection(store: JarnLookStore) {
                 store.applyThemeChoice(saved.withOverride(view, saved.override(view).nextOverride()))
             }
         }
+        JarnBuildLayoutRow(saved.layout)
         JarnThemeImportRows(store, saved)
     }
 }
@@ -96,7 +102,7 @@ private fun LiveThemePreview(focused: JarnThemeChoice?) {
 }
 
 @Composable
-private fun JarnThemeEntry.displayName(): String = nameRes?.let { stringResource(it) } ?: theme.spec.meta.name
+internal fun JarnThemeEntry.displayName(): String = nameRes?.let { stringResource(it) } ?: theme.spec.meta.name
 
 /** A layout with its own colors always says so, since picking it turns Command Panel matching off. */
 @get:StringRes

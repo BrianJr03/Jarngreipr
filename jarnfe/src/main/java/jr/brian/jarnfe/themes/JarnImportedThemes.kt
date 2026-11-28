@@ -46,8 +46,9 @@ internal fun Context.jarnEsdeThemeImport(savedLook: JarnLook): EsdeThemeImport {
 }
 
 /**
- * Themes the player added (ES-DE imports and theme files), read from `filesDir/themes`. Each brings
- * its own colors, so it never follows the Look. A folder whose theme no longer reads is skipped.
+ * Themes on this device, read from `filesDir/themes`: ES-DE imports, theme files and ones made in
+ * the editor. Each brings its own colors unless it says it follows the Look. A folder whose theme
+ * no longer reads is skipped.
  */
 internal object JarnImportedThemes {
     var entries by mutableStateOf<List<JarnThemeEntry>>(emptyList())
@@ -80,7 +81,7 @@ internal fun readImportedThemes(themesRoot: File): List<JarnThemeEntry> =
                     id = dir.name,
                     kind = JarnThemeKind.Imported,
                     theme = LibraryBuiltInTheme(spec),
-                    ownColors = true,
+                    ownColors = !spec.meta.followsLook,
                     themeDir = dir,
                 )
             }
