@@ -1,9 +1,11 @@
 package jr.brian.jarnfe.editor
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,9 +27,9 @@ import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
-import jr.brian.jarnfe.shell.JarnNotices
 import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.applyThemeChoice
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -38,15 +40,30 @@ internal object ThemeEditorTryIt {
     var active by mutableStateOf(false)
         private set
 
+    /** The line shown above the hint bar: what Try it is on entry, then why a game didn't start. */
+    var notice by mutableStateOf<TryItNotice?>(null)
+        private set
+
     private var editorStack: List<StageRoute> = emptyList()
+    private var noticeCount = 0L
 
     fun start() {
         val session = JarnSession.state
         if (session.stageRoute != StageRoute.ThemeEditor) return
         editorStack = session.stageStack
         active = true
-        JarnLibrary.playGuard = { JarnNotices.show(R.string.jarnfe_editor_try_no_games) }
+        say(R.string.jarnfe_editor_try_strip)
+        JarnLibrary.playGuard = { say(R.string.jarnfe_editor_try_no_games) }
         JarnSession.update { openRoute(StageRoute.Library) }
+    }
+
+    fun dismiss(shown: TryItNotice) {
+        if (notice == shown) notice = null
+    }
+
+    private fun say(@StringRes messageRes: Int) {
+        noticeCount += 1
+        notice = TryItNotice(messageRes, noticeCount)
     }
 
     /** Back to the editor, with the routes it was opened over. */
@@ -66,12 +83,14 @@ internal object ThemeEditorTryIt {
 
     private fun end() {
         active = false
+        notice = null
         JarnLibrary.playGuard = null
     }
 }
 
 /**
- * On Stage while trying: a strip saying so, Start for the choices, and the draft on every screen.
+ * On Stage while trying: a short notice above the hint bar, Start for the choices, and the draft
+ * on every screen. Nothing covers the tabs, and notices clear after a few seconds.
  * Sits above the shell's Start, so Settings can't open mid-try.
  */
 @Composable
@@ -87,7 +106,7 @@ internal fun BoxScope.ThemeEditorTryItHost() {
         enabled = !choicesOpen,
         bindings = { on(JarnAction.Menu, R.string.jarnfe_editor_try_options) { choicesOpen = true } },
     )
-    TryItStrip(Modifier.align(Alignment.TopCenter))
+    TryItNoticeLine(Modifier.align(Alignment.BottomCenter))
     JarnSheet(
         visible = choicesOpen,
         onDismiss = { choicesOpen = false },
@@ -106,10 +125,21 @@ internal fun BoxScope.ThemeEditorTryItHost() {
 
 
 @Composable
-private fun TryItStrip(modifier: Modifier) {
-    JarnSurface(modifier = modifier.padding(JarnTheme.space.md)) {
-        Box(Modifier.padding(horizontal = JarnTheme.space.lg, vertical = JarnTheme.space.sm)) {
-            JarnText(stringResource(R.string.jarnfe_editor_try_strip), JarnTheme.type.label, JarnTheme.colors.textHigh, maxLines = 1)
+private fun TryItNoticeLine(modifier: Modifier) {
+    val notice = ThemeEditorTryIt.notice ?: return
+    LaunchedEffect(notice) {
+        delay(TRY_IT_NOTICE_MS)
+        ThemeEditorTryIt.dismiss(notice)
+    }
+    JarnSurface(modifier = modifier.padding(bottom = JarnTheme.space.hintBarHeight + JarnTheme.space.lg)) {
+        Box(Modifier.padding(horizontal = JarnTheme.space.lg, vertical = JarnTheme.space.md)) {
+            JarnText(stringResource(notice.messageRes), JarnTheme.type.body, JarnTheme.colors.textHigh, maxLines = 2)
         }
     }
 }
+
+/** One Try it message; [sequence] makes a repeat of the same message show again. */
+internal data class TryItNotice(@param:StringRes val messageRes: Int, val sequence: Long)
+
+/** As long as Jarn's other notices stay up. */
+private const val TRY_IT_NOTICE_MS = 5_000L
