@@ -2,12 +2,17 @@ package jr.brian.frontend.look.esde
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextStyle
+import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.core.model.theme.ThemeColor
 import jr.brian.core.model.theme.ThemeColors
 import jr.brian.core.model.theme.ThemeSystemArt
+import jr.brian.core.model.theme.ThemeTextStyle
+import jr.brian.core.model.theme.ThemeTypeScale
 import jr.brian.core.ui.theme.JarnColors
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnPaletteMatch
+import jr.brian.core.ui.theme.JarnType
 import jr.brian.frontend.library.systems.SystemCatalog
 import java.io.File
 
@@ -54,9 +59,42 @@ data class EsdeFallbackResult(
     val assets: List<String>,
     val notes: List<EsdeFallbackNote>,
 ) {
-    /** [systemArt] in the theme format, for [jr.brian.core.model.theme.JarnThemeSpec.systemArt]. */
+    /** [systemArt] in the theme format, for [JarnThemeSpec.systemArt]. */
     val themeSystemArt: Map<String, ThemeSystemArt>
         get() = systemArt.mapValues { (_, files) -> ThemeSystemArt(logo = files.logo, background = files.background) }
+
+    /**
+     * [spec] with this fallback's colors, per-system art and fonts. Titles and headings take the
+     * display font (or the body font when there is none), text and labels the body font. A role the
+     * spec already styles keeps its sizes and gains only the font; any other gets Jarn's own sizes.
+     */
+    fun applyTo(spec: JarnThemeSpec): JarnThemeSpec = spec.copy(
+        tokens = spec.tokens.copy(colors = colors, type = spec.tokens.type.withFonts(fonts.display ?: fonts.body, fonts.body)),
+        systemArt = spec.systemArt + themeSystemArt,
+    )
+}
+
+private fun ThemeTypeScale.withFonts(display: String?, body: String?): ThemeTypeScale {
+    val jarn = JarnType()
+    fun ThemeTextStyle?.with(font: String?, role: TextStyle): ThemeTextStyle? {
+        if (font == null) return this
+        return this?.let { it.copy(font = it.font ?: font) } ?: ThemeTextStyle(
+            size = role.fontSize.value,
+            lineHeight = role.lineHeight.value,
+            weight = role.fontWeight?.weight ?: ThemeTextStyle.DEFAULT_WEIGHT,
+            font = font,
+        )
+    }
+    return copy(
+        display = this.display.with(display, jarn.display),
+        title = title.with(display, jarn.title),
+        heading = heading.with(display, jarn.heading),
+        body = this.body.with(body, jarn.body),
+        label = label.with(body, jarn.label),
+        labelStrong = labelStrong.with(body, jarn.labelStrong),
+        caption = caption.with(body, jarn.caption),
+        captionStrong = captionStrong.with(body, jarn.captionStrong),
+    )
 }
 
 object EsdeThemeFallback {
