@@ -165,6 +165,11 @@
     <string name="jarnfe_editor_preview_shape_narrow">Narrow</string>
     <string name="jarnfe_editor_preview_shape_hint">Narrow shows the layout the bottom screen gets.</string>
     <string name="jarnfe_editor_preview_system">System</string>
+    <string name="jarnfe_editor_narrow_only">Narrow only</string>
+    <string name="jarnfe_editor_narrow_reset_piece">Reset narrow to wide</string>
+    <string name="jarnfe_editor_narrow_reset_piece_hint">The bottom screen shows this piece as the top one does.</string>
+    <string name="jarnfe_editor_narrow_reset_view">Reset the whole narrow layout</string>
+    <string name="jarnfe_editor_narrow_reset_view_hint">The bottom screen shows this screen\'s layout as the top one does.</string>
     <string name="jarnfe_editor_preview_game">Game</string>
     <string name="jarnfe_editor_preview_pick_none">None yet</string>
     <string name="jarnfe_editor_preview_shuffle">Shuffle</string>
@@ -209,6 +214,10 @@
     <plurals name="jarnfe_editor_diff_changed">
         <item quantity="one">%1$d piece changed since then</item>
         <item quantity="other">%1$d pieces changed since then</item>
+    </plurals>
+    <plurals name="jarnfe_editor_diff_narrow">
+        <item quantity="one">%1$d change for the bottom screen</item>
+        <item quantity="other">%1$d changes for the bottom screen</item>
     </plurals>
     <string name="jarnfe_editor_diff_list">The list changed</string>
     <string name="jarnfe_editor_diff_colors">The colors changed</string>

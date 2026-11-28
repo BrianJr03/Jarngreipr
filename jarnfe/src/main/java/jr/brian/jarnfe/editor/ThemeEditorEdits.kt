@@ -6,6 +6,11 @@ import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.model.theme.ViewSpec
+import jr.brian.core.model.theme.narrowChanges
+import jr.brian.core.model.theme.narrowView
+import jr.brian.core.model.theme.withNarrowEdit
+import jr.brian.core.model.theme.withoutNarrowLayer
+import jr.brian.core.model.theme.withoutNarrowPrimary
 import kotlin.math.abs
 
 private const val LATERAL_WEIGHT = 2f
@@ -28,8 +33,37 @@ internal fun JarnThemeSpec.withView(view: ThemeView, transform: (ViewSpec) -> Vi
     )
 }
 
+/**
+ * The draft with [transform] applied to the view on the canvas. With the narrow canvas on, the
+ * result is written back as the view's narrow patch and the wide layout is left as it was.
+ */
 internal fun ThemeEditorState.withViewSpec(transform: (ViewSpec) -> ViewSpec): ThemeEditorState =
+    copy(spec = spec.withView(view) { wide -> if (narrow) wide.withNarrowEdit(transform(wide.narrowView())) else transform(wide) })
+
+/** The written view changed directly, narrow patch included, whichever canvas is showing. */
+internal fun ThemeEditorState.withWideViewSpec(transform: (ViewSpec) -> ViewSpec): ThemeEditorState =
     copy(spec = spec.withView(view, transform))
+
+/** The narrow screen shows [target] as the wide one does again. */
+internal fun ThemeEditorState.withNarrowReset(target: ThemeEditorTarget): ThemeEditorState = withWideViewSpec { view ->
+    when (target) {
+        ThemeEditorTarget.Navigator -> view.withoutNarrowPrimary()
+        is ThemeEditorTarget.Layer -> view.withoutNarrowLayer(target.id)
+    }
+}.let { if (it.selected in it.targets) it else it.copy(selected = ThemeEditorTarget.Navigator) }
+
+/** The narrow screen shows the whole view as the wide one does. */
+internal fun ThemeEditorState.withNarrowCleared(): ThemeEditorState =
+    withWideViewSpec { it.copy(narrow = null) }.let { if (it.selected in it.targets) it else it.copy(selected = ThemeEditorTarget.Navigator) }
+
+/** Whether the narrow screen shows [target] differently from the wide one. */
+internal fun ThemeEditorState.differsOnNarrow(target: ThemeEditorTarget): Boolean {
+    val view = wideViewSpec ?: return false
+    return when (target) {
+        ThemeEditorTarget.Navigator -> view.narrow?.primary != null
+        is ThemeEditorTarget.Layer -> view.narrowChanges(target.id)
+    }
+}
 
 /** The selected piece's rect replaced. */
 internal fun ThemeEditorState.withSelectedRect(rect: ThemeRect): ThemeEditorState = withViewSpec { view ->

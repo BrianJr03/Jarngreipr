@@ -6,6 +6,7 @@ import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.model.theme.ThemeViews
 import jr.brian.core.model.theme.ViewSpec
+import jr.brian.core.model.theme.narrowView
 import jr.brian.jarnfe.library.LibraryBuiltInTheme
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeKind
@@ -31,7 +32,8 @@ internal data class ThemeEditorHold(val before: JarnThemeSpec)
 /**
  * One editing session. [spec] is the live draft, shown on the canvas as it changes. [sheetFocused]
  * is the single screen case, where X moves control between the canvas and the tools sheet.
- * [narrow] shows the canvas at the bottom screen's shape, so a view's narrow layout can be checked.
+ * [narrow] shows the canvas at the bottom screen's shape and edits that screen's layout: every
+ * change then lands in the view's narrow patch (see [withViewSpec]), and the wide layout stays.
  */
 @Immutable
 internal data class ThemeEditorState(
@@ -46,7 +48,11 @@ internal data class ThemeEditorState(
     val snap: Boolean = true,
     val narrow: Boolean = false,
 ) {
-    val viewSpec: ViewSpec? get() = spec.views[view]
+    /** The view as the canvas shows it: the narrow layout while [narrow] is on. */
+    val viewSpec: ViewSpec? get() = wideViewSpec?.let { if (narrow) it.narrowView() else it }
+
+    /** The view as written, its narrow patch included. */
+    val wideViewSpec: ViewSpec? get() = spec.views[view]
 
     /** The navigator first, then the layers bottom to top. */
     val targets: List<ThemeEditorTarget>
@@ -67,6 +73,12 @@ internal data class ThemeEditorState(
     fun withTab(step: Int): ThemeEditorState {
         val tabs = ThemeEditorTab.entries
         return copy(tab = tabs[(tabs.indexOf(tab) + step).mod(tabs.size)])
+    }
+
+    /** Turns the narrow canvas on or off, letting go of a piece the other layout doesn't have. */
+    fun withNarrowCanvas(on: Boolean): ThemeEditorState {
+        val next = copy(narrow = on)
+        return if (next.selected in next.targets) next else next.copy(selected = ThemeEditorTarget.Navigator)
     }
 
     fun withView(next: ThemeView): ThemeEditorState =

@@ -24,7 +24,7 @@ internal fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
     JarnValueRow(
         label = stringResource(R.string.jarnfe_editor_preview_shape),
         value = stringResource(if (editor.narrow) R.string.jarnfe_editor_preview_shape_narrow else R.string.jarnfe_editor_preview_shape_wide),
-        onClick = { JarnThemeEditor.update { copy(narrow = !narrow) } },
+        onClick = { JarnThemeEditor.update { withNarrowCanvas(!narrow) } },
         modifier = Modifier.fillMaxWidth(),
         supporting = stringResource(R.string.jarnfe_editor_preview_shape_hint),
     )
