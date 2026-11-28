@@ -8,6 +8,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import jr.brian.core.model.MediaKind
 import jr.brian.core.model.theme.ThemeCorner
 import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
@@ -33,7 +34,7 @@ internal fun ThemeVideoLayer(layer: ThemeLayer.Video, decor: ThemeDecorFocus, de
     }
     Box(Modifier.fillMaxSize().clip(layer.corner.shape())) {
         if (fallbacks.isNotEmpty()) ThemePictureLayer(fallbacks, ThemeFit.Crop, ThemeCorner.None, decodeCap)
-        if (game != null) NowSceneVideo(LibrarySelection.Game(game), preview)
+        if (game != null && MediaKind.Video !in LocalThemeHiddenMedia.current) NowSceneVideo(LibrarySelection.Game(game), preview)
     }
 }
 

@@ -2,6 +2,9 @@ package jr.brian.jarnfe.editor
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -21,7 +24,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.theme.JarnTheme
-import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryHome
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.themekit.LocalThemeLayoutProbe
@@ -45,12 +47,16 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
     LaunchedEffect(probe.placed) { JarnThemeEditor.layoutIssues = probe.placed?.issues.orEmpty() }
     Box(modifier) {
         CompositionLocalProvider(LocalThemeLayoutProbe provides probe) {
-            LibraryHome(
-                section = editor.view.librarySection,
-                library = JarnLibrary,
-                onOpenSystem = {},
-                emptyActions = {},
-            )
+            ThemeEditorPreviewScope {
+                Box(Modifier.matchParentSize().canvasShape(editor.narrow)) {
+                    LibraryHome(
+                        section = editor.view.librarySection,
+                        library = rememberEditorPreviewLibrary(),
+                        onOpenSystem = {},
+                        emptyActions = {},
+                    )
+                }
+            }
         }
         val flagged = probe.placed?.issues.orEmpty().mapNotNull { it.layerId }.toSet()
         ThemeEditorSelection(probe, editor.selected, held = editor.held != null, flagged, Modifier.matchParentSize())
@@ -65,6 +71,16 @@ private fun DraftPreviewEffect(editor: ThemeEditorState) {
         onDispose { JarnThemePreview.choice = null }
     }
 }
+
+/**
+ * The Thor's bottom screen browse area, width over height. Narrower than the narrow-layout cutoff,
+ * so a view's narrow patch shows.
+ */
+internal const val NARROW_CANVAS_ASPECT = 1240f / 860f
+
+/** The full canvas, or a centered box at the bottom screen's shape. */
+private fun Modifier.canvasShape(narrow: Boolean): Modifier =
+    if (narrow) wrapContentSize().fillMaxHeight().aspectRatio(NARROW_CANVAS_ASPECT, matchHeightConstraintsFirst = true) else this
 
 private val ThemeView.librarySection: LibrarySection
     get() = when (this) {

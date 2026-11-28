@@ -31,6 +31,7 @@ internal data class ThemeEditorHold(val before: JarnThemeSpec)
 /**
  * One editing session. [spec] is the live draft, shown on the canvas as it changes. [sheetFocused]
  * is the single screen case, where X moves control between the canvas and the tools sheet.
+ * [narrow] shows the canvas at the bottom screen's shape, so a view's narrow layout can be checked.
  */
 @Immutable
 internal data class ThemeEditorState(
@@ -43,6 +44,7 @@ internal data class ThemeEditorState(
     val held: ThemeEditorHold? = null,
     val axis: ThemeEditorAxis = ThemeEditorAxis.Width,
     val snap: Boolean = true,
+    val narrow: Boolean = false,
 ) {
     val viewSpec: ViewSpec? get() = spec.views[view]
 
