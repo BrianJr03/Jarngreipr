@@ -57,6 +57,7 @@ class EsdeThemeUpdates internal constructor(
     private val themesRoot: File,
     private val locator: EsdeThemeLocator,
     private val readStamp: (File) -> EsdeThemeStamp?,
+    private val offerFile: File = esdeRestoreOfferFile(themesRoot.parentFile ?: themesRoot),
 ) {
     @Inject
     constructor(@ApplicationContext context: Context, locator: EsdeThemeLocator) :
@@ -77,6 +78,22 @@ class EsdeThemeUpdates internal constructor(
         val folder = themeFolder(update.themeId) ?: return@withContext
         val record = readEsdeImportRecord(folder) ?: return@withContext
         runCatching { writeEsdeImportRecord(folder, record.copy(dismissedStamp = update.current)) }
+    }
+
+    /**
+     * "Bring back your ES-DE layout?" after a restore: the re-import to offer for [activeThemeId], or
+     * null. An offer that no longer applies is cleared; one waiting for an SD card or access stays.
+     */
+    suspend fun restoreOfferFor(activeThemeId: String?): EsdeThemeUpdate? = withContext(Dispatchers.IO) {
+        val offer = readEsdeRestoreOffer(offerFile) ?: return@withContext null
+        val check = checkEsdeRestoreOffer(offer, activeThemeId, { themeFolder(it) != null }, locator, readStamp)
+        if (check.drop) runCatching { writeEsdeRestoreOffer(offerFile, null) }
+        check.update
+    }
+
+    /** The player brought the layout back or said no, so the offer ends. */
+    suspend fun dropRestoreOffer() = withContext(Dispatchers.IO) {
+        runCatching { writeEsdeRestoreOffer(offerFile, null) }
     }
 
     private fun themeFolder(themeId: String): File? =

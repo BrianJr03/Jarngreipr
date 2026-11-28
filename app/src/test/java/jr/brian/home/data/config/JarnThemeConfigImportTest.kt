@@ -67,7 +67,7 @@ class JarnThemeConfigImportTest {
 
     @Test
     fun `schema version covers the active theme`() {
-        assertEquals(78, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(79, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test
