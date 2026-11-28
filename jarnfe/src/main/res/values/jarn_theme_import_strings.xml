@@ -54,6 +54,10 @@
     <string name="jarnfe_esde_note_per_system_art">A per-system picture became the system\'s own art.</string>
     <string name="jarnfe_esde_note_some_systems">Shows only on the systems that have it.</string>
     <string name="jarnfe_esde_note_media_skipped">A media type Jarn doesn\'t keep was swapped for the next one.</string>
+    <string name="jarnfe_esde_note_stacked_details">Game details stack, so an empty line leaves no gap.</string>
+    <string name="jarnfe_esde_note_name_when_no_logo">The system name shows where a logo is missing.</string>
+    <string name="jarnfe_esde_note_narrow_layout">Narrow screens use the theme\'s own narrow layout.</string>
+    <string name="jarnfe_esde_note_narrow_list_kept">The narrow layout keeps the wide screen\'s list type.</string>
     <string name="jarnfe_esde_note_font_not_used">The theme\'s own font isn\'t used yet.</string>
     <string name="jarnfe_esde_note_unsupported_element">Something Jarn can\'t draw yet.</string>
     <string name="jarnfe_esde_note_extra_primary">A second list. Jarn uses the first.</string>
