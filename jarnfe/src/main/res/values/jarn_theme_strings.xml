@@ -18,4 +18,8 @@
     <string name="jarnfe_theme_template_big_shelf_blurb">One large cover, no names.</string>
     <string name="jarnfe_theme_template_cover_grid_blurb">Covers with details on the side.</string>
     <string name="jarnfe_theme_template_list_art_blurb">Names in a list, art beside them.</string>
+    <string name="jarnfe_theme_share_license">This theme\'s license doesn\'t allow sharing.</string>
+    <string name="jarnfe_theme_share_built_in">This layout comes with Jarn, so everyone has it already.</string>
+    <string name="jarnfe_theme_share_missing">That theme isn\'t on this device anymore.</string>
+    <string name="jarnfe_theme_share_failed">Couldn\'t share the theme. Try again.</string>
 </resources>

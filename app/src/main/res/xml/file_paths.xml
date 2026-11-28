@@ -3,6 +3,9 @@
     <cache-path
         name="updates"
         path="updates/" />
+    <cache-path
+        name="theme_exports"
+        path="theme-exports/" />
     <external-path
         name="external_roms"
         path="." />
