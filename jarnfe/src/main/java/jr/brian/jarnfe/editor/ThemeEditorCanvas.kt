@@ -21,7 +21,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.theme.JarnTheme
-import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.LibraryHome
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.themekit.LocalThemeLayoutProbe
@@ -45,12 +44,14 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
     LaunchedEffect(probe.placed) { JarnThemeEditor.layoutIssues = probe.placed?.issues.orEmpty() }
     Box(modifier) {
         CompositionLocalProvider(LocalThemeLayoutProbe provides probe) {
-            LibraryHome(
-                section = editor.view.librarySection,
-                library = JarnLibrary,
-                onOpenSystem = {},
-                emptyActions = {},
-            )
+            ThemeEditorPreviewScope {
+                LibraryHome(
+                    section = editor.view.librarySection,
+                    library = rememberEditorPreviewLibrary(),
+                    onOpenSystem = {},
+                    emptyActions = {},
+                )
+            }
         }
         val flagged = probe.placed?.issues.orEmpty().mapNotNull { it.layerId }.toSet()
         ThemeEditorSelection(probe, editor.selected, held = editor.held != null, flagged, Modifier.matchParentSize())
