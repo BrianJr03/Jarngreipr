@@ -2,6 +2,9 @@ package jr.brian.jarnfe.editor
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -45,12 +48,14 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
     Box(modifier) {
         CompositionLocalProvider(LocalThemeLayoutProbe provides probe) {
             ThemeEditorPreviewScope {
-                LibraryHome(
-                    section = editor.view.librarySection,
-                    library = rememberEditorPreviewLibrary(),
-                    onOpenSystem = {},
-                    emptyActions = {},
-                )
+                Box(Modifier.matchParentSize().canvasShape(editor.narrow)) {
+                    LibraryHome(
+                        section = editor.view.librarySection,
+                        library = rememberEditorPreviewLibrary(),
+                        onOpenSystem = {},
+                        emptyActions = {},
+                    )
+                }
             }
         }
         val flagged = probe.placed?.issues.orEmpty().mapNotNull { it.layerId }.toSet()
@@ -66,6 +71,16 @@ private fun DraftPreviewEffect(editor: ThemeEditorState) {
         onDispose { JarnThemePreview.choice = null }
     }
 }
+
+/**
+ * The Thor's bottom screen browse area, width over height. Narrower than the narrow-layout cutoff,
+ * so a view's narrow patch shows.
+ */
+internal const val NARROW_CANVAS_ASPECT = 1240f / 860f
+
+/** The full canvas, or a centered box at the bottom screen's shape. */
+private fun Modifier.canvasShape(narrow: Boolean): Modifier =
+    if (narrow) wrapContentSize().fillMaxHeight().aspectRatio(NARROW_CANVAS_ASPECT, matchHeightConstraintsFirst = true) else this
 
 private val ThemeView.librarySection: LibrarySection
     get() = when (this) {

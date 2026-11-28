@@ -21,6 +21,13 @@ internal fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
         onClick = { JarnThemeEditor.update { withView(ThemeView.entries[(view.ordinal + 1) % ThemeView.entries.size]) } },
         modifier = Modifier.fillMaxWidth(),
     )
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_editor_preview_shape),
+        value = stringResource(if (editor.narrow) R.string.jarnfe_editor_preview_shape_narrow else R.string.jarnfe_editor_preview_shape_wide),
+        onClick = { JarnThemeEditor.update { copy(narrow = !narrow) } },
+        modifier = Modifier.fillMaxWidth(),
+        supporting = stringResource(R.string.jarnfe_editor_preview_shape_hint),
+    )
     PreviewPickRows()
     PreviewCaseRows()
     InspectActionRow(stringResource(R.string.jarnfe_editor_try), stringResource(R.string.jarnfe_editor_try_hint)) {

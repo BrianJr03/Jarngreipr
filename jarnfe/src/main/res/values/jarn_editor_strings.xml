@@ -160,6 +160,10 @@
     <string name="jarnfe_editor_save">Save</string>
     <string name="jarnfe_editor_save_hint">Keeps this version. Your last 20 saves are listed below.</string>
     <string name="jarnfe_editor_version">Saved %1$s</string>
+    <string name="jarnfe_editor_preview_shape">Screen shape</string>
+    <string name="jarnfe_editor_preview_shape_wide">Wide</string>
+    <string name="jarnfe_editor_preview_shape_narrow">Narrow</string>
+    <string name="jarnfe_editor_preview_shape_hint">Narrow shows the layout the bottom screen gets.</string>
     <string name="jarnfe_editor_preview_system">System</string>
     <string name="jarnfe_editor_preview_game">Game</string>
     <string name="jarnfe_editor_preview_pick_none">None yet</string>
