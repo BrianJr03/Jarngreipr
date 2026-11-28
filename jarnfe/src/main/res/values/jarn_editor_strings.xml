@@ -156,4 +156,9 @@
     <string name="jarnfe_editor_issue_text_covered">Covered by the hint bar.</string>
     <string name="jarnfe_editor_issue_under_bars">Runs under the bars at the screen edge.</string>
     <string name="jarnfe_editor_issue_covers_list">Covers the list, so it draws behind it.</string>
+
+    <string name="jarnfe_editor_save">Save</string>
+    <string name="jarnfe_editor_save_hint">Keeps this version. Your last 20 saves are listed below.</string>
+    <string name="jarnfe_editor_version">Saved %1$s</string>
+    <string name="jarnfe_editor_restore_hint">Restore this version. Undo brings back what you had.</string>
 </resources>

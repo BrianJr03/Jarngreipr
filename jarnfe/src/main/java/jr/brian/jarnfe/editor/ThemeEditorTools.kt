@@ -93,6 +93,7 @@ private fun ThemeEditorPreviewTab(editor: ThemeEditorState) {
         onClick = { JarnThemeEditor.update { withView(ThemeView.entries[(view.ordinal + 1) % ThemeView.entries.size]) } },
         modifier = Modifier.fillMaxWidth(),
     )
+    ThemeEditorHistory()
 }
 
 /** "List" for the navigator, else the layer's kind and its id, so two pictures can be told apart. */

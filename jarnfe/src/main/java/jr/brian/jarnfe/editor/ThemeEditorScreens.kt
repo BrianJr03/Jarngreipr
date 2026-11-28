@@ -36,6 +36,7 @@ internal fun ThemeEditorStage(session: JarnSessionState) {
     val toolsOnDeck = session.editorToolsOnDeck
     var optionsOpen by remember { mutableStateOf(false) }
     var layerOptionsOpen by remember { mutableStateOf(false) }
+    ThemeEditorAutosave(editor)
     ThemeEditorCanvasInput(
         editor = editor,
         toolsOnDeck = toolsOnDeck,

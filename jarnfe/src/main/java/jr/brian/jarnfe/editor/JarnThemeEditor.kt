@@ -8,6 +8,8 @@ import jr.brian.jarnfe.library.LibraryBuiltInThemes
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.themekit.ThemeLayoutIssue
+import jr.brian.jarnfe.themes.JarnUserThemeStore
+import jr.brian.jarnfe.themes.ThemeVersion
 
 private const val UNDO_LIMIT = 100
 
@@ -33,7 +35,16 @@ internal object JarnThemeEditor {
     /** How many repeats the current held direction or shoulder has run, so it speeds up. */
     private var holdRepeat = 0
 
-    fun open(themeId: String, spec: JarnThemeSpec) {
+    /** Where the draft, saves and history go. Null in tests and previews, which keep nothing. */
+    var store: JarnUserThemeStore? = null
+        private set
+
+    /** The theme's saved versions, newest first. */
+    var versions by mutableStateOf<List<ThemeVersion>>(emptyList())
+
+    fun open(themeId: String, spec: JarnThemeSpec, store: JarnUserThemeStore? = null) {
+        this.store = store
+        versions = emptyList()
         state = ThemeEditorState(themeId, spec.withBothViews(LibraryBuiltInThemes.Grid.spec))
         undoStack.clear()
         redoStack.clear()
