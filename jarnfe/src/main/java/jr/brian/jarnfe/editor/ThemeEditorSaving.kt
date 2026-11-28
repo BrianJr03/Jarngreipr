@@ -1,13 +1,25 @@
 package jr.brian.jarnfe.editor
 
-import android.text.format.DateUtils
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.JarnThemeSpec
+import jr.brian.core.model.theme.ThemeView
+import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.themes.JarnImportedThemes
+import jr.brian.jarnfe.themes.ThemeVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,21 +54,39 @@ internal suspend fun JarnThemeEditor.saveVersion(spec: JarnThemeSpec? = state?.s
     loadVersions()
 }
 
-/** The last saves, newest first. Restoring one makes it the draft and saves it as a new version. */
+/**
+ * The last saves, newest first, each with a picture of the screen being edited. A opens Compare,
+ * where Restore makes that version the draft and saves it as a new version.
+ */
 @Composable
 internal fun ThemeEditorHistory() {
+    val editor = JarnThemeEditor.state ?: return
     val scope = rememberCoroutineScope()
+    var comparing by remember { mutableStateOf<ThemeVersion?>(null) }
     InspectActionRow(stringResource(R.string.jarnfe_editor_save), stringResource(R.string.jarnfe_editor_save_hint)) {
         scope.launch { JarnThemeEditor.saveVersion() }
     }
     JarnThemeEditor.versions.forEach { version ->
-        val ago = DateUtils.getRelativeTimeSpanString(version.savedAt).toString()
-        InspectActionRow(
-            label = stringResource(R.string.jarnfe_editor_version, ago),
-            supporting = stringResource(R.string.jarnfe_editor_restore_hint),
-        ) {
+        HistoryRow(version, editor.view) { comparing = version }
+    }
+    ThemeEditorCompare(
+        now = editor.spec,
+        view = editor.view,
+        version = comparing,
+        onRestore = { version ->
             JarnThemeEditor.edit { copy(spec = version.spec) }
             scope.launch { JarnThemeEditor.saveVersion(version.spec) }
-        }
+        },
+        onDismiss = { comparing = null },
+    )
+}
+
+@Composable
+private fun HistoryRow(version: ThemeVersion, view: ThemeView, onClick: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
+        ThemeVersionThumbnail(version.spec, view, Modifier.width(HistoryThumbnailWidth))
+        InspectActionRow(versionLabel(version), stringResource(R.string.jarnfe_editor_compare_hint), onClick)
     }
 }
+
+private val HistoryThumbnailWidth = 96.dp
