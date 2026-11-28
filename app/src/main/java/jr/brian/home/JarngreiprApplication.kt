@@ -113,7 +113,14 @@ class JarngreiprApplication :
     JarnEsdeRomsProvider,
     JarnHomeAppProvider,
     JarnMeetJarnProvider,
-    jr.brian.jarnfe.themes.JarnThemeImportProvider {
+    jr.brian.jarnfe.themes.JarnThemeImportProvider,
+    jr.brian.jarnfe.themes.JarnThemeShareProvider {
+
+    @Inject
+    lateinit var jarnThemeShareSheetProvider: Provider<jr.brian.home.jarn.AppJarnThemeShareSheet>
+
+    override val jarnThemeShareSheet: jr.brian.jarnfe.themes.JarnThemeShareSheet
+        get() = jarnThemeShareSheetProvider.get()
 
     /** [Provider]s so Classic never builds Jarn FE's theme import. */
     @Inject
