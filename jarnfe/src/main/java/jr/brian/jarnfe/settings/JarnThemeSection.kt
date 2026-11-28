@@ -3,7 +3,6 @@ package jr.brian.jarnfe.settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.components.JarnChoiceCard
 import jr.brian.core.ui.components.JarnValueRow
-import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
@@ -94,11 +92,7 @@ private fun ViewOverrideRow(view: ThemeView, override: JarnBrowseView?, onClick:
 
 @Composable
 private fun LiveThemePreview(focused: JarnThemeChoice?) {
-    val preview = focused.takeIf { LocalJarnScreenActive.current }
-    DisposableEffect(preview) {
-        JarnThemePreview.choice = preview
-        onDispose { JarnThemePreview.choice = null }
-    }
+    LiveFocusPreview(focused) { JarnThemePreview.choice = it }
 }
 
 @Composable
