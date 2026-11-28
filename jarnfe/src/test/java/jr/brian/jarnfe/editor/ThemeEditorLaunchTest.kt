@@ -56,6 +56,26 @@ class ThemeEditorLaunchTest {
     }
 
     @Test
+    fun `a copy of a copy numbers on instead of stacking copy`() {
+        val plain = { name: String -> "$name copy" }
+        val numbered = { name: String, n: Int -> "$name copy $n" }
+        assertEquals("Grid", copyBaseName("Grid copy", plain, numbered))
+        assertEquals("Grid", copyBaseName("Grid copy 3", plain, numbered))
+        assertEquals("Grid", copyBaseName("Grid", plain, numbered))
+        assertEquals("Copycat", copyBaseName("Copycat", plain, numbered))
+        val next = nextCopyName(plain(copyBaseName("Grid copy", plain, numbered)), { numbered("Grid", it) }, setOf("Grid copy"))
+        assertEquals("Grid copy 2", next)
+    }
+
+    @Test
+    fun `a copy of a built-in leaves the header band free`() {
+        val (_, copy) = store.duplicate(JarnThemeRegistry.Grid, "Grid copy")
+        val box = copy.views.systems!!.primary.box
+        assertTrue(box.y - box.originY * box.height >= jr.brian.jarnfe.library.LIBRARY_HEADER_BAND)
+        assertEquals(JarnThemeRegistry.Grid.theme.spec.views.games, copy.views.games)
+    }
+
+    @Test
     fun `copies are numbered once the plain name is taken`() {
         val numbered = { n: Int -> "Grid copy $n" }
         assertEquals("Grid copy", nextCopyName("Grid copy", numbered, setOf("Grid")))
