@@ -20,6 +20,7 @@ import jr.brian.frontend.look.themes.ThemeImportProblem
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.library.LibraryBuiltInThemes
 import jr.brian.jarnfe.settings.EsdeFallbackLine
+import jr.brian.jarnfe.settings.EsdeReportHeadline
 import jr.brian.jarnfe.settings.fallbackLines
 import jr.brian.jarnfe.settings.messageRes
 import jr.brian.jarnfe.settings.summary
@@ -116,6 +117,23 @@ class JarnEsdeThemeImportFlowTest {
 
         val lines = imported().copy(systemsWithArt = 0, fontsUsed = true).fallbackLines()
         assertEquals(listOf(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_fonts_used)), lines)
+    }
+
+    @Test
+    fun `the headline only says everything came over when nothing was changed or left out`() {
+        fun item(name: String, note: EsdeTranslationNote? = null) = EsdeReportItem(EsdeView.System, EsdeElementKey("image", name), note)
+        val clean = EsdeTranslationReport(listOf(item("a")), emptyList(), emptyList())
+        assertEquals(EsdeReportHeadline.Everything, clean.summary().headline)
+
+        val themeWideNote = clean.copy(notUsed = listOf(EsdeReportItem(null, null, EsdeTranslationNote.TransitionsAndTriggers)))
+        assertEquals(EsdeReportHeadline.Counts, themeWideNote.summary().headline)
+        assertEquals(0, themeWideNote.summary().needFix)
+
+        val adjusted = clean.copy(adjusted = listOf(item("a", EsdeTranslationNote.SizeGuessed)))
+        assertEquals(EsdeReportHeadline.Counts, adjusted.summary().headline)
+
+        val onlyNotes = EsdeTranslationReport(emptyList(), emptyList(), listOf(EsdeReportItem(null, null, EsdeTranslationNote.NoPrimary)))
+        assertEquals(EsdeReportHeadline.None, onlyNotes.summary().headline)
     }
 
     @Test
