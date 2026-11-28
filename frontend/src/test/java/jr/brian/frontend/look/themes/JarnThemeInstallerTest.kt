@@ -7,6 +7,7 @@ import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeTextStyle
 import jr.brian.core.model.theme.ThemeTypeScale
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ThemeViews
 import jr.brian.core.model.theme.ViewSpec
 import org.junit.Assert.assertEquals
@@ -52,6 +53,29 @@ class JarnThemeInstallerTest {
         assertEquals(File(themes, "art-book"), installed.folder)
         assertTrue(File(installed.folder, "art/bg.png").isFile)
         assertEquals(listOf("art-book"), themes.list()!!.toList())
+    }
+
+    @Test
+    fun `a theme file's narrow layers are checked like the rest`() {
+        val box = ThemeRect(0f, 0f, 1f, 1f)
+        fun picture(id: String, path: String) = ThemeLayer.Picture(id, box, source = ThemePicture.File(path))
+        val spec = testSpec().copy(
+            views = ThemeViews(
+                systems = ViewSpec(
+                    primary = ThemePrimary.Grid(box),
+                    narrow = ThemeViewPatch(
+                        layers = listOf(picture("ok", "art/bg.png"), picture("missing", "art/nope.png"), picture("up", "../bg.png")),
+                    ),
+                ),
+            ),
+        )
+
+        val result = installer().install(zip("theme.json" to themeJson(spec), "art/bg.png" to pngHeader(8, 8))) as ThemeImportResult.Installed
+
+        val narrow = result.spec.views.systems!!.narrow!!
+        assertEquals(listOf("ok"), narrow.layers.map { it.id })
+        assertEquals(listOf("missing", "up"), narrow.hide)
+        assertEquals(2, result.dropped)
     }
 
     @Test

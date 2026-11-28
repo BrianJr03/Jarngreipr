@@ -4,6 +4,7 @@ import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ThemeRect
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ThemeViews
 import jr.brian.core.model.theme.ViewSpec
 import org.junit.Assert.assertEquals
@@ -80,6 +81,29 @@ class ThemeInstallFilesTest {
         assertEquals(first.id, again.id)
         assertEquals(listOf(first.id), themes.list()!!.toList())
         assertTrue(File(again.folder, "note.json").isFile)
+    }
+
+    @Test
+    fun `narrow layers naming missing or outside files hide on narrow screens`() {
+        val source = temp.newFolder("esde-theme")
+        File(source, "art").mkdirs()
+        File(source, "art/wide.png").writeBytes(pngHeader(10, 10))
+        temp.newFile("secret.png").writeBytes(pngHeader(1, 1))
+        val installer = JarnThemeInstaller(temp.newFolder("themes"))
+
+        val result = installer.installFiles(source, listOf("art/wide.png", "art/missing.png", "../secret.png")) {
+            val wide = ViewSpec(ThemePrimary.Shelf(box), listOf(picture("art", "art/wide.png")))
+            testSpec().copy(
+                views = ThemeViews(
+                    games = wide.copy(narrow = ThemeViewPatch(layers = listOf(picture("art", "art/missing.png"), picture("leak", "../secret.png")))),
+                ),
+            )
+        } as ThemeImportResult.Installed
+
+        val games = result.spec.views.games!!
+        assertEquals(ThemePicture.File("art/wide.png"), (games.layers.single() as ThemeLayer.Picture).source)
+        assertEquals(ThemeViewPatch(hide = listOf("art", "leak")), games.narrow)
+        assertEquals(2, result.dropped)
     }
 
     @Test
