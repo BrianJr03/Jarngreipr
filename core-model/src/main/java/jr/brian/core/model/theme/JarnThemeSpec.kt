@@ -19,11 +19,24 @@ data class JarnThemeSpec(
     val meta: ThemeMeta,
     val tokens: ThemeTokens,
     val views: ThemeViews = ThemeViews(),
+    /** Per-system art the theme brings, by Jarn system id. See [ThemeSystemArt]. */
+    val systemArt: Map<String, ThemeSystemArt> = emptyMap(),
 ) {
     companion object {
         const val CURRENT_SCHEMA = 1
     }
 }
+
+/**
+ * One system's art from the theme, as file paths relative to the theme folder. When a theme has
+ * an entry for a system, its cards and backdrops use only this art, never mixed with another
+ * source; a missing [background] shows the system's name over a plain card.
+ */
+@Serializable
+data class ThemeSystemArt(
+    val logo: String? = null,
+    val background: String? = null,
+)
 
 @Serializable
 data class ThemeMeta(

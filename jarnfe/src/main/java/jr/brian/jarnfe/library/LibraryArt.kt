@@ -20,6 +20,7 @@ import coil.decode.BitmapFactoryDecoder
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import jr.brian.core.ui.library.JarnArtPlaceholder
+import jr.brian.jarnfe.themekit.withThemeArt
 
 private const val SYSTEM_LOGO_FRACTION = 0.62f
 private const val SYSTEM_LOGO_AREA_HEIGHT = 0.7f
@@ -92,7 +93,8 @@ internal fun BoxScope.LibraryDeckArt(game: JarnLibraryGame) {
  * clear a caption, or in the [logoAlignment] given when there is none.
  */
 @Composable
-internal fun BoxScope.LibrarySystemArt(system: JarnLibrarySystem, logoAlignment: Alignment = Alignment.TopCenter) {
+internal fun BoxScope.LibrarySystemArt(shown: JarnLibrarySystem, logoAlignment: Alignment = Alignment.TopCenter) {
+    val system = shown.withThemeArt()
     if (system.artPath != null || system.logoPath == null) LibraryArt(system.artPath, system.title)
     system.logoPath?.let { logo ->
         AsyncImage(
