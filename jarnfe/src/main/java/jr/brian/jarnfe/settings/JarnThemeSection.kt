@@ -43,7 +43,11 @@ internal fun JarnThemeSection(store: JarnLookStore) {
     val installed = JarnThemeRegistry.installed
     val options = remember(saved, installed) { jarnThemeOptions(saved, installed) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
-    LiveThemePreview(options.firstOrNull { it.key == focusedKey }?.choice)
+    var optionsFor by remember { mutableStateOf<JarnThemeEntry?>(null) }
+    val focused = options.firstOrNull { it.key == focusedKey }
+    LiveThemePreview(focused?.choice)
+    JarnThemeCardOptionsInput(focused?.entry) { optionsFor = it }
+    JarnThemeCardOptions(optionsFor) { optionsFor = null }
     SettingsGroup(R.string.jarnfe_look_theme_title) {
         JarnChoiceGrid(options) { option, cellModifier ->
             JarnThemeCard(
@@ -59,6 +63,7 @@ internal fun JarnThemeSection(store: JarnLookStore) {
                 store.applyThemeChoice(saved.withOverride(view, saved.override(view).nextOverride()))
             }
         }
+        JarnBuildLayoutRow(saved.layout)
         JarnThemeImportRows(store, saved)
     }
 }
@@ -97,7 +102,7 @@ private fun LiveThemePreview(focused: JarnThemeChoice?) {
 }
 
 @Composable
-private fun JarnThemeEntry.displayName(): String = nameRes?.let { stringResource(it) } ?: theme.spec.meta.name
+internal fun JarnThemeEntry.displayName(): String = nameRes?.let { stringResource(it) } ?: theme.spec.meta.name
 
 /** A layout with its own colors always says so, since picking it turns Command Panel matching off. */
 @get:StringRes
