@@ -52,7 +52,7 @@ private fun JarnBindingsBuilder.browseBindings(toolsOnDeck: Boolean, onOptions: 
     on(JarnAction.MoveRight) { JarnThemeEditor.update { jumped(1, 0) } }
     on(JarnAction.TabPrevious) { JarnThemeEditor.update { withSelectionStep(-1) } }
     on(JarnAction.TabNext) { JarnThemeEditor.update { withSelectionStep(1) } }
-    if (JarnThemeEditor.canUndo) on(JarnAction.Search, R.string.jarnfe_canvas_undo, onPress = JarnThemeEditor::undo)
+    undoBinding(JarnThemeEditor.canUndo)
     on(JarnAction.Menu, R.string.jarnfe_hint_context, onPress = onOptions)
     toolsTabBindings()
     on(JarnAction.SwitchScreen, R.string.jarnfe_editor_hint_tools) {
@@ -104,7 +104,7 @@ internal fun ThemeEditorToolsInput(editor: ThemeEditorState, onCanvas: (() -> Un
         enabled = onCanvas == null || editor.sheetFocused,
         bindings = {
             toolsTabBindings()
-            if (JarnThemeEditor.canUndo) on(JarnAction.Search, R.string.jarnfe_canvas_undo, onPress = JarnThemeEditor::undo)
+            undoBinding(JarnThemeEditor.canUndo)
             if (onCanvas != null) {
                 on(JarnAction.SwitchScreen, R.string.jarnfe_editor_hint_canvas, onPress = onCanvas)
                 on(JarnAction.Back, R.string.jarnfe_editor_hint_canvas, onPress = onCanvas)
@@ -118,4 +118,12 @@ internal fun ThemeEditorToolsInput(editor: ThemeEditorState, onCanvas: (() -> Un
 private fun JarnBindingsBuilder.toolsTabBindings() {
     on(JarnAction.BottomTabPrevious) { JarnThemeEditor.update { withTab(-1) } }
     on(JarnAction.BottomTabNext) { JarnThemeEditor.update { withTab(1) } }
+}
+
+/**
+ * Y is undo everywhere in the editor. It stays bound with nothing to undo (and no hint), so it
+ * never falls through to the shell's Search.
+ */
+internal fun JarnBindingsBuilder.undoBinding(canUndo: Boolean) {
+    on(JarnAction.Search, R.string.jarnfe_canvas_undo.takeIf { canUndo }, onPress = JarnThemeEditor::undo)
 }
