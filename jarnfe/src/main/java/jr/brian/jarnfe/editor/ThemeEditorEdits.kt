@@ -11,6 +11,7 @@ import jr.brian.core.model.theme.narrowView
 import jr.brian.core.model.theme.withNarrowEdit
 import jr.brian.core.model.theme.withoutNarrowLayer
 import jr.brian.core.model.theme.withoutNarrowPrimary
+import jr.brian.jarnfe.library.withBox
 import kotlin.math.abs
 
 private const val LATERAL_WEIGHT = 2f
@@ -129,12 +130,6 @@ internal fun ThemeEditorState.jumped(dx: Int, dy: Int): ThemeEditorState {
 
 private fun ThemeEditorState.otherEdges(): List<PieceEdges> =
     targets.filter { it != selected }.mapNotNull { rectOf(it)?.edges }
-
-internal fun ThemePrimary.withBox(box: ThemeRect): ThemePrimary = when (this) {
-    is ThemePrimary.Shelf -> copy(box = box)
-    is ThemePrimary.Grid -> copy(box = box)
-    is ThemePrimary.List -> copy(box = box)
-}
 
 internal fun ThemeLayer.withRect(rect: ThemeRect): ThemeLayer = when (this) {
     is ThemeLayer.Picture -> copy(rect = rect)

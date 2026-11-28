@@ -73,7 +73,8 @@ internal fun LibraryThemedBrowse(
         val headerInPrimary = shown.theme.pins.containsKey(kind.themeView)
         CompositionLocalProvider(LocalLibraryHeaderInPrimary provides headerInPrimary) {
             Box(Modifier.fillMaxSize()) {
-                LibraryAreaView(spec) { view ->
+                val placed = if (!headerInPrimary && header != null) spec.clearingHeaderBand() else spec
+                LibraryAreaView(placed) { view ->
                     val primary: @Composable () -> Unit = { LibraryThemePrimary(view.primary, pins, kind, cellMinSize, grid, shelf, list) }
                     if (view.layers.isEmpty()) {
                         JarnThemeLayout(view = view, primary = primary, layer = {}, insets = BrowseInsets)

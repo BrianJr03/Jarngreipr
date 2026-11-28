@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSheet
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.editor.copyBaseName
 import jr.brian.jarnfe.editor.editableInPlace
 import jr.brian.jarnfe.editor.nextCopyName
 import jr.brian.jarnfe.editor.openThemeEditor
@@ -72,11 +73,15 @@ internal fun JarnThemeCardOptions(entry: JarnThemeEntry?, onDismiss: () -> Unit)
     }
 }
 
-/** "Grid copy", or "Grid copy 2" and on when a theme on this device already has that name. */
+/** "Grid copy", or "Grid copy 2" and on when that name is taken; a copy of a copy numbers on. */
 @Composable
 private fun rememberCopyName(entry: JarnThemeEntry): String {
     val resources = LocalContext.current.resources
-    val name = entry.displayName()
+    val name = copyBaseName(
+        name = entry.displayName(),
+        plain = { resources.getString(R.string.jarnfe_editor_copy_name, it) },
+        numbered = { base, n -> resources.getString(R.string.jarnfe_editor_copy_name_numbered, base, n) },
+    )
     val first = stringResource(R.string.jarnfe_editor_copy_name, name)
     val taken = JarnThemeRegistry.installed.mapTo(HashSet()) { it.theme.spec.meta.name }
     return remember(first, taken) {
