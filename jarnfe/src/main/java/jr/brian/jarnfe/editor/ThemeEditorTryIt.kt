@@ -27,8 +27,8 @@ import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
-import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.applyThemeChoice
+import jr.brian.jarnfe.themes.resolveJarnThemeChoice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -73,10 +73,17 @@ internal object ThemeEditorTryIt {
         JarnSession.update { copy(stageStack = stack).openThemeEditor() }
     }
 
-    /** Saves the draft, makes it the active theme and closes the editor. */
+    /**
+     * Saves the draft and makes it the active layout, keeping the player's Systems and Games
+     * choices (so it looks as it did in Try it), then closes the editor.
+     */
     suspend fun use(lookStore: JarnLookStore?) {
         JarnThemeEditor.saveVersion()
-        JarnThemeEditor.state?.let { lookStore?.applyThemeChoice(JarnThemeChoice(it.entry)) }
+        val draft = JarnThemeEditor.state?.entry
+        if (draft != null && lookStore != null) {
+            val saved = resolveJarnThemeChoice(lookStore.activeThemeId, lookStore.display)
+            lookStore.applyThemeChoice(tryItChoice(draft, saved))
+        }
         end()
         JarnThemeEditor.close()
     }
@@ -101,7 +108,7 @@ internal fun BoxScope.ThemeEditorTryItHost() {
     val lookStore = remember(context) { context.jarnLookStoreOrNull() }
     val scope = rememberCoroutineScope()
     var choicesOpen by remember { mutableStateOf(false) }
-    DraftPreviewEffect(editor)
+    DraftPreviewEffect(editor, withOverrides = true)
     JarnInputLayer(
         enabled = !choicesOpen,
         bindings = { on(JarnAction.Menu, R.string.jarnfe_editor_try_options) { choicesOpen = true } },

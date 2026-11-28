@@ -1,12 +1,11 @@
 package jr.brian.jarnfe.themes
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.core.model.theme.ThemeColors
 import jr.brian.core.model.theme.ThemeView
@@ -97,9 +96,37 @@ internal fun JarnLookStore.applyThemeChoice(choice: JarnThemeChoice) {
     }
 }
 
-/** An unsaved layout shown on both screens while its card has focus. */
+/**
+ * An unsaved layout shown on both screens: a focused card, the editor's canvas or Try it. Each
+ * caller shows its own and clears only its own, so one leaving (the canvas as Try it starts)
+ * never wipes out the one that just took over. The newest still showing wins.
+ */
 internal object JarnThemePreview {
-    var choice by mutableStateOf<JarnThemeChoice?>(null)
+    private val shown = mutableStateListOf<Pair<Any, JarnThemeChoice>>()
+
+    val choice: JarnThemeChoice? get() = shown.lastOrNull()?.second
+
+    /** Shows [choice] for [owner], replacing what [owner] showed before; null clears it. */
+    fun show(owner: Any, choice: JarnThemeChoice?) {
+        val index = shown.indexOfFirst { it.first === owner }
+        when {
+            choice == null -> if (index >= 0) shown.removeAt(index)
+            index >= 0 -> shown[index] = owner to choice
+            else -> shown.add(owner to choice)
+        }
+    }
+
+    fun clear(owner: Any) = show(owner, null)
+}
+
+/** Shows [choice] on both screens while this is in composition, or until [choice] is null. */
+@Composable
+internal fun ThemePreviewEffect(choice: JarnThemeChoice?) {
+    val owner = remember { Any() }
+    DisposableEffect(owner, choice) {
+        JarnThemePreview.show(owner, choice)
+        onDispose { JarnThemePreview.clear(owner) }
+    }
 }
 
 @Composable

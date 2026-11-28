@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +30,9 @@ import jr.brian.jarnfe.themekit.PlacedThemeView
 import jr.brian.jarnfe.themekit.ThemeLayoutProbe
 import jr.brian.jarnfe.themekit.ThemePxRect
 import jr.brian.jarnfe.themes.JarnThemeChoice
-import jr.brian.jarnfe.themes.JarnThemePreview
+import jr.brian.jarnfe.themes.JarnThemeEntry
+import jr.brian.jarnfe.themes.ThemePreviewEffect
+import jr.brian.jarnfe.themes.rememberSavedThemeChoice
 
 private const val OUTLINE_ALPHA = 0.5f
 private const val HELD_FILL_ALPHA = 0.16f
@@ -63,15 +64,20 @@ internal fun ThemeEditorCanvas(editor: ThemeEditorState, modifier: Modifier = Mo
     }
 }
 
-/** The whole app follows [editor]'s draft while this is in composition: the canvas and Try it. */
+/**
+ * The whole app follows [editor]'s draft while this is in composition. The canvas shows the draft
+ * as it is; Try it ([withOverrides]) shows it with the player's own Systems and Games choices, as
+ * Use this layout would.
+ */
 @Composable
-internal fun DraftPreviewEffect(editor: ThemeEditorState) {
-    val choice = JarnThemeChoice(editor.entry)
-    DisposableEffect(choice) {
-        JarnThemePreview.choice = choice
-        onDispose { JarnThemePreview.choice = null }
-    }
+internal fun DraftPreviewEffect(editor: ThemeEditorState, withOverrides: Boolean = false) {
+    val saved = rememberSavedThemeChoice()
+    val choice = if (withOverrides) tryItChoice(editor.entry, saved) else JarnThemeChoice(editor.entry)
+    ThemePreviewEffect(choice)
 }
+
+/** [draft] as the layout, keeping the per-view overrides the player has set now. */
+internal fun tryItChoice(draft: JarnThemeEntry, saved: JarnThemeChoice): JarnThemeChoice = saved.copy(layout = draft)
 
 /**
  * The Thor's bottom screen browse area, width over height. Narrower than the narrow-layout cutoff,
