@@ -71,5 +71,8 @@ internal class JarnEsdeThemeImportFlow(
 internal object JarnEsdeThemeUpdatePending {
     var update by mutableStateOf<EsdeThemeUpdate?>(null)
 
+    /** A restored backup's ES-DE layout this device doesn't have, offered once its folder can be read. */
+    var restore by mutableStateOf<EsdeThemeUpdate?>(null)
+
     var checked = false
 }

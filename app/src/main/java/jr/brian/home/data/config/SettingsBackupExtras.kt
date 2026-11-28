@@ -7,12 +7,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.frontend.library.art.GameSortStore
 import jr.brian.frontend.library.collections.CollectionsBackup
 import jr.brian.frontend.library.favorites.FavoritesBackup
+import jr.brian.frontend.look.themes.esdeRestoreOfferFile
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val FILE_SCHEME = "file://"
 private const val CONTENT_SCHEME = "content://"
+private const val THEMES_DIR = "themes"
 
 /**
  * The v52 and later backup areas, kept out of [ImportExportManager] so it doesn't grow. Export adds them to a
@@ -41,6 +43,7 @@ class SettingsBackupExtras @Inject constructor(
             jarnCollections = collections.export()?.map { it.toConfig() },
             jarnFavorites = favorites.export()?.map { it.toConfig() },
             jingles = config.feature.jingles.copy(enabled = jingles.enabled, repos = jingles.repos),
+            jarnTheme = config.feature.jarnTheme?.withEsdeSource(themesRoot),
         ),
     )
 
@@ -62,7 +65,10 @@ class SettingsBackupExtras @Inject constructor(
         config.feature.jarnSystemSorts?.let(gameSorts::restore)
         config.feature.jarnCollections?.let { list -> collections.restore(list.map { it.toBackedUpCollection() }) }
         config.feature.jarnFavorites?.let { list -> favorites.restore(list.map { it.toBackedUpFavorite() }) }
+        restoreEsdeOffer(config.feature.jarnTheme, themesRoot, esdeRestoreOfferFile(context.filesDir))
     }
+
+    private val themesRoot: File get() = File(context.filesDir, THEMES_DIR)
 
     private fun providerOf(widgetId: Int): String? =
         runCatching { widgetManager?.getAppWidgetInfo(widgetId)?.provider?.flattenToString() }.getOrNull()

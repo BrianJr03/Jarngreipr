@@ -4,6 +4,8 @@
     <string name="jarnfe_esde_theme_updated">Your ES-DE theme updated. Re-import?</string>
     <string name="jarnfe_esde_theme_reimport">Re-import</string>
     <string name="jarnfe_esde_theme_not_now">Not now</string>
+    <string name="jarnfe_esde_theme_restore">Bring back your ES-DE layout?</string>
+    <string name="jarnfe_esde_theme_restore_notice">Bring back your ES-DE layout? Re-import it in Look, Layout.</string>
     <string name="jarnfe_esde_theme_updated_notice">Your ES-DE theme updated. Re-import it in Look, Layout.</string>
     <string name="jarnfe_theme_import_too_new">This theme needs a newer Jarn. Update, then try again.</string>
     <string name="jarnfe_theme_import_unreadable">Couldn\'t open that file.</string>
