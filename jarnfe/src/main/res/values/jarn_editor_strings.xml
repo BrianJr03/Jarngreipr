@@ -171,6 +171,7 @@
     <string name="jarnfe_editor_try_no_games">Games don\'t start in Try it.</string>
     <string name="jarnfe_editor_restore_hint">Restore this version. Undo brings back what you had.</string>
 
+    <string name="jarnfe_editor_share">Share</string>
     <string name="jarnfe_editor_build">Build a layout</string>
     <string name="jarnfe_editor_build_hint">Starts from the layout you use now.</string>
     <string name="jarnfe_editor_copy_name">%1$s copy</string>

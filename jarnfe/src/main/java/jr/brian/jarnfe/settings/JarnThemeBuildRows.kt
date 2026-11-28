@@ -66,6 +66,7 @@ internal fun JarnThemeCardOptions(entry: JarnThemeEntry?, onDismiss: () -> Unit)
             modifier = Modifier.fillMaxWidth(),
             supporting = stringResource(R.string.jarnfe_editor_duplicate_edit_hint).takeUnless { shown.editableInPlace },
         )
+        JarnThemeShareRow(shown.id, onDone = onDismiss)
     }
 }
 

@@ -9,6 +9,7 @@ import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSheet
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.settings.JarnThemeShareRow
 import kotlinx.coroutines.launch
 
 /** Select on a piece: duplicate, delete and order. */
@@ -29,6 +30,7 @@ internal fun ThemeEditorOptions(editor: ThemeEditorState, visible: Boolean, onDi
             scope.launch { JarnThemeEditor.saveVersion() }
             onDismiss()
         }
+        JarnThemeShareRow(editor.themeId, onDone = onDismiss, beforeShare = { JarnThemeEditor.saveVersion() })
         InspectActionRow(stringResource(R.string.jarnfe_editor_try), stringResource(R.string.jarnfe_editor_try_hint)) {
             onDismiss()
             ThemeEditorTryIt.start()
