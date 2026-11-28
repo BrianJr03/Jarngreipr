@@ -404,7 +404,10 @@ fun JarnKeyCap(key: JarnKey, modifier: Modifier = Modifier, active: Boolean = tr
 @Immutable
 data class JarnHint(val key: JarnKey, val label: String)
 
-/** [trailing] hints sit at the right end, with the same padding as the start. */
+/**
+ * [trailing] hints sit at the right end, with the same padding as the start. On a narrow screen
+ * whole hints drop out, lowest priority first, so no label is ever cut.
+ */
 @Composable
 fun JarnHintBar(
     hints: List<JarnHint>,
@@ -412,29 +415,16 @@ fun JarnHintBar(
     active: Boolean = true,
     trailing: List<JarnHint> = emptyList(),
 ) {
-    Row(
+    JarnFittedHints(
+        leading = hints,
+        trailing = trailing,
+        gap = JarnTheme.space.lg,
         modifier = modifier
             .fillMaxWidth()
             .height(JarnTheme.space.hintBarHeight)
             .background(JarnTheme.colors.surface)
             .padding(horizontal = JarnTheme.space.lg),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        JarnHintGroup(hints, active, Modifier.weight(1f).horizontalScroll(rememberScrollState()))
-        if (trailing.isNotEmpty()) JarnHintGroup(trailing, active)
-    }
-}
-
-@Composable
-private fun JarnHintGroup(hints: List<JarnHint>, active: Boolean, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.lg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        hints.forEach { hint -> JarnHintItem(hint, active) }
-    }
+    ) { hint -> JarnHintItem(hint, active) }
 }
 
 @Composable

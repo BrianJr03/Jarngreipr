@@ -19,6 +19,7 @@ import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.themes.JarnImportedThemes
 import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeOption
@@ -58,6 +59,7 @@ internal fun JarnThemeSection(store: JarnLookStore) {
                 store.applyThemeChoice(saved.withOverride(view, saved.override(view).nextOverride()))
             }
         }
+        JarnThemeImportRows(store, saved)
     }
 }
 

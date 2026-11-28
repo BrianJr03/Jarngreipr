@@ -7,7 +7,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.themes.JarnUserThemes
+import jr.brian.jarnfe.themes.JarnImportedThemes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ internal suspend fun JarnThemeEditor.saveVersion(spec: JarnThemeSpec? = state?.s
     val store = store ?: return
     val saved = spec ?: return
     withContext(Dispatchers.IO) { store.save(id, saved) }
-    JarnUserThemes.reload(store)
+    JarnImportedThemes.refresh(store.root)
     loadVersions()
 }
 

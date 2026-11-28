@@ -12,6 +12,7 @@ import jr.brian.core.model.theme.ThemeSource
 import jr.brian.core.model.theme.ThemeTokens
 import jr.brian.core.model.theme.ThemeViews
 import jr.brian.core.model.theme.ViewSpec
+import java.io.File
 import kotlin.math.roundToInt
 
 private val PRIMARY_TYPES = setOf("carousel", "grid", "textlist")
@@ -40,14 +41,18 @@ private val DefaultBox = ThemeRect(0.05f, 0.1f, 0.9f, 0.8f)
  */
 object EsdeThemeTranslator {
 
-    fun translate(model: EsdeThemeModel, options: EsdeTranslateOptions): EsdeTranslation {
+    /**
+     * [narrowModel] is the same theme parsed with its narrow aspect ratio ([narrowAspectRatioOf]);
+     * where it lays a view out differently, the view gets a [ViewSpec.narrow] patch.
+     */
+    fun translate(
+        model: EsdeThemeModel,
+        options: EsdeTranslateOptions,
+        narrowModel: EsdeThemeModel? = null,
+    ): EsdeTranslation {
         val report = EsdeReportBuilder()
-        val aspect = aspectOf(model.selection.aspectRatio)
-        // TODO(#568): translate the theme's narrow aspect ratios into ViewSpec.narrow once it lands.
-        val views = ThemeViews(
-            systems = translateView(model, EsdeView.System, aspect, report)?.clearOfBand(options.systemsTopClear, report),
-            games = translateView(model, EsdeView.Gamelist, aspect, report),
-        )
+        val wide = translateViews(model, options, report)
+        val views = narrowModel?.let { withNarrowPatches(wide, it, options, report) } ?: wide
         val themeNote = if (model.isLegacy) EsdeTranslationNote.LegacyTheme else EsdeTranslationNote.TransitionsAndTriggers
         report.notUsed(null, null, themeNote)
         val spec = JarnThemeSpec(
@@ -60,6 +65,34 @@ object EsdeThemeTranslator {
             views = views,
         )
         return EsdeTranslation(spec, report.assets(), report.colors(), report.report())
+    }
+
+    private fun translateViews(model: EsdeThemeModel, options: EsdeTranslateOptions, report: EsdeReportBuilder): ThemeViews {
+        val aspect = aspectOf(model.selection.aspectRatio)
+        return ThemeViews(
+            systems = translateView(model, EsdeView.System, aspect, report)?.clearOfBand(options.systemsTopClear, report),
+            games = translateView(model, EsdeView.Gamelist, aspect, report),
+        )
+    }
+
+    /** The narrow pass reports only how it differs; its assets join the theme's. */
+    private fun withNarrowPatches(
+        wide: ThemeViews,
+        narrowModel: EsdeThemeModel,
+        options: EsdeTranslateOptions,
+        report: EsdeReportBuilder,
+    ): ThemeViews {
+        val narrowReport = EsdeReportBuilder()
+        val narrow = translateViews(narrowModel, options, narrowReport)
+        report.addAssets(narrowReport.assets())
+        fun patched(view: EsdeView, wideSpec: ViewSpec?, narrowSpec: ViewSpec?): ViewSpec? {
+            if (wideSpec == null || narrowSpec == null) return wideSpec
+            return wideSpec.copy(narrow = narrowPatch(wideSpec, narrowSpec, view, report))
+        }
+        return ThemeViews(
+            systems = patched(EsdeView.System, wide.systems, narrow.systems),
+            games = patched(EsdeView.Gamelist, wide.games, narrow.games),
+        )
     }
 
     private fun translateView(model: EsdeThemeModel, view: EsdeView, aspect: Float, report: EsdeReportBuilder): ViewSpec? {
@@ -80,7 +113,8 @@ object EsdeThemeTranslator {
         val layers = EsdeLayerTranslator(view, primaryZ, aspect, report).let { translator ->
             elements.filter { it.key.type !in PRIMARY_TYPES }.mapNotNull(translator::translate)
         }
-        return ViewSpec(primary = primary, layers = layers.sortedBy { it.z })
+        val arranged = layers.logoOrName(view, report).stacked(view, report)
+        return ViewSpec(primary = primary, layers = arranged.sortedBy { it.z })
     }
 
     private fun primaryOf(element: EsdeElementAcrossSystems, view: EsdeView, aspect: Float, report: EsdeReportBuilder): ThemePrimary =
@@ -186,4 +220,20 @@ object EsdeThemeTranslator {
         is ThemeLayer.Panel -> copy(rect = rect)
         is ThemeLayer.Video -> copy(rect = rect)
     }
+}
+
+/**
+ * Parses [themeDir] for [systems] and translates it, with a second, narrow parse when the theme
+ * declares a narrow aspect ratio. Blocking file IO; call off the main thread.
+ */
+fun EsdeThemeParser.translate(
+    themeDir: File,
+    systems: List<EsdeSystemRef>,
+    selection: EsdeThemeSelection,
+    options: EsdeTranslateOptions,
+): EsdeTranslation {
+    val model = parse(themeDir, systems, selection)
+    val narrowRatio = narrowAspectRatioOf(model.capabilities)?.takeUnless { it == model.selection.aspectRatio }
+    val narrowModel = narrowRatio?.let { parse(themeDir, systems, model.selection.copy(aspectRatio = it)) }
+    return EsdeThemeTranslator.translate(model, options, narrowModel)
 }

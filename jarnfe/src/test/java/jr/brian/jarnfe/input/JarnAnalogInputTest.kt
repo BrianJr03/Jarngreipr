@@ -141,4 +141,12 @@ class JarnAnalogInputTest {
         assertEquals(count, received.size)
         assertEquals(1f, received.last().left.x)
     }
+
+    @Test
+    fun `a hat D-pad press and its release both reach Android`() {
+        layer(sticks = true)
+        assertFalse(raw(lx = 1f, hat = true))
+        assertFalse(raw(lx = 1f))
+        assertTrue(raw(lx = 1f))
+    }
 }

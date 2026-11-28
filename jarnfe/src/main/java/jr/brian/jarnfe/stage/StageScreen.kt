@@ -36,7 +36,6 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.themes.JarnUserThemesLoader
 import jr.brian.jarnfe.editor.ThemeEditorStage
 import jr.brian.jarnfe.editor.ThemeEditorTitle
 import jr.brian.jarnfe.backdrop.JarnAdaptiveContent
@@ -113,7 +112,6 @@ private fun LibrarySection.labelRes(): Int = when (this) {
 @Composable
 internal fun StageScreen(state: JarnSessionState) {
     LaunchedEffect(JarnLibrary.source) { JarnLibrary.observe() }
-    JarnUserThemesLoader()
     LibraryOrphanGuard(JarnLibrary.state.gameListIsOrphaned(state.stageRoute)) {
         JarnSession.update { openRoute(StageRoute.Library) }
     }

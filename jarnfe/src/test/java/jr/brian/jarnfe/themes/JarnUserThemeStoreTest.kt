@@ -53,15 +53,11 @@ class JarnUserThemeStoreTest {
     }
 
     @Test
-    fun `made themes follow their own colors setting, imports are marked`() {
+    fun `saved themes list beside imports and keep their own colors setting`() {
         store.save("mine", spec)
-        val made = JarnUserThemes.entryFor(store.list().single())
-        assertEquals(JarnThemeKind.User, made.kind)
-        assertFalse(made.ownColors)
-        val imported = JarnUserThemes.entryFor(
-            StoredTheme("esde", temp.root, spec.copy(meta = spec.meta.copy(source = ThemeSource.EsDe, followsLook = false))),
-        )
-        assertEquals(JarnThemeKind.Imported, imported.kind)
-        assertTrue(imported.ownColors)
+        store.save("esde", spec.copy(meta = spec.meta.copy(source = ThemeSource.EsDe, followsLook = false)))
+        val entries = readImportedThemes(temp.root).associateBy { it.id }
+        assertFalse(entries.getValue("mine").ownColors)
+        assertTrue(entries.getValue("esde").ownColors)
     }
 }

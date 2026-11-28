@@ -6,8 +6,6 @@ import jr.brian.core.model.theme.JarnThemeFormat
 import jr.brian.core.model.theme.JarnThemeSpec
 import java.io.File
 
-/** The folder the theme installer uses too, so made and imported themes sit side by side. */
-private const val THEMES_DIR = "themes"
 private const val THEME_FILE = "theme.json"
 private const val DRAFT_FILE = "draft.json"
 private const val HISTORY_DIR = "history"
@@ -27,7 +25,7 @@ internal data class ThemeVersion(val savedAt: Long, val spec: JarnThemeSpec)
  * autosave, and `history/` the last [HISTORY_LIMIT] saves. Plain files, never backed up; only the
  * active theme's id is. Callers keep this off the main thread.
  */
-internal class JarnUserThemeStore(private val root: File, private val now: () -> Long = System::currentTimeMillis) {
+internal class JarnUserThemeStore(val root: File, private val now: () -> Long = System::currentTimeMillis) {
     fun list(): List<StoredTheme> = root.listFiles().orEmpty()
         .filter { it.isDirectory && !it.name.startsWith(".") }
         .sortedBy { it.name }
@@ -83,4 +81,4 @@ internal class JarnUserThemeStore(private val root: File, private val now: () ->
     private val File.savedAt: Long get() = nameWithoutExtension.toLongOrNull() ?: 0L
 }
 
-internal fun Context.jarnUserThemeStore(): JarnUserThemeStore = JarnUserThemeStore(File(filesDir, THEMES_DIR))
+internal fun Context.jarnUserThemeStore(): JarnUserThemeStore = JarnUserThemeStore(jarnThemesRoot())

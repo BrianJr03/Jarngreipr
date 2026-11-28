@@ -90,7 +90,7 @@ internal object JarnThemeRegistry {
     }
 
     /** Layouts that can be saved as the active theme: these, then the ones on this device. */
-    val installed: List<JarnThemeEntry> get() = builtIns + templates + JarnUserThemes.entries
+    val installed: List<JarnThemeEntry> get() = builtIns + templates + JarnImportedThemes.entries
 
     fun builtInFor(view: JarnBrowseView): JarnThemeEntry = when (view) {
         JarnBrowseView.Grid, JarnBrowseView.SameAsLayout -> Grid

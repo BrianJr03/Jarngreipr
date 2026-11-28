@@ -36,6 +36,10 @@ internal class EsdeReportBuilder {
         }
     }
 
+    fun addAssets(paths: List<String>) {
+        assets += paths
+    }
+
     fun assets(): List<String> = assets.toList()
     fun colors(): List<EsdeColorCandidate> = colors.toList()
     fun report() = EsdeTranslationReport(translated.toList(), adjusted.toList(), notUsed.toList())

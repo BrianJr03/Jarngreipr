@@ -66,7 +66,64 @@ class JarnThemeInstaller(
         }
     }
 
-    private fun checkAndPlace(incoming: File, clash: ThemeIdClash): ThemeImportResult {
+    /**
+     * Installs a theme built in code, such as an ES-DE translation: [spec] plus the [assets] it names,
+     * relative to [sourceRoot], under the same caps and checks as a theme file. Files that are missing,
+     * too big, or reach outside [sourceRoot] (a symlink, say) are left out, and what pointed at them
+     * drops. [replaceId] installs over that id, for a re-import. [beforePlace] adds files of its own
+     * to the checked folder just before it moves into place. [prepare] runs on the unchecked folder
+     * after the copy and returns the spec, so a step that writes its own files there (the ES-DE
+     * fallback's art and fonts) goes through the same checks.
+     */
+    @Synchronized
+    fun installFiles(
+        sourceRoot: File,
+        assets: Collection<String>,
+        replaceId: String? = null,
+        beforePlace: (File) -> Unit = {},
+        prepare: (File) -> JarnThemeSpec,
+    ): ThemeImportResult {
+        themesRoot.mkdirs()
+        clearLeftovers()
+        val incoming = File(themesRoot, INCOMING_PREFIX + UUID.randomUUID())
+        return try {
+            incoming.mkdirs()
+            copyAssets(sourceRoot, assets, incoming)
+            File(incoming, THEME_FILE).writeText(JarnThemeFormat.encode(prepare(incoming)))
+            val id = replaceId?.takeIf { isSafeThemePath(it) && '/' !in it && !it.startsWith(".") }
+            checkAndPlace(incoming, ThemeIdClash.Replace.takeIf { id != null } ?: ThemeIdClash.KeepBoth, id, beforePlace)
+        } catch (e: ThemeImportException) {
+            ThemeImportResult.Rejected(e.problem)
+        } catch (e: java.io.IOException) {
+            ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
+        } catch (e: IllegalArgumentException) {
+            ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
+        } finally {
+            incoming.deleteRecursively()
+        }
+    }
+
+    private fun copyAssets(sourceRoot: File, assets: Collection<String>, incoming: File) {
+        val paths = assets.distinct()
+        if (paths.size > limits.maxEntries) throw ThemeImportException(ThemeImportProblem.TooManyEntries)
+        val root = sourceRoot.canonicalFile
+        var total = 0L
+        paths.filter { isSafeThemePath(it) && themeAssetKind(it) != null }.forEach { path ->
+            val source = File(root, path).canonicalFile
+            val inside = source.path.startsWith(root.path + File.separator)
+            if (!inside || !source.isFile || source.length() > limits.maxEntryBytes) return@forEach
+            total += source.length()
+            if (total > limits.maxTotalBytes) throw ThemeImportException(ThemeImportProblem.TooLarge)
+            source.copyTo(File(incoming, path), overwrite = true)
+        }
+    }
+
+    private fun checkAndPlace(
+        incoming: File,
+        clash: ThemeIdClash,
+        fixedId: String? = null,
+        beforePlace: (File) -> Unit = {},
+    ): ThemeImportResult {
         val themeFile = File(incoming, THEME_FILE)
         if (!themeFile.isFile) return ThemeImportResult.Rejected(ThemeImportProblem.NotATheme)
         if (themeFile.length() > MAX_THEME_JSON_BYTES) return ThemeImportResult.Rejected(ThemeImportProblem.TooLarge)
@@ -77,7 +134,8 @@ class JarnThemeInstaller(
         }
         val checked = checkFileRefs(spec, checkThemeAssets(incoming))
         themeFile.writeText(JarnThemeFormat.encode(checked.spec))
-        val id = placeId(themeIdFor(spec.meta.name), clash)
+        beforePlace(incoming)
+        val id = fixedId ?: placeId(themeIdFor(spec.meta.name), clash)
         val target = File(themesRoot, id)
         moveIntoPlace(incoming, target)
         return ThemeImportResult.Installed(id, target, checked.spec, checked.dropped)

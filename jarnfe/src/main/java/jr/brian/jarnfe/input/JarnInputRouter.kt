@@ -123,6 +123,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     private val leftStick = JarnStickFilter()
     private val rightStick = JarnStickFilter()
     private var lastSticks = JarnSticks()
+    private var hatWasPressed = false
 
     /**
      * Joystick motion from each activity's `dispatchGenericMotionEvent`. Returns true, so Android
@@ -132,6 +133,10 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
     fun dispatch(event: MotionEvent): Boolean = event.jarnStickRaw()?.let(::dispatchSticks) ?: false
 
     fun dispatchSticks(raw: JarnStickRaw): Boolean {
+        // The Thor's D-pad is a hat that Android turns into D-pad keys, so its press and its
+        // release both have to reach Android, or the key it started never ends.
+        val hatMoving = raw.hatPressed || hatWasPressed
+        hatWasPressed = raw.hatPressed
         val sticks = JarnSticks(
             left = leftStick.update(raw.leftX, raw.leftY),
             right = rightStick.update(raw.rightX, raw.rightY),
@@ -142,7 +147,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
             lastSticks = sticks
             receiver.onSticks?.invoke(sticks)
         }
-        return !raw.hatPressed
+        return !hatMoving
     }
 
     /** The top layer on the active screen that takes sticks, unless a non-passive layer sits above it. */
