@@ -61,6 +61,9 @@ class JarnThemeInstaller(
             ThemeImportResult.Rejected(e.problem)
         } catch (e: java.io.IOException) {
             ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
+        } catch (e: RuntimeException) {
+            // A malformed archive can trip a buffer bounds check; it is damaged, never a crash.
+            ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
         } finally {
             incoming.deleteRecursively()
         }
@@ -96,7 +99,7 @@ class JarnThemeInstaller(
             ThemeImportResult.Rejected(e.problem)
         } catch (e: java.io.IOException) {
             ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: RuntimeException) {
             ThemeImportResult.Rejected(ThemeImportProblem.Damaged)
         } finally {
             incoming.deleteRecursively()
