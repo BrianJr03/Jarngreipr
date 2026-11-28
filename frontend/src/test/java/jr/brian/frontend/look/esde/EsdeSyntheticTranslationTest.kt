@@ -38,10 +38,8 @@ class EsdeSyntheticTranslationTest {
         systemsTopClear = 0.2f,
     )
 
-    private fun translate(theme: EsdeSyntheticTheme): EsdeTranslation {
-        val model = EsdeThemeParser().parse(theme.install(temp.newFolder()), theme.systems, theme.selection)
-        return EsdeThemeTranslator.translate(model, options)
-    }
+    private fun translate(theme: EsdeSyntheticTheme): EsdeTranslation =
+        EsdeThemeParser().translate(theme.install(temp.newFolder()), theme.systems, theme.selection, options)
 
     @Test
     fun `every fixture matches its translator goldens`() {
