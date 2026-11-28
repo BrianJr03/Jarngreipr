@@ -258,6 +258,10 @@ data class JarngreiprConfig(
         // v78: added FeatureConfig.jarnTheme, the active Jarn theme id (null id is the built-in
         //      theme). Theme files are never exported. Null on older blobs keeps the current theme,
         //      and an id this device doesn't have is kept so the built-in shows until it is added.
-        const val CONFIG_VERSION = 78
+        // v79: added JarnThemeConfig.esde, the ES-DE folder, variant, color scheme and aspect ratio an
+        //      imported active theme came from. Null for other themes and on older blobs. Restoring it on
+        //      a device without that theme keeps the id (built-in shows) and offers a re-import on the
+        //      next launch once the ES-DE folder can be read. Theme files are still never exported.
+        const val CONFIG_VERSION = 79
     }
 }

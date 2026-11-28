@@ -121,8 +121,9 @@ private fun StepText(@StringRes res: Int) {
 }
 
 /**
- * On launch, checks once whether the active theme's ES-DE folder changed since it was imported,
- * and if so says where to re-import. A missing folder or SD card says nothing.
+ * On launch, checks once whether a restored backup's ES-DE layout can be brought back, or else
+ * whether the active theme's ES-DE folder changed since it was imported, and says where to
+ * re-import. A missing folder or SD card says nothing.
  */
 @Composable
 internal fun JarnEsdeThemeUpdateCheck() {
@@ -132,6 +133,11 @@ internal fun JarnEsdeThemeUpdateCheck() {
         JarnEsdeThemeUpdatePending.checked = true
         val id = context.jarnLookStoreOrNull()?.activeThemeId ?: return@LaunchedEffect
         val updates = context.jarnThemeImportOrNull()?.jarnEsdeThemeUpdates ?: return@LaunchedEffect
+        runCatching { updates.restoreOfferFor(id) }.getOrNull()?.let { offer ->
+            JarnEsdeThemeUpdatePending.restore = offer
+            JarnNotices.show(R.string.jarnfe_esde_theme_restore_notice)
+            return@LaunchedEffect
+        }
         runCatching { updates.updateFor(id) }.getOrNull()?.let { update ->
             JarnEsdeThemeUpdatePending.update = update
             JarnNotices.show(R.string.jarnfe_esde_theme_updated_notice)

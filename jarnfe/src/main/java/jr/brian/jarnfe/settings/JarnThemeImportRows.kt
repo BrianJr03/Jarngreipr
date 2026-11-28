@@ -65,6 +65,7 @@ internal sealed interface EsdeImportMode {
 internal fun JarnThemeImportRows(store: JarnLookStore, saved: JarnThemeChoice) {
     var mode by remember { mutableStateOf<EsdeImportMode?>(null) }
     val entryFocus = remember { FocusRequester() }
+    RestoreOfferRows { mode = EsdeImportMode.Reimport(it) }
     PendingUpdateRows(saved) { mode = EsdeImportMode.Reimport(it) }
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_esde_import_entry),
@@ -80,6 +81,27 @@ internal fun JarnThemeImportRows(store: JarnLookStore, saved: JarnThemeChoice) {
         EsdeImportPanel(current, onUse = { id -> useImported(store, saved, id); close() }, onClose = close)
     }
     ThemeFileRow()
+}
+
+@Composable
+private fun RestoreOfferRows(onReimport: (EsdeThemeUpdate) -> Unit) {
+    val offer = JarnEsdeThemeUpdatePending.restore ?: return
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_esde_theme_restore),
+        value = stringResource(R.string.jarnfe_esde_theme_reimport),
+        onClick = { onReimport(offer) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_esde_theme_not_now),
+        onClick = {
+            JarnEsdeThemeUpdatePending.restore = null
+            scope.launch { context.jarnThemeImportOrNull()?.jarnEsdeThemeUpdates?.dropRestoreOffer() }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -125,6 +147,10 @@ private fun EsdeImportPanel(mode: EsdeImportMode, onUse: (String) -> Unit, onClo
         onAllowAccess = { openAllFilesAccess(context) },
         onUse = { id ->
             if (JarnEsdeThemeUpdatePending.update?.themeId == id) JarnEsdeThemeUpdatePending.update = null
+            if (mode is EsdeImportMode.Reimport && mode.update == JarnEsdeThemeUpdatePending.restore) {
+                JarnEsdeThemeUpdatePending.restore = null
+                scope.launch { context.jarnThemeImportOrNull()?.jarnEsdeThemeUpdates?.dropRestoreOffer() }
+            }
             onUse(id)
         },
         onClose = onClose,
