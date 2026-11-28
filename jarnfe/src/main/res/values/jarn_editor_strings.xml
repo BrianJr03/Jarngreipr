@@ -211,6 +211,7 @@
     <string name="jarnfe_editor_build">Build a layout</string>
     <string name="jarnfe_editor_build_hint">Starts from the layout you use now.</string>
     <string name="jarnfe_editor_copy_name">%1$s copy</string>
+    <string name="jarnfe_editor_copy_name_numbered">%1$s copy %2$d</string>
     <string name="jarnfe_editor_card_options">Layout options</string>
     <string name="jarnfe_editor_duplicate_edit">Duplicate and edit</string>
     <string name="jarnfe_editor_duplicate_edit_hint">Built-in layouts stay as they are. You edit a copy.</string>

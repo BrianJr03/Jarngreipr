@@ -11,10 +11,12 @@ import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSheet
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.editor.editableInPlace
+import jr.brian.jarnfe.editor.nextCopyName
 import jr.brian.jarnfe.editor.openThemeEditor
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.themes.JarnThemeEntry
+import jr.brian.jarnfe.themes.JarnThemeRegistry
 import jr.brian.jarnfe.themes.jarnUserThemeStore
 import kotlinx.coroutines.launch
 
@@ -22,7 +24,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun JarnBuildLayoutRow(current: JarnThemeEntry) {
     val launch = rememberEditorLauncher()
-    val copyName = stringResource(R.string.jarnfe_editor_copy_name, current.displayName())
+    val copyName = rememberCopyName(current)
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_editor_build),
         onClick = { launch(current, copyName) },
@@ -46,7 +48,7 @@ internal fun JarnThemeCardOptions(entry: JarnThemeEntry?, onDismiss: () -> Unit)
     val launch = rememberEditorLauncher()
     JarnSheet(visible = entry != null, onDismiss = onDismiss, title = entry?.displayName()) {
         val shown = entry ?: return@JarnSheet
-        val copyName = stringResource(R.string.jarnfe_editor_copy_name, shown.displayName())
+        val copyName = rememberCopyName(shown)
         if (shown.editableInPlace) {
             JarnNavigateRow(
                 label = stringResource(R.string.jarnfe_game_edit),
@@ -67,6 +69,18 @@ internal fun JarnThemeCardOptions(entry: JarnThemeEntry?, onDismiss: () -> Unit)
             supporting = stringResource(R.string.jarnfe_editor_duplicate_edit_hint).takeUnless { shown.editableInPlace },
         )
         JarnThemeShareRow(shown.id, onDone = onDismiss)
+    }
+}
+
+/** "Grid copy", or "Grid copy 2" and on when a theme on this device already has that name. */
+@Composable
+private fun rememberCopyName(entry: JarnThemeEntry): String {
+    val resources = LocalContext.current.resources
+    val name = entry.displayName()
+    val first = stringResource(R.string.jarnfe_editor_copy_name, name)
+    val taken = JarnThemeRegistry.installed.mapTo(HashSet()) { it.theme.spec.meta.name }
+    return remember(first, taken) {
+        nextCopyName(first, { n -> resources.getString(R.string.jarnfe_editor_copy_name_numbered, name, n) }, taken)
     }
 }
 

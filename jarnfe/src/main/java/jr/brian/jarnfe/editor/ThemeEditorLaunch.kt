@@ -37,3 +37,10 @@ internal suspend fun openThemeEditor(store: JarnUserThemeStore, entry: JarnTheme
     JarnImportedThemes.refresh(store.root)
     JarnThemeEditor.open(id, spec, store)
 }
+
+/**
+ * The name for a new copy: [first] ("Grid copy") while no theme uses it, then [numbered] from 2
+ * ("Grid copy 2", "Grid copy 3"), so every copy can be told apart on its card.
+ */
+internal fun nextCopyName(first: String, numbered: (Int) -> String, taken: Set<String>): String =
+    if (first !in taken) first else generateSequence(2) { it + 1 }.map(numbered).first { it !in taken }
