@@ -170,6 +170,26 @@
     <string name="jarnfe_editor_try_use_hint">Saves it and makes it your layout.</string>
     <string name="jarnfe_editor_try_no_games">Games don\'t start in Try it.</string>
     <string name="jarnfe_editor_restore_hint">Restore this version. Undo brings back what you had.</string>
+    <string name="jarnfe_editor_restore">Restore</string>
+    <string name="jarnfe_editor_compare">Compare</string>
+    <string name="jarnfe_editor_compare_hint">Compare with what you have now.</string>
+    <string name="jarnfe_editor_compare_now">Now</string>
+    <string name="jarnfe_editor_compare_close">Keep what I have</string>
+    <plurals name="jarnfe_editor_diff_added">
+        <item quantity="one">%1$d piece added since then</item>
+        <item quantity="other">%1$d pieces added since then</item>
+    </plurals>
+    <plurals name="jarnfe_editor_diff_removed">
+        <item quantity="one">%1$d piece removed since then</item>
+        <item quantity="other">%1$d pieces removed since then</item>
+    </plurals>
+    <plurals name="jarnfe_editor_diff_changed">
+        <item quantity="one">%1$d piece changed since then</item>
+        <item quantity="other">%1$d pieces changed since then</item>
+    </plurals>
+    <string name="jarnfe_editor_diff_list">The list changed</string>
+    <string name="jarnfe_editor_diff_colors">The colors changed</string>
+    <string name="jarnfe_editor_diff_same">No changes</string>
 
     <string name="jarnfe_editor_share">Share</string>
     <string name="jarnfe_editor_build">Build a layout</string>
