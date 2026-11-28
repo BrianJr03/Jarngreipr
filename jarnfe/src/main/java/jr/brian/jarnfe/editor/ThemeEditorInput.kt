@@ -12,6 +12,7 @@ import jr.brian.jarnfe.session.JarnSession
  * The canvas owns every button while it has control, with Canvas's buttons: A picks up and drops,
  * B puts back or leaves, L1/R1 resize, Select flips the axis, Y undoes and Start opens options.
  * Browsing, the D-pad jumps between pieces and L1/R1 step through them; X goes to the tools.
+ * While a piece is held the sticks also work: the left one moves it, the right one resizes it.
  */
 @Composable
 internal fun ThemeEditorCanvasInput(
@@ -32,9 +33,13 @@ internal fun ThemeEditorCanvasInput(
             }
         },
     )
+    val holding = canvasActive && editor.held != null
+    val sticks = rememberThemeEditorStickDriver()
+    ThemeEditorStickFrames(holding, sticks)
     JarnInputLayer(
         mode = JarnLayerMode.Capture,
-        enabled = canvasActive && editor.held != null,
+        enabled = holding,
+        onSticks = sticks::onSticks,
         bindings = { heldBindings(editor.axis) },
     )
 }
