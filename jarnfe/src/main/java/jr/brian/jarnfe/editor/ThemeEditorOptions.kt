@@ -9,6 +9,7 @@ import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSheet
 import jr.brian.core.ui.components.JarnToggleRow
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.settings.JarnThemeShareRow
 import kotlinx.coroutines.launch
 
@@ -29,6 +30,10 @@ internal fun ThemeEditorOptions(editor: ThemeEditorState, visible: Boolean, onDi
         InspectActionRow(stringResource(R.string.jarnfe_editor_save), stringResource(R.string.jarnfe_editor_save_hint)) {
             scope.launch { JarnThemeEditor.saveVersion() }
             onDismiss()
+        }
+        InspectActionRow(stringResource(R.string.jarnfe_editor_history), stringResource(R.string.jarnfe_editor_history_hint)) {
+            onDismiss()
+            JarnThemeEditor.showHistory(JarnSession.state.editorToolsOnDeck)
         }
         JarnThemeShareRow(editor.themeId, onDone = onDismiss, beforeShare = { JarnThemeEditor.saveVersion() })
         InspectActionRow(stringResource(R.string.jarnfe_editor_try), stringResource(R.string.jarnfe_editor_try_hint)) {

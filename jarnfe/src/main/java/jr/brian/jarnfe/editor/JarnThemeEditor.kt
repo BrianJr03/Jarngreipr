@@ -1,10 +1,12 @@
 package jr.brian.jarnfe.editor
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.jarnfe.library.LibraryBuiltInThemes
+import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.themekit.ThemeLayoutIssue
@@ -41,6 +43,17 @@ internal object JarnThemeEditor {
 
     /** The theme's saved versions, newest first. */
     var versions by mutableStateOf<List<ThemeVersion>>(emptyList())
+
+    /** Grows each time Start > History asks the tools to bring History into view. */
+    var historyRequests by mutableIntStateOf(0)
+        private set
+
+    /** Opens the tools at History: on the Deck when it has a window, else in the sheet. */
+    fun showHistory(toolsOnDeck: Boolean) {
+        update { copy(tab = ThemeEditorTab.Preview, sheetFocused = !toolsOnDeck) }
+        if (toolsOnDeck) JarnSession.update { activate(JarnScreen.Deck) }
+        historyRequests += 1
+    }
 
     fun open(themeId: String, spec: JarnThemeSpec, store: JarnUserThemeStore? = null) {
         this.store = store

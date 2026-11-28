@@ -12,7 +12,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import jr.brian.core.ui.components.JarnText
 import androidx.compose.ui.unit.dp
 import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.core.model.theme.ThemeView
@@ -26,6 +30,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val AUTOSAVE_DELAY_MS = 800L
+
+/** Frames to wait so the tools' own first focus lands before History takes it. */
+private const val HISTORY_FOCUS_FRAMES = 2
 
 /** Writes the draft a moment after each change, so leaving or a crash never loses work. */
 @Composable
@@ -63,7 +70,14 @@ internal fun ThemeEditorHistory() {
     val editor = JarnThemeEditor.state ?: return
     val scope = rememberCoroutineScope()
     var comparing by remember { mutableStateOf<ThemeVersion?>(null) }
-    InspectActionRow(stringResource(R.string.jarnfe_editor_save), stringResource(R.string.jarnfe_editor_save_hint)) {
+    val historyFocus = remember { FocusRequester() }
+    HistoryFocusEffect(historyFocus)
+    JarnText(stringResource(R.string.jarnfe_editor_history), JarnTheme.type.heading, JarnTheme.colors.textHigh, maxLines = 1)
+    InspectActionRow(
+        label = stringResource(R.string.jarnfe_editor_save),
+        supporting = stringResource(R.string.jarnfe_editor_history_save_hint),
+        modifier = Modifier.focusRequester(historyFocus),
+    ) {
         scope.launch { JarnThemeEditor.saveVersion() }
     }
     JarnThemeEditor.versions.forEach { version ->
@@ -81,11 +95,22 @@ internal fun ThemeEditorHistory() {
     )
 }
 
+/** After Start > History, waits for the tab to settle, then focuses History so it scrolls into view. */
+@Composable
+private fun HistoryFocusEffect(target: FocusRequester) {
+    val requests = JarnThemeEditor.historyRequests
+    LaunchedEffect(requests) {
+        if (requests == 0) return@LaunchedEffect
+        repeat(HISTORY_FOCUS_FRAMES) { withFrameNanos { } }
+        runCatching { target.requestFocus() }
+    }
+}
+
 @Composable
 private fun HistoryRow(version: ThemeVersion, view: ThemeView, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
         ThemeVersionThumbnail(version.spec, view, Modifier.width(HistoryThumbnailWidth))
-        InspectActionRow(versionLabel(version), stringResource(R.string.jarnfe_editor_compare_hint), onClick)
+        InspectActionRow(versionLabel(version), stringResource(R.string.jarnfe_editor_compare_hint), onClick = onClick)
     }
 }
 
