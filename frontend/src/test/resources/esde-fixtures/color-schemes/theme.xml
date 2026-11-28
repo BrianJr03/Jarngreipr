@@ -1,0 +1,35 @@
+<theme>
+    <colorScheme name="dusk">
+        <variables>
+            <bg>14181F</bg>
+            <fg>F2F4F7</fg>
+            <accent>6FC3FF</accent>
+        </variables>
+    </colorScheme>
+    <colorScheme name="paper">
+        <variables>
+            <bg>F6F3EC</bg>
+            <fg>1E2227</fg>
+            <accent>B24A2E</accent>
+        </variables>
+    </colorScheme>
+    <colorScheme name="debug">
+        <variables>
+            <bg>FF00FF</bg>
+            <fg>00FF00</fg>
+            <accent>FFFF00</accent>
+        </variables>
+    </colorScheme>
+    <view name="system, gamelist">
+        <image name="background">
+            <color>${bg}</color>
+            <size>1 1</size>
+        </image>
+    </view>
+    <view name="gamelist">
+        <textlist name="gamelistTextlist">
+            <primaryColor>${fg}</primaryColor>
+            <selectorColor>${accent}</selectorColor>
+        </textlist>
+    </view>
+</theme>

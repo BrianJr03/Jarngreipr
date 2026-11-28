@@ -67,7 +67,7 @@ class JarnThemeConfigImportTest {
 
     @Test
     fun `schema version covers the active theme`() {
-        assertEquals(78, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(79, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test
@@ -126,18 +126,39 @@ class JarnThemeConfigImportTest {
     }
 
     @Test
-    fun `the preview lists a theme change under Look`() {
+    fun `the preview lists a layout change under Layout`() {
         val now = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember", jarnTheme = JarnThemeConfig()))
 
-        assertEquals(JarnBackupChange.Replaces, look(FeatureConfig(jarnTheme = JarnThemeConfig("art-book")), now))
-        assertEquals(JarnBackupChange.Same, look(FeatureConfig(jarnLook = "ember", jarnTheme = JarnThemeConfig()), now))
-        assertEquals(JarnBackupChange.Same, look(FeatureConfig(jarnLook = "ember"), now))
-        assertEquals(JarnBackupChange.NotIncluded, look(FeatureConfig(), now))
+        assertEquals(JarnBackupChange.Replaces, layout(FeatureConfig(jarnTheme = JarnThemeConfig("art-book")), now))
+        assertEquals(JarnBackupChange.Same, layout(FeatureConfig(jarnLook = "ember", jarnTheme = JarnThemeConfig()), now))
+        assertEquals(JarnBackupChange.NotIncluded, layout(FeatureConfig(jarnLook = "ember"), now))
+        assertEquals(JarnBackupChange.NotIncluded, layout(FeatureConfig(), now))
     }
 
-    private fun look(backup: FeatureConfig, now: JarngreiprConfig): JarnBackupChange =
+    @Test
+    fun `a restored ES-DE layout missing on this device counts as a change`() {
+        val source = JarnThemeEsdeSourceConfig("/storage/emulated/0/ES-DE/themes/linear", variant = "textlist")
+        val missing = JarngreiprConfig(feature = FeatureConfig(jarnTheme = JarnThemeConfig("linear")))
+        val installed = JarngreiprConfig(feature = FeatureConfig(jarnTheme = JarnThemeConfig("linear", source)))
+        val backup = FeatureConfig(jarnTheme = JarnThemeConfig("linear", source))
+
+        assertEquals(JarnBackupChange.Replaces, layout(backup, missing))
+        assertEquals(JarnBackupChange.Same, layout(backup, installed))
+        val preview = buildBackupPreview(JarngreiprConfig(feature = backup), missing)
+        assertEquals(1, preview.items.count { it.change != JarnBackupChange.Same && it.change != JarnBackupChange.NotIncluded })
+    }
+
+    @Test
+    fun `a layout change alone leaves Look unchanged`() {
+        val now = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember", jarnTheme = JarnThemeConfig()))
+        val backup = JarngreiprConfig(feature = FeatureConfig(jarnLook = "ember", jarnTheme = JarnThemeConfig("art-book")))
+        val look = buildBackupPreview(backup, now).items.first { it.area == JarnBackupArea.Look }.change
+        assertEquals(JarnBackupChange.Same, look)
+    }
+
+    private fun layout(backup: FeatureConfig, now: JarngreiprConfig): JarnBackupChange =
         buildBackupPreview(JarngreiprConfig(feature = backup), now)
-            .items.first { it.area == JarnBackupArea.Look }.change
+            .items.first { it.area == JarnBackupArea.Layout }.change
 
     private suspend fun importBackup(json: String) {
         val result = importExport.importFromStream(ByteArrayInputStream(json.toByteArray()))

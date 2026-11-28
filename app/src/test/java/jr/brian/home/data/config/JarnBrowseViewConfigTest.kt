@@ -25,6 +25,14 @@ class JarnBrowseViewConfigTest {
     }
 
     @Test
+    fun `same as layout round trips through the config`() {
+        val prefs = JarnDisplayPrefs(systemView = JarnBrowseView.SameAsLayout, gameView = JarnBrowseView.Carousel)
+        val config = json.decodeFromString<JarnDisplayConfig>(json.encodeToString(prefs.toConfig()))
+        assertEquals("layout", config.systemView)
+        assertEquals(prefs, config.applyTo(JarnDisplayPrefs()))
+    }
+
+    @Test
     fun `a v52 display block has no browse views and keeps the current ones`() {
         val config = json.decodeFromString<JarnDisplayConfig>("""{"switchCue":"dim"}""")
         assertNull(config.systemView)

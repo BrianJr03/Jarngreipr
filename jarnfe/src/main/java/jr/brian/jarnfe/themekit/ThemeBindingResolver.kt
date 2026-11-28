@@ -132,23 +132,39 @@ internal fun resolveThemePicture(
     is ThemePicture.File -> themeFile(themeDir, source.path)
 }
 
+/** Every file [sources] has for the focused item, in order and without repeats, for a picture to try one by one. */
+internal fun resolveThemePictures(
+    sources: List<ThemePicture>,
+    focus: FocusedItem,
+    media: ThemeFocusMedia,
+    themeDir: File?,
+): List<String> = sources.mapNotNull { resolveThemePicture(it, focus, media, themeDir) }.distinct()
+
 private fun gameMediaPath(gameId: String, artPath: String?, kind: MediaKind, media: ThemeFocusMedia): String? =
     media.pathFor(gameId, kind) ?: artPath.cleaned()?.takeIf { kind == MediaKind.Cover }
 
-private fun themeFile(themeDir: File?, path: String): String? {
+/** [path] inside [themeDir] as an absolute path, or null when it is blank or escapes the folder. */
+internal fun themeFile(themeDir: File?, path: String): String? {
     val dir = themeDir?.canonicalFile ?: return null
     val file = File(dir, path.cleaned() ?: return null).canonicalFile
     return file.path.takeIf { file.toPath().startsWith(dir.toPath()) && file != dir }
 }
 
-/** Every set condition must hold. With nothing set the layer always shows. */
+/**
+ * Every set condition must hold. With nothing set the layer always shows. [ThemeVisibleWhen.missing]
+ * flips the media, text and system art checks, and only when at least one of them is set.
+ */
 internal fun themeLayerVisible(rule: ThemeVisibleWhen?, focus: FocusedItem, media: ThemeFocusMedia): Boolean {
     if (rule == null) return true
     val game = focus.game
-    val mediaOk = rule.hasMedia?.let { kind -> game != null && gameMediaPath(game.id, game.artPath, kind, media) != null } ?: true
-    val textOk = rule.hasText?.let { field -> resolveThemeText(ThemeText.Game(field), focus) != null } ?: true
+    val mediaOk = rule.hasMedia?.let { kind -> game != null && gameMediaPath(game.id, game.artPath, kind, media) != null }
+    val textOk = rule.hasText?.let { field -> resolveThemeText(ThemeText.Game(field), focus) != null }
+    val artOk = rule.hasSystemArt?.let { kind -> resolveThemePicture(ThemePicture.SystemArt(kind), focus, media, null) != null }
+    val checks = listOfNotNull(mediaOk, textOk, artOk)
+    val present = checks.all { it }
+    val presenceOk = if (rule.missing && checks.isNotEmpty()) !present else present
     val systemOk = rule.systems.isEmpty() || (focus.system?.id ?: game?.systemId) in rule.systems
-    return mediaOk && textOk && systemOk
+    return presenceOk && systemOk
 }
 
 private fun String?.cleaned(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

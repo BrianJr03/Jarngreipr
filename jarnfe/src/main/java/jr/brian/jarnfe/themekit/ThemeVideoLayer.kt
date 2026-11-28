@@ -8,6 +8,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import jr.brian.core.model.MediaKind
 import jr.brian.core.model.theme.ThemeCorner
 import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
@@ -25,15 +26,15 @@ import kotlinx.coroutines.delay
  */
 @Composable
 internal fun ThemeVideoLayer(layer: ThemeLayer.Video, decor: ThemeDecorFocus, decodeCap: ThemePxSize?) {
-    val fallback = layer.fallback?.let { resolveThemePicture(it, decor.settled, decor.media, decor.themeDir) }
+    val fallbacks = resolveThemePictures(layer.pictures, decor.settled, decor.media, decor.themeDir)
     val game = rememberDelayedGame(decor.settled.game, layer.delayMs.toLong())
     val display = rememberJarnDisplay()
     val preview = remember(display, layer.audio) {
         display.nowVideoPreview().let { it.copy(muted = it.muted || !layer.audio, crop = true) }
     }
     Box(Modifier.fillMaxSize().clip(layer.corner.shape())) {
-        if (fallback != null) ThemePictureLayer(fallback, ThemeFit.Crop, ThemeCorner.None, decodeCap)
-        if (game != null) NowSceneVideo(LibrarySelection.Game(game), preview)
+        if (fallbacks.isNotEmpty()) ThemePictureLayer(fallbacks, ThemeFit.Crop, ThemeCorner.None, decodeCap)
+        if (game != null && MediaKind.Video !in LocalThemeHiddenMedia.current) NowSceneVideo(LibrarySelection.Game(game), preview)
     }
 }
 

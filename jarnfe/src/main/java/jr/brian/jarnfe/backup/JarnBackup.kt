@@ -17,6 +17,7 @@ enum class JarnBackupArea {
     Collections,
     Favorites,
     RecentlyPlayed,
+    Layout,
     Look,
     Wallpaper,
     Scraper,

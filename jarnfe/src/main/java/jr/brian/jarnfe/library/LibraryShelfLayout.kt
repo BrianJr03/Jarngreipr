@@ -35,6 +35,7 @@ private const val SHELF_NARROW_GROWTH = 1.8f
  * How a shelf sizes and spaces its cards, as fractions of the shelf width. The centered card is
  * [widthFraction] wide, neighbors are scaled by [neighborScale], [neighborsBefore] and
  * [neighborsAfter] show on each side, and the card sits near [centerY] of the shelf height.
+ * [showsCaption] off drops the lines under the centered card whatever the content asks for.
  */
 internal data class LibraryShelfGeometry(
     val widthFraction: Float,
@@ -45,6 +46,7 @@ internal data class LibraryShelfGeometry(
     val neighborsBefore: Int = SHELF_NEIGHBORS,
     val neighborsAfter: Int = SHELF_NEIGHBORS,
     val centerY: Float = SHELF_CENTER_Y,
+    val showsCaption: Boolean = true,
 ) {
     fun cardWidthFraction(narrow: Boolean): Float =
         if (narrow) widthFraction * SHELF_NARROW_GROWTH else widthFraction

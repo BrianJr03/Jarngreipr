@@ -2,6 +2,7 @@ package jr.brian.jarnfe.themekit
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -34,8 +35,9 @@ internal fun JarnThemeDecorView(
     insets: ThemeInsets = rememberJarnThemeInsets(),
     onIssues: (List<ThemeLayoutIssue>) -> Unit = {},
 ) {
-    val settled = rememberSettledThemeFocus(focused)
-    val decor = ThemeDecorFocus(focused, settled, rememberThemeFocusMedia(settled), themeDir)
+    val live = LocalThemeSystemArt.current.apply(focused)
+    val settled = rememberSettledThemeFocus(live)
+    val decor = ThemeDecorFocus(live, settled, rememberThemeFocusMedia(settled), themeDir)
     JarnThemeLayout(
         view = view,
         primary = primary,
@@ -51,7 +53,8 @@ internal fun JarnThemeDecorView(
 internal fun ThemeDecorLayer(placed: PlacedThemeLayer, decor: ThemeDecorFocus) {
     val layer = placed.layer
     if (!themeLayerVisible(layer.visibleWhen, decor.live, decor.media)) return
-    Box(Modifier.fillMaxSize().graphicsLayer { alpha = layer.opacity.coerceIn(0f, 1f) }) {
+    val area = if (LocalThemeStacked.current) Modifier.fillMaxWidth() else Modifier.fillMaxSize()
+    Box(area.graphicsLayer { alpha = layer.opacity.coerceIn(0f, 1f) }) {
         when (layer) {
             is ThemeLayer.Text -> ThemeTextLayer(layer, decor.live)
             is ThemeLayer.Date -> ThemeDateLayer(layer, decor.live)
@@ -65,6 +68,7 @@ internal fun ThemeDecorLayer(placed: PlacedThemeLayer, decor: ThemeDecorFocus) {
 
 @Composable
 private fun ThemeBoundPicture(layer: ThemeLayer.Picture, decor: ThemeDecorFocus, decodeCap: ThemePxSize?) {
-    val path = resolveThemePicture(layer.source, decor.settled, decor.media, decor.themeDir) ?: return
-    ThemePictureLayer(path, layer.fit, layer.corner, decodeCap)
+    val paths = resolveThemePictures(listOf(layer.source) + layer.fallbacks, decor.settled, decor.media, decor.themeDir)
+    if (paths.isEmpty()) return
+    ThemePictureLayer(paths, layer.fit, layer.corner, decodeCap)
 }

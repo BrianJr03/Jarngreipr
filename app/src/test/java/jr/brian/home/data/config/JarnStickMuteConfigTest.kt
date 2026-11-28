@@ -18,7 +18,7 @@ class JarnStickMuteConfigTest {
 
     @Test
     fun `schema version covers the L3 and R3 mute setting`() {
-        assertEquals(78, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(79, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

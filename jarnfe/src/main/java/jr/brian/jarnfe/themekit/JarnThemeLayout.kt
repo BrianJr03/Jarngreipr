@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -35,10 +38,18 @@ internal fun JarnThemeLayout(
     insets: ThemeInsets = rememberJarnThemeInsets(),
     onIssues: (List<ThemeLayoutIssue>) -> Unit = {},
 ) {
-    BoxWithConstraints(modifier) {
+    val probe = LocalThemeLayoutProbe.current
+    val probed = if (probe != null) Modifier.onGloballyPositioned { probe.origin = it.positionInRoot() } else Modifier
+    BoxWithConstraints(modifier.then(probed)) {
         val screen = ThemeScreen(constraints.maxWidth, constraints.maxHeight, insets)
         val placed = remember(view, screen) { resolveThemeView(view, screen) }
         ThemeIssuesEffect(placed.issues, onIssues)
+        if (probe != null) {
+            SideEffect {
+                probe.placed = placed
+                probe.screen = screen
+            }
+        }
         PlacedThemeChildren(placed, primary, layer)
     }
 }
@@ -57,9 +68,9 @@ private fun PlacedThemeChildren(
 ) {
     Layout(
         content = {
-            placed.below.forEach { key(it.layer.id) { ThemeSlot(it.bounds) { layer(it) } } }
+            ThemeSlots(placed.below, layer)
             key(PRIMARY_KEY) { ThemeSlot(placed.primary, primary) }
-            placed.above.forEach { key(it.layer.id) { ThemeSlot(it.bounds) { layer(it) } } }
+            ThemeSlots(placed.above, layer)
         },
     ) { measurables, constraints ->
         val placeables = measurables.mapNotNull { measurable ->
@@ -68,6 +79,21 @@ private fun PlacedThemeChildren(
         }
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeables.forEach { (placeable, rect) -> placeable.place(rect.left, rect.top) }
+        }
+    }
+}
+
+/** Each layer in its own slot, and each stack in one slot spanning its members. */
+@Composable
+private fun ThemeSlots(layers: List<PlacedThemeLayer>, layer: @Composable (PlacedThemeLayer) -> Unit) {
+    layers.slotItems().forEach { item ->
+        key(item.key) {
+            ThemeSlot(item.bounds) {
+                when (item) {
+                    is ThemeSlotItem.Single -> layer(item.placed)
+                    is ThemeSlotItem.Stack -> ThemeStack(item, layer)
+                }
+            }
         }
     }
 }

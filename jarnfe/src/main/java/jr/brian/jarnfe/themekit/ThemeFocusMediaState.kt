@@ -25,7 +25,8 @@ internal fun rememberSettledThemeFocus(focus: FocusedItem): FocusedItem =
 
 /**
  * The settled game's media by kind. Read once per view and shared by every layer. Empty while a
- * game is up, for a system, or before the library answers.
+ * game is up, for a system, or before the library answers. Kinds a preview hides
+ * ([LocalThemeHiddenMedia]) are left out.
  */
 @Composable
 internal fun rememberThemeFocusMedia(settled: FocusedItem): ThemeFocusMedia {
@@ -40,7 +41,8 @@ internal fun rememberThemeFocusMedia(settled: FocusedItem): ThemeFocusMedia {
             value = ThemeFocusMedia(gameId, art.slots.mapValues { it.value.path })
         }
     }
-    return media
+    val hidden = LocalThemeHiddenMedia.current
+    return remember(media, hidden) { media.without(hidden) }
 }
 
 private fun JarnLibraryData.themeArt(gameKey: String): Flow<GameArt> = flow {

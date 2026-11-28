@@ -209,6 +209,12 @@ abstract class JarnScreenActivity : ComponentActivity() {
         focusManager.moveFocus(FocusDirection.Enter)
     }
 
+    /** Sticks reach a layer that opted in; otherwise Android turns them into D-pad keys as before. */
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (JarnSplash.isPlaying) return super.dispatchGenericMotionEvent(event)
+        return JarnInput.dispatch(event) || super.dispatchGenericMotionEvent(event)
+    }
+
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         if (JarnSplash.isPlaying) {
             if (event.actionMasked == MotionEvent.ACTION_DOWN) JarnSplash.finish()

@@ -1,0 +1,12 @@
+# ES-DE translator report: color-schemes
+[translated]
+  gamelist textlist gamelistTextlist
+[adjusted]
+[notUsed]
+  system -: NoPrimary
+  gamelist image background: UnsupportedElement
+  theme -: TransitionsAndTriggers
+[assets]
+[colors]
+  gamelist textlist gamelistTextlist primaryColor=1E2227
+  gamelist textlist gamelistTextlist selectorColor=B24A2E

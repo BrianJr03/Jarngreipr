@@ -36,7 +36,7 @@ internal val JarnTileCaptionScrim = Color(0xFF080706).copy(alpha = 0.82f)
 internal val JarnTileCaptionTitle = Color.White
 internal val JarnTileCaptionSubtitle = Color(0xFFE5DED8)
 
-/** [focusBorder] adds the thin focus border outside the tile. */
+/** [focusBorder] adds the thin focus border outside the tile. [aspectRatio] is the tile's width over height. */
 @Composable
 fun JarnSystemTile(
     title: String,
@@ -44,11 +44,12 @@ fun JarnSystemTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     focusBorder: Boolean = false,
+    aspectRatio: Float = JARN_SYSTEM_TILE_ASPECT,
     art: @Composable BoxScope.() -> Unit,
 ) {
     JarnLibraryTileFrame(
         shape = JarnTheme.tileShape,
-        aspectRatio = JARN_SYSTEM_TILE_ASPECT,
+        aspectRatio = aspectRatio,
         focusStyle = if (focusBorder) JarnFocusStyle.FloatBorder else JarnFocusStyle.Float,
         captioned = true,
         description = null,

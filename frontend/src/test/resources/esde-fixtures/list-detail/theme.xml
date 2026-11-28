@@ -1,0 +1,11 @@
+<theme>
+    <include>./_inc/colors.xml</include>
+    <include>./_inc/gamelist.xml</include>
+    <view name="system">
+        <textlist name="systemList">
+            <pos>0.05 0.2</pos>
+            <size>0.4 0.7</size>
+            <primaryColor>${text}</primaryColor>
+        </textlist>
+    </view>
+</theme>

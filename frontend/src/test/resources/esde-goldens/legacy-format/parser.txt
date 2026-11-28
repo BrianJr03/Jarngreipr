@@ -1,0 +1,10 @@
+# ES-DE parser golden: legacy-format
+themeName=Fixture Legacy
+variants=
+colorSchemes=
+fontSizes=
+aspectRatios=
+selection=variant:null colorScheme:null fontSize:null aspectRatio:null
+legacy=true
+[issues]
+  LegacyFormat theme.xml: Pre ES-DE theme format

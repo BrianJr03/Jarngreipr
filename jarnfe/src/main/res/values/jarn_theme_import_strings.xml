@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_esde_theme_howto">Copy the theme folder to ES-DE/themes, then come back.</string>
+    <string name="jarnfe_esde_theme_updated">Your ES-DE theme updated. Re-import?</string>
+    <string name="jarnfe_esde_theme_reimport">Re-import</string>
+    <string name="jarnfe_esde_theme_restore">Bring back your ES-DE layout?</string>
+    <string name="jarnfe_esde_theme_restore_notice">Bring back your ES-DE layout? Re-import it in Look, Layout.</string>
+    <string name="jarnfe_esde_theme_updated_notice">Your ES-DE theme updated. Re-import it in Look, Layout.</string>
+    <string name="jarnfe_theme_import_too_new">This theme needs a newer Jarn. Update, then try again.</string>
+    <string name="jarnfe_theme_import_unreadable">Couldn\'t open that file.</string>
+    <string name="jarnfe_theme_import_not_a_theme">That file isn\'t a Jarn theme.</string>
+    <string name="jarnfe_theme_import_too_large">This theme is too big to add.</string>
+    <string name="jarnfe_theme_import_unsafe">This theme file isn\'t safe to add.</string>
+    <string name="jarnfe_theme_import_damaged">This theme file is damaged.</string>
+    <string name="jarnfe_theme_file_added">Theme added. Pick it under Layout.</string>
+
+    <!-- Look > Layout entries -->
+    <string name="jarnfe_esde_import_entry">Import from ES-DE</string>
+    <string name="jarnfe_esde_import_entry_hint">Bring over a theme you copied into ES-DE</string>
+    <string name="jarnfe_theme_file_entry">Load a theme file</string>
+    <string name="jarnfe_theme_file_entry_hint">Add a .jarntheme file from your storage</string>
+
+    <!-- Import from ES-DE steps -->
+    <string name="jarnfe_esde_import_scanning">Looking for ES-DE themes</string>
+    <string name="jarnfe_esde_import_importing">Bringing over %1$s</string>
+    <string name="jarnfe_esde_import_in_use">In ES-DE now</string>
+    <string name="jarnfe_esde_theme_no_access">Jarn needs file access to read ES-DE themes.</string>
+    <string name="jarnfe_esde_import_check_again">Check again</string>
+    <string name="jarnfe_esde_import_none">No ES-DE themes found.</string>
+    <string name="jarnfe_esde_import_legacy">This theme uses the format from before ES-DE, which Jarn can\'t read.</string>
+    <string name="jarnfe_esde_import_use">Use this layout</string>
+    <string name="jarnfe_esde_import_everything">Everything came over.</string>
+    <plurals name="jarnfe_esde_import_came_over">
+        <item quantity="one">%1$d of %2$d came over.</item>
+        <item quantity="other">%1$d of %2$d came over.</item>
+    </plurals>
+    <plurals name="jarnfe_esde_import_need_fix">
+        <item quantity="one">%1$d needs a fix.</item>
+        <item quantity="other">%1$d need a fix.</item>
+    </plurals>
+    <string name="jarnfe_esde_import_changed_title">Changed to fit</string>
+    <string name="jarnfe_esde_import_left_out_title">Left out</string>
+    <string name="jarnfe_esde_import_colors_title">Colors, art and fonts</string>
+    <string name="jarnfe_esde_import_pick_another">Pick another theme</string>
+    <string name="jarnfe_esde_import_note_count">%1$s (%2$d)</string>
+    <plurals name="jarnfe_esde_import_unusable_files">
+        <item quantity="one">%1$d file couldn\'t be used.</item>
+        <item quantity="other">%1$d files couldn\'t be used.</item>
+    </plurals>
+
+    <!-- What each translation note means for the player -->
+    <string name="jarnfe_esde_note_wheel_as_shelf">A wheel became a straight shelf.</string>
+    <string name="jarnfe_esde_note_moved_below_header">Moved down to keep Continue playing clear.</string>
+    <string name="jarnfe_esde_note_fitted_above_hints">Squeezed a little to keep the button hints clear.</string>
+    <string name="jarnfe_esde_note_size_guessed">Jarn picked a size the theme left open.</string>
+    <string name="jarnfe_esde_note_tile_as_crop">Tiled pictures fill the space instead.</string>
+    <string name="jarnfe_esde_note_per_system_art">A per-system picture became the system\'s own art.</string>
+    <string name="jarnfe_esde_note_some_systems">Shows only on the systems that have it.</string>
+    <string name="jarnfe_esde_note_media_skipped">A media type Jarn doesn\'t keep was swapped for the next one.</string>
+    <string name="jarnfe_esde_note_stacked_details">Game details stack, so an empty line leaves no gap.</string>
+    <string name="jarnfe_esde_note_name_when_no_logo">The system name shows where a logo is missing.</string>
+    <string name="jarnfe_esde_note_narrow_layout">Narrow screens use the theme\'s own narrow layout.</string>
+    <string name="jarnfe_esde_note_narrow_list_kept">The narrow layout keeps the wide screen\'s list type.</string>
+    <string name="jarnfe_esde_note_font_not_used">The theme\'s own font couldn\'t be used here.</string>
+    <string name="jarnfe_esde_note_unsupported_element">Something Jarn can\'t draw yet.</string>
+    <string name="jarnfe_esde_note_extra_primary">A second list. Jarn uses the first.</string>
+    <string name="jarnfe_esde_note_unsupported_media">Media Jarn doesn\'t keep, like 3D boxes.</string>
+    <string name="jarnfe_esde_note_differs_per_system">Changes per system in a way Jarn can\'t follow.</string>
+    <string name="jarnfe_esde_note_unsupported_field">Game or system info Jarn doesn\'t show.</string>
+    <string name="jarnfe_esde_note_nothing_readable">Nothing in it could be read.</string>
+    <string name="jarnfe_esde_note_hidden">Hidden by the theme.</string>
+    <string name="jarnfe_esde_note_no_primary">A view with no list, so Jarn keeps its own layout there.</string>
+    <string name="jarnfe_esde_note_legacy">The theme uses an older format.</string>
+    <string name="jarnfe_esde_note_transitions">Transitions and variant switches aren\'t read yet.</string>
+
+    <!-- What the colors, art and fonts fallback did -->
+    <string name="jarnfe_esde_fallback_full_palette">Its colors came over.</string>
+    <string name="jarnfe_esde_fallback_accent_only">Accent only: the rest keeps your Look\'s colors.</string>
+    <string name="jarnfe_esde_fallback_saved_look">Its colors were hard to read, so your Look\'s colors stay.</string>
+    <string name="jarnfe_esde_fallback_dark_version">Dark version: %1$s</string>
+    <string name="jarnfe_esde_fallback_background_from_picture">Its background color came from its background picture.</string>
+    <string name="jarnfe_esde_fallback_light_accent">A light theme, so only its accent came over.</string>
+    <string name="jarnfe_esde_fallback_fonts_used">The theme\'s fonts came over.</string>
+    <string name="jarnfe_esde_fallback_capped">The theme is big, so some of its art was left out.</string>
+    <plurals name="jarnfe_esde_fallback_systems_with_art">
+        <item quantity="one">%1$d of your %2$d systems has theme art.</item>
+        <item quantity="other">%1$d of your %2$d systems have theme art.</item>
+    </plurals>
+    <plurals name="jarnfe_esde_fallback_unknown_systems">
+        <item quantity="one">%1$d system folder Jarn doesn\'t know was left out.</item>
+        <item quantity="other">%1$d system folders Jarn doesn\'t know were left out.</item>
+    </plurals>
+    <plurals name="jarnfe_esde_fallback_art_not_copied">
+        <item quantity="one">%1$d system picture couldn\'t be copied.</item>
+        <item quantity="other">%1$d system pictures couldn\'t be copied.</item>
+    </plurals>
+    <plurals name="jarnfe_esde_fallback_fonts_refused">
+        <item quantity="one">%1$d font couldn\'t be used.</item>
+        <item quantity="other">%1$d fonts couldn\'t be used.</item>
+    </plurals>
+
+    <!-- A Look card while a layout with its own colors is active -->
+    <string name="jarnfe_look_own_colors_note">Your layout uses its own colors. The Look you pick here shows with layouts that follow the Look.</string>
+    <string name="jarnfe_look_saved_for_later">Look saved. Your layout keeps its own colors.</string>
+</resources>

@@ -1,0 +1,5 @@
+tier=FullPalette darkVersion=Dusk
+colors=ThemeColors(bg=#14181F, surface=#1F232A, raised=#292D34, textHigh=#F2F4F7, textMid=#BBBEC2, textLow=#9C9FA4, accent=#6FC3FF, danger=#FF7A6B, success=#7FD99A, line=#4D5157, focus=#ACDCFF)
+fonts=EsdeFontFiles(display=null, body=null)
+assets=
+note Colors(tier=FullPalette, darkVersion=Dusk)

@@ -1,0 +1,205 @@
+package jr.brian.frontend.look.esde
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextStyle
+import jr.brian.core.model.theme.JarnThemeSpec
+import jr.brian.core.model.theme.ThemeColor
+import jr.brian.core.model.theme.ThemeColors
+import jr.brian.core.model.theme.ThemeSystemArt
+import jr.brian.core.model.theme.ThemeTextStyle
+import jr.brian.core.model.theme.ThemeTypeScale
+import jr.brian.core.ui.theme.JarnColors
+import jr.brian.core.ui.theme.JarnLook
+import jr.brian.core.ui.theme.JarnPaletteMatch
+import jr.brian.core.ui.theme.JarnType
+import jr.brian.frontend.library.systems.SystemCatalog
+import java.io.File
+
+/** Something the fallback did that the import report tells the player about. jarnfe words each one. */
+sealed interface EsdeFallbackNote {
+    /** Which colors the theme kept. [darkVersion] names the theme's dark color scheme when that was used instead. */
+    data class Colors(val tier: JarnPaletteMatch, val darkVersion: String? = null) : EsdeFallbackNote
+
+    /** The theme states no background color, so it came from its background picture. */
+    data object BackgroundFromPicture : EsdeFallbackNote
+
+    /** A light theme with no usable dark scheme: only its accent carries over. */
+    data object LightThemeAccentOnly : EsdeFallbackNote
+
+    /** An ES-DE system folder Jarn doesn't know, so its art is left out. */
+    data class UnknownSystem(val esdeName: String) : EsdeFallbackNote
+
+    data class LogoNotCopied(val systemId: String) : EsdeFallbackNote
+
+    data class BackgroundNotCopied(val systemId: String) : EsdeFallbackNote
+
+    /** An SVG that could reach outside itself (scripts, links, entities) or is too large; Jarn's own art shows instead. */
+    data class SvgRefused(val systemId: String) : EsdeFallbackNote
+
+    /** Not a TrueType or OpenType font, too large, or missing Latin letters. */
+    data class FontRefused(val path: String) : EsdeFallbackNote
+
+    /** The copy reached [ESDE_ASSET_CAP_BYTES]; the rest of the art is left out. */
+    data object AssetsCapped : EsdeFallbackNote
+}
+
+/**
+ * The parts of an ES-DE theme that don't translate to layout, carried over on their own. The
+ * import step combines this with the translator's layout into the final Jarn theme: [colors]
+ * become its tokens, [fonts] its type fonts, and [systemArt] per-system art. [assets] lists every
+ * file written to the theme folder, relative to it.
+ */
+data class EsdeFallbackResult(
+    val colors: ThemeColors,
+    val tier: JarnPaletteMatch,
+    val darkVersion: String?,
+    val systemArt: Map<String, EsdeSystemArtFiles>,
+    val fonts: EsdeFontFiles,
+    val assets: List<String>,
+    val notes: List<EsdeFallbackNote>,
+) {
+    /** [systemArt] in the theme format, for [JarnThemeSpec.systemArt]. */
+    val themeSystemArt: Map<String, ThemeSystemArt>
+        get() = systemArt.mapValues { (_, files) -> ThemeSystemArt(logo = files.logo, background = files.background) }
+
+    /**
+     * [spec] with this fallback's colors, per-system art and fonts. Titles and headings take the
+     * display font (or the body font when there is none), text and labels the body font. A role the
+     * spec already styles keeps its sizes and gains only the font; any other gets Jarn's own sizes.
+     */
+    fun applyTo(spec: JarnThemeSpec): JarnThemeSpec = spec.copy(
+        tokens = spec.tokens.copy(colors = colors, type = spec.tokens.type.withFonts(fonts.display ?: fonts.body, fonts.body)),
+        systemArt = spec.systemArt + themeSystemArt,
+    )
+}
+
+private fun ThemeTypeScale.withFonts(display: String?, body: String?): ThemeTypeScale {
+    val jarn = JarnType()
+    fun ThemeTextStyle?.with(font: String?, role: TextStyle): ThemeTextStyle? {
+        if (font == null) return this
+        return this?.let { it.copy(font = it.font ?: font) } ?: ThemeTextStyle(
+            size = role.fontSize.value,
+            lineHeight = role.lineHeight.value,
+            weight = role.fontWeight?.weight ?: ThemeTextStyle.DEFAULT_WEIGHT,
+            font = font,
+        )
+    }
+    return copy(
+        display = this.display.with(display, jarn.display),
+        title = title.with(display, jarn.title),
+        heading = heading.with(display, jarn.heading),
+        body = this.body.with(body, jarn.body),
+        label = label.with(body, jarn.label),
+        labelStrong = labelStrong.with(body, jarn.labelStrong),
+        caption = caption.with(body, jarn.caption),
+        captionStrong = captionStrong.with(body, jarn.captionStrong),
+    )
+}
+
+object EsdeThemeFallback {
+
+    /**
+     * Builds the fallback for [model], read from [themeDir], with [savedLook] as the floor.
+     * [reparse] reads the theme again with another color scheme, so a light theme can use its
+     * dark scheme; without it a light theme keeps only its accent. Assets go to [outDir], the
+     * theme's install folder. A theme with no solid background color takes one from its
+     * full-screen background picture through [sampler]. Blocking file IO; call off the main thread.
+     */
+    fun build(
+        model: EsdeThemeModel,
+        themeDir: File,
+        savedLook: JarnLook,
+        catalog: SystemCatalog,
+        outDir: File,
+        reparse: ((colorScheme: String) -> EsdeThemeModel)? = null,
+        copier: EsdeAssetCopier = EsdeAssetCopier(themeDir, outDir),
+        sampler: EsdeColorSampler = AndroidEsdeColorSampler,
+    ): EsdeFallbackResult {
+        val notes = mutableListOf<EsdeFallbackNote>()
+        val (candidates, unknown) = EsdeArtFallback.systemArt(model, catalog)
+        val sampledBg = { sampleBackground(themeDir, candidates.flatMap { it.background }, sampler) }
+        val colors = pickColors(model, savedLook, reparse, sampledBg, notes)
+
+        notes += unknown.map(EsdeFallbackNote::UnknownSystem)
+        val art = copier.copyArt(candidates)
+        val fonts = copier.copyFonts(EsdeArtFallback.fonts(model))
+        notes += copier.takeNotes()
+
+        return EsdeFallbackResult(
+            colors = colors.colors.toThemeColors(),
+            tier = colors.tier,
+            darkVersion = colors.darkVersion,
+            systemArt = art,
+            fonts = fonts,
+            assets = copier.copied.toList(),
+            notes = notes.distinct(),
+        )
+    }
+
+    private data class Picked(val colors: JarnColors, val tier: JarnPaletteMatch, val darkVersion: String?)
+
+    private fun pickColors(
+        model: EsdeThemeModel,
+        savedLook: JarnLook,
+        reparse: ((String) -> EsdeThemeModel)?,
+        sampledBg: () -> Color?,
+        notes: MutableList<EsdeFallbackNote>,
+    ): Picked {
+        val stated = EsdeColorExtractor.extract(model)
+        val sampled = if (stated.bg == null) sampledBg() else null
+        if (sampled != null) notes += EsdeFallbackNote.BackgroundFromPicture
+        val raw = sampled?.let { stated.copy(bg = it) } ?: stated
+        if (raw.isLight) darkScheme(model, savedLook, reparse)?.let { (label, colors) ->
+            notes += EsdeFallbackNote.Colors(JarnPaletteMatch.FullPalette, label)
+            return Picked(colors, JarnPaletteMatch.FullPalette, label)
+        }
+        val pick = EsdeColorExtractor.pick(raw, savedLook)
+        notes += EsdeFallbackNote.Colors(pick.tier)
+        if (raw.isLight && pick.tier == JarnPaletteMatch.AccentOnSavedLook) notes += EsdeFallbackNote.LightThemeAccentOnly
+        return Picked(pick.colors, pick.tier, null)
+    }
+
+    /** The main dark tone of the first background picture that exists in the theme and decodes. */
+    private fun sampleBackground(themeDir: File, paths: List<String>, sampler: EsdeColorSampler): Color? {
+        val root = themeDir.canonicalFile
+        return paths.asSequence()
+            .map { File(root, it.removePrefix("./")).canonicalFile }
+            .filter { it.isFile && it.toPath().startsWith(root.toPath()) && !it.extension.equals("svg", ignoreCase = true) }
+            .mapNotNull { file -> runCatching { sampler.pixels(file) }.getOrNull()?.let(::dominantDarkColor) }
+            .firstOrNull()
+    }
+
+    /** The first other selectable color scheme whose full palette is dark and passes repair, with its label. */
+    private fun darkScheme(
+        model: EsdeThemeModel,
+        savedLook: JarnLook,
+        reparse: ((String) -> EsdeThemeModel)?,
+    ): Pair<String, JarnColors>? {
+        if (reparse == null) return null
+        return model.capabilities.colorSchemes.asSequence()
+            .filter { it.selectable && it.name != model.selection.colorScheme }
+            .mapNotNull { scheme ->
+                EsdeColorExtractor.fullColors(EsdeColorExtractor.extract(reparse(scheme.name)), savedLook)
+                    ?.let { (scheme.label ?: scheme.name) to it }
+            }
+            .firstOrNull()
+    }
+}
+
+/** Jarn colors as theme tokens; the importer writes them, and Jarn repairs them again on load. */
+fun JarnColors.toThemeColors() = ThemeColors(
+    bg = bg.token(),
+    surface = surface.token(),
+    raised = raised.token(),
+    textHigh = textHigh.token(),
+    textMid = textMid.token(),
+    textLow = textLow.token(),
+    accent = accent.token(),
+    danger = danger.token(),
+    success = success.token(),
+    line = line.token(),
+    focus = focus.token(),
+)
+
+private fun Color.token() = ThemeColor(toArgb())

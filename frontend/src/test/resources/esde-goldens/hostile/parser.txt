@@ -1,0 +1,47 @@
+# ES-DE parser golden: hostile
+themeName=Fixture Hostile
+variants=
+colorSchemes=
+fontSizes=
+aspectRatios=
+selection=variant:null colorScheme:null fontSize:null aspectRatio:null
+legacy=false
+[system nes]
+  view system
+    text fromB: text=B
+    text fromA: text=A
+  view gamelist
+    image escape: 
+    image home: 
+    text unknown: color=
+    textlist gamelistTextlist: pos=0.1 0.1
+[system snes]
+  view system
+    text fromB: text=B
+    text fromA: text=A
+  view gamelist
+    image escape: 
+    image home: 
+    text unknown: color=
+    textlist gamelistTextlist: pos=0.1 0.1
+[system n64]
+  view system
+    text fromB: text=B
+    text fromA: text=A
+  view gamelist
+    image escape: 
+    image home: 
+    text unknown: color=
+    textlist gamelistTextlist: pos=0.1 0.1
+[issues]
+  IncludeCycle _inc/b.xml: Includes loop back to _inc/a.xml
+  PathOutsideTheme theme.xml:3: Path leaves the theme folder: ../outside.xml
+  DocTypeRefused _inc/doctype.xml: Document type declarations aren't read
+  FileTooLarge _inc/huge.xml: File is 528398 bytes
+  MissingInclude theme.xml:6: Missing include ./_inc/missing.xml
+  PathOutsideTheme theme.xml:9: Path leaves the theme folder: ../../../../etc/hosts
+  PathOutsideTheme theme.xml:12: Path leaves the theme folder: ~/secret.png
+  UnknownVariable theme.xml:15 (nes): Unknown variable notDefined
+  Malformed theme.xml:17: <image> has no name
+  UnknownVariable theme.xml:15 (snes): Unknown variable notDefined
+  UnknownVariable theme.xml:15 (n64): Unknown variable notDefined

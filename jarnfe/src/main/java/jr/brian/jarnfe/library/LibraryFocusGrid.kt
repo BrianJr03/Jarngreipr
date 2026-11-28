@@ -53,12 +53,16 @@ internal val LibraryGridColumnSpacing = 12.dp
 /**
  * How a grid sizes and spaces its cells. Columns fit as many [cellMinSize] cells as there is room
  * for, unless [columns] fixes the count. An unspecified [rowSpacing] takes the theme's medium space.
+ * [itemAspect] (width over height) replaces the tiles' own slot shape when set, and [showTitle]
+ * off hides the name on tiles that carry one.
  */
 internal data class LibraryGridGeometry(
     val cellMinSize: Dp,
     val rowSpacing: Dp = Dp.Unspecified,
     val columnSpacing: Dp = LibraryGridColumnSpacing,
     val columns: Int? = null,
+    val itemAspect: Float? = null,
+    val showTitle: Boolean = true,
 ) {
     val cells: GridCells get() = columns?.let { GridCells.Fixed(it) } ?: GridCells.Adaptive(cellMinSize)
 }

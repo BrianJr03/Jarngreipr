@@ -1,0 +1,21 @@
+# ES-DE translator report: list-detail
+[translated]
+  system textlist systemList
+  gamelist textlist gamelistTextlist
+  gamelist image art
+  gamelist rating stars
+  gamelist datetime released
+  gamelist text summary
+[adjusted]
+  gamelist rating stars: SizeGuessed
+  gamelist datetime released: SizeGuessed
+  gamelist -: StackedDetails
+[notUsed]
+  theme -: TransitionsAndTriggers
+[assets]
+[colors]
+  system textlist systemList primaryColor=E8EEF2
+  gamelist textlist gamelistTextlist primaryColor=E8EEF2
+  gamelist textlist gamelistTextlist secondaryColor=8A99A6
+  gamelist datetime released color=8A99A6
+  gamelist text summary color=E8EEF2

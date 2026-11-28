@@ -1,0 +1,71 @@
+{
+    "schema": 1,
+    "meta": {
+        "name": "Fixture Folders",
+        "source": "es-de"
+    },
+    "tokens": {
+        "colors": {
+            "bg": "#000000",
+            "surface": "#111111",
+            "raised": "#222222",
+            "textHigh": "#FFFFFF",
+            "textMid": "#DDDDDD",
+            "textLow": "#BBBBBB",
+            "accent": "#FF8800",
+            "danger": "#FF4444",
+            "success": "#44FF44"
+        }
+    },
+    "views": {
+        "games": {
+            "primary": {
+                "type": "list",
+                "box": {
+                    "x": 0.05,
+                    "y": 0.17999999,
+                    "width": 0.9,
+                    "height": 0.71999997
+                },
+                "rows": 6
+            },
+            "layers": [
+                {
+                    "type": "picture",
+                    "id": "image-background",
+                    "rect": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 0.112500004,
+                        "height": 0.17999999
+                    },
+                    "z": -20,
+                    "source": {
+                        "type": "system",
+                        "kind": "art"
+                    }
+                },
+                {
+                    "type": "picture",
+                    "id": "image-systemLogo",
+                    "rect": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 0.112500004,
+                        "height": 0.17999999
+                    },
+                    "z": -20,
+                    "visibleWhen": {
+                        "systems": [
+                            "nes"
+                        ]
+                    },
+                    "source": {
+                        "type": "file",
+                        "path": "nes/logo.svg"
+                    }
+                }
+            ]
+        }
+    }
+}

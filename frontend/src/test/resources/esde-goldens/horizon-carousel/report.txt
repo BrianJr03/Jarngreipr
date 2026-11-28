@@ -1,0 +1,20 @@
+# ES-DE translator report: horizon-carousel
+[translated]
+  system carousel systemCarousel
+  system image backdrop
+  system text systemInfo
+  gamelist textlist gamelistTextlist
+  gamelist image cover
+[adjusted]
+  system carousel systemCarousel: PerSystemFileAsSystemArt
+  system image backdrop: PerSystemFileAsSystemArt
+  system text systemInfo: SizeGuessed
+  system -: FittedAboveHints
+  system -: NarrowScreenLayout
+[notUsed]
+  theme -: TransitionsAndTriggers
+[assets]
+[colors]
+  system carousel systemCarousel color=5AB4FF33
+  system text systemInfo color=5AB4FF
+  gamelist textlist gamelistTextlist selectorColor=5AB4FF

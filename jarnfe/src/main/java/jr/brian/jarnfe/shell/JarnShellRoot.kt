@@ -19,6 +19,7 @@ import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
 import jr.brian.jarnfe.firstrun.rememberJarnFirstRun
 import jr.brian.jarnfe.library.JarnEsdeRomsNoticeHost
 import jr.brian.jarnfe.settings.JarnEsdeImportNoticeHost
+import jr.brian.jarnfe.settings.JarnEsdeThemeUpdateCheck
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.jarnfe.look.JarnSwitchCuePreview
@@ -31,6 +32,8 @@ import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.session.SyncTabOrders
 import jr.brian.jarnfe.stage.StageScreen
+import jr.brian.jarnfe.themekit.LocalThemeSystemArt
+import jr.brian.jarnfe.themes.rememberThemeSystemArt
 import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 import jr.brian.jarnfe.transition.rememberJarnMarkHandoff
 import jr.brian.jarnfe.wallpaper.rememberJarnFocusFloatAllowed
@@ -56,6 +59,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),
             LocalJarnMarkHandoff provides rememberJarnMarkHandoff(screen, state.settingsOnDeck, state),
             LocalJarnTabSwitchFocus provides display.tabFocus.switchFocus(),
+            LocalThemeSystemArt provides rememberThemeSystemArt(),
         ) {
             ProvideJarnInput(JarnInput, screen) {
                 val firstRun = rememberJarnFirstRun(state.stageRoute)
@@ -70,6 +74,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
                     }
                     JarnEsdeRomsNoticeHost(screen)
                     JarnEsdeImportNoticeHost(screen)
+                    if (screen == JarnScreen.Stage) JarnEsdeThemeUpdateCheck()
                     JarnCornerToastHost()
                     if (screen == JarnScreen.Deck && firstRun?.coversShell(state.stageRoute) != true) {
                         JarnFontPromptHost()

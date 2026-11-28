@@ -65,7 +65,7 @@ class JarnFontsPromptConfigImportTest {
 
     @Test
     fun `schema version covers the fonts prompt`() {
-        assertEquals(78, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(79, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

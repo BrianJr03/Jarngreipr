@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -17,6 +18,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnLookCard
+import jr.brian.core.ui.components.JarnText
+import androidx.compose.ui.res.stringResource
+import jr.brian.jarnfe.shell.JarnNotices
+import jr.brian.jarnfe.themes.activeTheme
+import jr.brian.jarnfe.themes.rememberSavedThemeChoice
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.JarnTheme
@@ -39,15 +45,30 @@ internal fun JarnLookSection() {
     val matchCard = rememberJarnMatchCard(store, savedLook)
     val fontOffer by rememberCommandPanelFontOffer()
     val fontRow = rememberJarnFontMatchRow(store, fontOffer.availability)
-    SettingsGroup(R.string.jarnfe_look_theme_title) {
+    JarnThemeSection(store)
+    val layoutOwnsColors = rememberSavedThemeChoice().activeTheme().ownColors != null
+    SettingsGroup(R.string.jarnfe_look_colors_title) {
+        if (layoutOwnsColors) OwnColorsNote()
         JarnLookPicker(
             chosen = savedLook.takeUnless { matchCard.state.isMatching },
-            onChoose = { store.setLookId(it.id) },
+            onChoose = {
+                store.setLookId(it.id)
+                if (layoutOwnsColors) JarnNotices.show(R.string.jarnfe_look_saved_for_later)
+            },
         )
         JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
         JarnMatchCommandPanelFontsRow(fontRow, store::setMatchCommandPanelFonts)
         JarnMatchCommandPanelSwatches(matchCard)
     }
+}
+
+/**
+ * A layout with its own colors draws them over any Look, so the Look cards say so instead of
+ * seeming to do nothing. The picked Look is saved and shows with layouts that follow the Look.
+ */
+@Composable
+private fun OwnColorsNote() {
+    JarnText(stringResource(R.string.jarnfe_look_own_colors_note), JarnTheme.type.body, JarnTheme.colors.textMid)
 }
 
 @Composable
@@ -56,29 +77,34 @@ internal fun JarnLookPicker(chosen: JarnLook?, onChoose: (JarnLook) -> Unit) {
     val store = remember(context) { context.jarnLookStoreOrNull() }
     var focusedId by remember { mutableStateOf<String?>(null) }
     LiveLookPreview(focusedId)
+    JarnChoiceGrid(JarnLooks.All) { look, cellModifier ->
+        JarnLookCard(
+            look = look,
+            chosen = look == chosen,
+            onClick = {
+                store?.setMatchCommandPanel(false)
+                onChoose(look)
+            },
+            modifier = cellModifier.onFocusChanged { state ->
+                focusedId = nextFocusedLook(focusedId, look.id, state.isFocused)
+            },
+        )
+    }
+}
+
+/** Cards in rows of four, or two on a narrow screen. A short last row keeps the same card width. */
+@Composable
+internal fun <T> JarnChoiceGrid(items: List<T>, card: @Composable (T, Modifier) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val columns = if (maxWidth < TwoColumnMaxWidth) COMPACT_COLUMNS else WIDE_COLUMNS
         Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
-            JarnLooks.All.chunked(columns).forEach { row ->
+            items.chunked(columns).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
                 ) {
-                    row.forEach { look ->
-                        JarnLookCard(
-                            look = look,
-                            chosen = look == chosen,
-                            onClick = {
-                                store?.setMatchCommandPanel(false)
-                                onChoose(look)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .onFocusChanged { state ->
-                                    focusedId = nextFocusedLook(focusedId, look.id, state.isFocused)
-                                },
-                        )
-                    }
+                    row.forEach { item -> card(item, Modifier.weight(1f)) }
+                    repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
@@ -88,10 +114,19 @@ internal fun JarnLookPicker(chosen: JarnLook?, onChoose: (JarnLook) -> Unit) {
 /** Both screens follow the focused card, and fall back to the saved look once it loses focus. */
 @Composable
 private fun LiveLookPreview(focusedId: String?) {
-    val previewId = focusedId.takeIf { LocalJarnScreenActive.current }
-    DisposableEffect(previewId) {
-        JarnLookPreview.lookId = previewId
-        onDispose { JarnLookPreview.lookId = null }
+    LiveFocusPreview(focusedId) { JarnLookPreview.lookId = it }
+}
+
+/**
+ * Shows [focused] on both screens through [show] while this screen has control, and clears it
+ * once focus leaves or the picker closes. Shared by the look and layout pickers.
+ */
+@Composable
+internal fun <T> LiveFocusPreview(focused: T?, show: (T?) -> Unit) {
+    val preview = focused.takeIf { LocalJarnScreenActive.current }
+    DisposableEffect(preview) {
+        show(preview)
+        onDispose { show(null) }
     }
 }
 

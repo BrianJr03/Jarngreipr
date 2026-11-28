@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnSliderRow
 import jr.brian.core.ui.components.JarnToggleRow
+import jr.brian.core.model.theme.ThemeView
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.theme.JarnSwitchCue
 import jr.brian.frontend.look.JarnBrowseView
@@ -20,6 +21,7 @@ import jr.brian.frontend.look.JarnTapControl
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.look.jarnLookStoreOrNull
 import jr.brian.jarnfe.session.JarnSession
+import jr.brian.jarnfe.themes.rememberJarnActiveTheme
 import kotlin.math.roundToInt
 
 private const val PERCENT = 100
@@ -42,12 +44,6 @@ internal fun JarnDisplaySection() {
 @Composable
 private fun BrowsingGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
     SettingsGroup(R.string.jarnfe_settings_browsing_title) {
-        BrowseViewRow(R.string.jarnfe_settings_system_view, R.string.jarnfe_settings_system_view_hint, display.systemView) {
-            store.updateDisplay { it.copy(systemView = it.systemView.next()) }
-        }
-        BrowseViewRow(R.string.jarnfe_settings_game_view, R.string.jarnfe_settings_game_view_hint, display.gameView) {
-            store.updateDisplay { it.copy(gameView = it.gameView.next()) }
-        }
         SystemNamesRow(store, display.systemNamesVisible)
         JarnCoverGlowRow(display.coverGlow) { store.updateDisplay { it.copy(coverGlow = it.coverGlow.next()) } }
     }
@@ -114,37 +110,15 @@ private fun SystemNamesRow(store: JarnLookStore, visible: Boolean) {
     )
 }
 
-@Composable
-private fun BrowseViewRow(
-    @StringRes labelRes: Int,
-    @StringRes hintRes: Int,
-    view: JarnBrowseView,
-    onClick: () -> Unit,
-) {
-    JarnValueRow(
-        label = stringResource(labelRes),
-        value = stringResource(view.labelRes),
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        supporting = stringResource(hintRes),
-    )
-}
-
-@get:StringRes
-private val JarnBrowseView.labelRes: Int
-    get() = when (this) {
-        JarnBrowseView.Grid -> R.string.jarnfe_browse_view_grid
-        JarnBrowseView.Carousel -> R.string.jarnfe_browse_view_carousel
-    }
-
-private fun JarnBrowseView.next(): JarnBrowseView =
-    JarnBrowseView.entries[(ordinal + 1) % JarnBrowseView.entries.size]
-
-/** A carousel ignores tile size, so its row hides, and the group goes when neither view uses it. */
+/**
+ * A carousel ignores tile size, so its row hides, and the group goes when neither view of the
+ * chosen theme uses it.
+ */
 @Composable
 private fun TilesGroup(store: JarnLookStore, display: JarnDisplayPrefs) {
-    val systemsGrid = display.systemView == JarnBrowseView.Grid
-    val gamesGrid = display.gameView == JarnBrowseView.Grid
+    val theme = rememberJarnActiveTheme()
+    val systemsGrid = theme.systems.browseView(ThemeView.Systems) == JarnBrowseView.Grid
+    val gamesGrid = theme.games.browseView(ThemeView.Games) == JarnBrowseView.Grid
     if (!systemsGrid && !gamesGrid) return
     SettingsGroup(R.string.jarnfe_settings_tiles_title) {
         if (systemsGrid) {

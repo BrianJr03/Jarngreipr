@@ -137,6 +137,7 @@ private fun previewItems(backup: JarngreiprConfig, current: JarngreiprConfig): L
             c.recentlyPlayed.size,
             b.recentlyPlayed == c.recentlyPlayed,
         ),
+        JarnBackupItem(JarnBackupArea.Layout, null, null, layoutChange(b.jarnTheme, c.jarnTheme)),
         JarnBackupItem(JarnBackupArea.Look, null, null, lookChange(b, c)),
         replaced(
             JarnBackupArea.Wallpaper,
@@ -204,13 +205,23 @@ private fun gameFolders(
     )
 }
 
+/**
+ * The active layout, its id and where an ES-DE import came from. A different source alone counts as a
+ * change, since restoring it offers to bring that layout back. Null (older than v78) keeps the current one.
+ */
+private fun layoutChange(backup: JarnThemeConfig?, current: JarnThemeConfig?): JarnBackupChange = when {
+    backup == null -> JarnBackupChange.NotIncluded
+    backup == current -> JarnBackupChange.Same
+    else -> JarnBackupChange.Replaces
+}
+
 private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBackupChange {
     val display = backup.jarnDisplay
     val match = backup.jarnMatchCommandPanel
     val matchFonts = backup.jarnMatchCommandPanelFonts
     val promptShown = backup.jarnFontsPromptShown
     if (backup.jarnLook == null && backup.jarnReducedMotion == null && display == null && match == null &&
-        matchFonts == null && promptShown == null && backup.jarnTheme == null
+        matchFonts == null && promptShown == null
     ) {
         return JarnBackupChange.NotIncluded
     }
@@ -251,7 +262,6 @@ private fun lookChange(backup: FeatureConfig, current: FeatureConfig): JarnBacku
         )
     } ?: shown
     val same = (backup.jarnLook ?: current.jarnLook) == current.jarnLook &&
-        (backup.jarnTheme ?: current.jarnTheme)?.id == current.jarnTheme?.id &&
         (backup.jarnReducedMotion ?: current.jarnReducedMotion) == current.jarnReducedMotion &&
         (match ?: current.jarnMatchCommandPanel) == current.jarnMatchCommandPanel &&
         (matchFonts ?: current.jarnMatchCommandPanelFonts) == current.jarnMatchCommandPanelFonts &&

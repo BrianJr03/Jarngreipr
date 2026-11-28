@@ -81,7 +81,10 @@ class LibraryBuiltInThemesTest {
     fun `an unpinned grid fixes its columns and spaces by box width`() {
         val primary = ThemePrimary.Grid(box = ThemeRect(0f, 0f, 0.5f, 1f), columns = 4, spacing = 0.02f)
         val geometry = libraryGridGeometry(primary, 112.dp, 600.dp)
-        assertEquals(LibraryGridGeometry(112.dp, rowSpacing = 12.dp, columnSpacing = 12.dp, columns = 4), geometry)
+        assertEquals(
+            LibraryGridGeometry(112.dp, rowSpacing = 12.dp, columnSpacing = 12.dp, columns = 4, itemAspect = 0.75f, showTitle = false),
+            geometry,
+        )
     }
 
     @Test
