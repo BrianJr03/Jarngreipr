@@ -61,6 +61,14 @@ enum class EsdeTranslationNote {
     ShownOnSomeSystems,
     /** The first media type Jarn doesn't track (3D box, back cover) was skipped for the next one. */
     MediaKindSkipped,
+    /** Text, dates and ratings stacked so an empty row gives its room to the next. */
+    StackedDetails,
+    /** The system name shows where the theme's logo would, for systems with no logo. */
+    NameWhenNoLogo,
+    /** The theme's narrow aspect ratio layout is used on narrow screens. */
+    NarrowScreenLayout,
+    /** The narrow layout uses a different list type; Jarn keeps the wide one and moves only the rest. */
+    NarrowListTypeKept,
     /** The theme's own font isn't used yet. */
     FontNotUsed,
     /** An ES-DE element type Jarn has no layer for. */

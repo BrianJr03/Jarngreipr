@@ -182,6 +182,24 @@ class JarnThemeFormatCompatibilityTest {
         assertEquals(schema1Fade, JarnThemeFormat.encode(spec))
     }
 
+    /** Added with #581: a theme's own art per system. */
+    private val schema1ThemeArt = """
+        {"schema":1,"meta":{"name":"Per system"},"tokens":{"colors":{"bg":"#000000","surface":"#111111",
+        "raised":"#222222","textHigh":"#FFFFFF","textMid":"#DDDDDD","textLow":"#BBBBBB",
+        "accent":"#FF8800","danger":"#FF4444","success":"#44FF44"}},
+        "systemArt":{"snes":{"logo":"esde/logos/snes.svg","background":"esde/backgrounds/snes.jpg"},
+        "nes":{"logo":"esde/logos/nes.png"}}}
+    """.trimIndent().replace("\n", "")
+
+    @Test
+    fun `schema 1 per-system art decodes and re-encodes byte for byte`() {
+        val spec = (JarnThemeFormat.decode(schema1ThemeArt) as JarnThemeDecodeResult.Decoded).spec
+
+        assertEquals(ThemeSystemArt(logo = "esde/logos/nes.png"), spec.systemArt["nes"])
+        assertEquals(emptyMap<String, ThemeSystemArt>(), decodeGolden().systemArt)
+        assertEquals(schema1ThemeArt, JarnThemeFormat.encode(spec))
+    }
+
     @Test
     fun `the golden schema 1 theme has no narrow patch`() {
         assertEquals(null, decodeGolden().views[ThemeView.Systems]?.narrow)

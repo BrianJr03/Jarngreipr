@@ -73,6 +73,7 @@
     <string name="jarnfe_esde_fallback_accent_only">Accent only: the rest keeps your Look\'s colors.</string>
     <string name="jarnfe_esde_fallback_saved_look">Its colors were hard to read, so your Look\'s colors stay.</string>
     <string name="jarnfe_esde_fallback_dark_version">Dark version: %1$s</string>
+    <string name="jarnfe_esde_fallback_background_from_picture">Its background color came from its background picture.</string>
     <string name="jarnfe_esde_fallback_light_accent">A light theme, so only its accent came over.</string>
     <string name="jarnfe_esde_fallback_capped">The theme is big, so some of its art was left out.</string>
     <plurals name="jarnfe_esde_fallback_systems_with_art">

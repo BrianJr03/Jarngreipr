@@ -54,11 +54,12 @@ internal fun EsdeImportOutcome.Imported.fallbackLines(): List<EsdeFallbackLine> 
         add(EsdeFallbackLine.Text(colors.tier.messageRes))
         colors.darkVersion?.let { add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_dark_version, it)) }
     }
+    if (EsdeFallbackNote.BackgroundFromPicture in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_background_from_picture))
     if (EsdeFallbackNote.LightThemeAccentOnly in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_light_accent))
     if (systemCount > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_systems_with_art, systemsWithArt, systemCount))
     countOf<EsdeFallbackNote.UnknownSystem>(R.plurals.jarnfe_esde_fallback_unknown_systems)?.let(::add)
     val notCopied = fallbackNotes.count {
-        it is EsdeFallbackNote.LogoNotCopied || it is EsdeFallbackNote.BackgroundNotCopied || it is EsdeFallbackNote.SvgNotCopied
+        it is EsdeFallbackNote.LogoNotCopied || it is EsdeFallbackNote.BackgroundNotCopied || it is EsdeFallbackNote.SvgRefused
     }
     if (notCopied > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_art_not_copied, notCopied))
     countOf<EsdeFallbackNote.FontRefused>(R.plurals.jarnfe_esde_fallback_fonts_refused)?.let(::add)

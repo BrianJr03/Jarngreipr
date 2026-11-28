@@ -67,7 +67,9 @@
                     },
                     "z": -10,
                     "field": "releaseDate",
-                    "style": "title"
+                    "style": "title",
+                    "verticalAlign": "start",
+                    "stack": "stack-rating-stars"
                 },
                 {
                     "type": "text",
@@ -84,7 +86,9 @@
                         "field": "description"
                     },
                     "style": "title",
-                    "maxLines": 3
+                    "maxLines": 3,
+                    "verticalAlign": "start",
+                    "stack": "stack-rating-stars"
                 },
                 {
                     "type": "rating",
@@ -95,7 +99,8 @@
                         "width": 0.2,
                         "height": 0.04
                     },
-                    "z": -5
+                    "z": -5,
+                    "stack": "stack-rating-stars"
                 }
             ]
         }

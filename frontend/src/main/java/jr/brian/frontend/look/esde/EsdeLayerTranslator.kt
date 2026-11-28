@@ -74,7 +74,7 @@ internal class EsdeLayerTranslator(
 
     private fun image(element: EsdeElementAcrossSystems): ThemeLayer? {
         val rect = element.rect(squareSide())
-        val source = pictureOf(element, "path", rect.rect) ?: return null
+        val chain = pictureChainOf(element, rect.rect) ?: return null
         if (element.bool("tile") == true) report.adjusted(view, element.key, EsdeTranslationNote.TileAsCrop)
         val common = element.common(rect)
         return ThemeLayer.Picture(
@@ -83,36 +83,49 @@ internal class EsdeLayerTranslator(
             z = common.z,
             opacity = common.opacity,
             visibleWhen = common.visibleWhen,
-            source = source,
+            source = chain.first(),
             fit = fitOf(element),
             corner = cornerOf(element.float("cornerRadius")),
+            fallbacks = chain.drop(1),
         )
     }
 
     /**
-     * imageType wins (the focused game's media), then a static [pathProperty]. A path that changes
-     * per system becomes Jarn's own system art, since a theme can't carry one file per system.
+     * Source first, then fallbacks: the imageType chain (the focused game's media, in ES-DE's
+     * order) or else the static `path`, then the `default` image. Null after reporting why.
      */
-    private fun pictureOf(element: EsdeElementAcrossSystems, pathProperty: String, rect: ThemeRect): ThemePicture? {
-        val kinds = mediaKindsOf(element.props["imageType"])
-        val known = kinds.firstOrNull { it != null }
-        if (known != null) {
-            if (kinds.first() == null) report.adjusted(view, element.key, EsdeTranslationNote.MediaKindSkipped)
-            return ThemePicture.GameMedia(known)
+    private fun pictureChainOf(element: EsdeElementAcrossSystems, rect: ThemeRect): List<ThemePicture>? {
+        val media = mediaChainOf(element)
+        val primary = media.ifEmpty { listOfNotNull(staticPicture(element, "path", rect)) }
+        val chain = (primary + listOfNotNull(staticPicture(element, "default", rect))).distinct()
+        if (chain.isNotEmpty()) return chain
+        val note = if (mediaKindsOf(element.props["imageType"]).isNotEmpty()) {
+            EsdeTranslationNote.UnsupportedMedia
+        } else {
+            EsdeTranslationNote.UnsupportedElement
         }
-        if (kinds.isNotEmpty()) return notUsedPicture(element, EsdeTranslationNote.UnsupportedMedia)
-        val path = element.props[pathProperty]?.ifBlank { null } ?: element.props["default"]?.ifBlank { null }
-            ?: return notUsedPicture(element, EsdeTranslationNote.UnsupportedElement)
-        if (element.varies(pathProperty)) {
+        report.notUsed(view, element.key, note)
+        return null
+    }
+
+    /** The imageType kinds Jarn tracks, in ES-DE's order. */
+    private fun mediaChainOf(element: EsdeElementAcrossSystems): List<ThemePicture> {
+        val kinds = mediaKindsOf(element.props["imageType"])
+        val known = kinds.filterNotNull()
+        if (known.isNotEmpty() && kinds.first() == null) {
+            report.adjusted(view, element.key, EsdeTranslationNote.MediaKindSkipped)
+        }
+        return known.map { ThemePicture.GameMedia(it) }
+    }
+
+    /** A file in the theme. One that changes per system becomes Jarn's own system art. */
+    private fun staticPicture(element: EsdeElementAcrossSystems, property: String, rect: ThemeRect): ThemePicture? {
+        val path = element.props[property]?.ifBlank { null } ?: return null
+        if (element.varies(property)) {
             report.adjusted(view, element.key, EsdeTranslationNote.PerSystemFileAsSystemArt)
             return ThemePicture.SystemArt(systemArtFor(element, path, rect))
         }
         return report.asset(themeFilePath(path))
-    }
-
-    private fun notUsedPicture(element: EsdeElementAcrossSystems, note: EsdeTranslationNote): ThemePicture? {
-        report.notUsed(view, element.key, note)
-        return null
     }
 
     private fun systemArtFor(element: EsdeElementAcrossSystems, path: String, rect: ThemeRect): SystemArtKind = when {
@@ -131,8 +144,7 @@ internal class EsdeLayerTranslator(
     private fun video(element: EsdeElementAcrossSystems): ThemeLayer {
         val rect = element.rect(squareSide())
         val common = element.common(rect)
-        // TODO(#569): map ES-DE's defaultImage chain onto picture fallbacks once they land.
-        val fallback = mediaKindsOf(element.props["imageType"]).firstOrNull { it != null }?.let { ThemePicture.GameMedia(it) }
+        val chain = (mediaChainOf(element) + listOfNotNull(staticPicture(element, "defaultImage", rect.rect))).distinct()
         return ThemeLayer.Video(
             id = common.id,
             rect = common.rect,
@@ -141,7 +153,8 @@ internal class EsdeLayerTranslator(
             visibleWhen = common.visibleWhen,
             delayMs = ((element.float("delay") ?: 0f) * SECONDS_TO_MS).roundToInt().coerceAtLeast(0),
             audio = element.bool("audio") ?: false,
-            fallback = fallback,
+            fallback = chain.firstOrNull(),
+            fallbacks = chain.drop(1),
         )
     }
 
