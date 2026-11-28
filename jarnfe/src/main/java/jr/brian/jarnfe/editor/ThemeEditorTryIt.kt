@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +27,6 @@ import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.StageRoute
 import jr.brian.jarnfe.shell.JarnNotices
 import jr.brian.jarnfe.themes.JarnThemeChoice
-import jr.brian.jarnfe.themes.JarnThemePreview
 import jr.brian.jarnfe.themes.applyThemeChoice
 import kotlinx.coroutines.launch
 
@@ -84,7 +82,7 @@ internal fun BoxScope.ThemeEditorTryItHost() {
     val lookStore = remember(context) { context.jarnLookStoreOrNull() }
     val scope = rememberCoroutineScope()
     var choicesOpen by remember { mutableStateOf(false) }
-    TryItPreview(editor)
+    DraftPreviewEffect(editor)
     JarnInputLayer(
         enabled = !choicesOpen,
         bindings = { on(JarnAction.Menu, R.string.jarnfe_editor_try_options) { choicesOpen = true } },
@@ -106,14 +104,6 @@ internal fun BoxScope.ThemeEditorTryItHost() {
     }
 }
 
-@Composable
-private fun TryItPreview(editor: ThemeEditorState) {
-    val choice = JarnThemeChoice(editor.entry)
-    DisposableEffect(choice) {
-        JarnThemePreview.choice = choice
-        onDispose { JarnThemePreview.choice = null }
-    }
-}
 
 @Composable
 private fun TryItStrip(modifier: Modifier) {

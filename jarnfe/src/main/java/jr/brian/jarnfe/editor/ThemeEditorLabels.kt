@@ -58,10 +58,10 @@ private val GameTextField.labelRes: Int
         GameTextField.Title -> R.string.jarnfe_editor_game_title
         GameTextField.SystemTitle -> R.string.jarnfe_editor_game_system
         GameTextField.Description -> R.string.jarnfe_editor_game_description
-        GameTextField.Developer -> R.string.jarnfe_editor_game_developer
-        GameTextField.Publisher -> R.string.jarnfe_editor_game_publisher
-        GameTextField.Genre -> R.string.jarnfe_editor_game_genre
-        GameTextField.Players -> R.string.jarnfe_editor_game_players
+        GameTextField.Developer -> R.string.jarnfe_library_meta_developer
+        GameTextField.Publisher -> R.string.jarnfe_library_meta_publisher
+        GameTextField.Genre -> R.string.jarnfe_library_meta_genre
+        GameTextField.Players -> R.string.jarnfe_library_meta_players
         GameTextField.PlayCount -> R.string.jarnfe_editor_game_play_count
         GameTextField.Playtime -> R.string.jarnfe_editor_game_playtime
     }
@@ -81,9 +81,9 @@ internal val ThemePicture?.labelRes: Int
         null -> R.string.jarnfe_editor_fallback_none
         is ThemePicture.File -> R.string.jarnfe_editor_theme_file
         is ThemePicture.SystemArt -> when (kind) {
-            SystemArtKind.Art -> R.string.jarnfe_editor_system_art
+            SystemArtKind.Art -> R.string.jarnfe_system_art_title
             SystemArtKind.Logo -> R.string.jarnfe_editor_system_logo
-            SystemArtKind.Background -> R.string.jarnfe_editor_system_background
+            SystemArtKind.Background -> R.string.jarnfe_settings_system_background
         }
         is ThemePicture.GameMedia -> kind.labelRes
     }
@@ -98,7 +98,7 @@ private val MediaKind.labelRes: Int
         MediaKind.Titlescreen -> R.string.jarnfe_game_art_titlescreen
         MediaKind.Miximage -> R.string.jarnfe_game_art_mixed
         MediaKind.PhysicalMedia -> R.string.jarnfe_game_art_physical
-        MediaKind.Video -> R.string.jarnfe_editor_layer_video
+        MediaKind.Video -> R.string.jarnfe_rss_badge_video
     }
 
 @get:StringRes
@@ -156,7 +156,7 @@ internal val ThemeEdge?.labelRes: Int
 internal val ThemeDateField.labelRes: Int
     get() = when (this) {
         ThemeDateField.ReleaseDate -> R.string.jarnfe_editor_date_release
-        ThemeDateField.LastPlayed -> R.string.jarnfe_editor_date_last_played
+        ThemeDateField.LastPlayed -> R.string.jarnfe_library_meta_last_played
     }
 
 @get:StringRes
@@ -171,7 +171,7 @@ internal val ThemeDateFormat.labelRes: Int
 internal val ThemePrimary.typeRes: Int
     get() = when (this) {
         is ThemePrimary.Shelf -> R.string.jarnfe_editor_list_shelf
-        is ThemePrimary.Grid -> R.string.jarnfe_editor_list_grid
+        is ThemePrimary.Grid -> R.string.jarnfe_browse_view_grid
         is ThemePrimary.List -> R.string.jarnfe_editor_list_list
     }
 

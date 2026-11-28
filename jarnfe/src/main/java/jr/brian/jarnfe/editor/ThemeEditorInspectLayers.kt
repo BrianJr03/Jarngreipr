@@ -121,7 +121,7 @@ private fun TextLookRows(
 
 @Composable
 private fun ColorRow(color: ThemeColorRole, onChange: (ThemeColorRole) -> Unit) {
-    InspectChoiceRow(R.string.jarnfe_editor_color, color, TextColors, { it.labelRes }, onChoose = onChange)
+    InspectChoiceRow(R.string.jarnfe_systems_section_color, color, TextColors, { it.labelRes }, onChoose = onChange)
 }
 
 @Composable

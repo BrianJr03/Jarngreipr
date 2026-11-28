@@ -9,18 +9,14 @@
     <string name="jarnfe_editor_view">Screen</string>
     <string name="jarnfe_editor_layer_picture">Picture</string>
     <string name="jarnfe_editor_layer_text">Text</string>
-    <string name="jarnfe_editor_layer_rating">Rating</string>
     <string name="jarnfe_editor_layer_date">Date</string>
     <string name="jarnfe_editor_layer_panel">Panel</string>
-    <string name="jarnfe_editor_layer_video">Video</string>
     <string name="jarnfe_editor_layer_named">%1$s: %2$s</string>
     <string name="jarnfe_editor_hint_tools">Tools</string>
     <string name="jarnfe_editor_hint_canvas">Canvas</string>
     <string name="jarnfe_editor_hint_leave">Leave</string>
-    <string name="jarnfe_editor_hint_select">Select</string>
     <string name="jarnfe_editor_hint_pick_up">Pick up</string>
     <string name="jarnfe_editor_hint_put_back">Put back</string>
-    <string name="jarnfe_editor_options">Options</string>
     <string name="jarnfe_editor_redo">Redo</string>
     <string name="jarnfe_editor_snap">Snap to guides</string>
     <string name="jarnfe_editor_snap_hint">Lines up with the grid, the center and other pieces. Off moves in finer steps.</string>
@@ -38,10 +34,8 @@
     <string name="jarnfe_editor_y">Top edge</string>
     <string name="jarnfe_editor_width">Width</string>
     <string name="jarnfe_editor_height">Height</string>
-    <string name="jarnfe_editor_opacity">Opacity</string>
     <string name="jarnfe_editor_list_type">Type</string>
     <string name="jarnfe_editor_list_shelf">Shelf</string>
-    <string name="jarnfe_editor_list_grid">Grid</string>
     <string name="jarnfe_editor_list_list">List</string>
     <string name="jarnfe_editor_before">Items before</string>
     <string name="jarnfe_editor_after">Items after</string>
@@ -60,7 +54,6 @@
     <string name="jarnfe_editor_size_m">M</string>
     <string name="jarnfe_editor_size_l">L</string>
     <string name="jarnfe_editor_size_xl">XL</string>
-    <string name="jarnfe_editor_color">Color</string>
     <string name="jarnfe_editor_align">Align</string>
     <string name="jarnfe_editor_valign">Vertical align</string>
     <string name="jarnfe_editor_align_start">Start</string>
@@ -90,7 +83,6 @@
     <string name="jarnfe_editor_edge_end">End</string>
     <string name="jarnfe_editor_video_sound">Sound</string>
     <string name="jarnfe_editor_date_release">Release date</string>
-    <string name="jarnfe_editor_date_last_played">Last played</string>
     <string name="jarnfe_editor_date_format">Format</string>
     <string name="jarnfe_editor_date_year">Year</string>
     <string name="jarnfe_editor_date_short">Short date</string>
@@ -101,10 +93,6 @@
     <string name="jarnfe_editor_game_title">Game title</string>
     <string name="jarnfe_editor_game_system">Game\'s system</string>
     <string name="jarnfe_editor_game_description">Description</string>
-    <string name="jarnfe_editor_game_developer">Developer</string>
-    <string name="jarnfe_editor_game_publisher">Publisher</string>
-    <string name="jarnfe_editor_game_genre">Genre</string>
-    <string name="jarnfe_editor_game_players">Players</string>
     <string name="jarnfe_editor_game_play_count">Times played</string>
     <string name="jarnfe_editor_game_playtime">Game playtime</string>
     <string name="jarnfe_editor_system_name">System name</string>
@@ -112,9 +100,7 @@
     <string name="jarnfe_editor_system_favorites">Favorite count</string>
     <string name="jarnfe_editor_system_playtime">System playtime</string>
     <string name="jarnfe_editor_fixed_text">Fixed text</string>
-    <string name="jarnfe_editor_system_art">System art</string>
     <string name="jarnfe_editor_system_logo">System logo</string>
-    <string name="jarnfe_editor_system_background">System background</string>
     <string name="jarnfe_editor_theme_file">Theme picture</string>
     <string name="jarnfe_editor_color_bg">Background</string>
     <string name="jarnfe_editor_color_surface">Panel</string>
@@ -129,8 +115,6 @@
 
     <string name="jarnfe_editor_follow_look">Use my Look\'s colors</string>
     <string name="jarnfe_editor_follow_look_hint">Off gives this layout colors of its own, starting from the Look you see now.</string>
-    <string name="jarnfe_editor_hue">Hue</string>
-    <string name="jarnfe_editor_saturation">Saturation</string>
     <string name="jarnfe_editor_lightness">Lightness</string>
     <string name="jarnfe_editor_hard_to_read">Hard to read. Jarn would show your Look\'s colors instead.</string>
     <string name="jarnfe_editor_fix">Fix</string>
@@ -145,7 +129,6 @@
         <item quantity="other">%1$d issues</item>
     </plurals>
     <string name="jarnfe_editor_no_issues">No issues</string>
-    <string name="jarnfe_editor_colors_target">Colors</string>
     <string name="jarnfe_editor_issue_list_invalid">The list has no size, so it fills the screen.</string>
     <string name="jarnfe_editor_issue_list_small">The list is too small, so it was enlarged.</string>
     <string name="jarnfe_editor_issue_list_clamped">The list reached past the screen edge and was pulled in.</string>
@@ -164,13 +147,11 @@
     <string name="jarnfe_editor_preview_shape_wide">Wide</string>
     <string name="jarnfe_editor_preview_shape_narrow">Narrow</string>
     <string name="jarnfe_editor_preview_shape_hint">Narrow shows the layout the bottom screen gets.</string>
-    <string name="jarnfe_editor_preview_system">System</string>
     <string name="jarnfe_editor_narrow_only">Narrow only</string>
     <string name="jarnfe_editor_narrow_reset_piece">Reset narrow to wide</string>
     <string name="jarnfe_editor_narrow_reset_piece_hint">The bottom screen shows this piece as the top one does.</string>
     <string name="jarnfe_editor_narrow_reset_view">Reset the whole narrow layout</string>
     <string name="jarnfe_editor_narrow_reset_view_hint">The bottom screen shows this screen\'s layout as the top one does.</string>
-    <string name="jarnfe_editor_preview_game">Game</string>
     <string name="jarnfe_editor_preview_pick_none">None yet</string>
     <string name="jarnfe_editor_preview_shuffle">Shuffle</string>
     <string name="jarnfe_editor_preview_shuffle_hint">Picks a system and a game at random.</string>
@@ -228,7 +209,6 @@
     <string name="jarnfe_editor_build_hint">Starts from the layout you use now.</string>
     <string name="jarnfe_editor_copy_name">%1$s copy</string>
     <string name="jarnfe_editor_card_options">Layout options</string>
-    <string name="jarnfe_editor_edit">Edit</string>
     <string name="jarnfe_editor_duplicate_edit">Duplicate and edit</string>
     <string name="jarnfe_editor_duplicate_edit_hint">Built-in layouts stay as they are. You edit a copy.</string>
 </resources>

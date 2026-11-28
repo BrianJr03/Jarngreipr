@@ -25,7 +25,7 @@ internal fun ThemeEditorLayerSheet(editor: ThemeEditorState, visible: Boolean, o
 @Composable
 internal fun ThemeEditorOptions(editor: ThemeEditorState, visible: Boolean, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
-    JarnSheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.jarnfe_editor_options)) {
+    JarnSheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.jarnfe_hint_context)) {
         InspectActionRow(stringResource(R.string.jarnfe_editor_save), stringResource(R.string.jarnfe_editor_save_hint)) {
             scope.launch { JarnThemeEditor.saveVersion() }
             onDismiss()

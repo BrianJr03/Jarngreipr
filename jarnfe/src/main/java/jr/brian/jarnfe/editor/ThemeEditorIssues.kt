@@ -42,7 +42,7 @@ internal fun ThemeEditorIssues(editor: ThemeEditorState) {
     editor.issues(JarnThemeEditor.layoutIssues).forEach { issue ->
         val target = issue.target
         InspectActionRow(
-            label = target?.let { editor.targetLabel(it) } ?: stringResource(R.string.jarnfe_editor_colors_target),
+            label = target?.let { editor.targetLabel(it) } ?: stringResource(R.string.jarnfe_look_colors_title),
             supporting = stringResource(issue.messageRes),
         ) {
             JarnThemeEditor.update {

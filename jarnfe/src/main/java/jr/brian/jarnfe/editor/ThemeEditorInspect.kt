@@ -123,7 +123,7 @@ private fun NarrowRows() {
 
 @Composable
 private fun LayerRows(layer: ThemeLayer) {
-    InspectFractionRow(R.string.jarnfe_editor_opacity, layer.opacity) { o -> JarnThemeEditor.edit { withLayer(layer.id) { it.withOpacity(o) } } }
+    InspectFractionRow(R.string.jarnfe_systems_color_opacity, layer.opacity) { o -> JarnThemeEditor.edit { withLayer(layer.id) { it.withOpacity(o) } } }
     LayerKindRows(layer)
     ThisSystemRow(layer)
     LayerOptionRows(layer.id)

@@ -45,13 +45,13 @@ private fun PreviewPickRows() {
     val system = library.systems.items.firstOrNull { it.id == settings.systemId } ?: library.focusedSystem
     val game = library.allGames.items.firstOrNull { it.id == settings.gameId } ?: library.focusedAllGame
     JarnValueRow(
-        label = stringResource(R.string.jarnfe_editor_preview_system),
+        label = stringResource(R.string.jarnfe_settings_preview_system),
         value = system?.title ?: none,
         onClick = { ThemeEditorPreview.update { copy(systemId = ThemeEditorPreview.next(library.systems.items, system?.id, JarnLibrarySystem::id)) } },
         modifier = Modifier.fillMaxWidth(),
     )
     JarnValueRow(
-        label = stringResource(R.string.jarnfe_editor_preview_game),
+        label = stringResource(R.string.jarnfe_settings_preview_game),
         value = game?.title ?: none,
         onClick = { ThemeEditorPreview.update { copy(gameId = ThemeEditorPreview.next(library.allGames.items, game?.id, JarnLibraryGame::id)) } },
         modifier = Modifier.fillMaxWidth(),
