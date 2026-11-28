@@ -108,7 +108,9 @@ internal fun rememberSavedThemeChoice(): JarnThemeChoice {
     val store = remember(context) { context.jarnLookStoreOrNull() }
     val activeId = store?.activeThemeIdState?.collectAsState()?.value
     val display = store?.displayState?.collectAsState()?.value ?: JarnDisplayPrefs()
-    return remember(activeId, display.systemView, display.gameView) { resolveJarnThemeChoice(activeId, display) }
+    LoadImportedThemes()
+    val imports = JarnImportedThemes.entries
+    return remember(activeId, display.systemView, display.gameView, imports) { resolveJarnThemeChoice(activeId, display) }
 }
 
 /** The live preview wins, then the saved choice. */

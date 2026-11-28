@@ -18,6 +18,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnLookCard
+import jr.brian.core.ui.components.JarnText
+import androidx.compose.ui.res.stringResource
+import jr.brian.jarnfe.shell.JarnNotices
+import jr.brian.jarnfe.themes.activeTheme
+import jr.brian.jarnfe.themes.rememberSavedThemeChoice
 import jr.brian.core.ui.theme.JarnLook
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.JarnTheme
@@ -41,15 +46,29 @@ internal fun JarnLookSection() {
     val fontOffer by rememberCommandPanelFontOffer()
     val fontRow = rememberJarnFontMatchRow(store, fontOffer.availability)
     JarnThemeSection(store)
+    val layoutOwnsColors = rememberSavedThemeChoice().activeTheme().ownColors != null
     SettingsGroup(R.string.jarnfe_look_colors_title) {
+        if (layoutOwnsColors) OwnColorsNote()
         JarnLookPicker(
             chosen = savedLook.takeUnless { matchCard.state.isMatching },
-            onChoose = { store.setLookId(it.id) },
+            onChoose = {
+                store.setLookId(it.id)
+                if (layoutOwnsColors) JarnNotices.show(R.string.jarnfe_look_saved_for_later)
+            },
         )
         JarnMatchCommandPanelCard(matchCard, store::setMatchCommandPanel)
         JarnMatchCommandPanelFontsRow(fontRow, store::setMatchCommandPanelFonts)
         JarnMatchCommandPanelSwatches(matchCard)
     }
+}
+
+/**
+ * A layout with its own colors draws them over any Look, so the Look cards say so instead of
+ * seeming to do nothing. The picked Look is saved and shows with layouts that follow the Look.
+ */
+@Composable
+private fun OwnColorsNote() {
+    JarnText(stringResource(R.string.jarnfe_look_own_colors_note), JarnTheme.type.body, JarnTheme.colors.textMid)
 }
 
 @Composable

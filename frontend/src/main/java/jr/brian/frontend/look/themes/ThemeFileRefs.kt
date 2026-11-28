@@ -12,16 +12,17 @@ internal data class CheckedTheme(val spec: JarnThemeSpec, val dropped: Int)
 
 /**
  * Every font and picture path must name a file that passed its check inside the theme folder.
- * A bad reference drops alone: a picture layer goes, a primary or video keeps Jarn's default art,
- * and a text style keeps its role's font.
+ * A bad reference drops alone: a picture layer falls to its next good fallback (and goes when it has
+ * none), a primary or video keeps Jarn's default art, and a text style keeps its role's font.
  */
 internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKind>): CheckedTheme {
     var dropped = 0
-    fun ok(path: String, kind: ThemeAssetKind) = (isSafeThemePath(path) && assets[path] == kind).also {
+    fun ok(path: String, vararg kinds: ThemeAssetKind) = (isSafeThemePath(path) && assets[path] in kinds).also {
         if (!it) dropped++
     }
     fun ThemePicture?.checked(): ThemePicture? =
         if (this is ThemePicture.File && !ok(path, ThemeAssetKind.Image)) null else this
+    fun List<ThemePicture>.checked(): List<ThemePicture> = mapNotNull { it.checked() }
     fun ThemeTextStyle?.checked(): ThemeTextStyle? =
         this?.let { style -> style.font?.let { if (ok(it, ThemeAssetKind.Font)) style else style.copy(font = null) } ?: style }
 
@@ -31,8 +32,11 @@ internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKi
         is ThemePrimary.List -> copy(art = art.checked())
     }
     fun ThemeLayer.checked(): ThemeLayer? = when (this) {
-        is ThemeLayer.Picture -> takeIf { source.checked() != null }
-        is ThemeLayer.Video -> copy(fallback = fallback.checked())
+        is ThemeLayer.Picture -> {
+            val pictures = (listOf(source) + fallbacks).checked()
+            pictures.firstOrNull()?.let { copy(source = it, fallbacks = pictures.drop(1)) }
+        }
+        is ThemeLayer.Video -> copy(fallback = fallback.checked(), fallbacks = fallbacks.checked())
         else -> this
     }
     fun ViewSpec.checked() = copy(primary = primary.checked(), layers = layers.mapNotNull { it.checked() })

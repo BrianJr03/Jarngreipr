@@ -112,7 +112,33 @@ class JarngreiprApplication :
     JarnArtDetectorProvider,
     JarnEsdeRomsProvider,
     JarnHomeAppProvider,
-    JarnMeetJarnProvider {
+    JarnMeetJarnProvider,
+    jr.brian.jarnfe.themes.JarnThemeImportProvider {
+
+    /** [Provider]s so Classic never builds Jarn FE's theme import. */
+    @Inject
+    lateinit var jarnEsdeThemeLocatorProvider: Provider<jr.brian.frontend.look.themes.EsdeThemeLocator>
+
+    override val jarnEsdeThemeLocator: jr.brian.frontend.look.themes.EsdeThemeLocator
+        get() = jarnEsdeThemeLocatorProvider.get()
+
+    @Inject
+    lateinit var jarnEsdeThemeUpdatesProvider: Provider<jr.brian.frontend.look.themes.EsdeThemeUpdates>
+
+    override val jarnEsdeThemeUpdates: jr.brian.frontend.look.themes.EsdeThemeUpdates
+        get() = jarnEsdeThemeUpdatesProvider.get()
+
+    @Inject
+    lateinit var jarnThemeFileImporterProvider: Provider<jr.brian.frontend.look.themes.JarnThemeImporter>
+
+    override val jarnThemeFileImporter: jr.brian.frontend.look.themes.JarnThemeImporter
+        get() = jarnThemeFileImporterProvider.get()
+
+    @Inject
+    lateinit var jarnSystemCatalogProvider: Provider<jr.brian.frontend.library.systems.SystemCatalog>
+
+    override val jarnSystemCatalog: jr.brian.frontend.library.systems.SystemCatalog
+        get() = jarnSystemCatalogProvider.get()
 
     @Inject
     lateinit var jarnMeetJarnProvider: Provider<AppJarnMeetJarn>
