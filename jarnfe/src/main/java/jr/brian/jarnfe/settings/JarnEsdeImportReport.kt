@@ -28,7 +28,17 @@ internal data class EsdeReportSummary(
     val leftOut: List<Pair<EsdeTranslationNote, Int>>,
 ) {
     val needFix: Int get() = total - cameOver
+
+    /** "Everything came over." is only true when nothing was changed to fit or left out. */
+    val headline: EsdeReportHeadline
+        get() = when {
+            changed.isEmpty() && leftOut.isEmpty() -> EsdeReportHeadline.Everything
+            total == 0 -> EsdeReportHeadline.None
+            else -> EsdeReportHeadline.Counts
+        }
 }
+
+internal enum class EsdeReportHeadline { Everything, Counts, None }
 
 /** With [fontsUsed], the theme's fonts reached Jarn's type, so per-part "font not used" notes are dropped. */
 internal fun EsdeTranslationReport.summary(fontsUsed: Boolean = false): EsdeReportSummary {
@@ -121,11 +131,17 @@ internal fun EsdeImportReport(outcome: EsdeImportOutcome.Imported, modifier: Mod
 
 @Composable
 private fun ReportHeadline(summary: EsdeReportSummary) {
-    val cameOver = pluralStringResource(R.plurals.jarnfe_esde_import_came_over, summary.total, summary.cameOver, summary.total)
-    val text = if (summary.needFix == 0) {
-        stringResource(R.string.jarnfe_esde_import_everything)
-    } else {
-        cameOver + " " + pluralStringResource(R.plurals.jarnfe_esde_import_need_fix, summary.needFix, summary.needFix)
+    val text = when (summary.headline) {
+        EsdeReportHeadline.None -> return
+        EsdeReportHeadline.Everything -> stringResource(R.string.jarnfe_esde_import_everything)
+        EsdeReportHeadline.Counts -> {
+            val cameOver = pluralStringResource(R.plurals.jarnfe_esde_import_came_over, summary.total, summary.cameOver, summary.total)
+            if (summary.needFix == 0) {
+                cameOver
+            } else {
+                cameOver + " " + pluralStringResource(R.plurals.jarnfe_esde_import_need_fix, summary.needFix, summary.needFix)
+            }
+        }
     }
     JarnText(text, JarnTheme.type.heading, JarnTheme.colors.textHigh)
 }

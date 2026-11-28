@@ -2,6 +2,7 @@ package jr.brian.frontend.look.esde
 
 import jr.brian.core.model.theme.JarnThemeSpec
 import jr.brian.core.ui.theme.JarnLook
+import jr.brian.core.ui.theme.JarnPaletteMatch
 import jr.brian.frontend.library.setup.EsdeSettings
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.look.themes.EsdeImportRecord
@@ -41,14 +42,23 @@ fun interface EsdeImportFallback {
     ): EsdeFallbackOutcome
 
     companion object {
-        val None = EsdeImportFallback { _, translation, _, _, _ -> EsdeFallbackOutcome(translation.spec) }
+        /** No colors of the theme's own were worked out, so the import follows the player's Look. */
+        val None = EsdeImportFallback { _, translation, _, _, _ ->
+            EsdeFallbackOutcome(translation.spec.followingLook(true))
+        }
 
-        /** #581: readable colors from the theme with [savedLook] as the floor, plus its art and fonts. */
+        /**
+         * #581: readable colors from the theme with [savedLook] as the floor, plus its art and fonts.
+         * When none of the theme's colors could be read ([JarnPaletteMatch.SavedLook]) the import
+         * follows the Look, so its card, Look > Colors and Command Panel matching all treat it as
+         * a Look-following layout. Its full palette, or just its accent on the Look's colors
+         * ([JarnPaletteMatch.AccentOnSavedLook]), are colors of its own, kept as imported.
+         */
         fun readable(savedLook: JarnLook, catalog: SystemCatalog) =
             EsdeImportFallback { model, translation, themeDir, outDir, reparse ->
                 val result = EsdeThemeFallback.build(model, themeDir, savedLook, catalog, outDir, reparse)
                 EsdeFallbackOutcome(
-                    spec = result.applyTo(translation.spec),
+                    spec = result.applyTo(translation.spec).followingLook(followsLookFor(result.tier)),
                     notes = result.notes,
                     systemsWithArt = result.systemArt.size,
                     fontsUsed = result.fonts.display != null || result.fonts.body != null,
@@ -56,6 +66,11 @@ fun interface EsdeImportFallback {
             }
     }
 }
+
+private fun JarnThemeSpec.followingLook(follows: Boolean) = copy(meta = meta.copy(followsLook = follows))
+
+/** Only a theme none of whose colors could be read follows the Look; an accent or a full palette is its own. */
+internal fun followsLookFor(tier: JarnPaletteMatch): Boolean = tier == JarnPaletteMatch.SavedLook
 
 sealed interface EsdeImportOutcome {
     /** Installed as [themeId]. [unusableFiles] are theme files that failed their checks and were left out. */
