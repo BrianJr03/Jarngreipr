@@ -166,6 +166,24 @@ class EsdeThemeFallbackTest {
     }
 
     @Test
+    fun `an image-only theme takes its background from the picture`() {
+        val dir = EsdeSyntheticTheme.HorizonCarousel.install(temp.newFolder())
+        File(dir, "art/nes").mkdirs()
+        File(dir, "art/nes/backdrop.webp").writeBytes(pngHeader(64, 36))
+        val model = parser.parse(dir, EsdeSyntheticTheme.HorizonCarousel.systems)
+        val out = temp.newFolder()
+        val dark = Color(0xFF101826).argbInt()
+        val result = EsdeThemeFallback.build(
+            model, dir, savedLook, catalog, out,
+            copier = EsdeAssetCopier(dir, out, scaler = copyScaler),
+            sampler = { IntArray(64 * 36) { dark } },
+        )
+        assertEquals(JarnPaletteMatch.FullPalette, result.tier)
+        assertEquals(dark, result.colors.bg.argb)
+        assertTrue(EsdeFallbackNote.BackgroundFromPicture in result.notes)
+    }
+
+    @Test
     fun `copies stop at the cap and say so`() {
         val theme = EsdeSyntheticTheme.PerSystem.install(temp.newFolder())
         File(theme, "_inc/backgrounds").mkdirs()
