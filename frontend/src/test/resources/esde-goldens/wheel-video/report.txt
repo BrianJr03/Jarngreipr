@@ -6,6 +6,7 @@
 [adjusted]
   system carousel systemCarousel: WheelAsShelf
   system carousel systemCarousel: PerSystemFileAsSystemArt
+  system -: FittedAboveHints
   gamelist carousel gamelistCarousel: WheelAsShelf
 [notUsed]
   theme -: TransitionsAndTriggers

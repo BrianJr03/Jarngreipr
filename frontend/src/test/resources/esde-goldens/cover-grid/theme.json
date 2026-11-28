@@ -59,9 +59,9 @@
                 "type": "grid",
                 "box": {
                     "x": 0.03,
-                    "y": 0.12,
+                    "y": 0.117391296,
                     "width": 0.94,
-                    "height": 0.8
+                    "height": 0.7826087
                 },
                 "art": {
                     "type": "media",

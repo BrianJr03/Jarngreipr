@@ -31,6 +31,15 @@ private const val DEFAULT_LIST_LINE_SPACING = 1.5f
 private const val MIN_PRIMARY_HEIGHT = 0.15f
 private const val MIN_LAYER_HEIGHT = 0.03f
 private const val BACKDROP_WIDTH = 0.95f
+/** ES-DE's default carousel itemSize height, as a fraction of the screen. */
+private const val DEFAULT_CAROUSEL_ITEM_HEIGHT = 0.155f
+/** The shelf's 20dp focus float on the 349dp reference stage, as a fraction of the screen. */
+private const val SHELF_FOCUS_ROOM = 0.06f
+/** The shelf's 48dp one-line caption reserve on the reference stage. */
+private const val SHELF_CAPTION_ROOM = 0.14f
+private const val FIT_SLACK = 0.001f
+/** The shortest list row that stays readable on the reference stage; ES-DE's small rows merge into fewer. */
+private const val MIN_LIST_ROW_DP = 40f
 private val DefaultCarouselBox = ThemeRect(0f, 0.38f, 1f, 0.24f)
 private val DefaultBox = ThemeRect(0.05f, 0.1f, 0.9f, 0.8f)
 
@@ -69,10 +78,42 @@ object EsdeThemeTranslator {
 
     private fun translateViews(model: EsdeThemeModel, options: EsdeTranslateOptions, report: EsdeReportBuilder): ThemeViews {
         val aspect = aspectOf(model.selection.aspectRatio)
+        val band = options.systemsTopClear
         return ThemeViews(
-            systems = translateView(model, EsdeView.System, aspect, report)?.clearOfBand(options.systemsTopClear, report),
-            games = translateView(model, EsdeView.Gamelist, aspect, report),
+            systems = translateView(model, EsdeView.System, aspect, report)
+                ?.clearOfBand(band, report)
+                ?.fittedAbove(options.safeBottom, band, EsdeView.System, report),
+            games = translateView(model, EsdeView.Gamelist, aspect, report)
+                ?.fittedAbove(options.safeBottom, 0f, EsdeView.Gamelist, report),
         )
+    }
+
+    /**
+     * Squeezes the view between [top] and [safeBottom] when anything ends below the hint bar line,
+     * scaling every placement the same way so nothing starts to overlap. Full-width backdrops stay.
+     * Text that no longer fits its role steps down to a smaller one.
+     */
+    private fun ViewSpec.fittedAbove(safeBottom: Float, top: Float, view: EsdeView, report: EsdeReportBuilder): ViewSpec {
+        val placed = layers.filterNot { it.isBackdrop() }.map { it.rect } + primary.box
+        val lowest = placed.maxOf { it.top() + it.height }
+        if (lowest <= safeBottom + FIT_SLACK || lowest <= top) return this
+        val factor = (safeBottom - top) / (lowest - top)
+        fun ThemeRect.squeezed(): ThemeRect {
+            val newTop = top + (top() - top).coerceAtLeast(0f) * factor
+            val newHeight = height * factor
+            return copy(y = newTop + originY * newHeight, height = newHeight)
+        }
+        report.adjusted(view, null, EsdeTranslationNote.FittedAboveHints)
+        return copy(
+            primary = primary.withBox(primary.box.squeezed()),
+            layers = layers.map { layer -> if (layer.isBackdrop()) layer else layer.withRect(layer.rect.squeezed()).withFittedRole() },
+        )
+    }
+
+    private fun ThemeLayer.withFittedRole(): ThemeLayer = when (this) {
+        is ThemeLayer.Text -> copy(style = fittedRole(style, rect.height))
+        is ThemeLayer.Date -> copy(style = fittedRole(style, rect.height))
+        else -> this
     }
 
     /** The narrow pass reports only how it differs; its assets join the theme's. */
@@ -129,14 +170,33 @@ object EsdeThemeTranslator {
         if (type.endsWith("Wheel")) report.adjusted(view, element.key, EsdeTranslationNote.WheelAsShelf)
         val maxItems = element.float("maxItemCount") ?: DEFAULT_MAX_ITEMS
         val side = ((maxItems - 1f) / 2f).toInt().coerceAtLeast(1)
+        val axis = if (type.startsWith("vertical")) ThemeAxis.Vertical else ThemeAxis.Horizontal
+        val scale = (element.float("itemScale") ?: DEFAULT_ITEM_SCALE).coerceIn(1f, MAX_FOCUSED_SCALE)
+        val art = primaryArt(element, view, report)
+        // ES-DE shows an item's name only when it has no picture, so a shelf of art has no captions.
+        val showTitle = art == null
+        val box = element.rect(DefaultCarouselBox.width to DefaultCarouselBox.height).rect.withDefaultPos(element, DefaultCarouselBox)
         return ThemePrimary.Shelf(
-            box = element.rect(DefaultCarouselBox.width to DefaultCarouselBox.height).rect.withDefaultPos(element, DefaultCarouselBox),
-            art = primaryArt(element, view, report),
-            axis = if (type.startsWith("vertical")) ThemeAxis.Vertical else ThemeAxis.Horizontal,
+            box = if (axis == ThemeAxis.Horizontal) box.tallEnoughFor(element, scale, showTitle) else box,
+            art = art,
+            axis = axis,
             itemsBefore = element.float("itemsBeforeCenter")?.roundToInt() ?: side,
             itemsAfter = element.float("itemsAfterCenter")?.roundToInt() ?: side,
-            focusedScale = (element.float("itemScale") ?: DEFAULT_ITEM_SCALE).coerceIn(1f, MAX_FOCUSED_SCALE),
+            focusedScale = scale,
+            showTitle = showTitle,
         )
+    }
+
+    /**
+     * ES-DE's carousel box only has to hold its items; Jarn's shelf also needs room for the focus
+     * float and any captions. Grows the box around its middle to fit the focused item at ES-DE's size.
+     */
+    private fun ThemeRect.tallEnoughFor(element: EsdeElementAcrossSystems, scale: Float, captions: Boolean): ThemeRect {
+        val itemHeight = element.pair("itemSize")?.second?.takeIf { it > 0f } ?: DEFAULT_CAROUSEL_ITEM_HEIGHT
+        val needed = itemHeight * scale + SHELF_FOCUS_ROOM + if (captions) SHELF_CAPTION_ROOM else 0f
+        if (height >= needed) return this
+        val top = top() - (needed - height) / 2f
+        return copy(y = top + originY * needed, height = needed)
     }
 
     private fun gridOf(element: EsdeElementAcrossSystems, view: EsdeView, aspect: Float, report: EsdeReportBuilder): ThemePrimary.Grid {
@@ -157,9 +217,10 @@ object EsdeThemeTranslator {
         val box = element.rect(DefaultBox.width to DefaultBox.height).rect.withDefaultPos(element, DefaultBox)
         val lineHeight = (element.float("fontSize") ?: DEFAULT_LIST_FONT_SIZE) *
             (element.float("lineSpacing") ?: DEFAULT_LIST_LINE_SPACING)
+        val readableRows = (box.height * ESDE_REFERENCE_STAGE_DP / MIN_LIST_ROW_DP).toInt()
         return ThemePrimary.List(
             box = box,
-            rows = linesThatFit(box.height, lineHeight).coerceIn(MIN_ROWS, MAX_ROWS),
+            rows = minOf(linesThatFit(box.height, lineHeight), readableRows).coerceIn(MIN_ROWS, MAX_ROWS),
             align = alignOf(element.props["horizontalAlignment"]),
         )
     }

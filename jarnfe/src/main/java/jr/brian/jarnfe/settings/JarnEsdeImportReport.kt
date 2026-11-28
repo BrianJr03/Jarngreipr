@@ -85,6 +85,7 @@ internal val EsdeTranslationNote.messageRes: Int
     get() = when (this) {
         EsdeTranslationNote.WheelAsShelf -> R.string.jarnfe_esde_note_wheel_as_shelf
         EsdeTranslationNote.MovedBelowHeaderBand -> R.string.jarnfe_esde_note_moved_below_header
+        EsdeTranslationNote.FittedAboveHints -> R.string.jarnfe_esde_note_fitted_above_hints
         EsdeTranslationNote.SizeGuessed -> R.string.jarnfe_esde_note_size_guessed
         EsdeTranslationNote.TileAsCrop -> R.string.jarnfe_esde_note_tile_as_crop
         EsdeTranslationNote.PerSystemFileAsSystemArt -> R.string.jarnfe_esde_note_per_system_art
