@@ -141,7 +141,10 @@
     <string name="jarnfe_editor_issue_covers_list">Covers the list, so it draws behind it.</string>
 
     <string name="jarnfe_editor_save">Save</string>
-    <string name="jarnfe_editor_save_hint">Keeps this version. Your last 20 saves are listed below.</string>
+    <string name="jarnfe_editor_save_hint">Keeps this version. History, just below, lists your past saves.</string>
+    <string name="jarnfe_editor_history">History</string>
+    <string name="jarnfe_editor_history_hint">Your last 20 saves, to compare or restore.</string>
+    <string name="jarnfe_editor_history_save_hint">Keeps this version. Your last 20 saves are listed below.</string>
     <string name="jarnfe_editor_version">Saved %1$s</string>
     <string name="jarnfe_editor_preview_shape">Screen shape</string>
     <string name="jarnfe_editor_preview_shape_wide">Wide</string>
@@ -208,6 +211,7 @@
     <string name="jarnfe_editor_build">Build a layout</string>
     <string name="jarnfe_editor_build_hint">Starts from the layout you use now.</string>
     <string name="jarnfe_editor_copy_name">%1$s copy</string>
+    <string name="jarnfe_editor_copy_name_numbered">%1$s copy %2$d</string>
     <string name="jarnfe_editor_card_options">Layout options</string>
     <string name="jarnfe_editor_duplicate_edit">Duplicate and edit</string>
     <string name="jarnfe_editor_duplicate_edit_hint">Built-in layouts stay as they are. You edit a copy.</string>

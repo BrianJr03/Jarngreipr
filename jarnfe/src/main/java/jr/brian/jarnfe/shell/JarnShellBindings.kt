@@ -66,7 +66,8 @@ internal fun JarnBindingsBuilder.stageBindings(
     } else if (library.bannerHasFocus(state)) {
         hint(JarnAction.Confirm, R.string.jarnfe_hint_resume)
     } else {
-        confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
+        val playsHere = library.canPlay && library.playGuard == null
+        confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, playsHere))
     }
     backHint(state, session)
     gameActionsBinding(state, session, library)

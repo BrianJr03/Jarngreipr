@@ -54,4 +54,12 @@ class ThemeEditorLaunchTest {
         store.saveDraft(id, draft)
         assertEquals(draft, store.editableSpec(entry))
     }
+
+    @Test
+    fun `copies are numbered once the plain name is taken`() {
+        val numbered = { n: Int -> "Grid copy $n" }
+        assertEquals("Grid copy", nextCopyName("Grid copy", numbered, setOf("Grid")))
+        assertEquals("Grid copy 2", nextCopyName("Grid copy", numbered, setOf("Grid copy")))
+        assertEquals("Grid copy 4", nextCopyName("Grid copy", numbered, setOf("Grid copy", "Grid copy 2", "Grid copy 3")))
+    }
 }

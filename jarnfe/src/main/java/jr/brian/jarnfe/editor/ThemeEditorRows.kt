@@ -95,6 +95,6 @@ internal fun InspectToggleRow(
 }
 
 @Composable
-internal fun InspectActionRow(label: String, supporting: String? = null, onClick: () -> Unit) {
-    JarnNavigateRow(label = label, onClick = onClick, modifier = Modifier.fillMaxWidth(), supporting = supporting)
+internal fun InspectActionRow(label: String, supporting: String? = null, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    JarnNavigateRow(label = label, onClick = onClick, modifier = modifier.fillMaxWidth(), supporting = supporting)
 }
