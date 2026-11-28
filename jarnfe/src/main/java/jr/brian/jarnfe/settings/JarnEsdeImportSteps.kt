@@ -104,7 +104,7 @@ private fun DoneStep(step: EsdeImportStep.Done, focus: Modifier, onUse: (String)
 private fun NoAccessStep(focus: Modifier, onAllowAccess: () -> Unit, onRescan: () -> Unit) {
     StepText(R.string.jarnfe_esde_theme_no_access)
     StepText(R.string.jarnfe_esde_theme_howto)
-    JarnNavigateRow(stringResource(R.string.jarnfe_esde_import_allow_access), onAllowAccess, focus)
+    JarnNavigateRow(stringResource(R.string.jarnfe_first_run_media_access), onAllowAccess, focus)
     JarnNavigateRow(stringResource(R.string.jarnfe_esde_import_check_again), onRescan, Modifier.fillMaxWidth())
 }
 

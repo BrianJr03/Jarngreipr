@@ -95,7 +95,7 @@ private fun RestoreOfferRows(onReimport: (EsdeThemeUpdate) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     )
     JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_esde_theme_not_now),
+        label = stringResource(R.string.jarnfe_esde_import_not_now),
         onClick = {
             JarnEsdeThemeUpdatePending.restore = null
             scope.launch { context.jarnThemeImportOrNull()?.jarnEsdeThemeUpdates?.dropRestoreOffer() }
@@ -116,7 +116,7 @@ private fun PendingUpdateRows(saved: JarnThemeChoice, onReimport: (EsdeThemeUpda
         modifier = Modifier.fillMaxWidth(),
     )
     JarnNavigateRow(
-        label = stringResource(R.string.jarnfe_esde_theme_not_now),
+        label = stringResource(R.string.jarnfe_esde_import_not_now),
         onClick = {
             JarnEsdeThemeUpdatePending.update = null
             scope.launch { context.jarnThemeImportOrNull()?.jarnEsdeThemeUpdates?.dismiss(update) }
