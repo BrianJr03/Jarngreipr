@@ -42,6 +42,8 @@
     </plurals>
     <string name="jarnfe_esde_import_changed_title">Changed to fit</string>
     <string name="jarnfe_esde_import_left_out_title">Left out</string>
+    <string name="jarnfe_esde_import_colors_title">Colors, art and fonts</string>
+    <string name="jarnfe_esde_import_pick_another">Pick another theme</string>
     <string name="jarnfe_esde_import_note_count">%1$s (%2$d)</string>
     <plurals name="jarnfe_esde_import_unusable_files">
         <item quantity="one">%1$d file couldn\'t be used.</item>
@@ -60,7 +62,7 @@
     <string name="jarnfe_esde_note_name_when_no_logo">The system name shows where a logo is missing.</string>
     <string name="jarnfe_esde_note_narrow_layout">Narrow screens use the theme\'s own narrow layout.</string>
     <string name="jarnfe_esde_note_narrow_list_kept">The narrow layout keeps the wide screen\'s list type.</string>
-    <string name="jarnfe_esde_note_font_not_used">The theme\'s own font isn\'t used yet.</string>
+    <string name="jarnfe_esde_note_font_not_used">The theme\'s own font couldn\'t be used here.</string>
     <string name="jarnfe_esde_note_unsupported_element">Something Jarn can\'t draw yet.</string>
     <string name="jarnfe_esde_note_extra_primary">A second list. Jarn uses the first.</string>
     <string name="jarnfe_esde_note_unsupported_media">Media Jarn doesn\'t keep, like 3D boxes.</string>
@@ -79,6 +81,7 @@
     <string name="jarnfe_esde_fallback_dark_version">Dark version: %1$s</string>
     <string name="jarnfe_esde_fallback_background_from_picture">Its background color came from its background picture.</string>
     <string name="jarnfe_esde_fallback_light_accent">A light theme, so only its accent came over.</string>
+    <string name="jarnfe_esde_fallback_fonts_used">The theme\'s fonts came over.</string>
     <string name="jarnfe_esde_fallback_capped">The theme is big, so some of its art was left out.</string>
     <plurals name="jarnfe_esde_fallback_systems_with_art">
         <item quantity="one">%1$d of your %2$d systems has theme art.</item>

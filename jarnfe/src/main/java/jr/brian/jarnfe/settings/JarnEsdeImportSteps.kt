@@ -65,11 +65,12 @@ internal fun JarnEsdeImportSteps(
                     JarnLoadingState(stringResource(R.string.jarnfe_esde_import_importing, step.name))
                 EsdeImportStep.NoAccess -> NoAccessStep(focus, onAllowAccess, onRescan)
                 EsdeImportStep.NotFound -> MessageStep(R.string.jarnfe_esde_import_none, focus, onRescan, howTo = true)
-                EsdeImportStep.Legacy -> MessageStep(R.string.jarnfe_esde_import_legacy, focus, onRescan)
+                EsdeImportStep.Legacy -> MessageStep(R.string.jarnfe_esde_import_legacy, focus, onRescan, R.string.jarnfe_esde_import_pick_another)
                 is EsdeImportStep.Failed -> MessageStep(
                     themeImportMessage(ThemeImportResult.Rejected(step.problem)) ?: R.string.jarnfe_theme_import_damaged,
                     focus,
                     onRescan,
+                    R.string.jarnfe_esde_import_pick_another,
                 )
                 is EsdeImportStep.Choosing -> ThemeList(step, focus, onPick)
                 is EsdeImportStep.Done -> DoneStep(step, focus, onUse)
@@ -109,10 +110,16 @@ private fun NoAccessStep(focus: Modifier, onAllowAccess: () -> Unit, onRescan: (
 }
 
 @Composable
-private fun MessageStep(@StringRes messageRes: Int, focus: Modifier, onRescan: () -> Unit, howTo: Boolean = false) {
+private fun MessageStep(
+    @StringRes messageRes: Int,
+    focus: Modifier,
+    onRescan: () -> Unit,
+    @StringRes actionRes: Int = R.string.jarnfe_esde_import_check_again,
+    howTo: Boolean = false,
+) {
     StepText(messageRes)
     if (howTo) StepText(R.string.jarnfe_esde_theme_howto)
-    JarnNavigateRow(stringResource(R.string.jarnfe_esde_import_check_again), onRescan, focus)
+    JarnNavigateRow(stringResource(actionRes), onRescan, focus)
 }
 
 @Composable

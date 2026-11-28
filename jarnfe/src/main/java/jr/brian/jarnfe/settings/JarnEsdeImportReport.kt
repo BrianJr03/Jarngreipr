@@ -30,13 +30,14 @@ internal data class EsdeReportSummary(
     val needFix: Int get() = total - cameOver
 }
 
-internal fun EsdeTranslationReport.summary(): EsdeReportSummary {
+/** With [fontsUsed], the theme's fonts reached Jarn's type, so per-part "font not used" notes are dropped. */
+internal fun EsdeTranslationReport.summary(fontsUsed: Boolean = false): EsdeReportSummary {
     val cameOver = translated.map { it.view to it.element }.toSet()
     val missing = notUsed.filter { it.element != null }.map { it.view to it.element }.toSet() - cameOver
     return EsdeReportSummary(
         cameOver = cameOver.size,
         total = cameOver.size + missing.size,
-        changed = adjusted.mapNotNull { it.note }.counted(),
+        changed = adjusted.mapNotNull { it.note }.filterNot { fontsUsed && it == EsdeTranslationNote.FontNotUsed }.counted(),
         leftOut = notUsed.mapNotNull { it.note }.counted(),
     )
 }
@@ -56,7 +57,8 @@ internal fun EsdeImportOutcome.Imported.fallbackLines(): List<EsdeFallbackLine> 
     }
     if (EsdeFallbackNote.BackgroundFromPicture in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_background_from_picture))
     if (EsdeFallbackNote.LightThemeAccentOnly in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_light_accent))
-    if (systemCount > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_systems_with_art, systemsWithArt, systemCount))
+    if (systemsWithArt > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_systems_with_art, systemsWithArt, systemCount))
+    if (fontsUsed) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_fonts_used))
     countOf<EsdeFallbackNote.UnknownSystem>(R.plurals.jarnfe_esde_fallback_unknown_systems)?.let(::add)
     val notCopied = fallbackNotes.count {
         it is EsdeFallbackNote.LogoNotCopied || it is EsdeFallbackNote.BackgroundNotCopied || it is EsdeFallbackNote.SvgRefused
@@ -108,12 +110,12 @@ internal val EsdeTranslationNote.messageRes: Int
 /** "31 of 34 came over. 3 need a fix.", then what changed, what was left out, and the fallback lines. */
 @Composable
 internal fun EsdeImportReport(outcome: EsdeImportOutcome.Imported, modifier: Modifier = Modifier) {
-    val summary = outcome.report.summary()
+    val summary = outcome.report.summary(outcome.fontsUsed)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
         ReportHeadline(summary)
         NoteList(R.string.jarnfe_esde_import_changed_title, summary.changed)
         NoteList(R.string.jarnfe_esde_import_left_out_title, summary.leftOut)
-        outcome.fallbackLines().forEach { ReportLine(it.text()) }
+        FallbackList(outcome.fallbackLines())
     }
 }
 
@@ -136,6 +138,14 @@ private fun NoteList(@StringRes titleRes: Int, notes: List<Pair<EsdeTranslationN
         val line = stringResource(note.messageRes)
         ReportLine(if (count > 1) stringResource(R.string.jarnfe_esde_import_note_count, line, count) else line)
     }
+}
+
+/** Colors, art and fonts under their own title, so they never read as part of what was left out. */
+@Composable
+private fun FallbackList(lines: List<EsdeFallbackLine>) {
+    if (lines.isEmpty()) return
+    JarnText(stringResource(R.string.jarnfe_esde_import_colors_title), JarnTheme.type.labelStrong, JarnTheme.colors.textMid)
+    lines.forEach { ReportLine(it.text()) }
 }
 
 @Composable
