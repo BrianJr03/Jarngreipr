@@ -19,6 +19,7 @@ import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnLookStore
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.themes.JarnImportedThemes
 import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeOption
@@ -38,7 +39,8 @@ private const val THEME_BLURB_LINES = 3
 @Composable
 internal fun JarnThemeSection(store: JarnLookStore) {
     val saved = rememberSavedThemeChoice()
-    val options = remember(saved) { jarnThemeOptions(saved) }
+    val imports = JarnImportedThemes.entries
+    val options = remember(saved, imports) { jarnThemeOptions(saved) }
     var focusedKey by remember { mutableStateOf<String?>(null) }
     LiveThemePreview(options.firstOrNull { it.key == focusedKey }?.choice)
     SettingsGroup(R.string.jarnfe_look_theme_title) {
@@ -56,6 +58,7 @@ internal fun JarnThemeSection(store: JarnLookStore) {
                 store.applyThemeChoice(saved.withOverride(view, saved.override(view).nextOverride()))
             }
         }
+        JarnThemeImportRows(store, saved)
     }
 }
 
