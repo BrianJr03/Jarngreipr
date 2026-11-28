@@ -56,6 +56,10 @@
     <string name="jarnfe_esde_note_per_system_art">A per-system picture became the system\'s own art.</string>
     <string name="jarnfe_esde_note_some_systems">Shows only on the systems that have it.</string>
     <string name="jarnfe_esde_note_media_skipped">A media type Jarn doesn\'t keep was swapped for the next one.</string>
+    <string name="jarnfe_esde_note_stacked_details">Details stack, so an empty line makes room for the next.</string>
+    <string name="jarnfe_esde_note_name_when_no_logo">The system name shows where a missing logo would be.</string>
+    <string name="jarnfe_esde_note_narrow_layout">Narrow screens use the theme\'s narrow layout.</string>
+    <string name="jarnfe_esde_note_narrow_list_kept">On narrow screens the list keeps its wide style.</string>
     <string name="jarnfe_esde_note_font_not_used">The theme\'s own font isn\'t used yet.</string>
     <string name="jarnfe_esde_note_unsupported_element">Something Jarn can\'t draw yet.</string>
     <string name="jarnfe_esde_note_extra_primary">A second list. Jarn uses the first.</string>

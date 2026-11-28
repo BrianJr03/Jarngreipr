@@ -88,6 +88,10 @@ internal val EsdeTranslationNote.messageRes: Int
         EsdeTranslationNote.PerSystemFileAsSystemArt -> R.string.jarnfe_esde_note_per_system_art
         EsdeTranslationNote.ShownOnSomeSystems -> R.string.jarnfe_esde_note_some_systems
         EsdeTranslationNote.MediaKindSkipped -> R.string.jarnfe_esde_note_media_skipped
+        EsdeTranslationNote.StackedDetails -> R.string.jarnfe_esde_note_stacked_details
+        EsdeTranslationNote.NameWhenNoLogo -> R.string.jarnfe_esde_note_name_when_no_logo
+        EsdeTranslationNote.NarrowScreenLayout -> R.string.jarnfe_esde_note_narrow_layout
+        EsdeTranslationNote.NarrowListTypeKept -> R.string.jarnfe_esde_note_narrow_list_kept
         EsdeTranslationNote.FontNotUsed -> R.string.jarnfe_esde_note_font_not_used
         EsdeTranslationNote.UnsupportedElement -> R.string.jarnfe_esde_note_unsupported_element
         EsdeTranslationNote.ExtraPrimary -> R.string.jarnfe_esde_note_extra_primary
