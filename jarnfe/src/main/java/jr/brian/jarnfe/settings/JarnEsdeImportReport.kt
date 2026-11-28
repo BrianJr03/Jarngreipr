@@ -54,11 +54,12 @@ internal fun EsdeImportOutcome.Imported.fallbackLines(): List<EsdeFallbackLine> 
         add(EsdeFallbackLine.Text(colors.tier.messageRes))
         colors.darkVersion?.let { add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_dark_version, it)) }
     }
+    if (EsdeFallbackNote.BackgroundFromPicture in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_background_from_picture))
     if (EsdeFallbackNote.LightThemeAccentOnly in fallbackNotes) add(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_light_accent))
     if (systemCount > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_systems_with_art, systemsWithArt, systemCount))
     countOf<EsdeFallbackNote.UnknownSystem>(R.plurals.jarnfe_esde_fallback_unknown_systems)?.let(::add)
     val notCopied = fallbackNotes.count {
-        it is EsdeFallbackNote.LogoNotCopied || it is EsdeFallbackNote.BackgroundNotCopied || it is EsdeFallbackNote.SvgNotCopied
+        it is EsdeFallbackNote.LogoNotCopied || it is EsdeFallbackNote.BackgroundNotCopied || it is EsdeFallbackNote.SvgRefused
     }
     if (notCopied > 0) add(EsdeFallbackLine.Count(R.plurals.jarnfe_esde_fallback_art_not_copied, notCopied))
     countOf<EsdeFallbackNote.FontRefused>(R.plurals.jarnfe_esde_fallback_fonts_refused)?.let(::add)
@@ -87,6 +88,10 @@ internal val EsdeTranslationNote.messageRes: Int
         EsdeTranslationNote.PerSystemFileAsSystemArt -> R.string.jarnfe_esde_note_per_system_art
         EsdeTranslationNote.ShownOnSomeSystems -> R.string.jarnfe_esde_note_some_systems
         EsdeTranslationNote.MediaKindSkipped -> R.string.jarnfe_esde_note_media_skipped
+        EsdeTranslationNote.StackedDetails -> R.string.jarnfe_esde_note_stacked_details
+        EsdeTranslationNote.NameWhenNoLogo -> R.string.jarnfe_esde_note_name_when_no_logo
+        EsdeTranslationNote.NarrowScreenLayout -> R.string.jarnfe_esde_note_narrow_layout
+        EsdeTranslationNote.NarrowListTypeKept -> R.string.jarnfe_esde_note_narrow_list_kept
         EsdeTranslationNote.FontNotUsed -> R.string.jarnfe_esde_note_font_not_used
         EsdeTranslationNote.UnsupportedElement -> R.string.jarnfe_esde_note_unsupported_element
         EsdeTranslationNote.ExtraPrimary -> R.string.jarnfe_esde_note_extra_primary
@@ -98,10 +103,6 @@ internal val EsdeTranslationNote.messageRes: Int
         EsdeTranslationNote.NoPrimary -> R.string.jarnfe_esde_note_no_primary
         EsdeTranslationNote.LegacyTheme -> R.string.jarnfe_esde_note_legacy
         EsdeTranslationNote.TransitionsAndTriggers -> R.string.jarnfe_esde_note_transitions
-        EsdeTranslationNote.StackedDetails -> R.string.jarnfe_esde_note_stacked_details
-        EsdeTranslationNote.NameWhenNoLogo -> R.string.jarnfe_esde_note_name_when_no_logo
-        EsdeTranslationNote.NarrowScreenLayout -> R.string.jarnfe_esde_note_narrow_layout
-        EsdeTranslationNote.NarrowListTypeKept -> R.string.jarnfe_esde_note_narrow_list_kept
     }
 
 /** "31 of 34 came over. 3 need a fix.", then what changed, what was left out, and the fallback lines. */

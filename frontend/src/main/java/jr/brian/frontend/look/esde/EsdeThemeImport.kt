@@ -45,8 +45,7 @@ fun interface EsdeImportFallback {
         fun readable(savedLook: JarnLook, catalog: SystemCatalog) =
             EsdeImportFallback { model, translation, themeDir, outDir, reparse ->
                 val result = EsdeThemeFallback.build(model, themeDir, savedLook, catalog, outDir, reparse)
-                val spec = translation.spec
-                EsdeFallbackOutcome(spec.copy(tokens = spec.tokens.copy(colors = result.colors)), result.notes, result.systemArt.size)
+                EsdeFallbackOutcome(result.applyTo(translation.spec), result.notes, result.systemArt.size)
             }
     }
 }

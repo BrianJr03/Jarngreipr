@@ -32,6 +32,8 @@ import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.RememberDeckTab
 import jr.brian.jarnfe.session.SyncTabOrders
 import jr.brian.jarnfe.stage.StageScreen
+import jr.brian.jarnfe.themekit.LocalThemeSystemArt
+import jr.brian.jarnfe.themes.rememberThemeSystemArt
 import jr.brian.jarnfe.transition.LocalJarnMarkHandoff
 import jr.brian.jarnfe.transition.rememberJarnMarkHandoff
 import jr.brian.jarnfe.wallpaper.rememberJarnFocusFloatAllowed
@@ -57,6 +59,7 @@ internal fun JarnShellRoot(screen: JarnScreen) {
             LocalJarnFocusFloatAllowed provides rememberJarnFocusFloatAllowed(),
             LocalJarnMarkHandoff provides rememberJarnMarkHandoff(screen, state.settingsOnDeck, state),
             LocalJarnTabSwitchFocus provides display.tabFocus.switchFocus(),
+            LocalThemeSystemArt provides rememberThemeSystemArt(),
         ) {
             ProvideJarnInput(JarnInput, screen) {
                 val firstRun = rememberJarnFirstRun(state.stageRoute)

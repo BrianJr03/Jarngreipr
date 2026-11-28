@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.look.rememberJarnDisplay
+import jr.brian.jarnfe.themekit.withThemeArt
 
 private const val SHADE_START = 0.38f
 private const val SHADE_MIDDLE = 0.62f
@@ -70,7 +71,7 @@ private fun BoxScope.NowSceneArt(selection: LibrarySelection, systemNow: JarnSys
     val showsBackground = rememberJarnDisplay().systemBackgroundVisible
     val target = when (selection) {
         LibrarySelection.None, is LibrarySelection.Collection -> emptyList()
-        is LibrarySelection.System -> if (showsBackground) nowSystemPaths(selection.system, systemNow) else emptyList()
+        is LibrarySelection.System -> if (showsBackground) nowSystemPaths(selection.system.withThemeArt(), systemNow) else emptyList()
         is LibrarySelection.Game -> nowGamePaths(selection.game, rememberNowSceneArt(selection.game))
     }
     NowRevealWhen(target != null)

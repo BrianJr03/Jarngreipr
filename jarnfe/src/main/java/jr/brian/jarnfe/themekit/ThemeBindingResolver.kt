@@ -143,7 +143,8 @@ internal fun resolveThemePictures(
 private fun gameMediaPath(gameId: String, artPath: String?, kind: MediaKind, media: ThemeFocusMedia): String? =
     media.pathFor(gameId, kind) ?: artPath.cleaned()?.takeIf { kind == MediaKind.Cover }
 
-private fun themeFile(themeDir: File?, path: String): String? {
+/** [path] inside [themeDir] as an absolute path, or null when it is blank or escapes the folder. */
+internal fun themeFile(themeDir: File?, path: String): String? {
     val dir = themeDir?.canonicalFile ?: return null
     val file = File(dir, path.cleaned() ?: return null).canonicalFile
     return file.path.takeIf { file.toPath().startsWith(dir.toPath()) && file != dir }

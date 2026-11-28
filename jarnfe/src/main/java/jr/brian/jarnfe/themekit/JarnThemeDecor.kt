@@ -35,8 +35,9 @@ internal fun JarnThemeDecorView(
     insets: ThemeInsets = rememberJarnThemeInsets(),
     onIssues: (List<ThemeLayoutIssue>) -> Unit = {},
 ) {
-    val settled = rememberSettledThemeFocus(focused)
-    val decor = ThemeDecorFocus(focused, settled, rememberThemeFocusMedia(settled), themeDir)
+    val live = LocalThemeSystemArt.current.apply(focused)
+    val settled = rememberSettledThemeFocus(live)
+    val decor = ThemeDecorFocus(live, settled, rememberThemeFocusMedia(settled), themeDir)
     JarnThemeLayout(
         view = view,
         primary = primary,

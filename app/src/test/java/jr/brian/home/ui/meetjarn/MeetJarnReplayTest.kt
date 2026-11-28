@@ -6,6 +6,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -20,6 +21,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
+private const val DIALOG_LOAD_TIMEOUT_MS = 5_000L
 
 /**
  * Meet Jarn shown from inside Jarn. The test app has no Hilt, so any reach for the preview gate
@@ -37,6 +40,14 @@ class MeetJarnReplayTest {
 
     private fun press(key: Key) {
         rule.onRoot().performKeyInput { pressKey(key) }
+        rule.waitForIdle()
+    }
+
+    /** The dialog loads its content on the IO dispatcher, which waitForIdle doesn't track. */
+    private fun waitForDialogContent() {
+        rule.waitUntil(DIALOG_LOAD_TIMEOUT_MS) {
+            rule.onAllNodesWithTag(MEET_JARN_CLOSE_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
         rule.waitForIdle()
     }
 
@@ -63,7 +74,7 @@ class MeetJarnReplayTest {
     fun `b closes the replay without the gate, the arrival flag or a switch`() {
         var closed = false
         rule.setContent { MeetJarnReplayDialog(onClose = { closed = true }) }
-        rule.waitForIdle()
+        waitForDialogContent()
         rule.onNodeWithTag(MEET_JARN_CLOSE_TAG).assertIsFocused()
         rule.onNodeWithTag(MEET_JARN_CLOSE_TAG).performKeyInput { pressKey(Key.ButtonB) }
         rule.waitForIdle()

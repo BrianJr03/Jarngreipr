@@ -120,7 +120,7 @@ class JarnEsdeThemeImportFlowTest {
                 EsdeFallbackNote.Colors(JarnPaletteMatch.AccentOnSavedLook, darkVersion = "Dark"),
                 EsdeFallbackNote.UnknownSystem("foo"),
                 EsdeFallbackNote.UnknownSystem("bar"),
-                EsdeFallbackNote.SvgNotCopied("nes"),
+                EsdeFallbackNote.SvgRefused("nes"),
                 EsdeFallbackNote.LogoNotCopied("snes"),
             ),
             systemsWithArt = 2,

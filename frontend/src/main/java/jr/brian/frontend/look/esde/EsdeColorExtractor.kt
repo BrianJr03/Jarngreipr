@@ -80,12 +80,15 @@ object EsdeColorExtractor {
         return EsdeColorPick(adapted.look.resolvedColors, adapted.match)
     }
 
-    /** Null for a light theme or one whose text fails Jarn's contrast rules. */
+    /**
+     * Null for a light theme or one whose text fails Jarn's contrast rules. A dark background with
+     * no stated text color, as image-only themes have, takes the saved look's text.
+     */
     fun fullColors(raw: EsdeRawPalette, savedLook: JarnLook): JarnColors? {
         val bg = raw.bg ?: return null
-        val textHigh = raw.textHigh ?: return null
         if (raw.isLight) return null
         val saved = savedLook.resolvedColors
+        val textHigh = raw.textHigh ?: saved.textHigh
         val surface = raw.surface ?: lerp(bg, textHigh, SURFACE_STEP)
         return readableJarnColors(
             bg = bg,

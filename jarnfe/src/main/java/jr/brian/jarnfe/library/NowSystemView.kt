@@ -42,6 +42,7 @@ import jr.brian.jarnfe.look.rememberJarnDisplay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
+import jr.brian.jarnfe.themekit.withThemeArt
 
 private const val MINUTES_PER_HOUR = 60L
 private val UnboundedPanelHeight = 1000.dp
@@ -238,7 +239,8 @@ private fun NowNamePlate(system: JarnLibrarySystem, parts: NowSystemParts) {
 
 /** The logo, or the name in its place when there is none. */
 @Composable
-private fun NowSystemMark(system: JarnLibrarySystem) {
+private fun NowSystemMark(shown: JarnLibrarySystem) {
+    val system = shown.withThemeArt()
     var logoFailed by remember(system.logoPath) { mutableStateOf(false) }
     val logo = system.logoPath?.takeUnless { it.isBlank() || logoFailed }
     if (logo == null) {
