@@ -6,6 +6,7 @@ import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ThemeRect
 import jr.brian.core.model.theme.ThemeSystemArt
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ThemeViews
 import jr.brian.core.model.theme.ViewSpec
 import org.junit.Assert.assertEquals
@@ -49,5 +50,33 @@ class ThemeFileRefsTest {
         assertEquals(listOf(good), (layers[0] as ThemeLayer.Picture).fallbacks)
         assertEquals(listOf(good), (layers[1] as ThemeLayer.Video).fallbacks)
         assertEquals(2, checked.dropped)
+    }
+
+    @Test
+    fun `narrow layers follow the same rules and hide when nothing is left`() {
+        val rect = ThemeRect(0f, 0f, 1f, 1f)
+        val good = ThemePicture.File("art/bg.png")
+        val view = ViewSpec(
+            primary = ThemePrimary.Grid(rect),
+            layers = listOf(ThemeLayer.Picture(id = "art", rect = rect, source = good)),
+            narrow = ThemeViewPatch(
+                layers = listOf(
+                    ThemeLayer.Picture(id = "art", rect = rect, source = ThemePicture.File("art/missing.png")),
+                    ThemeLayer.Picture(id = "escape", rect = rect, source = ThemePicture.File("../outside.png")),
+                    ThemeLayer.Picture(id = "kept", rect = rect, source = ThemePicture.File("../x.png"), fallbacks = listOf(good)),
+                    ThemeLayer.Video(id = "clip", rect = rect, fallback = ThemePicture.File("art/nope.png")),
+                ),
+                hide = listOf("old"),
+            ),
+        )
+
+        val checked = checkFileRefs(testSpec().copy(views = ThemeViews(games = view)), assets)
+
+        val narrow = checked.spec.views.games!!.narrow!!
+        assertEquals(listOf("kept", "clip"), narrow.layers.map { it.id })
+        assertEquals(good, (narrow.layers[0] as ThemeLayer.Picture).source)
+        assertEquals(null, (narrow.layers[1] as ThemeLayer.Video).fallback)
+        assertEquals(listOf("old", "art", "escape"), narrow.hide)
+        assertEquals(4, checked.dropped)
     }
 }

@@ -6,6 +6,7 @@ import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
 import jr.brian.core.model.theme.ThemeSystemArt
 import jr.brian.core.model.theme.ThemeTextStyle
+import jr.brian.core.model.theme.ThemeViewPatch
 import jr.brian.core.model.theme.ViewSpec
 
 /** A theme with every file it names checked, and how many references were dropped to get there. */
@@ -15,7 +16,7 @@ internal data class CheckedTheme(val spec: JarnThemeSpec, val dropped: Int)
  * Every font and picture path must name a file that passed its check inside the theme folder.
  * A bad reference drops alone: a picture layer falls to its next good fallback (and goes when it has
  * none), a primary or video keeps Jarn's default art, a text style keeps its role's font, and a
- * system's art keeps only the files that passed.
+ * system's art keeps only the files that passed. Narrow layouts follow the same rules.
  */
 internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKind>): CheckedTheme {
     var dropped = 0
@@ -41,7 +42,17 @@ internal fun checkFileRefs(spec: JarnThemeSpec, assets: Map<String, ThemeAssetKi
         is ThemeLayer.Video -> copy(fallback = fallback.checked(), fallbacks = fallbacks.checked())
         else -> this
     }
-    fun ViewSpec.checked() = copy(primary = primary.checked(), layers = layers.mapNotNull { it.checked() })
+    /** A narrow layer that loses every picture hides on narrow screens, rather than showing the wide one. */
+    fun ThemeViewPatch.checked(): ThemeViewPatch {
+        val kept = layers.map { it to it.checked() }
+        val gone = kept.filter { it.second == null }.map { it.first.id }
+        return copy(layers = kept.mapNotNull { it.second }, hide = (hide + gone).distinct())
+    }
+    fun ViewSpec.checked() = copy(
+        primary = primary.checked(),
+        layers = layers.mapNotNull { it.checked() },
+        narrow = narrow?.checked(),
+    )
 
     val type = spec.tokens.type
     val checkedType = type.copy(
