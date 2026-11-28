@@ -17,6 +17,8 @@ import jr.brian.core.model.theme.ThemeFit
 import jr.brian.core.model.theme.ThemeLayer
 import jr.brian.core.model.theme.ThemePicture
 import jr.brian.core.model.theme.ThemePrimary
+import jr.brian.core.model.theme.ThemePrimaryPatch
+import jr.brian.core.model.theme.ThemeStackable
 import jr.brian.core.model.theme.ThemeSource
 import jr.brian.core.model.theme.ThemeText
 import jr.brian.core.model.theme.ThemeVisibleWhen
@@ -258,6 +260,117 @@ class EsdeThemeTranslatorTest {
             result.report.notUsed.filter { it.view == EsdeView.Gamelist }.map { it.note },
         )
         assertTrue(result.colorCandidates.isEmpty())
+    }
+
+    @Test
+    fun `image and video chains become fallbacks`() {
+        val result = translate(
+            fixture.element("gamelist", "carousel", "c") +
+                fixture.element(
+                    "gamelist", "image", "art", "pos" to "0.6 0.1", "size" to "0.3 0.3",
+                    "imageType" to "miximage, screenshot", "default" to "./art/none.png",
+                ) +
+                fixture.element(
+                    "gamelist", "video", "clip", "pos" to "0.6 0.5", "size" to "0.3 0.3",
+                    "imageType" to "screenshot, titlescreen", "defaultImage" to "./art/none.png",
+                ),
+        )
+
+        val art = result.gameLayer<ThemeLayer.Picture>("image-art")
+        assertEquals(ThemePicture.GameMedia(MediaKind.Miximage), art.source)
+        assertEquals(
+            listOf(ThemePicture.GameMedia(MediaKind.Screenshot), ThemePicture.File("art/none.png")),
+            art.fallbacks,
+        )
+        val clip = result.gameLayer<ThemeLayer.Video>("video-clip")
+        assertEquals(ThemePicture.GameMedia(MediaKind.Screenshot), clip.fallback)
+        assertEquals(
+            listOf(ThemePicture.GameMedia(MediaKind.Titlescreen), ThemePicture.File("art/none.png")),
+            clip.fallbacks,
+        )
+        assertEquals(listOf("art/none.png"), result.assets)
+    }
+
+    @Test
+    fun `a detail pane of adjacent rows becomes one stack`() {
+        val result = translate(
+            fixture.element("gamelist", "carousel", "c") +
+                fixture.element("gamelist", "text", "dev", "pos" to "0.5 0.2", "size" to "0.4 0.05", "metadata" to "developer") +
+                fixture.element("gamelist", "rating", "stars", "pos" to "0.5 0.26", "size" to "0.15 0.04") +
+                fixture.element("gamelist", "datetime", "year", "pos" to "0.7 0.26", "size" to "0.2 0.04") +
+                fixture.element("gamelist", "text", "desc", "pos" to "0.5 0.31", "size" to "0.4 0.3", "metadata" to "description") +
+                fixture.element("gamelist", "text", "far", "pos" to "0.5 0.8", "size" to "0.4 0.05", "metadata" to "genre"),
+        )
+
+        val stacks = result.games().layers.associate { it.id to (it as? ThemeStackable)?.stack }
+        assertEquals("stack-text-dev", stacks["text-dev"])
+        assertEquals("stack-text-dev", stacks["rating-stars"])
+        assertEquals("stack-text-dev", stacks["datetime-year"])
+        assertEquals("stack-text-dev", stacks["text-desc"])
+        assertNull(stacks["text-far"])
+        assertEquals(ThemeAlign.Start, result.gameLayer<ThemeLayer.Text>("text-desc").verticalAlign)
+        assertEquals(ThemeAlign.Center, result.gameLayer<ThemeLayer.Text>("text-far").verticalAlign)
+        assertTrue(EsdeTranslationNote.StackedDetails in result.notes { it.adjusted })
+    }
+
+    @Test
+    fun `a logo with the system name in its place swaps on missing art`() {
+        val result = translate(
+            """
+            <view name="system">
+              <carousel name="c"><pos>0 0.5</pos><size>1 0.3</size></carousel>
+              <image name="logo"><pos>0.3 0.25</pos><size>0.4 0.15</size><path>./logos/${'$'}{system.theme}.svg</path></image>
+              <text name="name"><pos>0.3 0.27</pos><size>0.4 0.08</size><text>${'$'}{system.fullName}</text></text>
+            </view>
+            """,
+            nes, snes,
+        )
+
+        val layers = result.systems().layers.associateBy { it.id }
+        assertEquals(ThemeVisibleWhen(hasSystemArt = SystemArtKind.Logo), layers.getValue("image-logo").visibleWhen)
+        assertEquals(ThemeVisibleWhen(hasSystemArt = SystemArtKind.Logo, missing = true), layers.getValue("text-name").visibleWhen)
+        assertTrue(EsdeTranslationNote.NameWhenNoLogo in result.notes { it.adjusted })
+    }
+
+    @Test
+    fun `a narrow aspect ratio block becomes the view's narrow patch`() {
+        fixture.capabilities(aspectRatios = listOf("16:9", "4:3"))
+        fixture.theme(
+            body = """
+                <view name="gamelist">
+                  <carousel name="c"><pos>0 0.6</pos><size>1 0.3</size><maxItemCount>5</maxItemCount></carousel>
+                  <image name="art"><pos>0.6 0.1</pos><size>0.3 0.3</size><imageType>cover</imageType></image>
+                  <text name="title"><pos>0.1 0.1</pos><size>0.4 0.05</size><metadata>name</metadata></text>
+                </view>
+                <aspectRatio name="4:3">
+                  <view name="gamelist">
+                    <carousel name="c"><maxItemCount>3</maxItemCount></carousel>
+                    <image name="art"><visible>false</visible></image>
+                    <text name="title"><pos>0.1 0.2</pos></text>
+                  </view>
+                </aspectRatio>
+            """.trimIndent(),
+        )
+
+        val result = EsdeThemeParser().translate(fixture.root, listOf(nes), EsdeThemeSelection(), options)
+
+        val games = result.games()
+        assertEquals(2, (games.primary as ThemePrimary.Shelf).itemsBefore)
+        val narrow = games.narrow!!
+        assertEquals(ThemePrimaryPatch(itemsBefore = 1, itemsAfter = 1), narrow.primary)
+        assertEquals(listOf("image-art"), narrow.hide)
+        assertEquals(0.2f, narrow.layers.single { it.id == "text-title" }.rect.y, EPSILON)
+        assertEquals(EsdeTranslationNote.NarrowScreenLayout, result.report.adjusted.last().note)
+    }
+
+    @Test
+    fun `themes without a narrow aspect ratio get no narrow patch`() {
+        fixture.capabilities(aspectRatios = listOf("16:9", "21:9"))
+        fixture.theme(body = fixture.element("gamelist", "carousel", "c"))
+
+        assertNull(EsdeThemeParser().translate(fixture.root, listOf(nes), EsdeThemeSelection(), options).games().narrow)
+        assertEquals("4:3", narrowAspectRatioOf(EsdeThemeCapabilities(aspectRatios = listOf("16:10", "4:3", "5:4"))))
+        assertEquals("16:10", narrowAspectRatioOf(EsdeThemeCapabilities(aspectRatios = listOf("16:9", "16:10"))))
     }
 
     @Test

@@ -9,6 +9,7 @@
 [adjusted]
   gamelist rating stars: SizeGuessed
   gamelist datetime released: SizeGuessed
+  gamelist -: StackedDetails
 [notUsed]
   theme -: TransitionsAndTriggers
 [assets]
