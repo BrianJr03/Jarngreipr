@@ -47,7 +47,7 @@ private fun ByteArray.startsWith(vararg bytes: Int) =
     size >= bytes.size && bytes.indices.all { (this[it].toInt() and 0xFF) == bytes[it] }
 
 private fun webpSize(buf: ByteBuffer): ImageSize? {
-    val chunk = String(ByteArray(4).also { buf.get(12, it) }, Charsets.US_ASCII)
+    val chunk = String(buf.array(), buf.arrayOffset() + 12, 4, Charsets.US_ASCII)
     return when (chunk) {
         "VP8 " -> ImageSize(buf.getShort(26).toInt() and 0x3FFF, buf.getShort(28).toInt() and 0x3FFF)
         "VP8L" -> buf.getInt(21).let { bits -> ImageSize((bits and 0x3FFF) + 1, ((bits ushr 14) and 0x3FFF) + 1) }

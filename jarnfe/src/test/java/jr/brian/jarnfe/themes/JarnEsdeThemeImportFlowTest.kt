@@ -108,6 +108,17 @@ class JarnEsdeThemeImportFlowTest {
     }
 
     @Test
+    fun `font notes drop once the theme's fonts came over, and no art means no art line`() {
+        val item = EsdeReportItem(EsdeView.Gamelist, EsdeElementKey("text", "title"), EsdeTranslationNote.FontNotUsed)
+        val report = EsdeTranslationReport(listOf(item.copy(note = null)), listOf(item), emptyList())
+        assertEquals(listOf(EsdeTranslationNote.FontNotUsed to 1), report.summary().changed)
+        assertTrue(report.summary(fontsUsed = true).changed.isEmpty())
+
+        val lines = imported().copy(systemsWithArt = 0, fontsUsed = true).fallbackLines()
+        assertEquals(listOf(EsdeFallbackLine.Text(R.string.jarnfe_esde_fallback_fonts_used)), lines)
+    }
+
+    @Test
     fun `every translation note has its own words`() {
         val res = EsdeTranslationNote.entries.map { it.messageRes }
         assertEquals(res.size, res.toSet().size)

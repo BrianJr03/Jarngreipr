@@ -89,7 +89,7 @@ private fun parseRecords(cd: ByteBuffer, count: Int): List<ThemeZipRecord> {
         if (compressed == ZIP64_MARKER || size == ZIP64_MARKER) refuse(ThemeImportProblem.TooLarge)
         val nameStart = at + CENTRAL_HEADER_BYTES
         if (nameStart + nameLength > cd.limit()) refuse(ThemeImportProblem.Damaged)
-        val name = String(ByteArray(nameLength).also { cd.get(nameStart, it) }, Charsets.UTF_8)
+        val name = String(cd.array(), cd.arrayOffset() + nameStart, nameLength, Charsets.UTF_8)
         at = nameStart + nameLength + extraLength + commentLength
         ThemeZipRecord(name, compressed, size, isSymlink = madeBy == UNIX_HOST && mode == SYMLINK_TYPE)
     }

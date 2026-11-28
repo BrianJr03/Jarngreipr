@@ -23,6 +23,8 @@ data class EsdeFallbackOutcome(
     val notes: List<EsdeFallbackNote> = emptyList(),
     /** How many of the player's systems got theme art. */
     val systemsWithArt: Int = 0,
+    /** The theme's own fonts were copied and set on Jarn's type roles. */
+    val fontsUsed: Boolean = false,
 )
 
 /**
@@ -45,7 +47,12 @@ fun interface EsdeImportFallback {
         fun readable(savedLook: JarnLook, catalog: SystemCatalog) =
             EsdeImportFallback { model, translation, themeDir, outDir, reparse ->
                 val result = EsdeThemeFallback.build(model, themeDir, savedLook, catalog, outDir, reparse)
-                EsdeFallbackOutcome(result.applyTo(translation.spec), result.notes, result.systemArt.size)
+                EsdeFallbackOutcome(
+                    spec = result.applyTo(translation.spec),
+                    notes = result.notes,
+                    systemsWithArt = result.systemArt.size,
+                    fontsUsed = result.fonts.display != null || result.fonts.body != null,
+                )
             }
     }
 }
@@ -61,6 +68,7 @@ sealed interface EsdeImportOutcome {
         val systemsWithArt: Int,
         val systemCount: Int,
         val unusableFiles: Int,
+        val fontsUsed: Boolean = false,
     ) : EsdeImportOutcome
 
     /** A theme in the format from before ES-DE, which Jarn doesn't read. */
@@ -124,7 +132,7 @@ class EsdeThemeImport(
         return when (result) {
             is ThemeImportResult.Installed -> EsdeImportOutcome.Imported(
                 result.id, result.folder, result.spec.meta.name, translation.report, fallbackOutcome.notes,
-                fallbackOutcome.systemsWithArt, refs.size, result.dropped,
+                fallbackOutcome.systemsWithArt, refs.size, result.dropped, fallbackOutcome.fontsUsed,
             )
             is ThemeImportResult.Rejected -> EsdeImportOutcome.Failed(result.problem)
             is ThemeImportResult.TooNew -> EsdeImportOutcome.Failed(ThemeImportProblem.Damaged)
