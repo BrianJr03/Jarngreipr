@@ -3,7 +3,6 @@
     <string name="jarnfe_esde_theme_howto">Copy the theme folder to ES-DE/themes, then come back.</string>
     <string name="jarnfe_esde_theme_updated">Your ES-DE theme updated. Re-import?</string>
     <string name="jarnfe_esde_theme_reimport">Re-import</string>
-    <string name="jarnfe_esde_theme_not_now">Not now</string>
     <string name="jarnfe_esde_theme_restore">Bring back your ES-DE layout?</string>
     <string name="jarnfe_esde_theme_restore_notice">Bring back your ES-DE layout? Re-import it in Look, Layout.</string>
     <string name="jarnfe_esde_theme_updated_notice">Your ES-DE theme updated. Re-import it in Look, Layout.</string>
@@ -26,7 +25,6 @@
     <string name="jarnfe_esde_import_importing">Bringing over %1$s</string>
     <string name="jarnfe_esde_import_in_use">In ES-DE now</string>
     <string name="jarnfe_esde_theme_no_access">Jarn needs file access to read ES-DE themes.</string>
-    <string name="jarnfe_esde_import_allow_access">Allow file access</string>
     <string name="jarnfe_esde_import_check_again">Check again</string>
     <string name="jarnfe_esde_import_none">No ES-DE themes found.</string>
     <string name="jarnfe_esde_import_legacy">This theme uses the format from before ES-DE, which Jarn can\'t read.</string>

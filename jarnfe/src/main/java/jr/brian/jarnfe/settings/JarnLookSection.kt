@@ -114,10 +114,19 @@ internal fun <T> JarnChoiceGrid(items: List<T>, card: @Composable (T, Modifier) 
 /** Both screens follow the focused card, and fall back to the saved look once it loses focus. */
 @Composable
 private fun LiveLookPreview(focusedId: String?) {
-    val previewId = focusedId.takeIf { LocalJarnScreenActive.current }
-    DisposableEffect(previewId) {
-        JarnLookPreview.lookId = previewId
-        onDispose { JarnLookPreview.lookId = null }
+    LiveFocusPreview(focusedId) { JarnLookPreview.lookId = it }
+}
+
+/**
+ * Shows [focused] on both screens through [show] while this screen has control, and clears it
+ * once focus leaves or the picker closes. Shared by the look and layout pickers.
+ */
+@Composable
+internal fun <T> LiveFocusPreview(focused: T?, show: (T?) -> Unit) {
+    val preview = focused.takeIf { LocalJarnScreenActive.current }
+    DisposableEffect(preview) {
+        show(preview)
+        onDispose { show(null) }
     }
 }
 
