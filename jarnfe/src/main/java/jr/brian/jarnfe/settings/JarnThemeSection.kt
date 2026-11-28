@@ -16,12 +16,13 @@ import jr.brian.core.ui.components.JarnChoiceCard
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.frontend.look.JarnBrowseView
 import jr.brian.frontend.look.JarnLookStore
+import jr.brian.core.ui.theme.LocalJarnScreenActive
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.themes.JarnImportedThemes
 import jr.brian.jarnfe.themes.JarnThemeChoice
 import jr.brian.jarnfe.themes.JarnThemeEntry
 import jr.brian.jarnfe.themes.JarnThemeOption
-import jr.brian.jarnfe.themes.JarnThemePreview
+import jr.brian.jarnfe.themes.ThemePreviewEffect
 import jr.brian.jarnfe.themes.JarnThemeRegistry
 import jr.brian.jarnfe.themes.applyThemeChoice
 import jr.brian.jarnfe.themes.jarnThemeOptions
@@ -92,7 +93,7 @@ private fun ViewOverrideRow(view: ThemeView, override: JarnBrowseView?, onClick:
 
 @Composable
 private fun LiveThemePreview(focused: JarnThemeChoice?) {
-    LiveFocusPreview(focused) { JarnThemePreview.choice = it }
+    ThemePreviewEffect(focused.takeIf { LocalJarnScreenActive.current })
 }
 
 @Composable
